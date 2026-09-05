@@ -172,6 +172,13 @@ create table public.tv_episodes_watched (
   season_number integer not null,
   episode_number integer not null,
   watched_at bigint not null,
+  -- Optionnels (migrations/036) : note par épisode, jamais promue comme
+  -- l'essentiel (voir tv_shows.manual_note, la note globale) — voir
+  -- js/series.js. times_watched : un compteur direct plutôt qu'un
+  -- historique façon `viewings` (une ligne par film) — l'utilisateur
+  -- demande un NOMBRE de fois vu, pas une date par revisionnage.
+  note numeric,
+  times_watched integer not null default 1,
   unique (user_id, tv_show_id, season_number, episode_number)
 );
 

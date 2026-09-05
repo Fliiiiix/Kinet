@@ -3312,16 +3312,30 @@ body[data-view-mode="list"] #topList .top-rank{width:26px; font-size:16px;}
   gap:8px;
   margin:8px 0 12px;
 }
+/* .episode-row = la ligne entière (case à cocher + éventuels contrôles
+   "note"/"vu ×N" ci-dessous, v2.39 — restructurée en <div> plutôt que
+   <label> pour que ces contrôles additionnels ne soient pas eux-mêmes
+   interprétés comme des clics sur la case à cocher). .episode-row-main
+   reste le <label> proprement dit (case + titre), qui garde tout le style
+   déjà en place. */
 .episode-row{
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:8px 10px;
+  padding:8px 0;
+  border-top:1px solid var(--line-soft);
+}
+.episode-row:first-of-type{border-top:none;}
+.episode-row-main{
   display:flex;
   align-items:flex-start;
   gap:10px;
-  padding:8px 0;
-  border-top:1px solid var(--line-soft);
+  flex:1;
+  min-width:200px;
   cursor:pointer;
 }
-.episode-row:first-of-type{border-top:none;}
-.episode-row input[type="checkbox"]{
+.episode-row-main input[type="checkbox"]{
   margin-top:3px;
   width:16px; height:16px;
   accent-color:var(--violet);
@@ -3341,6 +3355,47 @@ body[data-view-mode="list"] #topList .top-rank{width:26px; font-size:16px;}
   color:var(--text-muted);
   flex:none;
 }
+/* Note + nombre de fois vu (v2.39, retour utilisateur) : visibles
+   seulement une fois l'épisode coché vu — jamais l'essentiel de la ligne,
+   toujours discrets à côté. */
+.episode-extra{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex:none;
+  margin-left:auto;
+}
+.episode-note-input{
+  width:52px;
+  padding:4px 6px;
+  border-radius:6px;
+  border:1px solid var(--line);
+  background:var(--surface-2);
+  color:var(--text);
+  font-family:'Space Mono', monospace;
+  font-size:12px;
+  text-align:center;
+}
+.episode-watch-count{
+  display:flex;
+  align-items:center;
+  gap:4px;
+  font-family:'Space Mono', monospace;
+  font-size:11.5px;
+  color:var(--text-muted);
+}
+.episode-count-btn{
+  width:20px; height:20px;
+  border-radius:5px;
+  border:1px solid var(--line);
+  background:var(--surface-2);
+  color:var(--text);
+  cursor:pointer;
+  line-height:1;
+  padding:0;
+}
+.episode-count-btn:hover{border-color:var(--violet-dim); color:var(--violet);}
+.episode-count-val{min-width:22px; text-align:center;}
 
 /* Tablette (v2.1, retour utilisateur : recherche/filtre/grille doivent
    rester sur la même ligne) : .toolbar garde son flex-wrap de base

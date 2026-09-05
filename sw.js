@@ -17,7 +17,7 @@
 // (voir watchForUpdate() dans js/offline.js). Il purge aussi le cache
 // ci-dessous à chaque déploiement plutôt que de le laisser grossir sans
 // fin (chaque ?v=N étant une URL distincte, jamais réutilisée).
-const CACHE_NAME = 'critique-films-shell-v105';
+const CACHE_NAME = 'critique-films-shell-v106';
 
 self.addEventListener('activate', (event) => {
   // Nettoie le cache de toute version antérieure (voir CACHE_NAME

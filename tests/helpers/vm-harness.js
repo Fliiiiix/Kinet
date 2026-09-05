@@ -95,4 +95,15 @@ function setState(context, values){
   }
 }
 
-module.exports = { createContext, loadFiles, setState, stubElement, stubDocument, fakeLocalStorage, REPO_ROOT };
+// Lit l'état interne (`let x = ...`) d'un contexte APRÈS chargement — même
+// raison que setState() ci-dessus : un `let` de script top-level ne devient
+// PAS une propriété de l'objet contexte (contrairement à une fonction
+// déclarée avec `function`, elle bien exposée), donc `context.x` depuis le
+// realm hôte ne lit rien pour une variable `let`/`const`. On exécute la
+// simple expression `x` DANS le contexte pour retrouver la bonne liaison
+// lexicale.
+function getState(context, key){
+  return vm.runInContext(key, context);
+}
+
+module.exports = { createContext, loadFiles, setState, getState, stubElement, stubDocument, fakeLocalStorage, REPO_ROOT };

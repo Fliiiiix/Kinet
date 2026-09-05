@@ -68,6 +68,15 @@ film" a été diagnostiqué (voir le commentaire en tête de ce fichier).
   proposals: [...] })` (vm-harness.js) **après** `loadFiles()` : ça assigne
   sans redéclarer, donc la résolution de portée retrouve la bonne liaison
   et la mute pour de vrai (voir `proposals-voting.test.js`).
+- **Lire un `let` de script depuis le test échoue pour la même raison** :
+  une fois le fichier chargé, `ctx.watchedEpisodeExtras` (accès direct côté
+  hôte) ne renvoie RIEN pour une variable `let`/`const` top-level — seules
+  les fonctions déclarées avec `function` deviennent des propriétés de
+  l'objet contexte. Utiliser `getState(ctx, 'watchedEpisodeExtras')`
+  (vm-harness.js) pour récupérer la vraie référence ; comme c'est un objet,
+  la mutation faite par les fonctions testées (exécutées dans le contexte)
+  reste visible depuis cette référence côté hôte, sans avoir besoin de la
+  relire à chaque fois (voir `episode-notes.test.js`).
 
 ## Ajouter un test
 

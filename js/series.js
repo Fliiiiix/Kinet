@@ -17,6 +17,11 @@ let seriesTmdbSelected = null; // { tmdb_id, poster_url, overview, release_year,
 let currentShowId = null;       // série affichée sur #seriesDetailPage
 let currentShowSeasons = [];    // [{ season_number, name, episode_count, air_date }], depuis fetchTvDetails()
 let watchedEpisodeSet = new Set(); // "saison-episode" vus, pour la série actuellement ouverte
+// Note + nombre de fois vu par épisode (v2.39, retour utilisateur) —
+// facultatifs, jamais l'essentiel (voir tv_shows.manual_note, la note
+// globale) : "saison-episode" -> { note, timesWatched }, uniquement pour
+// les clés présentes dans watchedEpisodeSet ci-dessus.
+let watchedEpisodeExtras = {};
 let loadedSeasonEpisodes = {};  // season_number -> episodes[] (TMDB), cache pour la série actuellement ouverte
 
 function rowToShow(row){
@@ -378,14 +383,22 @@ async function refreshShowMeta(show){
 async function loadWatchedEpisodes(showId){
   const { data, error } = await supabaseClient
     .from('tv_episodes_watched')
-    .select('season_number, episode_number')
+    .select('season_number, episode_number, note, times_watched')
     .eq('tv_show_id', showId);
   if(error){
     console.error(error);
     watchedEpisodeSet = new Set();
+    watchedEpisodeExtras = {};
     return;
   }
   watchedEpisodeSet = new Set((data || []).map(r => `${r.season_number}-${r.episode_number}`));
+  watchedEpisodeExtras = {};
+  (data || []).forEach(r => {
+    watchedEpisodeExtras[`${r.season_number}-${r.episode_number}`] = {
+      note: r.note != null ? parseFloat(r.note) : null,
+      timesWatched: r.times_watched || 1
+    };
+  });
 }
 
 function seasonProgressLabel(seasonNumber, episodeCount){
@@ -451,20 +464,41 @@ function renderSeasonEpisodes(seasonNumber){
       <button class="btn secondary" type="button" data-unmark-season="${seasonNumber}">Tout marquer non vu</button>
     </div>
     ${episodes.map(ep => {
-      const checked = watchedEpisodeSet.has(`${seasonNumber}-${ep.episode_number}`);
+      const key = `${seasonNumber}-${ep.episode_number}`;
+      const checked = watchedEpisodeSet.has(key);
+      const extra = watchedEpisodeExtras[key];
       const air = formatDateFr(ep.air_date);
       return `
-        <label class="episode-row">
-          <input type="checkbox" data-season="${seasonNumber}" data-episode="${ep.episode_number}" ${checked ? 'checked' : ''}>
-          <span class="episode-num">E${String(ep.episode_number).padStart(2, '0')}</span>
-          <span class="episode-title">${escapeHtml(ep.name || `Épisode ${ep.episode_number}`)}</span>
-          ${air ? `<span class="episode-air">${air}</span>` : ''}
-        </label>
+        <div class="episode-row">
+          <label class="episode-row-main">
+            <input type="checkbox" data-season="${seasonNumber}" data-episode="${ep.episode_number}" ${checked ? 'checked' : ''}>
+            <span class="episode-num">E${String(ep.episode_number).padStart(2, '0')}</span>
+            <span class="episode-title">${escapeHtml(ep.name || `Épisode ${ep.episode_number}`)}</span>
+            ${air ? `<span class="episode-air">${air}</span>` : ''}
+          </label>
+          ${checked ? `
+          <div class="episode-extra">
+            <input type="number" class="episode-note-input" min="0" max="5" step="0.5" placeholder="note"
+              data-season="${seasonNumber}" data-episode="${ep.episode_number}"
+              value="${extra && extra.note != null ? extra.note : ''}">
+            <div class="episode-watch-count">
+              <button type="button" class="episode-count-btn" data-count="dec" data-season="${seasonNumber}" data-episode="${ep.episode_number}" aria-label="Retirer un visionnage">−</button>
+              <span class="episode-count-val">×${extra ? extra.timesWatched : 1}</span>
+              <button type="button" class="episode-count-btn" data-count="inc" data-season="${seasonNumber}" data-episode="${ep.episode_number}" aria-label="Ajouter un visionnage">+</button>
+            </div>
+          </div>` : ''}
+        </div>
       `;
     }).join('')}
   `;
   episodesEl.querySelectorAll('input[type="checkbox"]').forEach(cb => {
     cb.addEventListener('change', () => toggleEpisodeWatched(seasonNumber, parseInt(cb.dataset.episode, 10), cb.checked, cb));
+  });
+  episodesEl.querySelectorAll('.episode-note-input').forEach(inp => {
+    inp.addEventListener('change', () => updateEpisodeNote(seasonNumber, parseInt(inp.dataset.episode, 10), inp.value));
+  });
+  episodesEl.querySelectorAll('.episode-count-btn').forEach(btn => {
+    btn.addEventListener('click', () => changeEpisodeTimesWatched(seasonNumber, parseInt(btn.dataset.episode, 10), btn.dataset.count === 'inc' ? 1 : -1));
   });
   const markBtn = episodesEl.querySelector(`[data-mark-season="${seasonNumber}"]`);
   const unmarkBtn = episodesEl.querySelector(`[data-unmark-season="${seasonNumber}"]`);
@@ -496,6 +530,7 @@ async function toggleEpisodeWatched(seasonNumber, episodeNumber, watched, checkb
       return;
     }
     watchedEpisodeSet.add(key);
+    watchedEpisodeExtras[key] = { note: null, timesWatched: 1 };
   }else{
     const { error } = await supabaseClient
       .from('tv_episodes_watched')
@@ -508,10 +543,67 @@ async function toggleEpisodeWatched(seasonNumber, episodeNumber, watched, checkb
       return;
     }
     watchedEpisodeSet.delete(key);
+    delete watchedEpisodeExtras[key];
   }
   const season = currentShowSeasons.find(s => s.season_number === seasonNumber);
   if(season) updateSeasonProgressUI(seasonNumber, season.episode_count);
   watchedEpisodeCounts[currentShowId] = watchedEpisodeSet.size;
+  // Fait apparaître/disparaître les contrôles note/nombre de fois vu
+  // (.episode-extra, uniquement sur un épisode coché) — un simple
+  // classList.toggle() ne suffirait pas, cette section entière n'existe
+  // pas encore dans le DOM tant que l'épisode n'a jamais été coché.
+  renderSeasonEpisodes(seasonNumber);
+}
+
+// --- Note par épisode (v2.39, retour utilisateur, optionnelle) ---
+async function updateEpisodeNote(seasonNumber, episodeNumber, rawValue){
+  if(blockIfOffline()) return;
+  const key = `${seasonNumber}-${episodeNumber}`;
+  const value = rawValue.trim();
+  const note = value === '' ? null : Math.max(0, Math.min(5, parseFloat(value)));
+  const { error } = await supabaseClient
+    .from('tv_episodes_watched')
+    .update({ note })
+    .eq('tv_show_id', currentShowId).eq('season_number', seasonNumber).eq('episode_number', episodeNumber);
+  if(error){
+    showToast('Erreur, réessaie');
+    console.error(error);
+    return;
+  }
+  if(watchedEpisodeExtras[key]) watchedEpisodeExtras[key].note = note;
+}
+
+// --- Nombre de fois vu par épisode (v2.39, retour utilisateur) — compteur
+// direct sur la ligne existante, jamais en dessous de 1 (repasser à 0
+// revient à décocher l'épisode, voir le bouton "−" sur le premier
+// visionnage : sans effet plutôt que de finir à 0 en gardant la case
+// cochée, ce qui serait incohérent).
+async function changeEpisodeTimesWatched(seasonNumber, episodeNumber, delta){
+  if(blockIfOffline()) return;
+  const key = `${seasonNumber}-${episodeNumber}`;
+  const current = (watchedEpisodeExtras[key] && watchedEpisodeExtras[key].timesWatched) || 1;
+  const next = Math.max(1, current + delta);
+  if(next === current) return;
+  const { error } = await supabaseClient
+    .from('tv_episodes_watched')
+    .update({ times_watched: next })
+    .eq('tv_show_id', currentShowId).eq('season_number', seasonNumber).eq('episode_number', episodeNumber);
+  if(error){
+    showToast('Erreur, réessaie');
+    console.error(error);
+    return;
+  }
+  if(!watchedEpisodeExtras[key]) watchedEpisodeExtras[key] = { note: null, timesWatched: 1 };
+  watchedEpisodeExtras[key].timesWatched = next;
+  renderSeasonEpisodes(seasonNumber);
+}
+
+// Initialise les extras (note/nombre de fois vu) d'un épisode fraîchement
+// coché SANS écraser ceux d'un épisode déjà coché — utilisé par les
+// marquages en masse ci-dessous (ignoreDuplicates: true côté SQL, un
+// épisode déjà vu garde sa note/son compteur existants).
+function ensureEpisodeExtras(key){
+  if(!watchedEpisodeExtras[key]) watchedEpisodeExtras[key] = { note: null, timesWatched: 1 };
 }
 
 // "on conflict do nothing" via upsert({ignoreDuplicates:true}) : rejoue
@@ -531,7 +623,11 @@ async function markSeasonWatched(seasonNumber, episodeCount){
     console.error(error);
     return;
   }
-  for(let ep = 1; ep <= episodeCount; ep++) watchedEpisodeSet.add(`${seasonNumber}-${ep}`);
+  for(let ep = 1; ep <= episodeCount; ep++){
+    const key = `${seasonNumber}-${ep}`;
+    watchedEpisodeSet.add(key);
+    ensureEpisodeExtras(key);
+  }
   updateSeasonProgressUI(seasonNumber, episodeCount);
   watchedEpisodeCounts[currentShowId] = watchedEpisodeSet.size;
   renderSeasonEpisodes(seasonNumber);
@@ -550,7 +646,10 @@ async function unmarkSeasonWatched(seasonNumber){
     return;
   }
   Array.from(watchedEpisodeSet).forEach(key => {
-    if(key.startsWith(`${seasonNumber}-`)) watchedEpisodeSet.delete(key);
+    if(key.startsWith(`${seasonNumber}-`)){
+      watchedEpisodeSet.delete(key);
+      delete watchedEpisodeExtras[key];
+    }
   });
   const season = currentShowSeasons.find(s => s.season_number === seasonNumber);
   if(season) updateSeasonProgressUI(seasonNumber, season.episode_count);
@@ -583,7 +682,11 @@ async function markAllSeasonsWatched(){
     return;
   }
   currentShowSeasons.forEach(s => {
-    for(let ep = 1; ep <= s.episode_count; ep++) watchedEpisodeSet.add(`${s.season_number}-${ep}`);
+    for(let ep = 1; ep <= s.episode_count; ep++){
+      const key = `${s.season_number}-${ep}`;
+      watchedEpisodeSet.add(key);
+      ensureEpisodeExtras(key);
+    }
     updateSeasonProgressUI(s.season_number, s.episode_count);
     // Rafraîchit aussi les cases à cocher des saisons déjà dépliées.
     if(loadedSeasonEpisodes[s.season_number]) renderSeasonEpisodes(s.season_number);
@@ -605,6 +708,7 @@ async function unmarkAllSeasonsWatched(){
     return;
   }
   watchedEpisodeSet.clear();
+  watchedEpisodeExtras = {};
   currentShowSeasons.forEach(s => {
     updateSeasonProgressUI(s.season_number, s.episode_count);
     if(loadedSeasonEpisodes[s.season_number]) renderSeasonEpisodes(s.season_number);
@@ -646,6 +750,7 @@ async function openShowDetail(showId){
   currentShowSeasons = [];
   loadedSeasonEpisodes = {};
   watchedEpisodeSet = new Set();
+  watchedEpisodeExtras = {};
 
   renderShowDetailHeader(show);
   document.getElementById('seriesSeasonsList').innerHTML = `<div class="tmdb-empty">Chargement…</div>`;
