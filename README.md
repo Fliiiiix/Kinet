@@ -42,6 +42,7 @@ critique-films/
 ├── js/changelog.js                                             → "Nouveautés" : modale auto à la connexion + accessible à tout moment
 ├── js/feedback.js                                               → formulaire de retour utilisateur (catégorie + message)
 ├── js/importExternal.js                                          → import Letterboxd (CSV) — voir la section dédiée plus bas
+├── js/traktConfig.js / js/traktImport.js                          → import Trakt : PRÉPARÉ, pas branché (aucun <script>, aucun bouton) — voir la section dédiée plus bas
 ├── js/share.js                                                    → partage de l'app (QR + lien), accessible sans connexion
 ├── js/pwa.js                                                       → installation en app (bandeau + icône d'entête)
 ├── js/offline.js                                                    → mode hors ligne (lecture seule) + bannière de mise à jour
@@ -1184,10 +1185,21 @@ que par le premier résultat renvoyé par l'API, qui n'est pas forcément le
 bon (cas réel : "The Handmaiden" renvoyait d'abord un making-of avant le
 vrai film, "Mademoiselle"). Voir `tests/tmdb-matching.test.js`.
 
-**Trakt** : chantier suivant. Pas d'export fichier, seulement une API
-OAuth : nécessite une appli Trakt enregistrée par l'utilisateur propriétaire
-du site (client_id propre, gratuit, sur `trakt.tv/oauth/applications`)
-avant de pouvoir coder cette partie.
+**Trakt** : préparé (`js/traktImport.js`, `js/traktConfig.js`,
+`supabase/migrations/035_add_trakt_tokens.sql`) mais **pas branché** — pas
+d'export fichier chez eux, seulement une API OAuth : nécessite une appli
+Trakt enregistrée par l'utilisateur propriétaire du site (client_id propre,
+gratuit, sur `trakt.tv/oauth/applications`), qui n'existe pas encore. Le
+fichier n'est chargé par aucun `<script>` et aucun bouton n'y mène dans
+l'app : zéro effet sur le site tant que ce n'est pas explicitement câblé.
+Contrairement à Letterboxd (titre + année à recouper via
+`bestTmdbCandidate`), Trakt renvoie directement le `tmdb_id` de chaque
+film — pas de risque de mismatch façon "Handmaiden" à ce niveau-là. Point
+resté ouvert (voir le commentaire en tête du fichier) : l'échange du code
+OAuth contre un jeton suppose le flux standard documenté par Trakt (avec
+un `client_secret`, à embarquer côté client comme `TMDB_API_KEY`/la clé
+anon Supabase déjà publiques ici) — à reconfirmer sur leur doc au moment
+de vraiment connecter, jamais testé faute de client_id.
 
 (TV Time envisagé un temps, abandonné : le site n'a pas d'export exploitable
 — sa page est une appli Flutter qui dessine tout sur un `<canvas>`, aucune
