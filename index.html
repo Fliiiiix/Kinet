@@ -33,7 +33,7 @@
      CHAQUE DÉPLOIEMENT touchant HTML + JS/CSS ensemble (donc quasi
      toujours) — un seul numéro pour tous les fichiers, pas la peine de
      suivre lequel a changé. -->
-<link rel="stylesheet" href="css/style.css?v=110">
+<link rel="stylesheet" href="css/style.css?v=111">
 </head>
 <body>
 
@@ -95,6 +95,10 @@
              Halation (violet/or/bronze/teal déjà dans la palette, jamais de
              nouvelle couleur ajoutée pour l'occasion). -->
         <nav class="header-nav">
+          <!-- Recherche globale unifiée (v2.42, retour utilisateur) — un seul
+               point d'entrée, en premier dans la rangée (le plus transversal :
+               films, séries, amis, groupes à la fois), voir js/globalSearch.js. -->
+          <button class="header-nav-btn" id="globalSearchBtn" type="button" title="Rechercher" aria-label="Rechercher"><span class="nav-pip nav-pip-violet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4.3-4.3"></path></svg></span><span>Rechercher</span></button>
           <button class="header-nav-btn" id="watchlistBtn" type="button" title="À voir" aria-label="À voir"><span class="nav-pip nav-pip-violet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3.5h12a.5.5 0 01.5.5v16.2a.5.5 0 01-.77.42L12 16.2l-5.73 4.42a.5.5 0 01-.77-.42V4a.5.5 0 01.5-.5z"></path></svg></span><span>À voir</span></button>
           <button class="header-nav-btn" id="upcomingBtn" type="button" title="Prochainement" aria-label="Prochainement"><span class="nav-pip nav-pip-gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5.5" width="17" height="15" rx="2"></rect><path d="M3.5 10h17"></path><path d="M8 3.5v4"></path><path d="M16 3.5v4"></path></svg></span><span>Bientôt</span></button>
           <button class="header-nav-btn" id="friendsBtn" type="button" title="Amis" aria-label="Amis"><span class="nav-pip nav-pip-teal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9.3" cy="8" r="3.3"></circle><path d="M16 3.8c1.5.7 2.5 2.2 2.5 4S17.5 11.1 16 11.8"></path><path d="M14.5 20.3c0-3-2.3-5-5.2-5s-5.2 2-5.2 5"></path><path d="M19 20c0-2.5-1.7-4.3-4-4.8"></path></svg></span><span>Amis</span></button>
@@ -532,6 +536,22 @@
 </div>
 
 <!-- "Surprends-moi" (retour utilisateur) — voir js/watchlist.js. -->
+<!-- Recherche globale unifiée (v2.42, retour utilisateur) — voir
+     js/globalSearch.js. Ouvrable depuis n'importe où (icône header),
+     cherche dans films/séries suivies/amis/groupes déjà en mémoire ; un
+     résultat cliqué ferme cette recherche puis ouvre sa fiche existante,
+     jamais une deuxième couche de résultats. -->
+<div class="overlay" id="globalSearchOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>Rechercher</h2>
+      <button class="close-x" id="closeGlobalSearch" aria-label="Fermer">✕</button>
+    </div>
+    <input type="text" id="globalSearchInput" class="global-search-input" placeholder="Films, séries, amis, groupes…" autocomplete="off">
+    <div id="globalSearchResults"></div>
+  </div>
+</div>
+
 <div class="overlay" id="surpriseOverlay">
   <div class="modal">
     <div class="modal-head">
@@ -1340,93 +1360,99 @@
 <!-- ?v=N sur chaque js/*.js ci-dessous (voir le commentaire dans <head>) —
      à incrémenter à chaque déploiement, même numéro pour tous les fichiers. -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/supabaseConfig.js?v=110"></script>
+<script src="js/supabaseConfig.js?v=111"></script>
 <!-- Juste après supabaseConfig.js (a besoin de supabaseClient) et avant
      tout le reste : capte les erreurs de chargement des scripts suivants,
      pas seulement celles de l'app une fois démarrée — voir js/logging.js. -->
-<script src="js/logging.js?v=110"></script>
-<script src="js/tmdbConfig.js?v=110"></script>
-<script src="js/data.js?v=110"></script>
-<script src="js/happenings.js?v=110"></script>
+<script src="js/logging.js?v=111"></script>
+<script src="js/tmdbConfig.js?v=111"></script>
+<script src="js/data.js?v=111"></script>
+<script src="js/happenings.js?v=111"></script>
 <!-- Avant app.js et les 6 autres modules qui ouvrent/ferment une modale
      (openOverlay/closeOverlay) — l'ordre exact importe peu au runtime
      (rien n'y est appelé au chargement), gardé en premier des scripts
      "app" pour la lisibilité, comme un utilitaire partagé. -->
-<script src="js/ui.js?v=110"></script>
+<script src="js/ui.js?v=111"></script>
 <!-- Avant app.js/journal.js/watchlist.js, qui appellent saveOfflineCache()/
      loadOfflineCache()/blockIfOffline() (v1.6, mode hors ligne lecture
      seule) — l'ordre exact importe peu au runtime (rien n'y est appelé au
      chargement, seulement des listeners posés pour plus tard), gardé ici
      pour la lisibilité, comme ui.js juste au-dessus. -->
-<script src="js/offline.js?v=110"></script>
-<script src="js/app.js?v=110"></script>
-<script src="js/tmdb.js?v=110"></script>
-<script src="js/stats.js?v=110"></script>
-<script src="js/achievements.js?v=110"></script>
-<script src="js/journal.js?v=110"></script>
+<script src="js/offline.js?v=111"></script>
+<script src="js/app.js?v=111"></script>
+<script src="js/tmdb.js?v=111"></script>
+<script src="js/stats.js?v=111"></script>
+<script src="js/achievements.js?v=111"></script>
+<script src="js/journal.js?v=111"></script>
 <!-- Après app.js (showToast) — appelée par js/profile.js juste après. -->
-<script src="js/pwa.js?v=110"></script>
-<script src="js/profile.js?v=110"></script>
+<script src="js/pwa.js?v=111"></script>
+<script src="js/profile.js?v=111"></script>
 <!-- Après profile.js (closeProfileModal/openProfileModal) et data.js
      (FEEDBACK_CATEGORIES) — même raisonnement que pwa.js juste au-dessus. -->
-<script src="js/feedback.js?v=110"></script>
+<script src="js/feedback.js?v=111"></script>
 <!-- N'a besoin que de ui.js (openOverlay/closeOverlay) et app.js
      (showToast), chargés bien avant — placé ici pour rester groupé avec
      les autres modales accessibles depuis le chrome plutôt que pour une
      vraie dépendance. -->
-<script src="js/share.js?v=110"></script>
+<script src="js/share.js?v=111"></script>
 <!-- Après happenings.js/achievements.js (définitions) et profile.js
      (closeProfileModal) : admin.js s'appuie sur les trois au clic, jamais au
      chargement — l'ordre exact importe peu, gardé groupé ici pour la
      lisibilité. -->
-<script src="js/admin.js?v=110"></script>
-<script src="js/router.js?v=110"></script>
-<script src="js/publicProfile.js?v=110"></script>
-<script src="js/top.js?v=110"></script>
-<script src="js/friends.js?v=110"></script>
+<script src="js/admin.js?v=111"></script>
+<script src="js/router.js?v=111"></script>
+<script src="js/publicProfile.js?v=111"></script>
+<script src="js/top.js?v=111"></script>
+<script src="js/friends.js?v=111"></script>
 <!-- Après friends.js (cacheProfile/friendDisplayName/friendAvatarHtml) et
      journal.js (formatViewingDate), avant groups.js qui l'appelle depuis
      openGroupDetail() — l'ordre exact importe peu au runtime (tout est en
      fonctions globales appelées après chargement complet), gardé groupé
      ici pour la lisibilité. -->
-<script src="js/activity.js?v=110"></script>
-<script src="js/watchlist.js?v=110"></script>
+<script src="js/activity.js?v=111"></script>
+<script src="js/watchlist.js?v=111"></script>
 <!-- Après watchlist.js (loadWatchlist/watchlist, réutilisés pour exclure
      ce qui y est déjà) et app.js (getDisplayNote, chargé plus haut) — voir
      js/suggestions.js. Avant auth.js, qui appelle loadSuggestions() depuis
      showApp(). -->
-<script src="js/suggestions.js?v=110"></script>
+<script src="js/suggestions.js?v=111"></script>
 <!-- Import externe (Letterboxd pour l'instant) — après watchlist.js/app.js/
      tmdb.js/journal.js dont il réutilise films/watchlist/searchTmdb()/
      addViewing(). Voir js/importExternal.js. -->
-<script src="js/importExternal.js?v=110"></script>
+<script src="js/importExternal.js?v=111"></script>
 <!-- Fiche film (v2.1) — voir js/filmDetail.js. Regroupée ici avec
      friends.js/watchlist.js dont elle réutilise les helpers (même
      remarque que suggestions.js juste au-dessus : l'ordre exact n'importe
      pas au runtime, tout est en fonctions appelées après chargement
      complet — router.js, plus haut, appelle déjà openFriends()/
      openWatchlist() en aval de leur propre script de la même façon). -->
-<script src="js/filmDetail.js?v=110"></script>
+<script src="js/filmDetail.js?v=111"></script>
 <!-- Après watchlist.js : js/upcoming.js réutilise le tableau watchlist déjà
      chargé (voir plus bas). -->
-<script src="js/series.js?v=110"></script>
+<script src="js/series.js?v=111"></script>
 <!-- Après watchlist.js ET series.js — a besoin des deux tableaux chargés
      (loadWatchlist()/loadTrackedShows()), voir js/upcoming.js. -->
-<script src="js/upcoming.js?v=110"></script>
-<script src="js/groups.js?v=110"></script>
-<script src="js/proposals.js?v=110"></script>
+<script src="js/upcoming.js?v=111"></script>
+<script src="js/groups.js?v=111"></script>
+<script src="js/proposals.js?v=111"></script>
 <!-- Après groups.js (renderInviteBox appelée depuis renderGroupDetail) et
      proposals.js (chosenProposal) — voir js/invites.js. -->
-<script src="js/invites.js?v=110"></script>
+<script src="js/invites.js?v=111"></script>
 <!-- Après activity.js (rowToActivityEvent/renderActivityRowHtml) et
      friends.js (friendProfiles/cacheProfile) qu'elle réutilise pour le
      digest, avant auth.js qui appelle refreshActivityBadge()/
      maybeShowDigest() depuis showApp(). -->
-<script src="js/activityState.js?v=110"></script>
+<script src="js/activityState.js?v=111"></script>
 <!-- Après activityState.js (loadActivityState/activityState réutilisés
      pour son propre badge "vu") et avant auth.js qui appelle
      initChangelog() depuis showApp(). -->
-<script src="js/changelog.js?v=110"></script>
-<script src="js/auth.js?v=110"></script>
+<script src="js/changelog.js?v=111"></script>
+<!-- Recherche globale unifiée (v2.42) — après series.js/friends.js/
+     groups.js dont elle réutilise les tableaux déjà chargés et les
+     fonctions d'ouverture (openFriendProfile/goToSeriesDetail/goToGroup),
+     et après app.js/data.js pour getSearchTerms()/normalizeSearch()/
+     FILM_PLACEHOLDER_SVG. Voir js/globalSearch.js. -->
+<script src="js/globalSearch.js?v=111"></script>
+<script src="js/auth.js?v=111"></script>
 </body>
 </html>

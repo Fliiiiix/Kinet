@@ -2644,6 +2644,26 @@ input[type="range"]::-moz-range-thumb{
 }
 .wl-quick-form .btn{padding:6px 10px; font-size:11px;}
 
+/* Recherche globale unifiée (v2.42, retour utilisateur) — voir
+   js/globalSearch.js. Résultats en .wl-row réutilisées telles quelles
+   (déjà le gabarit "affiche + titre + sous-texte" partout ailleurs). */
+.global-search-input{width:100%; margin-bottom:16px;}
+.global-search-group + .global-search-group{margin-top:18px;}
+.global-search-group-title{
+  font-family:'Space Mono', monospace;
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:.05em;
+  color:var(--text-muted);
+  margin-bottom:8px;
+}
+.global-search-row{cursor:pointer; transition:border-color .15s, transform .15s;}
+.global-search-row:hover{border-color:var(--violet-dim); transform:translateY(-1px);}
+/* .film-poster-placeholder centre déjà son contenu (voir plus haut) —
+   juste la taille pour les emoji bruts (👤/👥, amis/groupes) ci-dessous,
+   qui n'ont pas la règle svg{width:42%} des icônes film/série. */
+.global-search-row .film-poster-placeholder{font-size:18px;}
+
 /* Propositions de groupe : votes + discussion */
 .proposal-row .wl-actions{margin-left:0;}
 .vote-controls-inline{
