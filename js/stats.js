@@ -22,13 +22,50 @@ function computeStats(list = films){
   }));
 
   const monthMap = {};
+  // Statistiques enrichies (retour utilisateur) : évolution de la note
+  // moyenne et genre dominant, mois par mois — mêmes clés "AAAA-MM" que
+  // `activity` ci-dessous, calculées dans la même boucle plutôt qu'une
+  // deuxième passe sur `list`.
+  const monthNoteMap = {}; // "AAAA-MM" -> { sum, count }
+  const monthGenreMap = {}; // "AAAA-MM" -> { genreId: count }
   list.forEach(f => {
     const d = new Date(f.added);
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
     monthMap[key] = (monthMap[key] || 0) + 1;
+
+    const note = getDisplayNote(f);
+    if(note !== null){
+      if(!monthNoteMap[key]) monthNoteMap[key] = { sum: 0, count: 0 };
+      monthNoteMap[key].sum += note;
+      monthNoteMap[key].count++;
+    }
+    (f.genreIds || []).forEach(gid => {
+      if(!monthGenreMap[key]) monthGenreMap[key] = {};
+      monthGenreMap[key][gid] = (monthGenreMap[key][gid] || 0) + 1;
+    });
   });
   const months = Object.keys(monthMap).sort();
   const activity = months.map(m => ({ month: m, count: monthMap[m] }));
+
+  const noteEvolution = Object.keys(monthNoteMap).sort().map(m => ({
+    month: m,
+    avg: monthNoteMap[m].sum / monthNoteMap[m].count
+  }));
+
+  // Genre "dominant" = le plus fréquent CE mois-là (pas le plus fréquent au
+  // global) : deux films de comédie en janvier suffisent à en faire le
+  // genre du mois si rien d'autre n'a été noté plus d'une fois ce mois-ci.
+  // En cas d'égalité, garde le premier rencontré (ordre de GENRE_MAP,
+  // js/data.js) — arbitraire mais stable, pas la peine d'un critère de
+  // départage plus élaboré pour une simple curiosité mensuelle.
+  const genreByMonth = Object.keys(monthGenreMap).sort().map(m => {
+    const counts = monthGenreMap[m];
+    let topId = null, topCount = 0;
+    Object.keys(counts).forEach(gid => {
+      if(counts[gid] > topCount){ topCount = counts[gid]; topId = parseInt(gid, 10); }
+    });
+    return { month: m, genreId: topId, count: topCount };
+  });
 
   let best = null, worst = null;
   rated.forEach(f => {
@@ -37,7 +74,7 @@ function computeStats(list = films){
     if(!worst || n < getDisplayNote(worst)) worst = f;
   });
 
-  return { total: list.length, avg, favCount, manualCount, gridCount, distribution, activity, best, worst };
+  return { total: list.length, avg, favCount, manualCount, gridCount, distribution, activity, noteEvolution, genreByMonth, best, worst };
 }
 
 function monthLabel(key){
@@ -67,6 +104,50 @@ function renderBarChart(items, opts = {}){
         </div>
       `;
       }).join('')}
+    </div>
+  `;
+}
+
+// Évolution de la note moyenne, mois par mois (retour utilisateur) — un
+// SVG à la main plutôt qu'une lib de graphiques (aucune dépendance dans ce
+// projet, même règle que le reste). viewBox en unités arbitraires (0-100 /
+// 0-40), preserveAspectRatio="none" pour occuper tout le conteneur (la
+// hauteur/largeur réelles sont fixées en CSS, .line-chart-svg) —
+// vector-effect="non-scaling-stroke" pour que le trait reste net quel que
+// soit l'étirement. items: [{label, value}].
+function renderLineChart(items){
+  const width = 100, height = 40;
+  const values = items.map(i => i.value);
+  const min = Math.min(...values), max = Math.max(...values);
+  const span = (max - min) || 1; // évite une division par 0 si une seule valeur/valeurs identiques
+  const stepX = items.length > 1 ? width / (items.length - 1) : 0;
+  const points = items.map((it, idx) => {
+    const x = idx * stepX;
+    const y = height - ((it.value - min) / span) * height;
+    return { x: x.toFixed(1), y: y.toFixed(1) };
+  });
+  return `
+    <div class="line-chart">
+      <svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" class="line-chart-svg">
+        <polyline points="${points.map(p => `${p.x},${p.y}`).join(' ')}" fill="none" stroke="var(--gold)" stroke-width="1.5" vector-effect="non-scaling-stroke"/>
+        ${points.map((p, idx) => `<circle cx="${p.x}" cy="${p.y}" r="1.6" fill="var(--gold)"><title>${escapeHtml(items[idx].label)} : ${items[idx].value.toFixed(2)}</title></circle>`).join('')}
+      </svg>
+      <div class="line-chart-labels">${items.map(i => `<span>${escapeHtml(i.label)}</span>`).join('')}</div>
+    </div>
+  `;
+}
+
+// Genre dominant par mois (retour utilisateur) — liste plutôt qu'un
+// troisième type de graphique : plus direct à lire pour une info qui est
+// déjà elle-même un résumé ("comédie" plutôt qu'un nombre). Plus récent
+// d'abord, repliée au-delà de quelques mois (renderCollapsible(), js/ui.js
+// — même pattern que le fil d'activité).
+function genreMonthRowHtml(g){
+  return `
+    <div class="genre-month-row">
+      <span class="genre-month-label">${monthLabel(g.month)}</span>
+      <span class="genre-month-genre">${escapeHtml(GENRE_MAP[g.genreId] || 'Genre inconnu')}</span>
+      <span class="genre-month-count">${g.count} film${g.count > 1 ? 's' : ''}</span>
     </div>
   `;
 }
@@ -241,6 +322,18 @@ function renderStatsInto(content, list = films){
       ${renderBarChart(activityItems)}
     </div>` : ''}
 
+    ${s.noteEvolution.length > 1 ? `
+    <div class="stats-section reveal">
+      <div class="stats-section-title">Évolution de la note moyenne</div>
+      ${renderLineChart(s.noteEvolution.map(n => ({ label: monthLabel(n.month), value: n.avg })))}
+    </div>` : ''}
+
+    ${s.genreByMonth.length > 0 ? `
+    <div class="stats-section reveal">
+      <div class="stats-section-title">Genre dominant par mois</div>
+      <div id="genreByMonthList"></div>
+    </div>` : ''}
+
     <div class="stats-section stats-extremes reveal">
       ${s.best ? `
       <div class="stats-extreme stats-extreme-best">
@@ -268,6 +361,12 @@ function renderStatsInto(content, list = films){
   `;
 
   wireStatsDistribution(content, list, s.distribution);
+
+  const genreByMonthEl = content.querySelector('#genreByMonthList');
+  if(genreByMonthEl){
+    // Plus récent d'abord (s.genreByMonth est trié chronologique croissant).
+    renderCollapsible(genreByMonthEl, s.genreByMonth.slice().reverse(), genreMonthRowHtml, { previewCount: 6 });
+  }
 }
 
 function renderStats(){

@@ -2138,6 +2138,44 @@ input[type="range"]::-moz-range-thumb{
 .bar-col-clickable:focus-visible{outline:2px solid var(--violet-dim); outline-offset:2px; border-radius:3px;}
 .bar-col-active .bar-fill{background:var(--violet);}
 .bar-col-active .bar-label{color:var(--violet-dim); font-weight:700;}
+
+/* Évolution de la note moyenne (retour utilisateur) — SVG à la main, voir
+   renderLineChart(), js/stats.js. */
+.line-chart-svg{width:100%; height:120px; display:block; margin-top:8px;}
+.line-chart-labels{
+  display:flex;
+  justify-content:space-between;
+  gap:4px;
+  margin-top:6px;
+  font-family:'Space Mono', monospace;
+  font-size:9.5px;
+  color:var(--text-muted);
+  overflow-x:auto;
+}
+.line-chart-labels span{white-space:nowrap;}
+
+/* Genre dominant par mois (retour utilisateur). */
+.genre-month-row{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:8px 0;
+  border-bottom:1px solid var(--line);
+}
+.genre-month-row:last-child{border-bottom:none;}
+.genre-month-label{
+  font-family:'Space Mono', monospace;
+  font-size:11px;
+  color:var(--text-muted);
+  width:56px;
+  flex:none;
+}
+.genre-month-genre{flex:1; font-weight:600; color:var(--gold);}
+.genre-month-count{
+  font-family:'Space Mono', monospace;
+  font-size:11.5px;
+  color:var(--text-muted);
+}
 .stats-drilldown{
   margin-top:16px;
   padding-top:14px;
