@@ -481,13 +481,24 @@ async function openFriendProfile(userId){
 
   content.innerHTML = '';
   if(compat){
+    // compat.compatibility peut être SQL null (donc JS null) même avec des
+    // films en commun (common_count > 0) : ça arrive si, pour chacun de ces
+    // films, l'un des deux n'a en réalité aucune note calculable (ex. un
+    // film ajouté au catalogue mais jamais vraiment noté — voir le fix
+    // équivalent sur Top films, migrations/033). Sans ce garde-fou,
+    // `${compat.compatibility}%` affichait littéralement "null%" — trouvé
+    // en testant la nouvelle section "Films en commun" juste en dessous.
     const compatEl = document.createElement('div');
     compatEl.className = 'ach-summary reveal';
-    compatEl.innerHTML = `
-      <div class="ach-summary-count">${compat.compatibility}%</div>
-      <div class="ach-summary-label">Compatibilité ciné · ${compat.common_count} film${compat.common_count > 1 ? 's' : ''} en commun</div>
-      <div class="ach-summary-bar"><div class="ach-summary-fill" style="width:${Math.max(0, Math.min(100, compat.compatibility))}%"></div></div>
-    `;
+    compatEl.innerHTML = compat.compatibility != null
+      ? `
+        <div class="ach-summary-count">${compat.compatibility}%</div>
+        <div class="ach-summary-label">Compatibilité ciné · ${compat.common_count} film${compat.common_count > 1 ? 's' : ''} en commun</div>
+        <div class="ach-summary-bar"><div class="ach-summary-fill" style="width:${Math.max(0, Math.min(100, compat.compatibility))}%"></div></div>
+      `
+      : `
+        <div class="ach-summary-label">${compat.common_count} film${compat.common_count > 1 ? 's' : ''} en commun, pas encore assez noté${compat.common_count > 1 ? 's' : ''} des deux côtés pour calculer une compatibilité</div>
+      `;
     content.appendChild(compatEl);
   }
 
