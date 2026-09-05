@@ -112,4 +112,50 @@ test('ensureEpisodeExtras() : n\'écrase jamais les extras d\'un épisode déjà
   assert.deepStrictEqual(JSON.parse(JSON.stringify(extras['2-5'])), { note: null, timesWatched: 1 });
 });
 
+// --- Régression : migration 036 pas encore appliquée ---
+// Bug réel constaté en vérifiant ce déploiement en direct : avant que la
+// migration 036 (colonnes note/times_watched) ne soit exécutée sur la
+// vraie base, le SELECT qui les demande échoue (colonnes inexistantes) et
+// loadWatchedEpisodes() vidait purement et simplement watchedEpisodeSet --
+// TOUS les épisodes s'affichaient comme non-vus, y compris ceux déjà
+// cochés depuis longtemps. loadWatchedEpisodes() doit se rabattre sur un
+// SELECT sans ces deux colonnes plutôt que de casser le statut vu/pas-vu,
+// qui existait bien avant elles.
+function buildContextWithoutMigration(){
+  function makeSelectQuery(table){
+    const chain = {
+      select(cols){ chain._cols = cols; return chain; },
+      eq(){ return chain; },
+      then(resolve, reject){
+        // Seul le SELECT qui demande note/times_watched échoue : simule une
+        // base où la migration 036 n'a pas encore tourné.
+        const result = chain._cols.includes('note')
+          ? { data: null, error: { message: 'column tv_episodes_watched.note does not exist' } }
+          : { data: [{ season_number: 1, episode_number: 1 }, { season_number: 1, episode_number: 2 }], error: null };
+        return Promise.resolve(result).then(resolve, reject);
+      },
+    };
+    return chain;
+  }
+  const ctx = createContext({
+    document: stubDocument(),
+    goToSeries(){},
+    blockIfOffline(){ return false; },
+    showToast(){},
+    escapeHtml(s){ return s; },
+    supabaseClient: { from: (table) => makeSelectQuery(table) },
+  });
+  loadFiles(ctx, ['js/series.js']);
+  return ctx;
+}
+
+test('loadWatchedEpisodes() : se rabat sur season_number/episode_number si note/times_watched n\'existent pas encore (migration non appliquée)', async () => {
+  const ctx = buildContextWithoutMigration();
+  await ctx.loadWatchedEpisodes(23);
+  const watchedSet = getState(ctx, 'watchedEpisodeSet');
+  assert.ok(watchedSet.has('1-1'), 'un épisode déjà vu en base doit rester marqué vu malgré l\'échec du SELECT enrichi');
+  assert.ok(watchedSet.has('1-2'));
+  assert.strictEqual(watchedSet.size, 2);
+});
+
 module.exports = run('episode-notes.test.js');

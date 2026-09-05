@@ -381,15 +381,28 @@ async function refreshShowMeta(show){
 }
 
 async function loadWatchedEpisodes(showId){
-  const { data, error } = await supabaseClient
+  let { data, error } = await supabaseClient
     .from('tv_episodes_watched')
     .select('season_number, episode_number, note, times_watched')
     .eq('tv_show_id', showId);
   if(error){
-    console.error(error);
-    watchedEpisodeSet = new Set();
-    watchedEpisodeExtras = {};
-    return;
+    // Repli : la migration 036 (colonnes note/times_watched) n'a peut-être
+    // pas encore été exécutée sur cette base -- ne jamais casser le statut
+    // vu/pas-vu pour ça (le cœur de la fonctionnalité, présent bien avant
+    // ces deux colonnes optionnelles). Sans ce repli, une base pas encore
+    // migrée affiche TOUS les épisodes comme non-vus, y compris ceux déjà
+    // cochés.
+    const fallback = await supabaseClient
+      .from('tv_episodes_watched')
+      .select('season_number, episode_number')
+      .eq('tv_show_id', showId);
+    if(fallback.error){
+      console.error(fallback.error);
+      watchedEpisodeSet = new Set();
+      watchedEpisodeExtras = {};
+      return;
+    }
+    data = fallback.data;
   }
   watchedEpisodeSet = new Set((data || []).map(r => `${r.season_number}-${r.episode_number}`));
   watchedEpisodeExtras = {};
