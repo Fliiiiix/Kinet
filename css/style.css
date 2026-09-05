@@ -2578,6 +2578,18 @@ input[type="range"]::-moz-range-thumb{
 .wl-actions{display:flex; gap:6px; flex:none;}
 .wl-actions .btn{padding:8px 12px; font-size:11px;}
 
+/* Note rapide depuis la watchlist (retour utilisateur : convertir un item
+   en film noté avec une seule note globale, sans ouvrir la grille complète)
+   — formulaire compact, replié par défaut, révélé sous le titre au clic sur
+   "⚡ Note rapide" (voir js/watchlist.js). */
+.wl-quick-form{display:flex; align-items:center; gap:6px; margin-top:8px; flex-wrap:wrap;}
+.wl-quick-note-input{
+  width:68px; padding:6px 8px; border-radius:6px;
+  border:1px solid var(--line); background:var(--surface-2); color:var(--text);
+  font-family:'Space Mono', monospace; font-size:12px; text-align:center;
+}
+.wl-quick-form .btn{padding:6px 10px; font-size:11px;}
+
 /* Propositions de groupe : votes + discussion */
 .proposal-row .wl-actions{margin-left:0;}
 .vote-controls-inline{

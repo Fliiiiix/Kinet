@@ -71,12 +71,32 @@ function renderWatchlist(){
       <div class="wl-main">
         <div class="wl-title">${escapeHtml(item.title)}${item.releaseYear ? ` <span class="wl-year">(${item.releaseYear})</span>` : ''}</div>
         ${item.note ? `<div class="wl-note">${escapeHtml(item.note)}</div>` : ''}
+        <div class="wl-quick-form" data-quick-form="${item.id}" style="display:none;">
+          <input type="number" class="wl-quick-note-input" min="0" max="5" step="0.5" placeholder="Note /5" data-id="${item.id}" aria-label="Note rapide pour ${escapeHtml(item.title)}">
+          <button class="btn" type="button" data-action="quick-confirm" data-id="${item.id}">OK</button>
+          <button class="btn secondary" type="button" data-action="quick-cancel" data-id="${item.id}">Annuler</button>
+        </div>
       </div>
       <div class="wl-actions">
+        <button class="btn secondary" data-action="quick" data-id="${item.id}" title="Note rapide : noter d'un coup, sans la grille complète">⚡ Rapide</button>
         <button class="btn secondary" data-action="rate" data-id="${item.id}">✔ Noter</button>
         <button class="btn danger" data-action="remove" data-id="${item.id}">Retirer</button>
       </div>
     `;
+    const quickForm = row.querySelector('[data-quick-form]');
+    const quickInput = row.querySelector('.wl-quick-note-input');
+    row.querySelector('[data-action="quick"]').addEventListener('click', () => {
+      quickForm.style.display = quickForm.style.display === 'none' ? '' : 'none';
+      if(quickForm.style.display !== 'none') quickInput.focus();
+    });
+    row.querySelector('[data-action="quick-cancel"]').addEventListener('click', () => {
+      quickForm.style.display = 'none';
+      quickInput.value = '';
+    });
+    row.querySelector('[data-action="quick-confirm"]').addEventListener('click', () => handleQuickRate(item, quickInput.value));
+    quickInput.addEventListener('keydown', (e) => {
+      if(e.key === 'Enter'){ e.preventDefault(); handleQuickRate(item, quickInput.value); }
+    });
     row.querySelector('[data-action="rate"]').addEventListener('click', () => startRatingFromWatchlist(item));
     row.querySelector('[data-action="remove"]').addEventListener('click', () => handleRemoveFromWatchlist(item.id));
     list.appendChild(row);
@@ -142,6 +162,50 @@ async function handleRemoveFromWatchlist(id){
   }
   watchlist = watchlist.filter(w => w.id !== id);
   renderWatchlist();
+}
+
+// --- Note rapide depuis la watchlist (retour utilisateur : convertir un
+// item en film noté avec une seule note globale, sans ouvrir la grille
+// complète à 7 critères) --- Crée directement le film en note manuelle,
+// symétrique de la branche création de handleSave() (js/app.js) mais sans
+// passer par le formulaire/la modale : un seul champ, un seul clic.
+async function handleQuickRate(item, rawValue){
+  if(blockIfOffline()) return; // js/offline.js — lecture seule hors ligne
+  const value = rawValue.trim();
+  if(value === ''){
+    showToast('Indique une note avant de valider');
+    return;
+  }
+  const manualNote = Math.max(0, Math.min(5, parseFloat(value)));
+  if(Number.isNaN(manualNote)){
+    showToast('Note invalide');
+    return;
+  }
+  const tmdbFields = item.tmdbId
+    ? { tmdb_id: item.tmdbId, poster_url: item.posterUrl, overview: item.overview, release_year: item.releaseYear, original_title: item.originalTitle, genre_ids: [] }
+    : { tmdb_id: null, poster_url: null, overview: null, release_year: null, original_title: null, genre_ids: [] };
+
+  const { data, error } = await supabaseClient
+    .from('films')
+    .insert({ title: item.title, crit: {}, fav: false, added: Date.now(), manual_note: manualNote, review: null, ...tmdbFields })
+    .select()
+    .single();
+  if(error){
+    showToast('Erreur de sauvegarde, réessaie');
+    console.error(error);
+    return;
+  }
+  films.push(rowToFilm(data));
+  await addViewing(data.id, data.added);
+
+  const { error: wlError } = await supabaseClient.from('watchlist').delete().eq('id', item.id);
+  if(wlError) console.error(wlError); // le film est déjà enregistré, on ne bloque pas là-dessus
+  watchlist = watchlist.filter(w => w.id !== item.id);
+
+  renderWatchlist();
+  buildGenreFilterOptions();
+  render();
+  showToast('Noté !');
 }
 
 // Bascule vers le formulaire principal (grille/note manuelle) prérempli avec
