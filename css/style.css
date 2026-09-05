@@ -3162,8 +3162,13 @@ body[data-view-mode="grid"] #topList .wl-note{
 /* #seriesList retiré de ces deux règles (v2.3) : la tuile série n'a plus de
    .wl-actions du tout (Ouvrir/Retirer), voir renderTrackedShows() dans
    js/series.js — la ligne entière ouvre la série au clic, comme .film-row. */
-body[data-view-mode="grid"] #wlList .wl-actions{margin-top:2px;}
-body[data-view-mode="grid"] #wlList .wl-actions .btn{flex:1;}
+/* flex-wrap (v2.40) : la watchlist a maintenant 3 boutons par ligne
+   (Rapide/Noter/Retirer) -- sur 2 seuls (séries/top), les deux tiennent
+   toujours sur une ligne (flex-basis 45% < 100%), donc ce wrap ne les
+   affecte pas ; sur 3, "Retirer" seul passe proprement à la ligne
+   suivante plutôt que de déborder de la carte. */
+body[data-view-mode="grid"] #wlList .wl-actions{margin-top:2px; flex-wrap:wrap;}
+body[data-view-mode="grid"] #wlList .wl-actions .btn{flex:1 1 45%; white-space:nowrap;}
 /* Rang du top 3 (js/top.js, .top-row) : en carte il devient un badge posé
    sur le coin de l'affiche plutôt qu'une ligne à part qui casserait la
    carte — voir le mode liste plus bas pour son traitement en ligne. */
