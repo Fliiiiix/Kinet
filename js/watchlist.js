@@ -164,6 +164,55 @@ function startRatingFromWatchlist(item){
   convertingFromWatchlistId = item.id;
 }
 
+// --- "Surprends-moi" (retour utilisateur) --- Tire un film au hasard dans
+// la watchlist pour aider à décider quoi regarder ce soir plutôt que de
+// parcourir toute la liste — correspond à l'usage central de l'app (noter
+// vite, juste après avoir vu quelque chose), version "avant" plutôt
+// qu'"après" du visionnage.
+let currentSurpriseItem = null;
+
+function renderSurpriseContent(item){
+  document.getElementById('surpriseContent').innerHTML = `
+    ${item.posterUrl
+      ? `<img class="film-poster surprise-poster" src="${item.posterUrl}" alt="">`
+      : ''}
+    <div class="surprise-info">
+      <div class="wl-title">${escapeHtml(item.title)}${item.releaseYear ? ` <span class="wl-year">(${item.releaseYear})</span>` : ''}</div>
+      ${item.note ? `<div class="wl-note">${escapeHtml(item.note)}</div>` : ''}
+    </div>
+  `;
+}
+
+function openSurprise(){
+  if(watchlist.length === 0){
+    showToast('Ta watchlist est vide — ajoute un film d\'abord');
+    return;
+  }
+  currentSurpriseItem = watchlist[Math.floor(Math.random() * watchlist.length)];
+  renderSurpriseContent(currentSurpriseItem);
+  openOverlay('surpriseOverlay');
+}
+
+document.getElementById('wlSurpriseBtn').addEventListener('click', openSurprise);
+document.getElementById('closeSurprise').addEventListener('click', () => closeOverlay('surpriseOverlay'));
+document.getElementById('surpriseOverlay').addEventListener('click', (e) => {
+  if(e.target.id === 'surpriseOverlay') closeOverlay('surpriseOverlay');
+});
+document.getElementById('surpriseRerollBtn').addEventListener('click', () => {
+  // Évite de retomber sur EXACTEMENT le même film que le tirage précédent
+  // tant qu'il y en a d'autres — sinon "Encore un" semblerait ne rien faire
+  // la moitié du temps sur une petite watchlist.
+  let next = currentSurpriseItem;
+  if(watchlist.length > 1){
+    do{ next = watchlist[Math.floor(Math.random() * watchlist.length)]; }while(next.id === currentSurpriseItem.id);
+  }
+  currentSurpriseItem = next;
+  renderSurpriseContent(currentSurpriseItem);
+});
+document.getElementById('surpriseRateBtn').addEventListener('click', () => {
+  closeOverlay('surpriseOverlay', () => startRatingFromWatchlist(currentSurpriseItem));
+});
+
 // --- Recherche TMDB pour le formulaire d'ajout rapide ---
 // Le champ "Titre du film" fait aussi office de recherche (debounce pendant
 // la frappe), comme dans le formulaire principal — voir js/tmdb.js.

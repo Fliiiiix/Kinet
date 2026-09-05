@@ -2421,6 +2421,17 @@ input[type="range"]::-moz-range-thumb{
 }
 .wl-add-form .field:last-of-type{margin-bottom:14px;}
 
+/* "Surprends-moi" (retour utilisateur) — voir js/watchlist.js. */
+.surprise-poster{
+  width:160px;
+  margin:0 auto 16px;
+  display:block;
+  border-radius:8px;
+}
+.surprise-info{text-align:center;}
+.surprise-info .wl-title{font-size:18px;}
+.surprise-info .wl-note{margin-top:8px; max-width:44ch; margin-left:auto; margin-right:auto;}
+
 /* ============================================================
    .wl-row — ligne compacte générique, réutilisée par de nombreuses
    listes très différentes (amis, membres de groupe, propositions, votes,

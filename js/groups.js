@@ -273,7 +273,7 @@ function renderGroupTopFilms(films){
   wrap.innerHTML = films.length === 0
     ? `<div class="tmdb-empty">Pas encore de film noté par au moins 2 membres du groupe.</div>`
     : films.map(f => `
-        <div class="wl-row">
+        <div class="wl-row" data-tmdb-id="${f.tmdb_id}">
           ${f.poster_url
             ? `<img class="film-poster" src="${f.poster_url}" alt="" loading="lazy">`
             : `<div class="film-poster film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
@@ -284,6 +284,14 @@ function renderGroupTopFilms(films){
           <div class="counter ${noteColorClass(Number(f.avg_note))}">${Number(f.avg_note).toFixed(1)}</div>
         </div>
       `).join('');
+  // Fiche film (retour utilisateur, audit) : ces lignes ne menaient nulle
+  // part alors que Top films/le catalogue d'un ami le font — vers la fiche
+  // communautaire (js/filmDetail.js), pas openFilmReviewDetail() : on n'a
+  // ici qu'un agrégat (avg_note/rating_count), jamais le détail par
+  // critère d'un film précis.
+  wrap.querySelectorAll('[data-tmdb-id]').forEach(row => {
+    makeRowClickable(row, () => goToFilmDetail(parseInt(row.dataset.tmdbId, 10)));
+  });
 }
 
 document.getElementById('groupDetailBack').addEventListener('click', goToGroups);

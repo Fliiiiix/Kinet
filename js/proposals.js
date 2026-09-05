@@ -209,6 +209,19 @@ async function handleProposeFilm(groupId){
     showToast('Ajoute un titre avant de proposer');
     return;
   }
+  // Doublon (retour utilisateur, audit) : seulement via tmdb_id, jamais un
+  // rapprochement de titre flou — même principe que le dédoublonnage de
+  // l'import Letterboxd/Trakt (js/importExternal.js, js/traktImport.js).
+  // Une proposition sans fiche TMDB (titre libre) n'est jamais comparée,
+  // faute d'identifiant fiable.
+  if(proposalTmdbSelected){
+    const existing = proposals.find(p => p.groupId === groupId && p.tmdbId === proposalTmdbSelected.tmdb_id);
+    if(existing){
+      const who = existing.proposedBy === currentUser.id ? 'toi' : friendDisplayName(existing.proposedBy);
+      showToast(`Déjà proposé par ${who} — vote plutôt pour son film`);
+      return;
+    }
+  }
   const tmdbFields = proposalTmdbSelected
     ? {
         tmdb_id: proposalTmdbSelected.tmdb_id, poster_url: proposalTmdbSelected.poster_url,

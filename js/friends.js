@@ -380,7 +380,7 @@ function renderFriendRecommendations(films){
   wrap.innerHTML = films.length === 0
     ? `<div class="tmdb-empty">Rien à recommander pour l'instant. Note plus de films en commun avec tes amis.</div>`
     : films.map(f => `
-        <div class="wl-row">
+        <div class="wl-row" data-tmdb-id="${f.tmdb_id}">
           ${f.poster_url
             ? `<img class="film-poster" src="${f.poster_url}" alt="" loading="lazy">`
             : `<div class="film-poster film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
@@ -391,6 +391,11 @@ function renderFriendRecommendations(films){
           <div class="counter ${noteColorClass(Number(f.avg_note))}">${Number(f.avg_note).toFixed(1)}</div>
         </div>
       `).join('');
+  // Fiche film (retour utilisateur, audit) — voir le même commentaire dans
+  // renderGroupTopFilms(), js/groups.js.
+  wrap.querySelectorAll('[data-tmdb-id]').forEach(row => {
+    makeRowClickable(row, () => goToFilmDetail(parseInt(row.dataset.tmdbId, 10)));
+  });
 }
 
 // --- Compatibilité ciné (v1.6, phase 4) — voir openFriendProfile() plus
