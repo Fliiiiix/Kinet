@@ -48,6 +48,18 @@ const HAPPENINGS = [
     trigger: 'click',
     icon: '📦',
     run: runSevenHappening
+  },
+  {
+    tmdbId: 244786, // Whiplash (2014)
+    trigger: 'click',
+    icon: '🥁',
+    run: runWhiplashHappening
+  },
+  {
+    tmdbId: 4977, // Paprika (2006)
+    trigger: 'click',
+    icon: '🎪',
+    run: runPaprikaHappening
   }
 ];
 
@@ -520,6 +532,59 @@ function runSevenHappening(){
       overlay.classList.add('seven-shake');
       setTimeout(() => overlay.classList.remove('seven-shake'), 400);
     }
+  });
+}
+
+// --- Whiplash : le métronome de Fletcher — jamais assez vite, jamais assez
+// bien. Un seul bouton, une seule réponse possible : peu importe où on
+// clique dessus, le verdict est déjà écrit (l'obsession du tempo PARFAIT
+// est tout le sujet du film, pas la peine de faire semblant de mesurer un
+// vrai rythme au clic — ce serait de toute façon peu fiable au navigateur).
+function runWhiplashHappening(){
+  const overlay = document.createElement('div');
+  overlay.className = 'overlay open';
+  overlay.innerHTML = `
+    <div class="modal happening-modal">
+      <div class="modal-head">
+        <h2>Pas tout à fait mon tempo.</h2>
+        <button class="close-x" data-close aria-label="Fermer">✕</button>
+      </div>
+      <div class="whiplash-metronome">
+        <div class="whiplash-metronome-arm${prefersReducedMotion() ? ' static' : ''}"></div>
+      </div>
+      <p class="happening-caption">Encore une fois. Depuis le début.</p>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', (e) => {
+    if(e.target === overlay || e.target.closest('[data-close]')) overlay.remove();
+  });
+}
+
+// --- Paprika : la parade --- l'image la plus reconnaissable du film,
+// façon couloir d'Old Boy (une bande d'éléments qui défile en boucle) mais
+// dans l'autre sens et avec un tempo différent, pour ne pas juste réutiliser
+// le même effet visuel sous un autre nom.
+function runPaprikaHappening(){
+  const overlay = document.createElement('div');
+  overlay.className = 'overlay open';
+  overlay.innerHTML = `
+    <div class="modal happening-modal">
+      <div class="modal-head">
+        <h2>La Parade</h2>
+        <button class="close-x" data-close aria-label="Fermer">✕</button>
+      </div>
+      <div class="paprika-parade">
+        <div class="paprika-parade-track${prefersReducedMotion() ? ' static' : ''}">
+          <span>🎺</span><span>🚪</span><span>🎎</span><span>📞</span><span>🐸</span><span>🎏</span><span>🕰️</span><span>🎻</span><span>🚪</span>
+        </div>
+      </div>
+      <p class="happening-caption">Un défilé de rêve traverse la ville, frigos et jouets en fanfare — la police n'y peut rien.</p>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', (e) => {
+    if(e.target === overlay || e.target.closest('[data-close]')) overlay.remove();
   });
 }
 

@@ -2786,6 +2786,52 @@ input[type="range"]::-moz-range-thumb{
   color:var(--text-muted);
 }
 
+/* Whiplash : le métronome de Fletcher, jamais content du tempo. Bras qui
+   bat inlassablement d'un côté à l'autre — la même exception
+   prefers-reduced-motion que le couloir d'Old Boy ci-dessus (animation
+   autonome lancée par le clic, pas un flash répété). */
+.whiplash-metronome{
+  display:flex; align-items:flex-end; justify-content:center;
+  height:120px;
+  margin-top:8px;
+}
+.whiplash-metronome-arm{
+  width:4px; height:90px;
+  background:linear-gradient(to top, var(--gold), var(--bronze));
+  border-radius:2px;
+  transform-origin:bottom center;
+  animation:whiplashBeat 0.55s ease-in-out infinite;
+}
+.whiplash-metronome-arm.static{animation:none; transform:rotate(18deg);}
+@keyframes whiplashBeat{
+  0%, 100%{transform:rotate(-24deg);}
+  50%{transform:rotate(24deg);}
+}
+
+/* Paprika : la parade, l'image la plus reconnaissable du film — même
+   technique que le couloir d'Old Boy (bande en boucle), sens et tempo
+   différents pour ne pas être un simple copié-collé déguisé. */
+.paprika-parade{
+  overflow:hidden;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:var(--surface-2);
+  padding:20px 0;
+  margin-top:8px;
+}
+.paprika-parade-track{
+  display:flex;
+  gap:40px;
+  font-size:30px;
+  width:max-content;
+  animation:paprikaMarch 4.5s linear;
+}
+.paprika-parade-track.static{animation:none; transform:translateX(-260px);}
+@keyframes paprikaMarch{
+  from{transform:translateX(-320px);}
+  to{transform:translateX(60px);}
+}
+
 /* The Whale : reste un peu trop longtemps... */
 .happening-fly{
   position:fixed;
@@ -2880,6 +2926,8 @@ input[type="range"]::-moz-range-thumb{
 
 @media (prefers-reduced-motion:reduce){
   .oldboy-corridor-track{animation:none; transform:translateX(-140px);}
+  .whiplash-metronome-arm{animation:none; transform:rotate(18deg);}
+  .paprika-parade-track{animation:none; transform:translateX(-260px);}
 }
 
 /* ============================================================
