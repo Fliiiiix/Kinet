@@ -47,8 +47,47 @@ const CUMULATIVE_GROUPS = [
     key: 'sociable', icon: '🤝', label: 'Sociable', unit: 'amis',
     metric: s => s.friendCount,
     tiers: [{ name: 'Bronze', threshold: 3 }, { name: 'Argent', threshold: 10 }, { name: 'Or', threshold: 25 }]
+  },
+  {
+    key: 'assidu', icon: '🔥', label: 'Série en cours', unit: 'jours d\'affilée',
+    metric: s => s.currentStreak,
+    tiers: [{ name: 'Bronze', threshold: 3 }, { name: 'Argent', threshold: 7 }, { name: 'Or', threshold: 30 }]
   }
 ];
+
+// Jours consécutifs avec au moins une activité (film noté OU visionnage
+// loggé) jusqu'à aujourd'hui inclus — un jour de battement toléré (compte
+// encore si la dernière activité était HIER, pas aujourd'hui : sinon le
+// palier retomberait à 0 dès le réveil, avant d'avoir eu la chance de noter
+// quoi que ce soit aujourd'hui). Purement dérivé de films/viewings déjà
+// chargés au démarrage (showApp()) — contrairement à Sérievore/Sociable
+// ci-dessus, ne dépend d'aucune donnée chargée seulement sur une autre
+// page, donc pas besoin de précharger quoi que ce soit dans
+// openAchievements()/openAdminModal() pour celui-ci.
+function computeCurrentStreak(){
+  const activeDates = new Set();
+  films.forEach(f => { if(f.added) activeDates.add(new Date(f.added).toDateString()); });
+  if(typeof viewings !== 'undefined'){
+    viewings.forEach(v => { if(v.watchedAt) activeDates.add(new Date(v.watchedAt).toDateString()); });
+  }
+
+  const oneDay = 24 * 60 * 60 * 1000;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const yesterday = new Date(today.getTime() - oneDay);
+
+  let cursor;
+  if(activeDates.has(today.toDateString())) cursor = today;
+  else if(activeDates.has(yesterday.toDateString())) cursor = yesterday;
+  else return 0; // ni hier ni aujourd'hui : le streak est brisé
+
+  let streak = 0;
+  while(activeDates.has(cursor.toDateString())){
+    streak++;
+    cursor = new Date(cursor.getTime() - oneDay);
+  }
+  return streak;
+}
 
 // Succès secrets : invisibles (silhouette "???") tant qu'ils ne sont pas
 // débloqués, pour garder la surprise.
@@ -181,7 +220,8 @@ function computeAchievements(){
       : 0,
     friendCount: (typeof friendships !== 'undefined')
       ? friendships.filter(f => f.status === 'accepted').length
-      : 0
+      : 0,
+    currentStreak: computeCurrentStreak()
   };
 
   const cumulative = getEffectiveCumulativeGroups().map(g => {

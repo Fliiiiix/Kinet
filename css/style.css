@@ -1758,6 +1758,12 @@ input[type="range"]::-moz-range-thumb{
   gap:8px;
   margin-top:10px;
 }
+/* Masqués par défaut (desktop) : Top films/Avis/Nouveautés sont déjà dans
+   l'entête (#topBtn/#feedbackBtn/#changelogBtn) — les doublonner ici ne
+   servait à personne (retour utilisateur, audit). Révélés sous le seuil
+   mobile (voir @media (max-width:600px) plus bas), seul endroit où
+   l'entête a disparu et où ces boutons sont le seul chemin qui reste. */
+.profile-mobile-only{display:none;}
 /* Installation en app (js/pwa.js) — même bloc .profile-activity-section
    que "Mon activité" juste au-dessus, .wl-note réutilisée telle quelle
    pour le texte descriptif/les instructions (pas de nouvelle classe pour
@@ -3265,6 +3271,9 @@ body[data-view-mode="list"] #topList .top-rank{width:26px; font-size:16px;}
      complet) : .user-bar disparaît entièrement ici plutôt que d'être
      réagencée. */
   .user-bar{display:none;}
+  /* .user-bar disparu ci-dessus : Top films/Avis/Nouveautés (entête)
+     n'ont plus aucun accès sur mobile à part ici (modale profil). */
+  .profile-mobile-only{display:inline-block;}
   .mobile-tabbar{
     display:flex;
     position:fixed;
