@@ -49,19 +49,18 @@ function computeRecap(year){
   };
 }
 
-// Ne rejette jamais (contrairement à Image.onerror natif) : une affiche
-// TMDB inaccessible (réseau, hotlink bloqué) ne doit pas faire échouer tout
-// le rendu du bilan, juste sauter cette affiche précise.
-function loadImageForCanvas(url){
-  return new Promise(resolve => {
-    if(!url){ resolve(null); return; }
-    const img = new Image();
-    img.crossOrigin = 'anonymous'; // image.tmdb.org autorise le CORS — nécessaire pour toDataURL() ensuite
-    img.onload = () => resolve(img);
-    img.onerror = () => resolve(null);
-    img.src = url;
-  });
-}
+// Pas d'affiches TMDB dans le canvas — vérifié en direct : image.tmdb.org
+// ne renvoie aucun en-tête CORS (une requête `fetch(url, {mode:'cors'})`
+// échoue tout court, `{mode:'no-cors'}` ne renvoie qu'une réponse opaque).
+// Un <img crossOrigin="anonymous"> pointé dessus échoue donc toujours
+// (onerror), et SANS crossOrigin le dessin réussirait à l'écran mais
+// tainterait le canvas — canvas.toDataURL() lèverait une SecurityError au
+// moment précis de "Télécharger l'image", l'unique raison d'être de cette
+// fonctionnalité. Un placeholder dessiné à la main (jamais d'image
+// distante) est donc le seul choix qui garantit un export qui marche à
+// tous les coups sur un site 100% statique, sans backend pour proxy-fier
+// les images.
+const RECAP_PLACEHOLDER_HUES = ['#8c7cff', '#e7b24c', '#d9aa67', '#6fcf97'];
 
 function drawRoundedRect(ctx, x, y, w, h, r){
   ctx.beginPath();
@@ -73,26 +72,20 @@ function drawRoundedRect(ctx, x, y, w, h, r){
   ctx.closePath();
 }
 
-function drawPosterOrPlaceholder(ctx, img, x, y, w, h, radius, accentColor){
+function drawPosterPlaceholder(ctx, title, x, y, w, h, radius, index){
+  const hue = RECAP_PLACEHOLDER_HUES[index % RECAP_PLACEHOLDER_HUES.length];
   drawRoundedRect(ctx, x, y, w, h, radius);
-  ctx.save();
-  ctx.clip();
-  if(img){
-    // Recouvrement centré (comme object-fit:cover) : l'affiche TMDB n'a pas
-    // forcément le même ratio que la case qui l'accueille.
-    const scale = Math.max(w / img.width, h / img.height);
-    const dw = img.width * scale, dh = img.height * scale;
-    ctx.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
-  }else{
-    ctx.fillStyle = 'rgba(255,255,255,0.06)';
-    ctx.fillRect(x, y, w, h);
-    ctx.fillStyle = accentColor;
-    ctx.font = `${Math.round(h * 0.3)}px sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('🎬', x + w / 2, y + h / 2);
-  }
-  ctx.restore();
+  ctx.fillStyle = 'rgba(255,255,255,0.06)';
+  ctx.fill();
+  drawRoundedRect(ctx, x, y, w, h, radius);
+  ctx.strokeStyle = hue;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.fillStyle = hue;
+  ctx.font = `700 ${Math.round(w * 0.4)}px 'Bricolage Grotesque', sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText((title || '?').trim().charAt(0).toUpperCase(), x + w / 2, y + h / 2);
 }
 
 function cssVar(name){
@@ -188,10 +181,9 @@ async function renderRecapCanvas(recap){
   y += 30;
   const posterW = (W - 140 - (recap.topFilms.length - 1) * 20) / Math.max(1, Math.min(recap.topFilms.length, 5));
   const posterH = posterW * 1.5;
-  const posterImgs = await Promise.all(recap.topFilms.map(f => loadImageForCanvas(f.posterUrl)));
   recap.topFilms.forEach((f, i) => {
     const x = 70 + i * (posterW + 20);
-    drawPosterOrPlaceholder(ctx, posterImgs[i], x, y, posterW, posterH, 14, textMuted);
+    drawPosterPlaceholder(ctx, f.title, x, y, posterW, posterH, 14, i);
     // Badge note, coin bas-droit de l'affiche — même esprit que .film-card
     // note badge en CSS, rejoué ici.
     const note = getDisplayNote(f);
