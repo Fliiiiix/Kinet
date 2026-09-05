@@ -2849,6 +2849,26 @@ input[type="range"]::-moz-range-thumb{
   to{transform:translateX(60px);}
 }
 
+/* Mission : Impossible — combustion du message, une seule fois au clic (pas
+   un flash répété : safe pour la photosensibilité, comme Fight Club
+   ci-dessus). Sautée entièrement en JS pour prefers-reduced-motion (voir
+   runMissionImpossibleHappening()), pas seulement neutralisée en CSS. */
+.mim-burn .modal{animation:mimBurn 0.9s ease-in forwards;}
+@keyframes mimBurn{
+  0%{opacity:1; filter:brightness(1);}
+  40%{filter:brightness(2) sepia(1) saturate(3);}
+  100%{opacity:0; filter:brightness(0.3); transform:scale(0.92);}
+}
+
+/* The Dark Knight — la pièce, un seul tour au clic. */
+.dk-coin{font-size:56px; text-align:center; margin:16px 0;}
+.dk-coin.flipping{animation:dkFlip 0.9s ease-in-out;}
+@keyframes dkFlip{
+  0%{transform:rotateY(0deg) scale(1);}
+  50%{transform:rotateY(900deg) scale(1.3);}
+  100%{transform:rotateY(1800deg) scale(1);}
+}
+
 /* The Whale : reste un peu trop longtemps... */
 .happening-fly{
   position:fixed;

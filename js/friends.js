@@ -490,6 +490,50 @@ async function openFriendProfile(userId){
     `;
     content.appendChild(compatEl);
   }
+
+  // Comparaison détaillée (retour utilisateur) : au-delà du % agrégé
+  // ci-dessus (get_friend_compatibility, jamais de user_id ni de note
+  // individuelle exposée pour un tiers quelconque), le catalogue complet
+  // de CET ami précis est déjà chargé ici même (RLS "Friends can view
+  // shared films") — recouper par tmdb_id avec mon propre `films` ne
+  // demande donc aucune requête ni fonction SQL supplémentaire. Triés par
+  // écart de note décroissant : les désaccords sont ce qu'une comparaison
+  // a de plus intéressant à montrer, pas seulement les points communs.
+  if(friendFilms.length > 0){
+    const myFilmsByTmdbId = new Map(films.filter(f => f.tmdbId).map(f => [f.tmdbId, f]));
+    const commonFilms = friendFilms
+      .filter(f => f.tmdbId && myFilmsByTmdbId.has(f.tmdbId))
+      .map(f => {
+        const mine = myFilmsByTmdbId.get(f.tmdbId);
+        const myNote = getDisplayNote(mine);
+        const theirNote = getDisplayNote(f);
+        const gap = (myNote != null && theirNote != null) ? Math.abs(myNote - theirNote) : -1;
+        return { tmdbId: f.tmdbId, title: f.title, releaseYear: f.releaseYear, posterUrl: f.posterUrl, myNote, theirNote, gap };
+      })
+      .sort((a, b) => b.gap - a.gap);
+
+    if(commonFilms.length > 0){
+      const commonWrap = document.createElement('div');
+      commonWrap.className = 'stats-section reveal';
+      commonWrap.innerHTML = `<div class="stats-section-title">Films en commun (${commonFilms.length})</div><div id="friendCommonList"></div>`;
+      content.appendChild(commonWrap);
+      renderCollapsible(commonWrap.querySelector('#friendCommonList'), commonFilms, (f) => `
+        <div class="wl-row" data-tmdb-id="${f.tmdbId}">
+          ${f.posterUrl
+            ? `<img class="film-poster" src="${f.posterUrl}" alt="" loading="lazy">`
+            : `<div class="film-poster film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
+          <div class="wl-main">
+            <div class="wl-title">${escapeHtml(f.title)}${f.releaseYear ? ` <span class="wl-year">(${f.releaseYear})</span>` : ''}</div>
+            <div class="wl-note">Toi : ${f.myNote != null ? f.myNote.toFixed(1) : '—'} · ${escapeHtml(friendDisplayName(userId))} : ${f.theirNote != null ? f.theirNote.toFixed(1) : '—'}</div>
+          </div>
+        </div>
+      `, { previewCount: 6 });
+      commonWrap.querySelectorAll('[data-tmdb-id]').forEach(row => {
+        makeRowClickable(row, () => goToFilmDetail(parseInt(row.dataset.tmdbId, 10)));
+      });
+    }
+  }
+
   content.appendChild(statsEl);
 
   // Catalogue complet replié par défaut (v2.5, retour utilisateur : les

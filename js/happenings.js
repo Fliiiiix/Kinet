@@ -60,6 +60,18 @@ const HAPPENINGS = [
     trigger: 'click',
     icon: '🎪',
     run: runPaprikaHappening
+  },
+  {
+    tmdbId: 954, // Mission : Impossible (1996)
+    trigger: 'click',
+    icon: '💣',
+    run: runMissionImpossibleHappening
+  },
+  {
+    tmdbId: 155, // The Dark Knight : Le Chevalier noir (2008)
+    trigger: 'click',
+    icon: '🪙',
+    run: runDarkKnightHappening
   }
 ];
 
@@ -585,6 +597,76 @@ function runPaprikaHappening(){
   document.body.appendChild(overlay);
   overlay.addEventListener('click', (e) => {
     if(e.target === overlay || e.target.closest('[data-close]')) overlay.remove();
+  });
+}
+
+// --- Mission : Impossible : le message qui s'autodétruit ---
+function runMissionImpossibleHappening(){
+  const overlay = document.createElement('div');
+  overlay.className = 'overlay open';
+  overlay.innerHTML = `
+    <div class="modal happening-modal">
+      <div class="modal-head">
+        <h2>Votre mission, si vous l'acceptez...</h2>
+        <button class="close-x" data-close aria-label="Fermer">✕</button>
+      </div>
+      <p class="happening-caption" id="mimMessage">Ce message s'autodétruira dans <span id="mimCountdown">5</span> secondes.</p>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', (e) => {
+    if(e.target === overlay || e.target.closest('[data-close]')) overlay.remove();
+  });
+  if(prefersReducedMotion()){
+    // Pas de décompte ni d'effet de combustion pour cette préférence : le
+    // message final directement, sans jouer sur le suspense du compte à
+    // rebours.
+    document.getElementById('mimMessage').textContent = 'Ce message s\'est autodétruit.';
+    return;
+  }
+  let n = 5;
+  const countdownEl = document.getElementById('mimCountdown');
+  const timer = setInterval(() => {
+    if(!document.body.contains(overlay)){ clearInterval(timer); return; } // fermé avant la fin
+    n--;
+    if(n <= 0){
+      clearInterval(timer);
+      overlay.classList.add('mim-burn');
+      setTimeout(() => overlay.remove(), 900);
+      return;
+    }
+    countdownEl.textContent = n;
+  }, 1000);
+}
+
+// --- The Dark Knight : la pièce, jamais vraiment laissée au hasard ---
+function runDarkKnightHappening(){
+  const overlay = document.createElement('div');
+  overlay.className = 'overlay open';
+  overlay.innerHTML = `
+    <div class="modal happening-modal">
+      <div class="modal-head">
+        <h2>Pile ou face ?</h2>
+        <button class="close-x" data-close aria-label="Fermer">✕</button>
+      </div>
+      <div class="dk-coin" id="dkCoin">🪙</div>
+      <p class="happening-caption" id="dkCaption">« Tu fais ton propre destin. » Lance la pièce.</p>
+      <button class="btn" id="dkFlipBtn" type="button">Lancer la pièce</button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', (e) => {
+    if(e.target === overlay || e.target.closest('[data-close]')) overlay.remove();
+  });
+  document.getElementById('dkFlipBtn').addEventListener('click', () => {
+    document.getElementById('dkFlipBtn').remove();
+    const coin = document.getElementById('dkCoin');
+    const reduced = prefersReducedMotion();
+    if(!reduced) coin.classList.add('flipping');
+    setTimeout(() => {
+      const caption = document.getElementById('dkCaption');
+      if(caption) caption.textContent = 'Les deux côtés sont identiques. Il n\'a jamais vraiment laissé le hasard décider.';
+    }, reduced ? 0 : 900);
   });
 }
 
