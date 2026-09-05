@@ -1796,6 +1796,21 @@ input[type="range"]::-moz-range-thumb{
 
 /* Statistiques */
 .stats-modal{max-width:720px;}
+#openRecapBtn{width:100%; margin-bottom:16px;}
+
+/* Bilan cinéphile partageable (v2.43) — voir js/recap.js. Le canvas garde
+   son ratio portrait (1080x1350, format bien adapté au partage) en
+   s'adaptant à la largeur du modal plutôt qu'un défilement horizontal. */
+.recap-modal{max-width:420px;}
+#recapBody{display:flex; justify-content:center;}
+#recapCanvas{
+  width:100%;
+  max-width:380px;
+  height:auto;
+  border-radius:14px;
+  border:1px solid var(--line);
+}
+#downloadRecapBtn{width:100%;}
 /* Entête du profil public (#/u/:userId, voir js/publicProfile.js) : avatar
    agrandi + pseudo, puis les mêmes .stat-tiles que Statistiques. */
 .public-profile-header{
