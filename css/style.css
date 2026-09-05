@@ -1860,6 +1860,55 @@ input[type="range"]::-moz-range-thumb{
   overflow:hidden;
   text-overflow:ellipsis;
 }
+/* Mur de posters — profil public (retour utilisateur) : même esprit que
+   .top-films-showcase juste au-dessus, généralisé à tout le catalogue. */
+.poster-wall{
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(110px, 1fr));
+  gap:14px;
+}
+.poster-wall-item{position:relative; display:flex; flex-direction:column; gap:6px;}
+.poster-wall-item img,
+.poster-wall-item .film-poster-placeholder{
+  width:100%;
+  aspect-ratio:2/3;
+  height:auto;
+  object-fit:cover;
+  border-radius:8px;
+  border:1px solid var(--line);
+}
+.poster-wall-note{
+  position:absolute;
+  top:6px; right:6px;
+  min-width:26px; height:26px; padding:0 6px;
+  border-radius:999px;
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Space Mono', monospace;
+  font-size:11.5px; font-weight:700;
+  color:var(--text);
+  background:rgba(20,17,28,0.82);
+  backdrop-filter:blur(2px);
+}
+/* .rate-low/-mid/-high (js/ui.js, noteColorClass()) sont sinon scopées à
+   .counter — redéclarées ici plutôt que d'ajouter .counter à cet élément,
+   dont le style de base (taille, bordure) ne convient pas à ce badge. */
+.poster-wall-note.rate-low{color:var(--coral);}
+.poster-wall-note.rate-mid{color:var(--gold);}
+.poster-wall-note.rate-high{color:var(--green);}
+.poster-wall-fav{
+  position:absolute;
+  top:6px; left:6px;
+  color:var(--gold);
+  text-shadow:0 1px 3px rgba(0,0,0,0.6);
+  font-size:14px;
+}
+.poster-wall-caption{
+  font-size:12px;
+  font-weight:600;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
 .stat-tiles{
   display:grid;
   grid-template-columns:repeat(auto-fit, minmax(110px, 1fr));

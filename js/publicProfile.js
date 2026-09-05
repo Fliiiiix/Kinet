@@ -6,17 +6,21 @@
 // l'email ni le commentaire libre), et rien du tout si le propriétaire n'a
 // pas coché "Profil public" dans sa propre modale profil (js/profile.js).
 
-function publicProfileFilmRowHtml(f){
+// Mur de posters (retour utilisateur) : plus impressionnant à partager
+// qu'une liste de lignes pour une page pensée pour être montrée à
+// quelqu'un — même esprit que .top-films-showcase juste au-dessus (4 films
+// mis en avant), généralisé à tout le catalogue. Toujours la note et le
+// titre en légende (jamais seulement au survol) : cette page est autant
+// consultée au tactile qu'à la souris.
+function publicProfilePosterHtml(f){
   return `
-    <div class="film-row friend-film-row">
+    <div class="poster-wall-item">
       ${f.poster_url
-        ? `<img class="film-poster" src="${f.poster_url}" alt="" loading="lazy">`
-        : `<div class="film-poster film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
-      <div class="film-main">
-        <div class="film-title">${escapeHtml(f.title)}${f.fav ? ' <span title="Favori">★</span>' : ''}</div>
-        <div class="film-sub">${f.release_year || ''}</div>
-      </div>
-      <div class="counter ${noteColorClass(f.note)}">${f.note !== null && f.note !== undefined ? Number(f.note).toFixed(1) : '—'}</div>
+        ? `<img src="${f.poster_url}" alt="" loading="lazy">`
+        : `<div class="film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
+      <div class="poster-wall-note ${noteColorClass(f.note)}">${f.note !== null && f.note !== undefined ? Number(f.note).toFixed(1) : '—'}</div>
+      ${f.fav ? `<div class="poster-wall-fav" title="Favori">★</div>` : ''}
+      <div class="poster-wall-caption">${escapeHtml(f.title)}${f.release_year ? ` <span class="wl-year">(${f.release_year})</span>` : ''}</div>
     </div>
   `;
 }
@@ -46,7 +50,7 @@ async function renderPublicProfilePage(userId){
 
   const listHtml = films.length === 0
     ? `<div class="empty-state">Aucun film noté pour l'instant.</div>`
-    : films.map(publicProfileFilmRowHtml).join('');
+    : `<div class="poster-wall">${films.map(publicProfilePosterHtml).join('')}</div>`;
 
   // Cliquable vers la fiche film seulement si connecté (v2.3) — la fiche
   // film (js/filmDetail.js) n'est pas de la poignée de pages accessibles
