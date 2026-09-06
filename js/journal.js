@@ -67,6 +67,12 @@ function removeViewingWithUndo(id, filmId){
   showUndoToast(
     'Visionnage retiré du journal',
     async () => {
+      // File d'attente hors ligne (retour utilisateur, js/offlineQueue.js) :
+      // cible un id déjà connu, rejouable sans réconciliation.
+      if(isOfflineMode){
+        enqueueOfflineWrite({ table: 'viewings', op: 'delete', match: { id } });
+        return;
+      }
       const { error } = await supabaseClient.from('viewings').delete().eq('id', id);
       if(error){
         console.error(error);

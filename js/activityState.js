@@ -163,3 +163,64 @@ async function maybeShowDigest(){
     await markDigestSeen();
   });
 }
+
+// --- Rappel "tu n'as rien noté depuis longtemps" (retour utilisateur) ---
+// Basé sur films.added (horloge client, comme partout ailleurs dans l'app
+// pour ce champ) — le moment le plus récent où un film a été ajouté/noté
+// au catalogue. Pas viewings.watchedAt : un visionnage peut être backdaté
+// (import Letterboxd, "+ Revisionnage" avec une date passée), ce qui
+// fausserait complètement "depuis quand tu n'as rien noté" si quelqu'un
+// importe un vieux journal d'un coup.
+const INACTIVITY_REMINDER_DAYS = 21;
+
+// null = jamais rien noté (catalogue vide) : pas "depuis longtemps", juste
+// "pas encore commencé" — un cas différent qui ne mérite pas ce rappel.
+function daysSinceLastRating(){
+  if(films.length === 0) return null;
+  const mostRecent = Math.max(...films.map(f => f.added));
+  return Math.floor((Date.now() - mostRecent) / (1000 * 60 * 60 * 24));
+}
+
+// Appelé depuis showApp() (js/auth.js), sans await — comme maybeShowDigest()
+// ci-dessus, ne doit jamais retarder le chargement du catalogue.
+function maybeShowInactivityReminder(){
+  const banner = document.getElementById('inactivityReminderBanner');
+  const days = daysSinceLastRating();
+  if(days === null || days < INACTIVITY_REMINDER_DAYS){
+    banner.style.display = 'none';
+    banner.innerHTML = '';
+    return;
+  }
+  // Fermeture mémorisée PAR APPAREIL (localStorage, pas Supabase — un
+  // simple rappel ne justifie pas un aller-retour serveur dédié), tant que
+  // le catalogue n'a pas changé depuis : ajouter un nouveau film change
+  // mostRecentAdded et fait naturellement réapparaître le rappel si
+  // l'inactivité reprend, sans jamais re-harceler pour la MÊME période déjà
+  // fermée.
+  const mostRecentAdded = Math.max(...films.map(f => f.added));
+  let dismissedFor = null;
+  try{ dismissedFor = localStorage.getItem('kinetInactivityDismissedFor'); }catch(e){}
+  if(dismissedFor === String(mostRecentAdded)){
+    banner.style.display = 'none';
+    banner.innerHTML = '';
+    return;
+  }
+  banner.innerHTML = `
+    <div class="digest-title">Ça fait ${days} jours que tu n'as rien noté</div>
+    <div class="wl-note" style="margin-bottom:14px;">Un film récemment vu à ajouter à ton catalogue ?</div>
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      <button class="btn" id="inactivityReminderAddBtn" type="button">+ Ajouter un film</button>
+      <button class="btn secondary" id="inactivityReminderDismissBtn" type="button">Plus tard</button>
+    </div>
+  `;
+  banner.style.display = '';
+  document.getElementById('inactivityReminderAddBtn').addEventListener('click', () => {
+    banner.style.display = 'none';
+    openModal();
+  });
+  document.getElementById('inactivityReminderDismissBtn').addEventListener('click', () => {
+    banner.style.display = 'none';
+    banner.innerHTML = '';
+    try{ localStorage.setItem('kinetInactivityDismissedFor', String(mostRecentAdded)); }catch(e){}
+  });
+}

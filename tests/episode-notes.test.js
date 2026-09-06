@@ -232,4 +232,53 @@ test('updateEpisodeNote() : rafraîchit l\'en-tête de saison (★ moyenne) tout
   assert.strictEqual(progressEl.textContent, '1/10 vus · ★ 4.0');
 });
 
+// --- File d'attente hors ligne (retour utilisateur, js/offlineQueue.js) ---
+// toggleEpisodeWatched() s'appuie sur une clé naturelle (tv_show_id +
+// saison + épisode), jamais un id serveur — d'où sa présence dans la
+// portée retenue pour la file d'attente hors ligne (voir le commentaire en
+// tête de js/offlineQueue.js).
+function buildOfflineContext(){
+  const { fakeLocalStorage } = require('./helpers/vm-harness');
+  const ctx = createContext({
+    document: stubDocument(),
+    goToSeries(){}, showToast(){}, escapeHtml(s){ return s; },
+    isOfflineMode: true,
+    currentUser: { id: 'u1' },
+    localStorage: fakeLocalStorage(),
+    supabaseClient: { from(){ throw new Error('ne doit jamais être appelé hors ligne'); } },
+  });
+  loadFiles(ctx, ['js/offlineQueue.js', 'js/series.js']);
+  setState(ctx, {
+    currentShowId: 42,
+    currentShowSeasons: [{ season_number: 1, episode_count: 10 }],
+    watchedEpisodeSet: new Set(),
+    watchedEpisodeExtras: {},
+    loadedSeasonEpisodes: { 1: [{ episode_number: 1, name: 'Pilote', air_date: null }] },
+  });
+  return ctx;
+}
+
+test('toggleEpisodeWatched() : hors ligne, cocher met en file un upsert (clé naturelle) plutôt que d\'appeler Supabase', async () => {
+  const ctx = buildOfflineContext();
+  await ctx.toggleEpisodeWatched(1, 1, true, null);
+  assert.ok(getState(ctx, 'watchedEpisodeSet').has('1-1'), 'mis à jour localement tout de suite, comme en ligne');
+  const queue = JSON.parse(JSON.stringify(getState(ctx, 'offlineQueue')));
+  assert.strictEqual(queue.length, 1);
+  assert.strictEqual(queue[0].table, 'tv_episodes_watched');
+  assert.strictEqual(queue[0].op, 'upsert');
+  assert.strictEqual(queue[0].payload.tv_show_id, 42);
+  assert.strictEqual(queue[0].upsertOptions.onConflict, 'user_id,tv_show_id,season_number,episode_number');
+});
+
+test('toggleEpisodeWatched() : hors ligne, décocher met en file une suppression (clé naturelle)', async () => {
+  const ctx = buildOfflineContext();
+  setState(ctx, { watchedEpisodeSet: new Set(['1-1']), watchedEpisodeExtras: { '1-1': { note: null, timesWatched: 1 } } });
+  await ctx.toggleEpisodeWatched(1, 1, false, null);
+  assert.ok(!getState(ctx, 'watchedEpisodeSet').has('1-1'));
+  const queue = JSON.parse(JSON.stringify(getState(ctx, 'offlineQueue')));
+  assert.strictEqual(queue.length, 1);
+  assert.strictEqual(queue[0].op, 'delete');
+  assert.deepStrictEqual(queue[0].match, { tv_show_id: 42, season_number: 1, episode_number: 1 });
+});
+
 module.exports = run('episode-notes.test.js');

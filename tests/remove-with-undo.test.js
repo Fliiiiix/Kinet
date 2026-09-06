@@ -11,7 +11,7 @@
 // lui-même d'appeler l'un ou l'autre pour simuler "le délai a expiré" ou
 // "l'utilisateur a cliqué Annuler", sans dépendre du vrai timer.
 const { createSuite, assert } = require('./helpers/tiny-test');
-const { createContext, loadFiles, setState, getState, stubDocument, stubElement } = require('./helpers/vm-harness');
+const { createContext, loadFiles, setState, getState, stubDocument, stubElement, fakeLocalStorage } = require('./helpers/vm-harness');
 const { test, run } = createSuite();
 
 function makeUndoToastMock(){
@@ -49,6 +49,12 @@ function buildWatchlistContext(){
     escapeHtml(s){ return s; },
     FILM_PLACEHOLDER_SVG: '',
     showUndoToast,
+    // currentUser/localStorage : nécessaires à offlineQueueKey()/
+    // saveOfflineQueueToStorage() (js/offlineQueue.js, file d'attente hors
+    // ligne) — chargé ci-dessous aux côtés de js/watchlist.js pour tester
+    // l'enfilement réel plutôt que de re-simuler enqueueOfflineWrite() ici.
+    currentUser: { id: 'u1' },
+    localStorage: fakeLocalStorage(),
     supabaseClient: {
       from(table){
         if(table !== 'watchlist') throw new Error(`table inattendue dans ce test : ${table}`);
@@ -56,7 +62,7 @@ function buildWatchlistContext(){
       },
     },
   });
-  loadFiles(ctx, ['js/watchlist.js']);
+  loadFiles(ctx, ['js/offlineQueue.js', 'js/watchlist.js']);
   setState(ctx, {
     watchlist: [
       { id: 7, title: 'Paprika', note: null, tmdbId: 42, posterUrl: null, overview: null, releaseYear: 2006, originalTitle: null, added: 111 },
@@ -90,21 +96,31 @@ test('handleRemoveFromWatchlist() : onUndo restaure l\'item à sa place d\'origi
   assert.strictEqual(deletedIds.length, 0);
 });
 
-test('handleRemoveFromWatchlist() : hors ligne, aucune suppression proposée (blockIfOffline coupe tout de suite)', () => {
-  const deletedIds = [];
-  const { showUndoToast, calls } = makeUndoToastMock();
-  const ctx = createContext({
-    document: stubDocument(),
-    goToWatchlist(){}, goHome(){}, closeOverlay(){}, openOverlay(){},
-    blockIfOffline(){ return true; }, // lecture seule hors ligne
-    showToast(){}, escapeHtml(s){ return s; },
-    showUndoToast,
-    supabaseClient: { from(){ throw new Error('ne doit jamais être appelé hors ligne'); } },
-  });
-  loadFiles(ctx, ['js/watchlist.js']);
-  setState(ctx, { watchlist: [{ id: 7, title: 'Paprika' }] });
+// File d'attente hors ligne (retour utilisateur, js/offlineQueue.js) :
+// retirer un item de la watchlist cible un id déjà connu, donc plus
+// bloqué hors ligne (blockIfOffline() retiré de cette fonction) — la
+// suppression optimiste + le toast d'annulation se comportent pareil en
+// ligne et hors ligne, seul onCommit change de chemin (met en file au lieu
+// d'appeler Supabase pour de vrai).
+test('handleRemoveFromWatchlist() : hors ligne, la suppression optimiste + le toast d\'annulation proposés comme en ligne', () => {
+  const { ctx, calls } = buildWatchlistContext();
+  setState(ctx, { isOfflineMode: true });
   ctx.handleRemoveFromWatchlist(7);
-  assert.strictEqual(calls.length, 0);
+  assert.strictEqual(calls.length, 1, 'le toast d\'annulation doit être proposé même hors ligne');
+  assert.deepStrictEqual(getState(ctx, 'watchlist').map(w => w.id), [8], 'retiré de l\'écran tout de suite, comme en ligne');
+});
+
+test('handleRemoveFromWatchlist() : onCommit hors ligne met en file plutôt que d\'appeler Supabase', async () => {
+  const { ctx, deletedIds, calls } = buildWatchlistContext();
+  setState(ctx, { isOfflineMode: true, offlineQueue: [] });
+  ctx.handleRemoveFromWatchlist(7);
+  await calls[0].onCommit();
+  assert.strictEqual(deletedIds.length, 0, 'aucun appel réseau hors ligne');
+  const queue = JSON.parse(JSON.stringify(getState(ctx, 'offlineQueue')));
+  assert.strictEqual(queue.length, 1);
+  assert.strictEqual(queue[0].table, 'watchlist');
+  assert.strictEqual(queue[0].op, 'delete');
+  assert.deepStrictEqual(queue[0].match, { id: 7 });
   assert.strictEqual(getState(ctx, 'watchlist').length, 1, 'rien ne doit avoir bougé');
 });
 

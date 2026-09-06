@@ -588,8 +588,31 @@ function updateSeasonProgressUI(seasonNumber, episodeCount){
 // la case cochée à l'écran alors que rien n'a été enregistré (bug
 // constaté à la vérification). On la remet dans son état réel ici.
 async function toggleEpisodeWatched(seasonNumber, episodeNumber, watched, checkboxEl){
-  if(blockIfOffline()){ if(checkboxEl) checkboxEl.checked = !watched; return; }
   const key = `${seasonNumber}-${episodeNumber}`;
+  // File d'attente hors ligne (retour utilisateur, js/offlineQueue.js) :
+  // épisode vu/pas vu s'appuie sur une clé naturelle (tv_show_id, saison,
+  // épisode), jamais un id généré par le serveur — rejouable sans
+  // réconciliation au retour du réseau, contrairement à une création.
+  if(isOfflineMode){
+    if(watched){
+      enqueueOfflineWrite({
+        table: 'tv_episodes_watched', op: 'upsert',
+        payload: { tv_show_id: currentShowId, season_number: seasonNumber, episode_number: episodeNumber, watched_at: Date.now() },
+        upsertOptions: { onConflict: 'user_id,tv_show_id,season_number,episode_number', ignoreDuplicates: true }
+      });
+      watchedEpisodeSet.add(key);
+      watchedEpisodeExtras[key] = { note: null, timesWatched: 1 };
+    }else{
+      enqueueOfflineWrite({ table: 'tv_episodes_watched', op: 'delete', match: { tv_show_id: currentShowId, season_number: seasonNumber, episode_number: episodeNumber } });
+      watchedEpisodeSet.delete(key);
+      delete watchedEpisodeExtras[key];
+    }
+    const seasonOffline = currentShowSeasons.find(s => s.season_number === seasonNumber);
+    if(seasonOffline) updateSeasonProgressUI(seasonNumber, seasonOffline.episode_count);
+    watchedEpisodeCounts[currentShowId] = watchedEpisodeSet.size;
+    renderSeasonEpisodes(seasonNumber);
+    return;
+  }
   if(watched){
     const { error } = await supabaseClient
       .from('tv_episodes_watched')

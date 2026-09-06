@@ -201,8 +201,11 @@ async function handleAddToWatchlist(){
 // Toast d'annulation (v2.8) plutôt qu'un confirm() bloquant — voir
 // showUndoToast() (js/ui.js) : l'item disparaît tout de suite de l'écran,
 // la suppression réelle en base n'a lieu qu'à l'expiration du délai.
+// Pas de blockIfOffline() ici (retour utilisateur, file d'attente hors
+// ligne, js/offlineQueue.js) : retirer un item cible un id déjà connu,
+// rejouable sans réconciliation — voir le onCommit ci-dessous, qui met en
+// file plutôt que d'attempter un appel réseau voué à échouer hors ligne.
 function handleRemoveFromWatchlist(id){
-  if(blockIfOffline()) return; // js/offline.js — lecture seule hors ligne
   const idx = watchlist.findIndex(w => w.id === id);
   if(idx === -1) return;
   const [removed] = watchlist.splice(idx, 1);
@@ -210,6 +213,10 @@ function handleRemoveFromWatchlist(id){
   showUndoToast(
     `« ${removed.title} » retiré de la watchlist`,
     async () => {
+      if(isOfflineMode){
+        enqueueOfflineWrite({ table: 'watchlist', op: 'delete', match: { id } });
+        return;
+      }
       const { error } = await supabaseClient.from('watchlist').delete().eq('id', id);
       if(error){
         console.error(error);

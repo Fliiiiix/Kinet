@@ -233,6 +233,88 @@ document.getElementById('lightThemeToggle').addEventListener('change', (e) => {
   setTheme(e.target.checked ? 'light' : 'dark');
 });
 
+// --- Personnaliser l'ordre des icônes de l'entête (retour utilisateur) ---
+// Même principe que kinetViewMode/kinetTheme ci-dessus : préférence PAR
+// APPAREIL (localStorage). installHeaderBtn (PWA, affiché seulement quand
+// pertinent — voir js/pwa.js) exclu délibérément : un bouton dont la
+// présence même est déjà conditionnelle n'a rien à faire dans un ordre à
+// mémoriser (il resterait où il est déjà dans le DOM, jamais déplacé par
+// applyHeaderNavOrder() ci-dessous, qui ne touche que les ids listés ici).
+const HEADER_NAV_DEFAULT_ORDER = ['globalSearchBtn', 'watchlistBtn', 'upcomingBtn', 'friendsBtn', 'topBtn', 'feedbackBtn', 'changelogBtn'];
+const HEADER_NAV_LABELS = {
+  globalSearchBtn: 'Rechercher',
+  watchlistBtn: 'À voir',
+  upcomingBtn: 'Bientôt',
+  friendsBtn: 'Amis',
+  topBtn: 'Top films',
+  feedbackBtn: 'Avis',
+  changelogBtn: 'Nouveautés',
+};
+
+function getHeaderNavOrder(){
+  let saved = null;
+  try{ saved = JSON.parse(localStorage.getItem('kinetHeaderOrder') || 'null'); }catch(e){}
+  if(!Array.isArray(saved)) return HEADER_NAV_DEFAULT_ORDER.slice();
+  // Filtre les ids obsolètes (une sauvegarde plus ancienne peut référencer
+  // un bouton depuis retiré) et rajoute à la fin ceux qu'elle ne connaît
+  // pas encore (un bouton ajouté après coup) — jamais un bouton qui
+  // disparaît silencieusement d'une préférence enregistrée avant lui.
+  const valid = saved.filter(id => HEADER_NAV_DEFAULT_ORDER.includes(id));
+  const missing = HEADER_NAV_DEFAULT_ORDER.filter(id => !valid.includes(id));
+  return valid.concat(missing);
+}
+
+// appendChild() DÉPLACE un élément déjà dans le DOM (ne le clone pas) —
+// réordonne donc les boutons existants sans perdre leurs listeners déjà
+// posés par chaque fichier propriétaire (js/globalSearch.js,
+// js/watchlist.js, etc.), aucun n'a besoin de savoir que cet ordre existe.
+function applyHeaderNavOrder(){
+  const nav = document.querySelector('.header-nav');
+  if(!nav) return;
+  getHeaderNavOrder().forEach(id => {
+    const btn = document.getElementById(id);
+    if(btn) nav.appendChild(btn);
+  });
+}
+
+function saveHeaderNavOrder(order){
+  try{ localStorage.setItem('kinetHeaderOrder', JSON.stringify(order)); }catch(e){}
+  applyHeaderNavOrder();
+}
+
+function moveHeaderNavItem(id, direction){
+  const order = getHeaderNavOrder();
+  const idx = order.indexOf(id);
+  const swapWith = idx + direction;
+  if(idx === -1 || swapWith < 0 || swapWith >= order.length) return;
+  [order[idx], order[swapWith]] = [order[swapWith], order[idx]];
+  saveHeaderNavOrder(order);
+  renderHeaderOrderPicker();
+}
+
+// Réutilise .top-film-chip/.top-film-chip-actions (picker Top films,
+// js/profile.js) tel quel plutôt que de nouvelles classes CSS — même
+// gabarit "ligne + boutons ↑/↓", juste sans affiche.
+function renderHeaderOrderPicker(){
+  const wrap = document.getElementById('headerOrderPicker');
+  if(!wrap) return;
+  const order = getHeaderNavOrder();
+  wrap.innerHTML = order.map((id, idx) => `
+    <div class="top-film-chip" data-id="${id}">
+      <div class="tmdb-result-info"><div class="tmdb-result-title">${escapeHtml(HEADER_NAV_LABELS[id] || id)}</div></div>
+      <div class="top-film-chip-actions">
+        <button type="button" data-move="up" data-id="${id}" ${idx === 0 ? 'disabled' : ''} title="Monter" aria-label="Monter">↑</button>
+        <button type="button" data-move="down" data-id="${id}" ${idx === order.length - 1 ? 'disabled' : ''} title="Descendre" aria-label="Descendre">↓</button>
+      </div>
+    </div>
+  `).join('');
+  wrap.querySelectorAll('[data-move]').forEach(btn => {
+    btn.addEventListener('click', () => moveHeaderNavItem(btn.dataset.id, btn.dataset.move === 'up' ? -1 : 1));
+  });
+}
+
+applyHeaderNavOrder();
+
 // --- Barème couleur du cadran (.counter) ---
 // Retenté v2.0 : la première version distinguait manuel/grille par
 // couleur (or vs teal), ce qui ne voulait rien dire pour quelqu'un qui

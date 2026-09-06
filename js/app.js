@@ -192,6 +192,31 @@ function buildYearFilterOptions(){
 // 2e select, voir setSortDir() plus bas.
 let sortDir = 'desc';
 
+// Extrait du click .star-btn (voir render() plus bas) pour rester testable
+// isolément (tests/favorite-offline.test.js) — renvoie true si l'état
+// local a effectivement changé (succès en ligne, ou mis en file hors
+// ligne), false sur une erreur réseau (l'appelant sait alors qu'il n'y a
+// rien à re-render/pulser, l'erreur étant déjà signalée ici par toast).
+async function toggleFilmFavorite(f){
+  const newFav = !f.fav;
+  // File d'attente hors ligne (retour utilisateur, js/offlineQueue.js) :
+  // toggle favori mis en file plutôt que bloqué — met à jour un id déjà
+  // connu, rejouable sans réconciliation au retour du réseau.
+  if(isOfflineMode){
+    f.fav = newFav;
+    enqueueOfflineWrite({ table: 'films', op: 'update', match: { id: f.id, user_id: currentUser.id }, payload: { fav: newFav } });
+    return true;
+  }
+  const { error } = await supabaseClient.from('films').update({ fav: newFav }).eq('id', f.id).eq('user_id', currentUser.id);
+  if(error){
+    showToast('Erreur de sauvegarde, réessaie');
+    console.error(error);
+    return false;
+  }
+  f.fav = newFav;
+  return true;
+}
+
 function render(){
   const list = document.getElementById('filmList');
   const countLine = document.getElementById('countLine');
@@ -328,15 +353,8 @@ function render(){
     }
     row.querySelector('.star-btn').addEventListener('click', async (e) => {
       e.stopPropagation();
-      if(blockIfOffline()) return; // js/offline.js — lecture seule hors ligne
-      const newFav = !f.fav;
-      const { error } = await supabaseClient.from('films').update({ fav: newFav }).eq('id', f.id).eq('user_id', currentUser.id);
-      if(error){
-        showToast('Erreur de sauvegarde, réessaie');
-        console.error(error);
-        return;
-      }
-      f.fav = newFav;
+      const changed = await toggleFilmFavorite(f);
+      if(!changed) return; // erreur réseau déjà signalée par toggleFilmFavorite() elle-même
       render();
       // render() reconstruit tout le DOM de la liste (voir plus haut) — le
       // bouton cliqué n'existe déjà plus, on pulse celui qui vient d'être

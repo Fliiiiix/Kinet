@@ -1,5 +1,5 @@
-// --- Mode hors ligne (lecture seule) ---
-// Repose sur deux mécanismes complémentaires :
+// --- Mode hors ligne ---
+// Repose sur trois mécanismes complémentaires :
 // 1. Un service worker (sw.js, enregistré plus bas) qui met en cache l'app
 //    shell (HTML/CSS/JS) au fil des visites en ligne, pour que la page
 //    elle-même s'ouvre encore sans réseau — sans lui, le cache de données
@@ -8,15 +8,21 @@
 // 2. Un cache localStorage des dernières listes chargées avec succès
 //    (films/watchlist/viewings), utilisé en repli quand une requête
 //    Supabase échoue — voir loadFilms()/loadViewings()/loadWatchlist().
+// 3. File d'attente hors ligne (retour utilisateur, js/offlineQueue.js) :
+//    les écritures à faible risque qui ciblent un id déjà connu ou une clé
+//    naturelle (toggle favori, épisode vu/pas vu, retirer un item
+//    watchlist/journal) restent possibles hors ligne, mises en file et
+//    rejouées au retour du réseau (voir le listener 'online' plus bas).
 //
-// Explicitement lecture seule (décision confirmée) : noter/modifier reste
-// bloqué tant que le réseau n'est pas revenu (blockIfOffline(), appelé
-// depuis les points d'entrée d'écriture du catalogue/watchlist) — pas de
-// file d'attente à synchroniser, pas de gestion de conflits. Les
-// fonctionnalités sociales (amis/groupes/propositions...) ne sont PAS
-// couvertes : elles supposent du réseau par nature (synchroniser avec
-// quelqu'un d'autre), échouent proprement avec le toast d'erreur déjà en
-// place si le réseau manque, comme avant cette version.
+// Le RESTE reste bloqué tant que le réseau n'est pas revenu
+// (blockIfOffline(), toujours appelé depuis les CRÉATIONS — nouveau film,
+// nouvel item watchlist, nouveau commentaire... — dont le résultat
+// dépendrait d'un id généré par le serveur, jamais réconciliable après
+// coup sans risque). Les fonctionnalités sociales (amis/groupes/
+// propositions...) ne sont pas couvertes par la file non plus : elles
+// supposent du réseau par nature (synchroniser avec quelqu'un d'autre),
+// échouent proprement avec le toast d'erreur déjà en place si le réseau
+// manque, comme avant cette version.
 
 let isOfflineMode = false;
 
@@ -57,8 +63,14 @@ function formatOfflineTimestamp(ms){
 // quand il bascule en repli, seul appelant qui a cette info sous la main.
 function enterOfflineMode(savedAt){
   isOfflineMode = true;
+  // File d'attente hors ligne (js/offlineQueue.js) : recharge une file
+  // laissée par une session précédente restée hors ligne (page fermée
+  // sans être jamais revenue en ligne) — sans ça, une nouvelle action mise
+  // en file cette session écraserait silencieusement celles d'avant au
+  // premier saveOfflineQueueToStorage().
+  loadOfflineQueue();
   const banner = document.getElementById('offlineBanner');
-  banner.textContent = `📴 Hors ligne, dernières données synchronisées le ${formatOfflineTimestamp(savedAt)}. Lecture seule : reconnecte-toi pour noter ou modifier.`;
+  banner.textContent = `📴 Hors ligne, dernières données synchronisées le ${formatOfflineTimestamp(savedAt)}. Tu peux quand même cocher/décocher, marquer favori, retirer un item — ce sera synchronisé au retour du réseau. Le reste (ajouter, commenter…) attend la reconnexion.`;
   banner.style.display = '';
 }
 
@@ -84,8 +96,12 @@ function blockIfOffline(){
 // navigator.onLine n'est qu'un indice (peut rester true sur un réseau
 // captif sans vraie sortie internet) : c'est loadFilms() qui tranche pour
 // de vrai en retentant une requête réelle.
-window.addEventListener('online', () => {
+window.addEventListener('online', async () => {
   if(!isOfflineMode || !currentUser) return;
+  // File d'attente hors ligne (retour utilisateur, js/offlineQueue.js) :
+  // rejouée AVANT de recharger films/viewings, pour que la vraie source de
+  // vérité relue juste après reflète déjà ce qui vient d'être synchronisé.
+  await replayOfflineQueue();
   loadFilms().then(() => { render(); });
   loadViewings();
 });

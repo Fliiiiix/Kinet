@@ -66,12 +66,15 @@ async function showApp(){
   // avant la connexion — on le consomme ici, une fois l'app pleinement
   // chargée, pour rejoindre le groupe et y rediriger.
   await consumePendingInviteIfAny();
-  // Badge 👥 + digest de retour (js/activityState.js) + Nouveautés
-  // (js/changelog.js) : jamais attendus, pour ne pas allonger le chemin
-  // critique déjà chargé de 4-5 allers-retours — ils se posent tout seuls
-  // une fois prêts.
+  // Badge 👥 + digest de retour + rappel d'inactivité (js/activityState.js)
+  // + Nouveautés (js/changelog.js) : jamais attendus, pour ne pas allonger
+  // le chemin critique déjà chargé de 4-5 allers-retours — ils se posent
+  // tout seuls une fois prêts. maybeShowInactivityReminder() est SYNCHRONE
+  // (films est déjà chargé à ce stade, aucun aller-retour réseau propre à
+  // elle) — appelée directement, sans le `.then`/pas d'await des deux autres.
   refreshActivityBadge();
   maybeShowDigest();
+  maybeShowInactivityReminder();
   initChangelog();
 }
 

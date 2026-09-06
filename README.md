@@ -45,7 +45,8 @@ critique-films/
 ├── js/traktConfig.js / js/traktImport.js                          → import Trakt : PRÉPARÉ, pas branché (aucun <script>, aucun bouton) — voir la section dédiée plus bas
 ├── js/share.js                                                    → partage de l'app (QR + lien), accessible sans connexion
 ├── js/pwa.js                                                       → installation en app (bandeau + icône d'entête)
-├── js/offline.js                                                    → mode hors ligne (lecture seule) + bannière de mise à jour
+├── js/offline.js                                                    → mode hors ligne + bannière de mise à jour
+├── js/offlineQueue.js                                                → file d'attente hors ligne (écritures à faible risque, rejouées au retour du réseau)
 ├── js/logging.js                                                     → capture des erreurs JS non interceptées (admin, `app_events`)
 ├── js/happenings.js                                                   → easter eggs par film (tmdb_id), façon Letterboxd
 ├── js/admin.js                                                         → interface admin (succès, happenings, nouveautés, avis, stats)
@@ -1045,23 +1046,26 @@ correctement) ; pour l'activer réellement, ouvrir `chrome://apps` (ou
 **"Ouvrir les liens pris en charge dans l'app"**. Une fois ce réglage
 activé, le lien du mail devrait ouvrir directement la fenêtre installée.
 
-## Mode hors ligne, lecture seule (v1.6)
+## Mode hors ligne (v1.6, file d'attente v2.10+)
 
 L'app reste consultable sans réseau (métro, avion, zone blanche...) :
 catalogue, watchlist, journal et statistiques restent visibles avec les
 dernières données synchronisées, un bandeau **"Hors ligne"** en haut de
-page précise depuis quand. Volontairement lecture seule (décision
-confirmée) : noter, modifier ou ajouter un film, ou toucher à la watchlist,
-reste bloqué avec un message clair tant que le réseau n'est pas revenu —
-pas de file d'attente à synchroniser, pas de gestion de conflits. Les
-fonctionnalités sociales (amis, groupes, propositions...) ne sont pas
-couvertes : elles supposent du réseau par nature et échouent proprement
-avec le message d'erreur habituel si la connexion manque, comme avant
-cette version. Dès que le réseau revient (évènement `online` du
-navigateur), l'app retente automatiquement et sort seule du mode hors
+page précise depuis quand. Dès que le réseau revient (évènement `online`
+du navigateur), l'app retente automatiquement et sort seule du mode hors
 ligne — pas besoin de recharger la page à la main.
 
-Techniquement, deux mécanismes complémentaires (`js/offline.js`) :
+Une partie des écritures reste possible hors ligne (voir "File d'attente
+hors ligne" ci-dessous) ; le reste — toute CRÉATION (nouveau film, nouvel
+item watchlist, nouveau commentaire...), dont le résultat dépend d'un id
+généré par le serveur — reste bloqué avec un message clair tant que le
+réseau n'est pas revenu. Les fonctionnalités sociales (amis, groupes,
+propositions...) ne sont pas couvertes non plus : elles supposent du
+réseau par nature et échouent proprement avec le message d'erreur habituel
+si la connexion manque.
+
+Techniquement, trois mécanismes complémentaires (`js/offline.js`,
+`js/offlineQueue.js`) :
 1. Un **service worker** (`sw.js`) qui met en cache l'app shell (HTML/CSS/
    JS) au fil des visites en ligne (stratégie "réseau, puis repli sur le
    cache", pas de préchargement à liste à maintenir à la main — chaque
@@ -1072,6 +1076,31 @@ Techniquement, deux mécanismes complémentaires (`js/offline.js`) :
    (films/watchlist/viewings), par compte — `loadFilms()`/`loadViewings()`/
    `loadWatchlist()` s'y replient quand la requête Supabase échoue, plutôt
    que de vider la liste et donner l'impression que tout a disparu.
+3. Une **file d'attente hors ligne** (retour utilisateur, `js/offlineQueue.js`)
+   — voir la section dédiée ci-dessous.
+
+### File d'attente hors ligne (retour utilisateur)
+
+Plutôt que bloquer TOUTE écriture, les actions à faible risque déjà
+identifiées par l'audit confirmations (v2.7) restent possibles hors ligne,
+mutées localement tout de suite comme d'habitude :
+- ★ marquer/retirer un favori,
+- ✓/☐ cocher/décocher un épisode vu,
+- retirer un item de la watchlist ou une entrée du journal (visionnage).
+
+La vraie écriture Supabase est mise en file (`localStorage`, par compte)
+et rejouée dans l'ordre au retour du réseau, avant même de recharger le
+catalogue depuis le serveur. Portée volontairement limitée aux écritures
+qui ciblent un id **déjà connu** (favori, retirer un item) ou une clé
+**naturelle** (épisode vu : `tv_show_id` + saison + épisode) — jamais une
+création dont le résultat dépendrait d'un id généré par le serveur
+(bigint identity) : il faudrait réconcilier après coup tout l'état local
+une fois la vraie ligne créée, un risque de bug bien plus élevé pour un
+gain plus incertain (on note rarement un film sans vérifier au moins son
+titre/affiche sur TMDB, un geste qui suppose déjà le réseau). Une entrée
+qui échoue au moment de la rejouer (ex. la ligne visée a été supprimée
+entre-temps depuis un autre appareil) n'empêche pas les suivantes —
+best-effort, cohérent avec le faible risque de ces actions.
 
 ## Accessibilité (v1.6)
 
@@ -1208,11 +1237,13 @@ donnée récupérable dans le HTML — et l'appli elle-même a fermé depuis.)
 ## Prochaines étapes possibles
 
 - D'autres happenings (voir la section ci-dessus pour ceux déjà en place)
-- Hors ligne en lecture/écriture (noter un film sans réseau, synchronisé au
-  retour) — nécessiterait une file d'attente locale, des ids temporaires
-  pour un film créé hors ligne et une gestion des conflits ; volontairement
-  laissé de côté pour l'instant au profit de la version lecture seule
-  ci-dessus, plus simple et plus fiable pour un usage perso.
+- Créer un film/un item watchlist/un commentaire hors ligne (voir "File
+  d'attente hors ligne" ci-dessus, qui couvre déjà les écritures sur un id
+  connu ou une clé naturelle) — nécessiterait des ids temporaires côté
+  client et une réconciliation de tout l'état local une fois la vraie
+  ligne créée côté serveur, plus une gestion des conflits ; volontairement
+  laissé de côté pour l'instant, un risque de bug plus élevé pour un gain
+  plus incertain sur un usage perso.
 - Un vrai `.apk` distribuable (au-delà du PWA installable ci-dessus,
   section "Installation en app") si le besoin devient spécifiquement
   "présent sur le Play Store" — demanderait un tout autre outillage

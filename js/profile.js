@@ -114,6 +114,7 @@ function openProfileModal(){
   setAvatarSourceTab('file');
   document.getElementById('publicProfileToggle').checked = !!(currentProfile && currentProfile.public_profile);
   updatePublicProfileLinkVisibility();
+  renderHeaderOrderPicker(); // js/ui.js — ordre des icônes de l'entête
   topFilmsSelection = (currentProfile && Array.isArray(currentProfile.top_films)) ? currentProfile.top_films.slice() : [];
   document.getElementById('topFilmsSearch').value = '';
   document.getElementById('topFilmsResults').innerHTML = '';

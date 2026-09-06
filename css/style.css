@@ -2018,6 +2018,12 @@ input[type="range"]::-moz-range-thumb{
    son ratio portrait (1080x1350, format bien adapté au partage) en
    s'adaptant à la largeur du modal plutôt qu'un défilement horizontal. */
 .recap-modal{max-width:420px;}
+/* 3 boutons dans un footer de 420px de large (Export PDF, retour
+   utilisateur, ajouté au Partager/Télécharger l'image déjà là) : le
+   .modal-footer générique (justify-content:space-between, pas de wrap) ne
+   suffit plus à les tenir sur une ligne — repli propre sur plusieurs
+   lignes plutôt qu'un débordement horizontal. */
+.recap-modal .modal-footer{flex-wrap:wrap; gap:10px; justify-content:flex-end;}
 #recapBody{display:flex; justify-content:center;}
 #recapCanvas{
   width:100%;

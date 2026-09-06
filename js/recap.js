@@ -241,6 +241,78 @@ async function renderRecapCanvas(recap){
   ctx.textAlign = 'left';
 }
 
+// --- Export PDF (retour utilisateur) --- Un PDF minimal construit à la
+// main (pas de librairie, cohérent avec le reste du projet) : une seule
+// page contenant l'image déjà dessinée sur #recapCanvas, réencodée en JPEG
+// et embarquée TELLE QUELLE — les octets JPEG bruts sont déjà exactement
+// le format qu'un flux PDF /Filter /DCTDecode attend, pas besoin de les
+// ré-encoder. Le PDF le plus simple qui existe : un catalogue, une page,
+// une image, un flux de contenu de 3 tokens qui la dessine.
+
+// data:image/jpeg;base64,XXXX -> les octets JPEG bruts.
+function dataUrlToBytes(dataUrl){
+  const base64 = dataUrl.split(',')[1];
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for(let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+
+// Concatène des chaînes ASCII et des Uint8Array binaires en un seul
+// Uint8Array — la construction du PDF alterne syntaxe texte (objets,
+// dictionnaires) et octets bruts (le flux JPEG lui-même) : jamais mélangés
+// en JS string, qui réinterpréterait les octets bruts comme de l'UTF-8 et
+// corromprait le fichier. Chaque chaîne ici est volontairement 100% ASCII
+// (mots-clés PDF, chiffres) — .length y vaut donc exactement le nombre
+// d'octets, pas seulement d'unités UTF-16, condition nécessaire pour que
+// les décomptes d'octets ci-dessous (/Length, offsets xref) soient justes.
+function concatBytes(parts){
+  const encoded = parts.map(p => (typeof p === 'string' ? new TextEncoder().encode(p) : p));
+  const total = encoded.reduce((sum, b) => sum + b.length, 0);
+  const out = new Uint8Array(total);
+  let offset = 0;
+  encoded.forEach(bytes => { out.set(bytes, offset); offset += bytes.length; });
+  return out;
+}
+
+function buildRecapPdf(canvas){
+  const jpegBytes = dataUrlToBytes(canvas.toDataURL('image/jpeg', 0.92));
+  const W = canvas.width, H = canvas.height;
+
+  const header = '%PDF-1.4\n';
+  const obj1 = '1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n';
+  const obj2 = '2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n';
+  const obj3 = `3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>\nendobj\n`;
+  const obj4Head = `4 0 obj\n<< /Type /XObject /Subtype /Image /Width ${W} /Height ${H} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpegBytes.length} >>\nstream\n`;
+  const obj4Tail = '\nendstream\nendobj\n';
+  // cm : dilate l'espace utilisateur 1x1 à la taille exacte de l'image
+  // avant de la dessiner (Do) — l'image occupe alors toute la MediaBox,
+  // sans repère de positionnement séparé à calculer.
+  const content = `q ${W} 0 0 ${H} 0 0 cm /Im0 Do Q`;
+  const obj5 = `5 0 obj\n<< /Length ${content.length} >>\nstream\n${content}\nendstream\nendobj\n`;
+
+  // Offsets EN OCTETS de chaque objet (indispensable pour un xref correct —
+  // chaque entrée pointe l'octet exact où son objet commence). offsets[0]
+  // n'est jamais utilisé (l'objet 0 est réservé, toujours "libre" en PDF).
+  const offsets = [0];
+  let running = header.length;
+  [obj1, obj2, obj3].forEach(o => { offsets.push(running); running += o.length; });
+  offsets.push(running); // objet 4 (l'image) : commence à obj4Head
+  running += obj4Head.length + jpegBytes.length + obj4Tail.length;
+  offsets.push(running); // objet 5 (le contenu de page)
+  running += obj5.length;
+  const xrefStart = running;
+
+  // Chaque entrée xref fait EXACTEMENT 20 octets (spec PDF) : 10 chiffres
+  // d'offset + espace + 5 chiffres de génération + espace + n/f + espace + \n.
+  const pad10 = (n) => String(n).padStart(10, '0');
+  let xref = 'xref\n0 6\n0000000000 65535 f \n';
+  for(let i = 1; i <= 5; i++) xref += `${pad10(offsets[i])} 00000 n \n`;
+  const trailer = `trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${xrefStart}\n%%EOF`;
+
+  return concatBytes([header, obj1, obj2, obj3, obj4Head, jpegBytes, obj4Tail, obj5, xref, trailer]);
+}
+
 // --- Partage direct (retour utilisateur) --- En plus du téléchargement
 // déjà là : sur mobile surtout, envoyer l'image direct par message sans
 // repasser par "télécharger puis rouvrir depuis les fichiers". Le bouton
@@ -268,6 +340,7 @@ async function openRecap(){
   const recap = computeRecap(new Date().getFullYear());
   const canvas = document.getElementById('recapCanvas');
   const downloadBtn = document.getElementById('downloadRecapBtn');
+  const downloadPdfBtn = document.getElementById('downloadRecapPdfBtn');
   const shareBtn = document.getElementById('shareRecapBtn');
   if(!recap){
     // Case limite (rien de vu cette année, ex. tout début janvier ou
@@ -284,11 +357,13 @@ async function openRecap(){
     ctx.fillText('Rien à résumer pour l\'instant.', canvas.width / 2, canvas.height / 2);
     ctx.textAlign = 'left';
     downloadBtn.style.display = 'none';
+    downloadPdfBtn.style.display = 'none';
     shareBtn.style.display = 'none';
     openOverlay('recapOverlay');
     return;
   }
   downloadBtn.style.display = '';
+  downloadPdfBtn.style.display = '';
   shareBtn.style.display = (await canShareFiles()) ? '' : 'none';
   openOverlay('recapOverlay');
   await renderRecapCanvas(recap);
@@ -316,6 +391,26 @@ document.getElementById('downloadRecapBtn').addEventListener('click', () => {
     // le canvas malgré crossOrigin='anonymous' (CDN mal configuré) — au pire
     // un message clair plutôt qu'un clic silencieusement mort.
     showToast('Impossible de générer l\'image, réessaie');
+    console.error(e);
+  }
+});
+document.getElementById('downloadRecapPdfBtn').addEventListener('click', () => {
+  const canvas = document.getElementById('recapCanvas');
+  const year = new Date().getFullYear();
+  try{
+    const pdfBytes = buildRecapPdf(canvas);
+    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.download = `kinet-bilan-${year}.pdf`;
+    link.href = url;
+    link.click();
+    URL.revokeObjectURL(url);
+  }catch(e){
+    // Même filet que le PNG ci-dessus : canvas.toDataURL() (dans
+    // buildRecapPdf()) peut lever SecurityError si le canvas a fini par
+    // être tainté malgré crossOrigin='anonymous'.
+    showToast('Impossible de générer le PDF, réessaie');
     console.error(e);
   }
 });

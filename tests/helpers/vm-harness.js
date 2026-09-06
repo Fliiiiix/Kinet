@@ -109,6 +109,16 @@ function createContext(overrides = {}){
     // bouton) passe sa propre implémentation via overrides plutôt que
     // celle-ci, qui se contente de dérouler le handler tel quel.
     withSubmitGuard: (btn, handler) => handler,
+    // isOfflineMode (js/offline.js) : lu directement (pas via une fonction)
+    // par plusieurs fichiers depuis la file d'attente hors ligne (retour
+    // utilisateur, js/offlineQueue.js — toggle favori/épisode, retirer un
+    // item watchlist/journal) — un test qui charge l'un de CES fichiers
+    // seul, sans js/offline.js, plante en ReferenceError sans ce stub (une
+    // variable jamais déclarée dans le contexte, pas juste undefined).
+    // false par défaut : la plupart des tests exercent le chemin "en
+    // ligne" ; un test qui veut vraiment le chemin hors ligne le
+    // réassigne via setState(ctx, { isOfflineMode: true }).
+    isOfflineMode: false,
     // setTimeout/clearTimeout : un contexte vm frais n'a PAS ces globals
     // (contrairement à ce qu'on pourrait croire — Node ne les pose que sur
     // le contexte réel, pas sur les sandbox créées par vm.createContext),
