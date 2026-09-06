@@ -355,6 +355,61 @@ document.getElementById('filmReviewOverlay').addEventListener('click', (e) => {
 // Factorisée pour être réutilisée par le profil (lecture seule) d'un ami —
 // voir openFriendProfile() dans js/friends.js — avec un autre conteneur et
 // la liste de films de cet ami plutôt que la sienne.
+// Comparaison année sur année (retour utilisateur) — réutilise
+// computeRecap() (js/recap.js) plutôt que de dupliquer sa logique : cette
+// fonction lit déjà "vu cette année" au sens propre (au moins un
+// visionnage `viewings` cette année-là, pas juste `films.added`), calcule
+// déjà total/note moyenne/genre dominant pour une année donnée — tout ce
+// dont cette comparaison a besoin, pour les DEUX années demandées.
+//
+// UNIQUEMENT pour son propre catalogue (voir l'appel dans
+// renderStatsInto() : `list === films`) — computeRecap() lit les
+// variables globales `films`/`viewings`, jamais celles d'un ami
+// (openFriendProfile() charge le catalogue d'un ami dans un tableau à
+// part, sans ses visionnages, qui ne sont d'ailleurs pas exposés côté
+// RLS). Comparer les années d'un ami donnerait donc TOUJOURS les
+// chiffres du compte connecté, silencieusement faux.
+function renderYearComparison(){
+  const thisYear = new Date().getFullYear();
+  const lastYear = thisYear - 1;
+  const curr = computeRecap(thisYear);
+  const prev = computeRecap(lastYear);
+  if(!curr && !prev) return ''; // rien à comparer, ni cette année ni l'an dernier
+
+  const yearColHtml = (recap, year) => recap ? `
+    <div class="year-compare-col">
+      <div class="year-compare-year">${year}</div>
+      <div class="year-compare-total">${recap.total}</div>
+      <div class="year-compare-sub">${recap.total > 1 ? 'films vus' : 'film vu'}</div>
+      <div class="year-compare-avg">${recap.avgNote != null ? recap.avgNote.toFixed(1) : '—'}<span class="year-compare-avg-unit"> / 5</span></div>
+      ${recap.topGenreLabel ? `<div class="year-compare-genre">${escapeHtml(recap.topGenreLabel)}</div>` : ''}
+    </div>
+  ` : `
+    <div class="year-compare-col year-compare-col-empty">
+      <div class="year-compare-year">${year}</div>
+      <div class="tmdb-empty">Rien de vu cette année-là.</div>
+    </div>
+  `;
+
+  // Delta affiché seulement quand les deux années ont des données — une
+  // comparaison contre zéro n'a pas de sens à afficher comme "progrès".
+  const delta = (curr && prev) ? curr.total - prev.total : null;
+  const deltaHtml = delta !== null && delta !== 0 ? `
+    <div class="year-compare-delta ${delta > 0 ? 'is-up' : 'is-down'}">${delta > 0 ? '▲' : '▼'} ${Math.abs(delta)} film${Math.abs(delta) > 1 ? 's' : ''} ${delta > 0 ? 'de plus' : 'de moins'} qu'en ${lastYear}</div>
+  ` : '';
+
+  return `
+    <div class="stats-section reveal">
+      <div class="stats-section-title">Cette année vs l'année dernière</div>
+      <div class="year-compare-grid">
+        ${yearColHtml(curr, thisYear)}
+        ${yearColHtml(prev, lastYear)}
+      </div>
+      ${deltaHtml}
+    </div>
+  `;
+}
+
 function renderStatsInto(content, list = films){
   const s = computeStats(list);
 
@@ -381,6 +436,8 @@ function renderStatsInto(content, list = films){
       <div class="stat-tile accent-violet"><div class="stat-value">${s.gridCount}</div><div class="stat-label">Grille 7 critères</div></div>
       <div class="stat-tile accent-gold"><div class="stat-value">${s.manualCount}</div><div class="stat-label">Note manuelle</div></div>
     </div>
+
+    ${list === films ? renderYearComparison() : ''}
 
     <div class="stats-section stats-section-dist reveal">
       <div class="stats-section-title">Distribution des notes</div>

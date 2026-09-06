@@ -2425,6 +2425,66 @@ input[type="range"]::-moz-range-thumb{
   margin-bottom:18px;
 }
 .film-review-open-detail{width:100%;}
+/* Comparaison année sur année (retour utilisateur) — voir
+   renderYearComparison() (js/stats.js). Deux colonnes symétriques plutôt
+   qu'un tableau : peu de valeurs par côté, une carte se lit plus vite
+   qu'une grille de cellules ici. */
+.year-compare-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+  margin-bottom:12px;
+}
+.year-compare-col{
+  background:linear-gradient(160deg, var(--surface) 0%, var(--surface-2) 220%);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:16px;
+  text-align:center;
+}
+.year-compare-col-empty{display:flex; flex-direction:column; justify-content:center; min-height:120px;}
+.year-compare-year{
+  font-family:'Space Mono', monospace;
+  font-size:11px;
+  color:var(--text-muted);
+  text-transform:uppercase;
+  letter-spacing:.05em;
+  margin-bottom:8px;
+}
+.year-compare-total{
+  font-family:'Bricolage Grotesque', sans-serif;
+  font-weight:700;
+  font-size:32px;
+  color:var(--violet);
+  line-height:1;
+}
+.year-compare-sub{font-size:11.5px; color:var(--text-muted); margin-top:2px;}
+.year-compare-avg{
+  font-family:'Space Mono', monospace;
+  font-weight:700;
+  font-size:15px;
+  color:var(--gold);
+  margin-top:10px;
+}
+.year-compare-avg-unit{font-weight:400; color:var(--text-muted);}
+.year-compare-genre{
+  display:inline-block;
+  margin-top:8px;
+  padding:3px 10px;
+  border-radius:999px;
+  background:var(--violet-wash);
+  color:var(--violet);
+  font-size:11px;
+  font-family:'Space Mono', monospace;
+}
+.year-compare-delta{
+  text-align:center;
+  font-family:'Space Mono', monospace;
+  font-size:12.5px;
+  color:var(--text-muted);
+}
+.year-compare-delta.is-up{color:var(--violet);}
+.year-compare-delta.is-down{color:var(--text-muted);}
 .stats-extremes{
   display:grid;
   grid-template-columns:1fr 1fr;
