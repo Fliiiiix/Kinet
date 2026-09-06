@@ -426,6 +426,76 @@ function skeletonRows(count = 5){
   return html;
 }
 
+// --- Toast d'annulation (undo) (retour utilisateur : "Annuler une action
+// destructrice") --- Complète l'audit confirmations (v2.7, voir
+// js/app.js/friends.js/groups.js) plutôt que de le remplacer : les actions
+// qui avaient délibérément été laissées sans confirm() (retirer un film de
+// la watchlist, retirer une entrée de journal — réversibles mais avec une
+// vraie perte de donnée si c'est un vrai clic malheureux) gagnent une
+// fenêtre d'annulation au lieu d'un confirm() bloquant à chaque clic. Pas
+// appliqué aux actions déjà triviales à refaire en un clic (like, vote —
+// un simple re-clic suffit, une annulation dédiée n'apporterait rien).
+//
+// Principe : l'appelant retire l'élément de son état local et re-rend
+// AVANT d'appeler showUndoToast — l'écran change tout de suite. La
+// suppression réelle en base (onCommit) n'a lieu qu'à l'expiration du
+// délai ci-dessous ; un clic sur "Annuler" (onUndo) l'annule et restaure
+// l'élément, sans qu'aucune écriture n'ait jamais atteint la base.
+// Jamais "supprimer puis ré-insérer" : ça changerait l'id et risquerait de
+// perdre une écriture concurrente pendant la fenêtre d'annulation.
+const UNDO_TOAST_DELAY_MS = 6000;
+let undoToastTimer = null;
+let undoToastCommit = null;       // callback à exécuter à l'expiration du délai
+let undoToastClickHandler = null; // listener actuellement posé sur #undoToastBtn
+
+function showUndoToast(message, onCommit, onUndo){
+  // Une annulation déjà en attente est validée tout de suite avant d'en
+  // afficher une nouvelle : jamais deux suppressions en attente à la fois,
+  // le bouton "Annuler" ne pourrait viser que l'une des deux.
+  finalizePendingUndo();
+
+  const toast = document.getElementById('undoToast');
+  document.getElementById('undoToastMsg').textContent = message;
+  toast.hidden = false;
+  requestAnimationFrame(() => toast.classList.add('show'));
+
+  undoToastCommit = onCommit;
+  undoToastTimer = setTimeout(finalizePendingUndo, UNDO_TOAST_DELAY_MS);
+
+  undoToastClickHandler = () => {
+    undoToastCommit = null;
+    clearTimeout(undoToastTimer);
+    undoToastTimer = null;
+    detachUndoToastHandler();
+    hideUndoToast();
+    onUndo();
+  };
+  document.getElementById('undoToastBtn').addEventListener('click', undoToastClickHandler);
+}
+
+function detachUndoToastHandler(){
+  if(!undoToastClickHandler) return;
+  document.getElementById('undoToastBtn').removeEventListener('click', undoToastClickHandler);
+  undoToastClickHandler = null;
+}
+
+function finalizePendingUndo(){
+  if(!undoToastCommit) return;
+  const commit = undoToastCommit;
+  undoToastCommit = null;
+  clearTimeout(undoToastTimer);
+  undoToastTimer = null;
+  detachUndoToastHandler();
+  hideUndoToast();
+  commit();
+}
+
+function hideUndoToast(){
+  const toast = document.getElementById('undoToast');
+  toast.classList.remove('show');
+  setTimeout(() => { if(!toast.classList.contains('show')) toast.hidden = true; }, 200);
+}
+
 // --- Retour en haut (retour utilisateur : le catalogue peut dépasser 300
 // films) --- Un seul bouton global (#scrollTopBtn, index.html) plutôt
 // qu'un par page : toute page défile au niveau de la fenêtre (aucun

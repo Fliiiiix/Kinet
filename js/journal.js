@@ -52,14 +52,35 @@ async function addViewing(filmId, watchedAt, note){
   return v;
 }
 
-async function removeViewing(id){
-  const { error } = await supabaseClient.from('viewings').delete().eq('id', id);
-  if(error){
-    showToast('Erreur de suppression, réessaie');
-    console.error(error);
-    return;
-  }
-  viewings = viewings.filter(v => v.id !== id);
+// Toast d'annulation (v2.8) plutôt qu'un confirm() bloquant — voir
+// showUndoToast() (js/ui.js) : le visionnage disparaît tout de suite de
+// l'écran, la suppression réelle en base n'a lieu qu'à l'expiration du
+// délai. filmId sert uniquement à re-rendre la bonne section au clic sur
+// "Annuler" (renderViewingsSection est propre à une fiche film).
+function removeViewingWithUndo(id, filmId){
+  const idx = viewings.findIndex(v => v.id === id);
+  if(idx === -1) return;
+  const [removed] = viewings.splice(idx, 1);
+  renderViewingsSection(filmId);
+  render();
+  showUndoToast(
+    'Visionnage retiré du journal',
+    async () => {
+      const { error } = await supabaseClient.from('viewings').delete().eq('id', id);
+      if(error){
+        console.error(error);
+        // Même logique que la watchlist (js/watchlist.js) : jamais
+        // supprimé côté base en cas d'erreur, un rechargement le
+        // restaurera plutôt qu'un échec silencieux.
+        showToast('Erreur de suppression, réessaie');
+      }
+    },
+    () => {
+      viewings.splice(idx, 0, removed);
+      renderViewingsSection(filmId);
+      render();
+    }
+  );
 }
 
 function viewingsForFilm(filmId){
@@ -88,10 +109,8 @@ function renderViewingsSection(filmId){
     </div>
   `).join('');
   list.querySelectorAll('.viewing-remove').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      await removeViewing(parseInt(btn.dataset.id, 10));
-      renderViewingsSection(filmId);
-      render();
+    btn.addEventListener('click', () => {
+      removeViewingWithUndo(parseInt(btn.dataset.id, 10), filmId);
     });
   });
 }

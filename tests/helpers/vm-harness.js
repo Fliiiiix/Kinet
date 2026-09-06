@@ -105,6 +105,19 @@ function createContext(overrides = {}){
     // bouton) passe sa propre implémentation via overrides plutôt que
     // celle-ci, qui se contente de dérouler le handler tel quel.
     withSubmitGuard: (btn, handler) => handler,
+    // setTimeout/clearTimeout : un contexte vm frais n'a PAS ces globals
+    // (contrairement à ce qu'on pourrait croire — Node ne les pose que sur
+    // le contexte réel, pas sur les sandbox créées par vm.createContext),
+    // donc n'importe quel code chargé qui en appelle un au moment de son
+    // exécution (pas juste à la déclaration d'une fonction) plante en
+    // ReferenceError sans ça. Les vraies fonctions hôte marchent très bien
+    // ici (un timer posé depuis le contexte retombe normalement sur la
+    // boucle d'événements Node) — inutile de les simuler.
+    setTimeout, clearTimeout,
+    // requestAnimationFrame : pas de vraie boucle de rendu en test, on
+    // exécute juste le callback tout de suite plutôt que d'attendre une
+    // frame qui n'arrivera jamais.
+    requestAnimationFrame: (cb) => cb(),
   };
   const ctx = Object.assign(base, overrides);
   return vm.createContext(ctx);

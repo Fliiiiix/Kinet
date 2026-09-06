@@ -107,6 +107,30 @@ film" a été diagnostiqué (voir le commentaire en tête de ce fichier).
   fournir son propre `classList` basé sur un vrai `Set`, sans quoi le test
   échoue silencieusement (le code testé n'a pourtant rien de cassé).
 
+- **Un contexte vm frais n'a PAS `setTimeout`/`clearTimeout`** : contrairement
+  à ce qu'on pourrait croire, `vm.createContext({})` ne les pose pas
+  automatiquement (ce sont des globals Node, pas JS pur) — n'importe quel
+  code chargé qui en appelle un AU MOMENT DE SON EXÉCUTION (pas juste à la
+  déclaration d'une fonction) plante en `ReferenceError`. Trouvé en testant
+  `showUndoToast()` (js/ui.js, toast d'annulation v2.8), qui pose un
+  `setTimeout` dès son premier appel. `createContext()` fournit désormais
+  les vraies fonctions hôte par défaut (elles marchent très bien depuis un
+  contexte vm — un timer posé dedans retombe normalement sur la boucle
+  d'événements Node), plus un `requestAnimationFrame` qui exécute le
+  callback tout de suite (pas de vraie frame de rendu en test).
+- **Un `document.createElement()` par défaut renvoie un élément dont
+  `querySelector()` répond toujours `null`** : suffisant pour un rendu de
+  liste qui s'arrête avant sa boucle (ex. `renderWatchlist()` avec une
+  liste vidée, voir `quick-rate.test.js`), plante en
+  `Cannot read properties of null (reading 'addEventListener')` dès qu'une
+  fonction de rendu construit au moins une ligne pour de vrai et interroge
+  aussitôt `row.querySelector('[data-action=...]').addEventListener(...)`
+  (ex. `remove-with-undo.test.js`, où il reste toujours un item après le
+  retrait testé). Un test dans ce cas fournit son propre `createElement()`
+  dont l'élément a un `querySelector()` renvoyant un stub non-null — le
+  contenu réel des lignes n'a pas besoin d'être exact, juste de ne pas
+  planter.
+
 ## Ajouter un test
 
 Un nouveau bug corrigé mérite un test qui l'aurait attrapé — pas

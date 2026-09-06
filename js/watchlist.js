@@ -153,16 +153,33 @@ async function handleAddToWatchlist(){
   showToast('Ajouté à la watchlist');
 }
 
-async function handleRemoveFromWatchlist(id){
+// Toast d'annulation (v2.8) plutôt qu'un confirm() bloquant — voir
+// showUndoToast() (js/ui.js) : l'item disparaît tout de suite de l'écran,
+// la suppression réelle en base n'a lieu qu'à l'expiration du délai.
+function handleRemoveFromWatchlist(id){
   if(blockIfOffline()) return; // js/offline.js — lecture seule hors ligne
-  const { error } = await supabaseClient.from('watchlist').delete().eq('id', id);
-  if(error){
-    showToast('Erreur de suppression, réessaie');
-    console.error(error);
-    return;
-  }
-  watchlist = watchlist.filter(w => w.id !== id);
+  const idx = watchlist.findIndex(w => w.id === id);
+  if(idx === -1) return;
+  const [removed] = watchlist.splice(idx, 1);
   renderWatchlist();
+  showUndoToast(
+    `« ${removed.title} » retiré de la watchlist`,
+    async () => {
+      const { error } = await supabaseClient.from('watchlist').delete().eq('id', id);
+      if(error){
+        console.error(error);
+        // L'item a déjà disparu de l'écran et la fenêtre d'annulation est
+        // passée — un rechargement de la page le restaurera (jamais
+        // supprimé côté base en cas d'erreur réseau) plutôt qu'un échec
+        // silencieux qui laisserait croire que la suppression a eu lieu.
+        showToast('Erreur de suppression, réessaie');
+      }
+    },
+    () => {
+      watchlist.splice(idx, 0, removed);
+      renderWatchlist();
+    }
+  );
 }
 
 // --- Note rapide depuis la watchlist (retour utilisateur : convertir un
