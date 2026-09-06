@@ -16,6 +16,68 @@
 let globalSearchTimer = null;
 let globalSearchDataReady = false;
 
+// --- Historique des recherches récentes (retour utilisateur) ---
+// localStorage plutôt que Supabase : une préférence propre à CET appareil
+// (même principe que kinetViewMode/getViewMode(), js/ui.js), pas une
+// donnée à synchroniser entre appareils — quelqu'un qui cherche "chern"
+// sur son téléphone n'a pas forcément envie de revoir cette recherche
+// ressurgir sur son PC.
+const RECENT_SEARCHES_KEY = 'kinetRecentSearches';
+const RECENT_SEARCHES_MAX = 5;
+
+function getRecentSearches(){
+  try{
+    const raw = localStorage.getItem(RECENT_SEARCHES_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  }catch(e){
+    return []; // localStorage indisponible/corrompu (navigation privée...) : dégrade en gracieux, pas d'historique plutôt qu'une exception
+  }
+}
+
+function addRecentSearch(query){
+  const trimmed = query.trim();
+  if(!trimmed) return;
+  // Insensible à la casse pour la déduplication ("Chernobyl" puis "chernobyl"
+  // ne doivent pas compter comme deux entrées distinctes) mais garde la
+  // CASSE de la recherche la plus récente pour l'affichage.
+  const existing = getRecentSearches().filter(q => q.toLowerCase() !== trimmed.toLowerCase());
+  const next = [trimmed, ...existing].slice(0, RECENT_SEARCHES_MAX);
+  try{
+    localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(next));
+  }catch(e){
+    // Quota dépassé ou stockage bloqué : tant pis pour l'historique, jamais
+    // une raison de faire échouer la recherche elle-même.
+  }
+}
+
+// Affiché tant qu'on n'a pas encore tapé 2 caractères — remplace le simple
+// message "Tape au moins 2 caractères…" par l'historique s'il y en a un,
+// pour retrouver une recherche récente sans avoir à la retaper.
+function renderEmptySearchState(){
+  const resultsEl = document.getElementById('globalSearchResults');
+  const recent = getRecentSearches();
+  if(recent.length === 0){
+    resultsEl.innerHTML = `<div class="empty-state">Tape au moins 2 caractères…</div>`;
+    return;
+  }
+  resultsEl.innerHTML = `
+    <div class="global-search-group">
+      <div class="global-search-group-title">Recherches récentes</div>
+      <div class="global-search-recent-list">
+        ${recent.map(q => `<button type="button" class="global-search-recent-item" data-query="${escapeHtml(q)}">🕐 ${escapeHtml(q)}</button>`).join('')}
+      </div>
+    </div>
+  `;
+  resultsEl.querySelectorAll('.global-search-recent-item').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const query = btn.dataset.query;
+      document.getElementById('globalSearchInput').value = query;
+      performGlobalSearch(query);
+    });
+  });
+}
+
 async function ensureGlobalSearchData(){
   if(globalSearchDataReady) return;
   await Promise.all([
@@ -80,9 +142,10 @@ function performGlobalSearch(rawQuery){
   const query = rawQuery.trim();
   const resultsEl = document.getElementById('globalSearchResults');
   if(query.length < 2){
-    resultsEl.innerHTML = `<div class="empty-state">Tape au moins 2 caractères…</div>`;
+    renderEmptySearchState();
     return;
   }
+  addRecentSearch(query);
   const normalizedQuery = normalizeSearch(query);
 
   const filmMatches = searchFilms(normalizedQuery);
@@ -139,7 +202,7 @@ function performGlobalSearch(rawQuery){
 
 async function openGlobalSearch(){
   document.getElementById('globalSearchInput').value = '';
-  document.getElementById('globalSearchResults').innerHTML = `<div class="empty-state">Tape au moins 2 caractères…</div>`;
+  renderEmptySearchState();
   openOverlay('globalSearchOverlay');
   document.getElementById('globalSearchInput').focus();
   await ensureGlobalSearchData(); // n'empêche pas de taper pendant le chargement

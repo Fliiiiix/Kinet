@@ -2870,6 +2870,27 @@ input[type="range"]::-moz-range-thumb{
    qui n'ont pas la règle svg{width:42%} des icônes film/série. */
 .global-search-row .film-poster-placeholder{font-size:18px;}
 
+/* Historique des recherches récentes (retour utilisateur) — voir
+   getRecentSearches()/renderEmptySearchState() (js/globalSearch.js).
+   Boutons en ligne plutôt qu'en .wl-row : ce ne sont que des libellés
+   texte, une ligne complète avec affiche serait disproportionnée. */
+.global-search-recent-list{display:flex; flex-direction:column; gap:4px;}
+.global-search-recent-item{
+  display:block;
+  width:100%;
+  text-align:left;
+  padding:9px 12px;
+  border-radius:8px;
+  border:1px solid transparent;
+  background:none;
+  color:var(--text);
+  font-size:13.5px;
+  font-family:inherit;
+  cursor:pointer;
+  transition:background .15s, border-color .15s;
+}
+.global-search-recent-item:hover{background:var(--surface-2); border-color:var(--line);}
+
 /* Propositions de groupe : votes + discussion */
 .proposal-row .wl-actions{margin-left:0;}
 .vote-controls-inline{

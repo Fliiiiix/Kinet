@@ -84,6 +84,46 @@ test('performGlobalSearch() : aucune correspondance -> message explicite, pas un
   assert.ok(resultsEl.innerHTML.includes('Rien ne correspond'));
 });
 
+// --- Historique des recherches récentes (retour utilisateur) ---
+// Une recherche réellement effectuée (2+ caractères) rejoint
+// localStorage — retrouvée ensuite tant qu'on n'a pas encore retapé
+// 2 caractères (renderEmptySearchState(), appelée par openGlobalSearch()
+// et par performGlobalSearch() elle-même sous le seuil).
+test('performGlobalSearch() : une recherche effectuée rejoint l\'historique, relu par renderEmptySearchState()', () => {
+  const { ctx, resultsEl } = buildContext();
+  ctx.performGlobalSearch('chern');
+  ctx.renderEmptySearchState();
+  assert.ok(resultsEl.innerHTML.includes('Recherches récentes'));
+  assert.ok(resultsEl.innerHTML.includes('chern'));
+});
+
+test('performGlobalSearch() : une recherche sous le seuil (< 2 caractères) n\'est PAS ajoutée à l\'historique', () => {
+  const { ctx } = buildContext();
+  ctx.performGlobalSearch('c');
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(ctx.getRecentSearches())), []);
+});
+
+test('addRecentSearch() : déduplique en ignorant la casse, mais garde la casse la plus récente', () => {
+  const { ctx } = buildContext();
+  ctx.addRecentSearch('Chernobyl');
+  ctx.addRecentSearch('paprika');
+  ctx.addRecentSearch('chernobyl'); // même recherche, casse différente -> remonte en tête, ne duplique pas
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(ctx.getRecentSearches())), ['chernobyl', 'paprika']);
+});
+
+test('addRecentSearch() : plafonné à 5 entrées, les plus récentes gardées', () => {
+  const { ctx } = buildContext();
+  ['a', 'b', 'c', 'd', 'e', 'f'].forEach(q => ctx.addRecentSearch(q));
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(ctx.getRecentSearches())), ['f', 'e', 'd', 'c', 'b']);
+});
+
+test('renderEmptySearchState() : message par défaut ("Tape au moins 2 caractères…") quand aucun historique', () => {
+  const { ctx, resultsEl } = buildContext();
+  ctx.renderEmptySearchState();
+  assert.ok(resultsEl.innerHTML.includes('2 caractères'));
+  assert.ok(!resultsEl.innerHTML.includes('Recherches récentes'));
+});
+
 // --- Raccourci clavier "/" (retour utilisateur) --- Ouvre la recherche
 // sans avoir à viser l'icône, sauf s'il vole le "/" à un champ de saisie
 // déjà actif ou qu'une modale est déjà ouverte (les modales ne s'empilent
