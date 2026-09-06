@@ -1,18 +1,22 @@
-// --- Tests de withSubmitGuard() (js/ui.js) ---
-// Répasse "balayage double-soumission partout" (retour utilisateur) suite
-// au bug réel trouvé sur "Note rapide" (js/watchlist.js) : un double-clic,
-// ou Entrée puis clic, sur un bouton qui déclenche une écriture Supabase
-// pouvait insérer le même enregistrement deux fois faute de désactivation
-// pendant la requête. withSubmitGuard() généralise ce filet à tous les
-// sites d'appel plutôt que de le réécrire à la main partout.
+// --- Tests des helpers partagés de js/ui.js ---
+// withSubmitGuard() : répasse "balayage double-soumission partout" (retour
+// utilisateur) suite au bug réel trouvé sur "Note rapide" (js/watchlist.js)
+// — un double-clic, ou Entrée puis clic, sur un bouton qui déclenche une
+// écriture Supabase pouvait insérer le même enregistrement deux fois faute
+// de désactivation pendant la requête. Généralisé ici plutôt que réécrit à
+// la main à chaque site d'appel.
+// skeletonRows() : remplace le texte brut "Chargement…" par une silhouette
+// animée sur les listes à fort trafic (watchlist, séries, top, amis,
+// groupes) — même fichier, regroupés dans ce test plutôt qu'un fichier par
+// petit helper.
 const { createSuite, assert } = require('./helpers/tiny-test');
 const { createContext, loadFiles, stubDocument, stubElement } = require('./helpers/vm-harness');
 const { test, run } = createSuite();
 
 function buildContext(){
   // js/ui.js fait aussi du wiring de bas de fichier (view-toggle, etc.) —
-  // stubDocument() suffit, aucun élément précis n'est interrogé par
-  // withSubmitGuard() lui-même (il reçoit btn en paramètre direct).
+  // stubDocument() suffit, aucun élément précis n'est interrogé par ces
+  // deux helpers (ils reçoivent leurs paramètres en direct).
   const ctx = createContext({ document: stubDocument() });
   loadFiles(ctx, ['js/ui.js']);
   return ctx;
@@ -63,4 +67,21 @@ test('withSubmitGuard() : transmet les arguments et la valeur de retour du handl
   assert.strictEqual(result, 5);
 });
 
-module.exports = run('submit-guard.test.js');
+test('skeletonRows() : génère le nombre de lignes demandé, chacune avec une affiche et 2 lignes de texte', () => {
+  const ctx = buildContext();
+  const html = ctx.skeletonRows(3);
+  assert.strictEqual((html.match(/skeleton-row/g) || []).length, 3);
+  assert.strictEqual((html.match(/skeleton-poster/g) || []).length, 3);
+  // \b évite de compter "skeleton-lines" (le conteneur qui les enveloppe,
+  // voir css/style.css) comme une occurrence de "skeleton-line" (la ligne
+  // elle-même) — sans lui, 3 correspondances par ligne au lieu de 2.
+  assert.strictEqual((html.match(/skeleton-line\b/g) || []).length, 6, '2 lignes de texte par ligne de squelette');
+});
+
+test('skeletonRows() : 5 lignes par défaut si aucun compte n\'est précisé', () => {
+  const ctx = buildContext();
+  const html = ctx.skeletonRows();
+  assert.strictEqual((html.match(/skeleton-row/g) || []).length, 5);
+});
+
+module.exports = run('ui-helpers.test.js');

@@ -1468,6 +1468,46 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   font-style:italic;
   padding:6px 2px;
 }
+
+/* --- Squelettes de chargement (retour utilisateur) --- Remplace le texte
+   brut "Chargement…" par des silhouettes animées sur les listes à fort
+   trafic (watchlist, séries, top, amis, groupes, recherche globale) — voir
+   skeletonRows()/skeletonCards() dans js/ui.js. Un seul gabarit .skeleton-row
+   (poster + 2 lignes de texte) sert pour toutes : ces listes partagent
+   déjà .wl-row (poster + titre + sous-texte), donc une seule silhouette
+   suffit à toutes les approximer. */
+.skeleton-row{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  padding:12px 14px;
+  margin-bottom:8px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:linear-gradient(160deg, var(--surface) 0%, var(--surface-2) 220%);
+}
+.skeleton-poster{width:52px; height:78px; border-radius:8px; flex:none;}
+.skeleton-lines{flex:1; display:flex; flex-direction:column; gap:8px; min-width:0;}
+.skeleton-line{height:11px; border-radius:4px;}
+.skeleton-line.short{width:40%;}
+.skeleton-line.medium{width:65%;}
+.skeleton-poster, .skeleton-line{
+  background:linear-gradient(100deg, var(--surface-2) 30%, var(--line-soft) 50%, var(--surface-2) 70%);
+  background-size:200% 100%;
+  animation:skeletonShimmer 1.4s ease-in-out infinite;
+}
+@keyframes skeletonShimmer{
+  0%{background-position:200% 0;}
+  100%{background-position:-200% 0;}
+}
+/* Squelette autonome une fois affiché (comme une transition de page ou
+   l'ouverture d'une modale) : garde l'exception prefers-reduced-motion déjà
+   établie pour ce type d'animation — mais SANS filer un rectangle figé aux
+   couleurs du dégradé pour autant, la silhouette reste lisible sans juste
+   perdre le mouvement. */
+@media (prefers-reduced-motion:reduce){
+  .skeleton-poster, .skeleton-line{animation:none; background:var(--surface-2);}
+}
 /* Top films (v2.3) — chaque film choisi réutilise le gabarit .tmdb-result
    (poster + titre + année) mais sans son survol cliquable-en-bloc, remplacé
    par 3 actions dédiées (monter/descendre/retirer) — voir

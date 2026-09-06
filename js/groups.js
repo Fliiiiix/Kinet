@@ -88,7 +88,7 @@ async function handleCreateGroup(){
 
 // Page liste des groupes — appelée par le routeur (#/groupes).
 async function openGroups(){
-  document.getElementById('groupsList').innerHTML = `<div class="tmdb-empty">Chargement…</div>`;
+  document.getElementById('groupsList').innerHTML = skeletonRows();
   document.getElementById('groupNameInput').value = '';
   document.getElementById('groupDescInput').value = '';
   await loadGroups();
@@ -231,16 +231,16 @@ async function openGroupDetail(groupId){
   }
   currentGroupId = groupId;
   document.getElementById('groupDetailTitle').textContent = group.name;
-  document.getElementById('groupMembersList').innerHTML = `<div class="tmdb-empty">Chargement…</div>`;
+  document.getElementById('groupMembersList').innerHTML = skeletonRows(3);
   document.getElementById('groupAddFriendSection').style.display = 'none';
   document.getElementById('groupInviteSection').style.display = 'none';
   document.getElementById('chosenBanner').style.display = 'none';
   document.getElementById('groupDetailFooter').innerHTML = '';
-  document.getElementById('groupProposalsList').innerHTML = `<div class="tmdb-empty">Chargement…</div>`;
+  document.getElementById('groupProposalsList').innerHTML = skeletonRows(3);
   document.getElementById('proposalTitleInput').value = '';
   clearProposalTmdbSelection();
-  document.getElementById('groupTopFilmsList').innerHTML = `<div class="tmdb-empty">Chargement…</div>`;
-  document.getElementById('groupActivityList').innerHTML = `<div class="tmdb-empty">Chargement…</div>`;
+  document.getElementById('groupTopFilmsList').innerHTML = skeletonRows(3);
+  document.getElementById('groupActivityList').innerHTML = skeletonRows(3);
 
   const members = await loadGroupMembers(groupId);
   groupMembersCache[groupId] = members;

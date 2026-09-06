@@ -240,8 +240,8 @@ function renderUpcoming(){
 
 // Page Prochainement — appelée par le routeur (#/prochainement).
 async function openUpcoming(){
-  document.getElementById('upcomingSoonList').innerHTML = `<div class="empty-state">Chargement…</div>`;
-  document.getElementById('upcomingEndedList').innerHTML = `<div class="empty-state">Chargement…</div>`;
+  document.getElementById('upcomingSoonList').innerHTML = skeletonRows(3);
+  document.getElementById('upcomingEndedList').innerHTML = skeletonRows(3);
   // Reparti du mois en cours à chaque ouverture de la page plutôt que de
   // garder une navigation précédente : sinon revenir sur Prochainement
   // après avoir feuilleté plusieurs mois rouvrirait sur un mois qui n'a

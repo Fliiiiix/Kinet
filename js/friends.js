@@ -426,14 +426,14 @@ async function openFriendsSideSections(){
 // --- Page amis (liste + demandes) — appelée par le routeur (#/amis). ---
 
 async function openFriends(){
-  document.getElementById('friendRequestsIn').innerHTML = `<div class="tmdb-empty">Chargement…</div>`;
+  document.getElementById('friendRequestsIn').innerHTML = skeletonRows(2);
   document.getElementById('friendRequestsOut').innerHTML = '';
-  document.getElementById('friendsList').innerHTML = '';
+  document.getElementById('friendsList').innerHTML = skeletonRows();
   document.getElementById('friendSearchInput').value = '';
   document.getElementById('friendSearchResults').innerHTML = '';
-  document.getElementById('friendActivityList').innerHTML = `<div class="tmdb-empty">Chargement…</div>`;
-  document.getElementById('friendSuggestionsList').innerHTML = `<div class="tmdb-empty">Chargement…</div>`;
-  document.getElementById('friendRecommendationsList').innerHTML = `<div class="tmdb-empty">Chargement…</div>`;
+  document.getElementById('friendActivityList').innerHTML = skeletonRows(3);
+  document.getElementById('friendSuggestionsList').innerHTML = skeletonRows(3);
+  document.getElementById('friendRecommendationsList').innerHTML = skeletonRows(3);
   await loadFriendships();
   renderFriendsPage();
   await openFriendsSideSections();
@@ -453,7 +453,7 @@ document.getElementById('amisGroupsLink').addEventListener('click', goToGroups);
 async function openFriendProfile(userId){
   document.getElementById('friendProfileTitle').textContent = friendDisplayName(userId);
   const content = document.getElementById('friendProfileContent');
-  content.innerHTML = `<div class="tmdb-empty">Chargement…</div>`;
+  content.innerHTML = skeletonRows(4);
   openOverlay('friendProfileOverlay');
 
   const [{ data, error }, compat] = await Promise.all([

@@ -55,7 +55,7 @@ function renderTopFilms(){
 
 // Page top films — appelée par le routeur (#/top).
 async function openTop(){
-  document.getElementById('topList').innerHTML = `<div class="tmdb-empty">Chargement…</div>`;
+  document.getElementById('topList').innerHTML = skeletonRows();
   await loadTopFilms(topScope);
   renderTopFilms();
 }

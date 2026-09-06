@@ -106,7 +106,7 @@ function renderWatchlist(){
 
 // Page watchlist — appelée par le routeur (#/watchlist).
 async function openWatchlist(){
-  document.getElementById('wlList').innerHTML = `<div class="empty-state">Chargement…</div>`;
+  document.getElementById('wlList').innerHTML = skeletonRows();
   await loadWatchlist();
   renderWatchlist();
   // Suggestions (v2.1, js/suggestions.js) : plusieurs appels TMDB, jamais

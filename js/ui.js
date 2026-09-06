@@ -396,3 +396,27 @@ function withSubmitGuard(btn, handler){
     }
   };
 }
+
+// --- Squelettes de chargement (retour utilisateur) ---
+// Remplace le texte brut "Chargement…" par une silhouette animée sur les
+// listes à fort trafic (watchlist, séries, top, amis, groupes, recherche
+// globale) — un seul gabarit .skeleton-row (poster + 2 lignes de texte,
+// voir css/style.css) suffit à toutes les approximer, ces listes
+// partageant déjà .wl-row (poster + titre + sous-texte). count : nombre de
+// lignes à afficher — 4-6 selon la place disponible, assez pour remplir le
+// premier écran sans en dessiner des dizaines pour rien.
+function skeletonRows(count = 5){
+  let html = '';
+  for(let i = 0; i < count; i++){
+    html += `
+      <div class="skeleton-row" aria-hidden="true">
+        <div class="skeleton-poster"></div>
+        <div class="skeleton-lines">
+          <div class="skeleton-line medium"></div>
+          <div class="skeleton-line short"></div>
+        </div>
+      </div>
+    `;
+  }
+  return html;
+}

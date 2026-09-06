@@ -142,7 +142,7 @@ function renderTrackedShows(){
 
 // Page liste des séries — appelée par le routeur (#/series).
 async function openSeries(){
-  document.getElementById('seriesList').innerHTML = `<div class="empty-state">Chargement…</div>`;
+  document.getElementById('seriesList').innerHTML = skeletonRows();
   await loadTrackedShows();
   renderTrackedShows();
 }
