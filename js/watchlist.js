@@ -12,6 +12,10 @@
 let watchlist = [];
 let wlTmdbSelected = null; // { tmdb_id, poster_url, overview, release_year, title }
 let convertingFromWatchlistId = null;
+// Alerte "un ami a noté un film de ta watchlist" (retour utilisateur) —
+// watchlistId -> [{ friendId, note }], voir get_watchlist_friend_ratings()
+// (migrations/039), jointure fiable sur tmdb_id (jamais le titre).
+let watchlistFriendRatings = {};
 
 async function loadWatchlist(){
   const { data, error } = await supabaseClient
@@ -54,6 +58,20 @@ async function loadWatchlist(){
   saveOfflineCache('watchlist', watchlist);
 }
 
+// Alerte "un ami a noté un film de ta watchlist" (retour utilisateur) —
+// null si aucun ami n'a noté ce tmdb_id (rien à afficher). Un seul ami :
+// son prénom + sa note ; plusieurs : décompte + moyenne, pour ne pas
+// allonger la ligne d'une liste de noms qui pourrait devenir longue.
+function friendRatingsLabel(watchlistId){
+  const ratings = watchlistFriendRatings[watchlistId];
+  if(!ratings || ratings.length === 0) return null;
+  if(ratings.length === 1){
+    return `👋 ${friendDisplayName(ratings[0].friendId)} a mis ${ratings[0].note.toFixed(1)}`;
+  }
+  const avg = ratings.reduce((a, r) => a + r.note, 0) / ratings.length;
+  return `👋 ${ratings.length} amis l'ont noté (moy. ${avg.toFixed(1)})`;
+}
+
 function renderWatchlist(){
   const list = document.getElementById('wlList');
   if(watchlist.length === 0){
@@ -64,6 +82,7 @@ function renderWatchlist(){
   watchlist.forEach(item => {
     const row = document.createElement('div');
     row.className = 'wl-row';
+    const friendLabel = friendRatingsLabel(item.id);
     row.innerHTML = `
       ${item.posterUrl
         ? `<img class="film-poster" src="${item.posterUrl}" alt="" loading="lazy">`
@@ -71,6 +90,7 @@ function renderWatchlist(){
       <div class="wl-main">
         <div class="wl-title">${escapeHtml(item.title)}${item.releaseYear ? ` <span class="wl-year">(${item.releaseYear})</span>` : ''}</div>
         ${item.note ? `<div class="wl-note">${escapeHtml(item.note)}</div>` : ''}
+        ${friendLabel ? `<div class="wl-friend-rating">${escapeHtml(friendLabel)}</div>` : ''}
         <div class="wl-quick-form" data-quick-form="${item.id}" style="display:none;">
           <input type="number" class="wl-quick-note-input" min="0" max="5" step="0.5" placeholder="Note /5" data-id="${item.id}" aria-label="Note rapide pour ${escapeHtml(item.title)}">
           <button class="btn" type="button" data-action="quick-confirm" data-id="${item.id}">OK</button>
@@ -104,14 +124,39 @@ function renderWatchlist(){
   });
 }
 
+// Alerte "un ami a noté un film de ta watchlist" (retour utilisateur) —
+// voir get_watchlist_friend_ratings() (migrations/039), jointure fiable
+// sur tmdb_id.
+async function loadWatchlistFriendRatings(){
+  const { data, error } = await supabaseClient.rpc('get_watchlist_friend_ratings');
+  if(error){ console.error(error); watchlistFriendRatings = {}; return; }
+  watchlistFriendRatings = {};
+  (data || []).forEach(row => {
+    (watchlistFriendRatings[row.watchlist_id] = watchlistFriendRatings[row.watchlist_id] || [])
+      .push({ friendId: row.friend_id, note: Number(row.note) });
+  });
+  const missing = [...new Set((data || []).map(r => r.friend_id))].filter(id => !friendProfiles[id]);
+  if(missing.length > 0){
+    const { data: profs, error: profErr } = await supabaseClient
+      .from('profiles')
+      .select('user_id, display_name, avatar_url')
+      .in('user_id', missing);
+    if(profErr) console.error(profErr);
+    else profs.forEach(p => cacheProfile(p.user_id, p.display_name, p.avatar_url));
+  }
+}
+
 // Page watchlist — appelée par le routeur (#/watchlist).
 async function openWatchlist(){
   document.getElementById('wlList').innerHTML = skeletonRows();
   await loadWatchlist();
   renderWatchlist();
-  // Suggestions (v2.1, js/suggestions.js) : plusieurs appels TMDB, jamais
-  // attendu — la page watchlist s'affiche sans attendre ce complément.
+  // Suggestions + alerte "ami a noté" (retour utilisateur) : ni l'une ni
+  // l'autre n'est attendue — la page s'affiche sans attendre ces
+  // compléments, qui se posent tout seuls une fois prêts (même principe
+  // que refreshActivityBadge()/maybeShowDigest(), js/auth.js).
   loadSuggestions();
+  loadWatchlistFriendRatings().then(renderWatchlist);
 }
 
 async function handleAddToWatchlist(){

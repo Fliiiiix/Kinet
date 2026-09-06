@@ -2029,6 +2029,30 @@ input[type="range"]::-moz-range-thumb{
 .poster-wall-note.rate-low{color:var(--coral);}
 .poster-wall-note.rate-mid{color:var(--gold);}
 .poster-wall-note.rate-high{color:var(--green);}
+/* Comparaison de goûts élargie (retour utilisateur, js/groups.js) — une
+   pastille "Nom note" par membre ayant noté ce film, réutilisant
+   .rate-low/-mid/-high (noteColorClass()) au lieu de .counter : la
+   moyenne du film garde SA note en cadran juste à côté (voir "Goûts du
+   groupe" plus haut), ce détail par membre reste volontairement plus
+   discret, une simple pastille de texte. */
+.taste-comparison-notes{
+  display:flex;
+  flex-wrap:wrap;
+  gap:4px;
+  margin-top:5px;
+}
+.taste-note-pill{
+  font-family:'Space Mono', monospace;
+  font-size:10.5px;
+  border-radius:999px;
+  padding:2px 8px;
+  background:var(--surface-2);
+  border:1px solid var(--line);
+  white-space:nowrap;
+}
+.taste-note-pill.rate-low{color:var(--coral); border-color:var(--coral-dim);}
+.taste-note-pill.rate-mid{color:var(--gold); border-color:var(--gold-dim);}
+.taste-note-pill.rate-high{color:var(--green); border-color:var(--green-dim);}
 .poster-wall-fav{
   position:absolute;
   top:6px; left:6px;
@@ -2858,6 +2882,16 @@ input[type="range"]::-moz-range-thumb{
   margin-top:4px;
   line-height:1.4;
 }
+/* Alerte "un ami a noté un film de ta watchlist" (retour utilisateur,
+   js/watchlist.js) — doré comme .new-episode-badge (séries) : même rôle,
+   un signal qui invite à l'action plutôt qu'un simple statut. */
+.wl-friend-rating{
+  font-family:'Space Mono', monospace;
+  font-size:11px;
+  color:var(--gold);
+  margin-top:4px;
+  line-height:1.4;
+}
 .wl-actions{display:flex; gap:6px; flex:none;}
 .wl-actions .btn{padding:8px 12px; font-size:11px;}
 
@@ -2970,6 +3004,37 @@ input[type="range"]::-moz-range-thumb{
   margin-bottom:3px;
 }
 .comment-body{font-size:13.5px; line-height:1.5; word-wrap:break-word;}
+/* Réactions rapides sur une critique d'ami (retour utilisateur) — palette
+   fixe toujours visible sous le commentaire, voir commentReactionsHtml()
+   (js/filmDetail.js). Pastilles discrètes au repos (pas de bordure tant
+   qu'on n'a pas réagi) pour ne pas alourdir chaque commentaire de 5
+   contours ; seule celle où l'on a réagi (.active) se détache vraiment. */
+.comment-reactions{
+  display:flex;
+  gap:4px;
+  margin-top:6px;
+}
+.reaction-btn{
+  display:flex;
+  align-items:center;
+  gap:3px;
+  background:none;
+  border:1px solid transparent;
+  border-radius:999px;
+  padding:2px 7px;
+  font-size:13px;
+  line-height:1.4;
+  cursor:pointer;
+  transition:background .12s, border-color .12s;
+}
+.reaction-btn:hover{background:var(--surface-2);}
+.reaction-btn.active{border-color:var(--violet-dim); background:var(--violet-wash);}
+.reaction-count{
+  font-family:'Space Mono', monospace;
+  font-size:10.5px;
+  color:var(--text-muted);
+}
+.reaction-btn.active .reaction-count{color:var(--violet);}
 .comment-delete{
   background:none;
   border:none;

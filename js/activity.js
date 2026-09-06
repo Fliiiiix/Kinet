@@ -30,7 +30,13 @@ function rowToActivityEvent(row){
   };
 }
 
-async function loadActivity({ scope, groupId = null, limit = 20 } = {}){
+// eventType (retour utilisateur : "Historique des élections de groupe") —
+// filtre optionnel côté serveur plutôt que de tout charger puis filtrer en
+// JS : réutilisé pour une liste dédiée aux seules élections
+// ('proposal_chosen'), qui a besoin de sa PROPRE limite (le fil d'activité
+// général mélange tous les types d'événements et, à limite=20 partagée,
+// perdrait vite les élections plus anciennes parmi le reste).
+async function loadActivity({ scope, groupId = null, eventType = null, limit = 20 } = {}){
   let query = supabaseClient
     .from('activity_events')
     .select('*')
@@ -38,6 +44,7 @@ async function loadActivity({ scope, groupId = null, limit = 20 } = {}){
     .order('created_at', { ascending: false })
     .limit(limit);
   if(groupId != null) query = query.eq('group_id', groupId);
+  if(eventType != null) query = query.eq('event_type', eventType);
 
   const { data, error } = await query;
   if(error){

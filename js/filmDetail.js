@@ -17,6 +17,13 @@ let currentFilmTmdbId = null;
 let currentFilmData = null;    // forme tmdbSelected : {tmdb_id, title, poster_url, overview, release_year, original_title, genre_ids}
 let filmDetailLikes = [];      // [{ id, userId }]
 let filmDetailComments = [];   // [{ id, userId, body, createdAt }]
+// Réactions rapides sur une critique d'ami (retour utilisateur, migration
+// 037) — commentId -> [{ id, userId, emoji }]. Palette volontairement
+// courte et fixe (pas de sélecteur d'emoji libre) : le point est la
+// rapidité, un choix parmi 5 réactions type "story" plutôt qu'un clavier
+// emoji complet à ouvrir pour un geste censé être léger.
+const COMMENT_REACTION_EMOJIS = ['👍', '❤️', '😂', '👏', '😮'];
+let commentReactions = {};
 
 function normalizeMovieDetails(details){
   return {
@@ -147,6 +154,24 @@ async function toggleFilmLike(){
   renderFilmDetailLikesSummary();
 }
 
+// Une pastille par emoji de la palette, TOUJOURS affichée (pas seulement
+// celles déjà utilisées) : montrer d'emblée les 5 choix possibles invite à
+// réagir, plutôt qu'un unique bouton "+" qu'il faudrait ouvrir d'abord —
+// c'est tout l'intérêt du mot "rapides" dans la demande d'origine. Un
+// compteur n'apparaît qu'à partir de 1 réaction pour cet emoji.
+function commentReactionsHtml(commentId){
+  const reactions = commentReactions[commentId] || [];
+  return `
+    <div class="comment-reactions" data-comment-id="${commentId}">
+      ${COMMENT_REACTION_EMOJIS.map(emoji => {
+        const forThis = reactions.filter(r => r.emoji === emoji);
+        const mine = forThis.some(r => r.userId === currentUser.id);
+        return `<button type="button" class="reaction-btn ${mine ? 'active' : ''}" data-emoji="${emoji}" title="Réagir avec ${emoji}" aria-pressed="${mine}">${emoji}${forThis.length > 0 ? `<span class="reaction-count">${forThis.length}</span>` : ''}</button>`;
+      }).join('')}
+    </div>
+  `;
+}
+
 function renderFilmDetailComments(){
   const list = document.getElementById('filmDetailCommentsList');
   if(filmDetailComments.length === 0){
@@ -159,12 +184,19 @@ function renderFilmDetailComments(){
       <div class="comment-body-wrap">
         <div class="comment-author">${escapeHtml(friendDisplayName(c.userId))}</div>
         <div class="comment-body">${escapeHtml(c.body)}</div>
+        ${commentReactionsHtml(c.id)}
       </div>
       ${c.userId === currentUser.id ? `<button class="comment-delete" data-id="${c.id}" type="button" title="Supprimer" aria-label="Supprimer ce commentaire">✕</button>` : ''}
     </div>
   `).join('');
   list.querySelectorAll('button[data-id]').forEach(btn => {
     btn.addEventListener('click', () => deleteFilmComment(parseInt(btn.dataset.id, 10)));
+  });
+  list.querySelectorAll('.reaction-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const commentId = parseInt(btn.closest('.comment-reactions').dataset.commentId, 10);
+      toggleCommentReaction(commentId, btn.dataset.emoji);
+    });
   });
 }
 
@@ -181,6 +213,45 @@ async function loadFilmDetailComments(){
   }
   filmDetailComments = data.map(row => ({ id: row.id, userId: row.user_id, body: row.body, createdAt: row.created_at }));
   await ensureProfilesCached(filmDetailComments.map(c => c.userId));
+  await loadCommentReactions(filmDetailComments.map(c => c.id));
+  renderFilmDetailComments();
+}
+
+// Un seul select groupé (in comment_id) pour tous les commentaires de la
+// fiche, plutôt qu'une requête par commentaire — même principe que
+// loadTrackedShows() (js/series.js) pour la progression par série.
+async function loadCommentReactions(commentIds){
+  if(commentIds.length === 0){ commentReactions = {}; return; }
+  const { data, error } = await supabaseClient
+    .from('comment_reactions')
+    .select('id, comment_id, user_id, emoji')
+    .in('comment_id', commentIds);
+  if(error){ console.error(error); commentReactions = {}; return; }
+  commentReactions = {};
+  data.forEach(row => {
+    (commentReactions[row.comment_id] = commentReactions[row.comment_id] || []).push({ id: row.id, userId: row.user_id, emoji: row.emoji });
+  });
+}
+
+// Toggle, pas de confirm() (audit confirmations, v2.7) : aussi léger et
+// réversible qu'un like ou un vote de groupe, un re-clic suffit à annuler.
+async function toggleCommentReaction(commentId, emoji){
+  if(blockIfOffline()) return;
+  const reactions = commentReactions[commentId] || (commentReactions[commentId] = []);
+  const mine = reactions.find(r => r.userId === currentUser.id && r.emoji === emoji);
+  if(mine){
+    const { error } = await supabaseClient.from('comment_reactions').delete().eq('id', mine.id);
+    if(error){ showToast('Erreur, réessaie'); console.error(error); return; }
+    commentReactions[commentId] = reactions.filter(r => r.id !== mine.id);
+  }else{
+    const { data, error } = await supabaseClient
+      .from('comment_reactions')
+      .insert({ comment_id: commentId, user_id: currentUser.id, emoji })
+      .select()
+      .single();
+    if(error){ showToast('Erreur, réessaie'); console.error(error); return; }
+    reactions.push({ id: data.id, userId: currentUser.id, emoji });
+  }
   renderFilmDetailComments();
 }
 
@@ -207,6 +278,7 @@ async function deleteFilmComment(id){
   const { error } = await supabaseClient.from('film_comments').delete().eq('id', id);
   if(error){ showToast('Erreur, réessaie'); console.error(error); return; }
   filmDetailComments = filmDetailComments.filter(c => c.id !== id);
+  delete commentReactions[id]; // supprimées en cascade côté base avec le commentaire (on delete cascade)
   renderFilmDetailComments();
 }
 

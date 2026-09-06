@@ -59,7 +59,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,500&family=Space+Mono:wght@400;700&display=swap">
-<link rel="stylesheet" href="css/style.css?v=136">
+<link rel="stylesheet" href="css/style.css?v=137">
 </head>
 <body>
 
@@ -947,12 +947,34 @@
     <div class="wl-list" id="groupProposalsList"></div>
   </div>
 
+  <!-- Historique des élections (retour utilisateur) — chaque élection
+       (set_chosen_proposal, migrations/020) log déjà un événement
+       'proposal_chosen' dans activity_events (migrations/019) : liste
+       dédiée à CE seul type d'événement (voir loadActivity(), js/activity.js),
+       sinon perdue au milieu du fil d'activité général plus bas qui mélange
+       tout (propositions, commentaires, arrivées de membres...). Masquée
+       tant qu'aucune élection n'a encore eu lieu (voir renderGroupDetail(),
+       js/groups.js). -->
+  <div class="stats-section" id="groupElectionHistorySection" style="display:none;">
+    <div class="stats-section-title">Historique des élections</div>
+    <div class="wl-list" id="groupElectionHistoryList"></div>
+  </div>
+
   <!-- Goûts du groupe (get_group_top_films, migrations/022) : films notés
        par au moins 2 membres — jamais un seul, ça reviendrait à exposer sa
        note individuelle à tout le groupe. -->
   <div class="stats-section">
     <div class="stats-section-title">Goûts du groupe</div>
     <div class="wl-list" id="groupTopFilmsList"></div>
+  </div>
+
+  <!-- Comparaison de goûts élargie (retour utilisateur, migrations/038) —
+       complète la section ci-dessus : pour les mêmes films, qui a mis
+       quelle note plutôt que la seule moyenne. Voir get_group_taste_comparison(),
+       js/groups.js. -->
+  <div class="stats-section">
+    <div class="stats-section-title">Comparaison de goûts</div>
+    <div class="wl-list" id="groupTasteComparisonList"></div>
   </div>
 
   <!-- Fil d'activité (js/activity.js) : qui a proposé/commenté/rejoint
@@ -1467,102 +1489,102 @@
 <!-- ?v=N sur chaque js/*.js ci-dessous (voir le commentaire dans <head>) —
      à incrémenter à chaque déploiement, même numéro pour tous les fichiers. -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/supabaseConfig.js?v=136"></script>
+<script src="js/supabaseConfig.js?v=137"></script>
 <!-- Juste après supabaseConfig.js (a besoin de supabaseClient) et avant
      tout le reste : capte les erreurs de chargement des scripts suivants,
      pas seulement celles de l'app une fois démarrée — voir js/logging.js. -->
-<script src="js/logging.js?v=136"></script>
-<script src="js/tmdbConfig.js?v=136"></script>
-<script src="js/data.js?v=136"></script>
-<script src="js/happenings.js?v=136"></script>
+<script src="js/logging.js?v=137"></script>
+<script src="js/tmdbConfig.js?v=137"></script>
+<script src="js/data.js?v=137"></script>
+<script src="js/happenings.js?v=137"></script>
 <!-- Avant app.js et les 6 autres modules qui ouvrent/ferment une modale
      (openOverlay/closeOverlay) — l'ordre exact importe peu au runtime
      (rien n'y est appelé au chargement), gardé en premier des scripts
      "app" pour la lisibilité, comme un utilitaire partagé. -->
-<script src="js/ui.js?v=136"></script>
+<script src="js/ui.js?v=137"></script>
 <!-- Avant app.js/journal.js/watchlist.js, qui appellent saveOfflineCache()/
      loadOfflineCache()/blockIfOffline() (v1.6, mode hors ligne lecture
      seule) — l'ordre exact importe peu au runtime (rien n'y est appelé au
      chargement, seulement des listeners posés pour plus tard), gardé ici
      pour la lisibilité, comme ui.js juste au-dessus. -->
-<script src="js/offline.js?v=136"></script>
-<script src="js/app.js?v=136"></script>
-<script src="js/tmdb.js?v=136"></script>
-<script src="js/stats.js?v=136"></script>
-<script src="js/achievements.js?v=136"></script>
-<script src="js/journal.js?v=136"></script>
+<script src="js/offline.js?v=137"></script>
+<script src="js/app.js?v=137"></script>
+<script src="js/tmdb.js?v=137"></script>
+<script src="js/stats.js?v=137"></script>
+<script src="js/achievements.js?v=137"></script>
+<script src="js/journal.js?v=137"></script>
 <!-- Après app.js (showToast) — appelée par js/profile.js juste après. -->
-<script src="js/pwa.js?v=136"></script>
-<script src="js/profile.js?v=136"></script>
+<script src="js/pwa.js?v=137"></script>
+<script src="js/profile.js?v=137"></script>
 <!-- Après profile.js (closeProfileModal/openProfileModal) et data.js
      (FEEDBACK_CATEGORIES) — même raisonnement que pwa.js juste au-dessus. -->
-<script src="js/feedback.js?v=136"></script>
+<script src="js/feedback.js?v=137"></script>
 <!-- Bilan cinéphile partageable (v2.43) — après journal.js (viewings) et
      profile.js (currentProfile), voir js/recap.js. -->
-<script src="js/recap.js?v=136"></script>
+<script src="js/recap.js?v=137"></script>
 <!-- N'a besoin que de ui.js (openOverlay/closeOverlay) et app.js
      (showToast), chargés bien avant — placé ici pour rester groupé avec
      les autres modales accessibles depuis le chrome plutôt que pour une
      vraie dépendance. -->
-<script src="js/share.js?v=136"></script>
+<script src="js/share.js?v=137"></script>
 <!-- Après happenings.js/achievements.js (définitions) et profile.js
      (closeProfileModal) : admin.js s'appuie sur les trois au clic, jamais au
      chargement — l'ordre exact importe peu, gardé groupé ici pour la
      lisibilité. -->
-<script src="js/admin.js?v=136"></script>
-<script src="js/router.js?v=136"></script>
-<script src="js/publicProfile.js?v=136"></script>
-<script src="js/top.js?v=136"></script>
-<script src="js/friends.js?v=136"></script>
+<script src="js/admin.js?v=137"></script>
+<script src="js/router.js?v=137"></script>
+<script src="js/publicProfile.js?v=137"></script>
+<script src="js/top.js?v=137"></script>
+<script src="js/friends.js?v=137"></script>
 <!-- Après friends.js (cacheProfile/friendDisplayName/friendAvatarHtml) et
      journal.js (formatViewingDate), avant groups.js qui l'appelle depuis
      openGroupDetail() — l'ordre exact importe peu au runtime (tout est en
      fonctions globales appelées après chargement complet), gardé groupé
      ici pour la lisibilité. -->
-<script src="js/activity.js?v=136"></script>
-<script src="js/watchlist.js?v=136"></script>
+<script src="js/activity.js?v=137"></script>
+<script src="js/watchlist.js?v=137"></script>
 <!-- Après watchlist.js (loadWatchlist/watchlist, réutilisés pour exclure
      ce qui y est déjà) et app.js (getDisplayNote, chargé plus haut) — voir
      js/suggestions.js. Avant auth.js, qui appelle loadSuggestions() depuis
      showApp(). -->
-<script src="js/suggestions.js?v=136"></script>
+<script src="js/suggestions.js?v=137"></script>
 <!-- Import externe (Letterboxd pour l'instant) — après watchlist.js/app.js/
      tmdb.js/journal.js dont il réutilise films/watchlist/searchTmdb()/
      addViewing(). Voir js/importExternal.js. -->
-<script src="js/importExternal.js?v=136"></script>
+<script src="js/importExternal.js?v=137"></script>
 <!-- Fiche film (v2.1) — voir js/filmDetail.js. Regroupée ici avec
      friends.js/watchlist.js dont elle réutilise les helpers (même
      remarque que suggestions.js juste au-dessus : l'ordre exact n'importe
      pas au runtime, tout est en fonctions appelées après chargement
      complet — router.js, plus haut, appelle déjà openFriends()/
      openWatchlist() en aval de leur propre script de la même façon). -->
-<script src="js/filmDetail.js?v=136"></script>
+<script src="js/filmDetail.js?v=137"></script>
 <!-- Après watchlist.js : js/upcoming.js réutilise le tableau watchlist déjà
      chargé (voir plus bas). -->
-<script src="js/series.js?v=136"></script>
+<script src="js/series.js?v=137"></script>
 <!-- Après watchlist.js ET series.js — a besoin des deux tableaux chargés
      (loadWatchlist()/loadTrackedShows()), voir js/upcoming.js. -->
-<script src="js/upcoming.js?v=136"></script>
-<script src="js/groups.js?v=136"></script>
-<script src="js/proposals.js?v=136"></script>
+<script src="js/upcoming.js?v=137"></script>
+<script src="js/groups.js?v=137"></script>
+<script src="js/proposals.js?v=137"></script>
 <!-- Après groups.js (renderInviteBox appelée depuis renderGroupDetail) et
      proposals.js (chosenProposal) — voir js/invites.js. -->
-<script src="js/invites.js?v=136"></script>
+<script src="js/invites.js?v=137"></script>
 <!-- Après activity.js (rowToActivityEvent/renderActivityRowHtml) et
      friends.js (friendProfiles/cacheProfile) qu'elle réutilise pour le
      digest, avant auth.js qui appelle refreshActivityBadge()/
      maybeShowDigest() depuis showApp(). -->
-<script src="js/activityState.js?v=136"></script>
+<script src="js/activityState.js?v=137"></script>
 <!-- Après activityState.js (loadActivityState/activityState réutilisés
      pour son propre badge "vu") et avant auth.js qui appelle
      initChangelog() depuis showApp(). -->
-<script src="js/changelog.js?v=136"></script>
+<script src="js/changelog.js?v=137"></script>
 <!-- Recherche globale unifiée (v2.42) — après series.js/friends.js/
      groups.js dont elle réutilise les tableaux déjà chargés et les
      fonctions d'ouverture (openFriendProfile/goToSeriesDetail/goToGroup),
      et après app.js/data.js pour getSearchTerms()/normalizeSearch()/
      FILM_PLACEHOLDER_SVG. Voir js/globalSearch.js. -->
-<script src="js/globalSearch.js?v=136"></script>
-<script src="js/auth.js?v=136"></script>
+<script src="js/globalSearch.js?v=137"></script>
+<script src="js/auth.js?v=137"></script>
 </body>
 </html>

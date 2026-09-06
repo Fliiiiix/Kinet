@@ -240,7 +240,9 @@ async function openGroupDetail(groupId){
   document.getElementById('proposalTitleInput').value = '';
   clearProposalTmdbSelection();
   document.getElementById('groupTopFilmsList').innerHTML = skeletonRows(3);
+  document.getElementById('groupTasteComparisonList').innerHTML = skeletonRows(3);
   document.getElementById('groupActivityList').innerHTML = skeletonRows(3);
+  document.getElementById('groupElectionHistorySection').style.display = 'none';
 
   const members = await loadGroupMembers(groupId);
   groupMembersCache[groupId] = members;
@@ -249,17 +251,26 @@ async function openGroupDetail(groupId){
   await loadProposals(groupId);
   renderGroupProposals();
 
-  // Fil d'activité + goûts du groupe (js/activity.js, migrations/022) —
-  // pour qu'un groupe revisité ne semble pas mort. Après les propositions
-  // plutôt qu'en parallèle : loadActivity() hydrate friendProfiles au
-  // besoin, autant laisser loadGroupMembers() (déjà groupé) faire le gros
-  // du travail en premier.
-  const [topFilms, events] = await Promise.all([
+  // Fil d'activité + historique des élections + goûts du groupe
+  // (js/activity.js, migrations/022) — pour qu'un groupe revisité ne
+  // semble pas mort. Après les propositions plutôt qu'en parallèle :
+  // loadActivity() hydrate friendProfiles au besoin, autant laisser
+  // loadGroupMembers() (déjà groupé) faire le gros du travail en premier.
+  const [topFilms, tasteComparison, events, electionHistory] = await Promise.all([
     loadGroupTopFilms(groupId),
-    loadActivity({ scope: 'group', groupId })
+    loadGroupTasteComparison(groupId),
+    loadActivity({ scope: 'group', groupId }),
+    // Historique des élections (retour utilisateur) : liste dédiée au seul
+    // type 'proposal_chosen', avec sa propre limite plus généreuse que le
+    // fil d'activité général ci-dessus (qui mélange tout et perdrait vite
+    // les élections plus anciennes).
+    loadActivity({ scope: 'group', groupId, eventType: 'proposal_chosen', limit: 30 })
   ]);
   renderGroupTopFilms(topFilms);
+  renderGroupTasteComparison(tasteComparison);
   renderActivityListInto(document.getElementById('groupActivityList'), events);
+  document.getElementById('groupElectionHistorySection').style.display = electionHistory.length > 0 ? '' : 'none';
+  renderActivityListInto(document.getElementById('groupElectionHistoryList'), electionHistory);
 }
 
 // --- Goûts du groupe (v1.6, phase 4) : films notés par au moins 2 membres
@@ -292,6 +303,45 @@ function renderGroupTopFilms(films){
   // communautaire (js/filmDetail.js), pas openFilmReviewDetail() : on n'a
   // ici qu'un agrégat (avg_note/rating_count), jamais le détail par
   // critère d'un film précis.
+  wrap.querySelectorAll('[data-tmdb-id]').forEach(row => {
+    makeRowClickable(row, () => goToFilmDetail(parseInt(row.dataset.tmdbId, 10)));
+  });
+}
+
+// --- Comparaison de goûts élargie (groupe entier), retour utilisateur ---
+// Complète "Goûts du groupe" ci-dessus (qui n'affiche que la moyenne) et
+// la compatibilité ciné à deux (js/friends.js, get_friend_compatibility) :
+// pour les mêmes films (notés par ≥2 membres), montre QUI a mis quelle
+// note plutôt que le seul agrégat — voir get_group_taste_comparison(),
+// migrations/038.
+async function loadGroupTasteComparison(groupId){
+  const { data, error } = await supabaseClient.rpc('get_group_taste_comparison', { p_group_id: groupId, p_limit: 15 });
+  if(error){ console.error(error); return []; }
+  return data || [];
+}
+
+function renderGroupTasteComparison(rows){
+  const wrap = document.getElementById('groupTasteComparisonList');
+  if(rows.length === 0){
+    wrap.innerHTML = `<div class="tmdb-empty">Pas encore de film noté par au moins 2 membres du groupe.</div>`;
+    return;
+  }
+  wrap.innerHTML = rows.map(f => `
+    <div class="wl-row" data-tmdb-id="${f.tmdb_id}">
+      ${f.poster_url
+        ? `<img class="film-poster" src="${f.poster_url}" alt="" loading="lazy">`
+        : `<div class="film-poster film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
+      <div class="wl-main">
+        <div class="wl-title">${escapeHtml(f.title)}${f.release_year ? ` <span class="wl-year">(${f.release_year})</span>` : ''}</div>
+        <div class="taste-comparison-notes">
+          ${(f.notes || []).map(n => `<span class="taste-note-pill ${noteColorClass(Number(n.note))}">${escapeHtml(friendDisplayName(n.user_id))} ${Number(n.note).toFixed(1)}</span>`).join('')}
+        </div>
+      </div>
+    </div>
+  `).join('');
+  // Même fiche communautaire que "Goûts du groupe" ci-dessus, pas
+  // openFilmReviewDetail() (avg_note/notes ici, jamais le détail par
+  // critère d'un film précis).
   wrap.querySelectorAll('[data-tmdb-id]').forEach(row => {
     makeRowClickable(row, () => goToFilmDetail(parseInt(row.dataset.tmdbId, 10)));
   });
