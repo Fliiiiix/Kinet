@@ -7,7 +7,7 @@
 // une responsabilité de js/app.js, stubbées ici avec une version minimale
 // suffisante pour ces cas.
 const { createSuite, assert } = require('./helpers/tiny-test');
-const { createContext, loadFiles, setState, getState, stubDocument, stubElement } = require('./helpers/vm-harness');
+const { createContext, loadFiles, setState, getState, stubDocument, stubElement, stubEventTarget } = require('./helpers/vm-harness');
 const { test, run } = createSuite();
 
 function buildContext(){
@@ -82,6 +82,80 @@ test('performGlobalSearch() : aucune correspondance -> message explicite, pas un
   const { ctx, resultsEl } = buildContext();
   ctx.performGlobalSearch('zzzzz');
   assert.ok(resultsEl.innerHTML.includes('Rien ne correspond'));
+});
+
+// --- Raccourci clavier "/" (retour utilisateur) --- Ouvre la recherche
+// sans avoir à viser l'icône, sauf s'il vole le "/" à un champ de saisie
+// déjà actif ou qu'une modale est déjà ouverte (les modales ne s'empilent
+// jamais dans cette app). Utilise stubEventTarget() (vm-harness.js), pas
+// stubDocument() : le addEventListener() par défaut est un no-op, ce test
+// a besoin de vraiment redéclencher le handler enregistré.
+function buildKeyboardShortcutContext(overlayOpen = false){
+  const eventTarget = stubEventTarget();
+  const doc = Object.assign(eventTarget, {
+    getElementById: () => stubElement(),
+    querySelector: (sel) => (sel === '.overlay.open' && overlayOpen ? stubElement() : null),
+    querySelectorAll(){ return []; },
+    createElement(){ return stubElement(); },
+    body: stubElement(),
+  });
+  let openCalls = 0;
+  const ctx = createContext({
+    document: doc,
+    normalizeSearch(s){ return s; }, getSearchTerms(){ return []; }, escapeHtml(s){ return s; },
+    getDisplayNote(){ return null; }, showStatusLabel(s){ return s; }, otherUserId(){ return null; },
+    friendDisplayName(){ return ''; }, friendAvatarUrl(){ return null; },
+    FILM_PLACEHOLDER_SVG: '', TV_PLACEHOLDER_SVG: '', makeRowClickable(){},
+    openOverlay(){ openCalls++; }, closeOverlay(){}, openModal(){}, goToFilmDetail(){}, goToSeriesDetail(){}, openFriendProfile(){}, goToGroup(){},
+    loadTrackedShows(){ return Promise.resolve(); }, loadFriendships(){ return Promise.resolve(); }, loadGroups(){ return Promise.resolve(); },
+    // openGlobalSearch() (déclenchée par le raccourci) va jusqu'à
+    // ensureGlobalSearchData(), qui lit ces 3 tableaux directement (pas
+    // seulement les loaders ci-dessus) — sans eux, ReferenceError
+    // asynchrone APRÈS le premier await, invisible tant que le test ne
+    // laisse pas cette promesse se résoudre (voir `await` dans les tests
+    // ci-dessous, indispensable pour l'attraper plutôt que de laisser une
+    // rejection non gérée planter tout run-all.js).
+    trackedShows: [], friendships: [], groups: [],
+  });
+  loadFiles(ctx, ['js/globalSearch.js']);
+  return { doc, getOpenCalls: () => openCalls };
+}
+
+test('raccourci "/" : ouvre la recherche globale depuis une page normale', async () => {
+  const { doc, getOpenCalls } = buildKeyboardShortcutContext();
+  let prevented = false;
+  doc.dispatch('keydown', { key: '/', target: { tagName: 'DIV' }, preventDefault(){ prevented = true; } });
+  assert.strictEqual(prevented, true, 'le "/" par défaut du navigateur doit être annulé');
+  assert.strictEqual(getOpenCalls(), 1);
+  await new Promise(r => setTimeout(r, 10)); // laisse openGlobalSearch() (async) se résoudre entièrement
+});
+
+test('raccourci "/" : ignoré si on tape déjà dans un champ (input/textarea/select)', async () => {
+  const { doc, getOpenCalls } = buildKeyboardShortcutContext();
+  ['INPUT', 'TEXTAREA', 'SELECT'].forEach(tag => {
+    doc.dispatch('keydown', { key: '/', target: { tagName: tag }, preventDefault(){} });
+  });
+  assert.strictEqual(getOpenCalls(), 0, 'ne doit jamais voler le "/" à un champ de saisie actif');
+  await new Promise(r => setTimeout(r, 10));
+});
+
+test('raccourci "/" : ignoré si un élément contentEditable a le focus', async () => {
+  const { doc, getOpenCalls } = buildKeyboardShortcutContext();
+  doc.dispatch('keydown', { key: '/', target: { tagName: 'DIV', isContentEditable: true }, preventDefault(){} });
+  assert.strictEqual(getOpenCalls(), 0);
+  await new Promise(r => setTimeout(r, 10));
+});
+
+test('raccourci "/" : ignoré si une modale est déjà ouverte', () => {
+  const { doc, getOpenCalls } = buildKeyboardShortcutContext(true);
+  doc.dispatch('keydown', { key: '/', target: { tagName: 'DIV' }, preventDefault(){} });
+  assert.strictEqual(getOpenCalls(), 0, 'les modales ne s\'empilent jamais dans cette app');
+});
+
+test('raccourci "/" : une autre touche ne déclenche rien', () => {
+  const { doc, getOpenCalls } = buildKeyboardShortcutContext();
+  doc.dispatch('keydown', { key: 'a', target: { tagName: 'DIV' }, preventDefault(){} });
+  assert.strictEqual(getOpenCalls(), 0);
 });
 
 module.exports = run('global-search.test.js');

@@ -155,3 +155,20 @@ document.getElementById('globalSearchInput').addEventListener('input', () => {
   const query = document.getElementById('globalSearchInput').value;
   globalSearchTimer = setTimeout(() => performGlobalSearch(query), 200);
 });
+
+// --- Raccourci clavier "/" (retour utilisateur) --- Habitude des sites
+// qu'on utilise beaucoup (GitHub, Slack...) : ouvrir la recherche sans
+// avoir à viser l'icône. Ignoré si on est déjà en train de taper quelque
+// part (le "/" doit atteindre le champ, pas ouvrir une recherche
+// par-dessus — vaut aussi pour #globalSearchInput lui-même, un <input>
+// comme un autre) ou si une modale est déjà ouverte (les modales ne
+// s'empilent jamais dans cette app, voir le closeur Échap centralisé,
+// js/ui.js).
+document.addEventListener('keydown', (e) => {
+  if(e.key !== '/') return;
+  const tag = (e.target.tagName || '').toLowerCase();
+  if(tag === 'input' || tag === 'textarea' || tag === 'select' || e.target.isContentEditable) return;
+  if(document.querySelector('.overlay.open')) return;
+  e.preventDefault();
+  openGlobalSearch();
+});

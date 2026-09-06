@@ -104,7 +104,12 @@ document.addEventListener('keydown', (e) => {
     feedbackOverlay: () => closeFeedbackModal(),
     shareOverlay: () => closeShareModal(),
     importLetterboxdTutoOverlay: () => closeOverlay('importLetterboxdTutoOverlay'),
-    surpriseOverlay: () => closeOverlay('surpriseOverlay')
+    surpriseOverlay: () => closeOverlay('surpriseOverlay'),
+    // Ajoutées après coup (audit clavier) — recherche globale et bilan
+    // cinéphile n'avaient jamais rejoint cette table au moment de leur
+    // ajout, contrairement à toutes les autres modales de l'app.
+    globalSearchOverlay: () => closeOverlay('globalSearchOverlay'),
+    recapOverlay: () => closeRecap()
   };
   for(const id in closers){
     if(document.getElementById(id).classList.contains('open')){
