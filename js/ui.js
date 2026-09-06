@@ -282,36 +282,99 @@ function saveHeaderNavOrder(order){
   applyHeaderNavOrder();
 }
 
-function moveHeaderNavItem(id, direction){
-  const order = getHeaderNavOrder();
-  const idx = order.indexOf(id);
-  const swapWith = idx + direction;
-  if(idx === -1 || swapWith < 0 || swapWith >= order.length) return;
-  [order[idx], order[swapWith]] = [order[swapWith], order[idx]];
-  saveHeaderNavOrder(order);
-  renderHeaderOrderPicker();
+// Glisser-déposer direct sur les icônes (retour utilisateur — "en prenant
+// les icônes avec clic + maintien souris et on glisse où on veut", pas des
+// boutons ↑/↓) : Pointer Events plutôt que l'API HTML5 Drag and Drop
+// (draggable="true") — celle-ci ne fonctionne pas au toucher sans
+// polyfill, alors que pointerdown/move/up couvrent souris ET tactile avec
+// le même code, cohérent avec le reste de l'app (jamais deux chemins
+// séparés desktop/mobile). Réutilise l'icône (.nav-pip) du VRAI bouton
+// d'entête plutôt que de redessiner les tracés SVG une 2e fois.
+function headerOrderItemHtml(id){
+  const realBtn = document.getElementById(id);
+  const pip = realBtn ? realBtn.querySelector('.nav-pip') : null;
+  return `
+    <div class="header-order-dnd-item" data-id="${id}">
+      <span class="header-order-drag-handle" aria-hidden="true">⠿</span>
+      ${pip ? pip.outerHTML : ''}
+      <span class="header-order-dnd-label">${escapeHtml(HEADER_NAV_LABELS[id] || id)}</span>
+    </div>
+  `;
 }
 
-// Réutilise .top-film-chip/.top-film-chip-actions (picker Top films,
-// js/profile.js) tel quel plutôt que de nouvelles classes CSS — même
-// gabarit "ligne + boutons ↑/↓", juste sans affiche.
-function renderHeaderOrderPicker(){
-  const wrap = document.getElementById('headerOrderPicker');
+function renderHeaderOrderList(){
+  const wrap = document.getElementById('headerOrderDndList');
   if(!wrap) return;
-  const order = getHeaderNavOrder();
-  wrap.innerHTML = order.map((id, idx) => `
-    <div class="top-film-chip" data-id="${id}">
-      <div class="tmdb-result-info"><div class="tmdb-result-title">${escapeHtml(HEADER_NAV_LABELS[id] || id)}</div></div>
-      <div class="top-film-chip-actions">
-        <button type="button" data-move="up" data-id="${id}" ${idx === 0 ? 'disabled' : ''} title="Monter" aria-label="Monter">↑</button>
-        <button type="button" data-move="down" data-id="${id}" ${idx === order.length - 1 ? 'disabled' : ''} title="Descendre" aria-label="Descendre">↓</button>
-      </div>
-    </div>
-  `).join('');
-  wrap.querySelectorAll('[data-move]').forEach(btn => {
-    btn.addEventListener('click', () => moveHeaderNavItem(btn.dataset.id, btn.dataset.move === 'up' ? -1 : 1));
-  });
+  wrap.innerHTML = getHeaderNavOrder().map(headerOrderItemHtml).join('');
+  wireHeaderOrderDrag(wrap);
 }
+
+// Technique "liste triable" classique en vanilla JS : au lieu de calculer
+// un index d'insertion à la main, on déplace l'élément en cours de
+// glisser-déposer directement dans le DOM (insertBefore/appendChild) dès
+// que le pointeur franchit le milieu d'un voisin — le navigateur se charge
+// de la mise en page, aucune animation ni transform à gérer soi-même.
+// L'ORDRE FINAL est relu directement depuis le DOM au relâchement (l'ordre
+// des .header-order-dnd-item est, par construction, celui qu'on vient de
+// glisser), pas depuis un état séparé à garder synchronisé.
+function wireHeaderOrderDrag(wrap){
+  let draggedEl = null;
+
+  wrap.querySelectorAll('.header-order-dnd-item').forEach(item => {
+    item.addEventListener('pointerdown', (e) => {
+      draggedEl = item;
+      item.classList.add('dragging');
+      // setPointerCapture : garde les événements move/up adressés à CET
+      // élément même si le pointeur sort de ses limites pendant le
+      // glisser — sans ça, un geste un peu rapide "perdrait" le drag dès
+      // que le curseur quitte la ligne de départ.
+      item.setPointerCapture(e.pointerId);
+    });
+  });
+
+  wrap.addEventListener('pointermove', (e) => {
+    if(!draggedEl) return;
+    const siblings = Array.from(wrap.querySelectorAll('.header-order-dnd-item:not(.dragging)'));
+    const after = siblings.find(sib => {
+      const rect = sib.getBoundingClientRect();
+      return e.clientY < rect.top + rect.height / 2;
+    });
+    if(after) wrap.insertBefore(draggedEl, after);
+    else wrap.appendChild(draggedEl);
+  });
+
+  function endDrag(){
+    if(!draggedEl) return;
+    draggedEl.classList.remove('dragging');
+    draggedEl = null;
+    const newOrder = Array.from(wrap.querySelectorAll('.header-order-dnd-item')).map(el => el.dataset.id);
+    saveHeaderNavOrder(newOrder);
+  }
+  wrap.addEventListener('pointerup', endDrag);
+  // pointercancel (ex. une notification système interrompt le geste) :
+  // sans ce filet, draggedEl resterait "collé" en mode glisser jusqu'au
+  // prochain pointerdown, un état incohérent invisible mais bien réel.
+  wrap.addEventListener('pointercancel', endDrag);
+}
+
+// Accessible depuis "Ton profil" (#openHeaderOrderBtn, retour utilisateur :
+// un simple bouton là-bas, pas la liste entière) — même pattern que
+// openJournal()/closeJournal() (js/journal.js) : referme le profil
+// d'abord (pas deux modales de tailles différentes superposées), le
+// rouvre à la fermeture pour revenir là où on était.
+function openHeaderOrderOverlay(){
+  closeProfileModal();
+  renderHeaderOrderList();
+  openOverlay('headerOrderOverlay');
+}
+function closeHeaderOrderOverlay(){
+  closeOverlay('headerOrderOverlay', () => openProfileModal());
+}
+document.getElementById('openHeaderOrderBtn').addEventListener('click', openHeaderOrderOverlay);
+document.getElementById('closeHeaderOrderOverlay').addEventListener('click', closeHeaderOrderOverlay);
+document.getElementById('headerOrderOverlay').addEventListener('click', (e) => {
+  if(e.target.id === 'headerOrderOverlay') closeHeaderOrderOverlay();
+});
 
 applyHeaderNavOrder();
 

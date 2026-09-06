@@ -1182,17 +1182,12 @@
       <span>Thème clair</span>
     </label>
 
-    <!-- Personnaliser l'ordre des icônes de l'entête (retour utilisateur) —
-         mêmes boutons ↑/↓ que le picker Top films juste en dessous
-         (.top-film-chip, réutilisé tel quel), voir
-         renderHeaderOrderPicker()/applyHeaderNavOrder() dans js/ui.js.
-         installHeaderBtn (PWA, affiché seulement quand pertinent) n'en
-         fait délibérément pas partie — un bouton dont la présence même est
-         déjà conditionnelle n'a rien à faire dans un ordre à mémoriser. -->
-    <div class="field">
-      <label>Ordre des icônes de l'entête</label>
-      <div class="top-films-picker" id="headerOrderPicker"></div>
-    </div>
+    <!-- Personnaliser l'ordre des icônes de l'entête (retour utilisateur :
+         un simple bouton ici, pas la liste entière — "ça prend tout
+         l'espace" dans le profil) — ouvre #headerOrderOverlay, où le
+         réglage se fait par glisser-déposer direct sur les icônes, voir
+         js/ui.js. -->
+    <button class="btn secondary" type="button" id="openHeaderOrderBtn">↕ Réorganiser les icônes de l'entête</button>
 
     <!-- Top films (v2.3, retour utilisateur : "un top films comme
          Letterboxd, mis en avant par choix pas par note") — jusqu'à 4,
@@ -1416,6 +1411,25 @@
       <button class="close-x" id="closeChangelog" aria-label="Fermer">✕</button>
     </div>
     <div id="changelogList"></div>
+  </div>
+</div>
+
+<!-- Réorganiser l'entête (retour utilisateur) — ouverte depuis "Ton
+     profil" (#openHeaderOrderBtn), un simple bouton là-bas plutôt que la
+     liste entière. Réglage par glisser-déposer direct sur les icônes
+     (pointerdown/pointermove/pointerup, voir js/ui.js) : aucune librairie,
+     cohérent avec le reste du projet. installHeaderBtn (PWA, affiché
+     seulement quand pertinent) n'apparaît délibérément pas dans la liste —
+     un bouton dont la présence même est déjà conditionnelle n'a rien à
+     faire dans un ordre à mémoriser. -->
+<div class="overlay" id="headerOrderOverlay">
+  <div class="modal" style="max-width:440px;">
+    <div class="modal-head">
+      <h2>Réorganiser l'entête</h2>
+      <button class="close-x" id="closeHeaderOrderOverlay" aria-label="Fermer">✕</button>
+    </div>
+    <p class="auth-intro">Glisse une icône pour changer son ordre.</p>
+    <div class="header-order-dnd-list" id="headerOrderDndList"></div>
   </div>
 </div>
 

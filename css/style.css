@@ -1713,6 +1713,40 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .top-film-chip-actions button:hover:not(:disabled){border-color:var(--violet-dim); color:var(--text);}
 .top-film-chip-actions button:disabled{opacity:0.3; cursor:default;}
 .top-film-chip-actions button[data-action="remove"]:hover:not(:disabled){border-color:var(--coral-dim); color:var(--coral);}
+/* Réorganiser l'entête par glisser-déposer (retour utilisateur), voir
+   wireHeaderOrderDrag() dans js/ui.js — même carte que .top-film-chip
+   (fond/rayon assortis) mais sans affiche, avec une poignée dédiée plutôt
+   que la ligne entière : évite qu'un simple clic sur le libellé démarre un
+   glisser par accident. touch-action:none indispensable au tactile — sans
+   lui, le navigateur intercepte le geste pour faire défiler la page avant
+   même que pointermove ne soit reçu. */
+.header-order-dnd-list{display:flex; flex-direction:column; gap:6px;}
+.header-order-dnd-item{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 12px;
+  border-radius:8px;
+  background:var(--surface-2);
+  border:1px solid var(--line);
+  touch-action:none;
+  user-select:none;
+}
+.header-order-drag-handle{
+  color:var(--text-muted);
+  font-size:16px;
+  line-height:1;
+  cursor:grab;
+  flex:none;
+}
+.header-order-dnd-item .nav-pip{flex:none;}
+.header-order-dnd-label{font-size:13.5px;}
+.header-order-dnd-item.dragging{
+  opacity:0.6;
+  border-color:var(--violet-dim);
+  cursor:grabbing;
+}
+.header-order-dnd-item.dragging .header-order-drag-handle{cursor:grabbing;}
 .tmdb-selected{
   display:flex;
   align-items:center;
