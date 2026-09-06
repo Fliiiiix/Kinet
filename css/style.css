@@ -3197,6 +3197,15 @@ input[type="range"]::-moz-range-thumb{
   z-index:100;
   max-width:calc(100vw - 32px);
 }
+/* Même bug de spécificité que .bulk-actions-bar[hidden] plus bas (trouvé
+   en le corrigeant là-bas, rétro-appliqué ici) : display:flex ci-dessus a
+   la même spécificité que le [hidden]{display:none} par défaut du
+   navigateur, donc l'attribut hidden posé par showUndoToast()/hideUndoToast()
+   (js/ui.js) n'empêchait ni la présence en layout ni le focus clavier du
+   bouton "Annuler" quand le toast est censé être invisible (opacity:0 seul
+   ne bloque pas les clics/le focus) — un Tab pouvait tomber dessus sans
+   que rien ne soit visible à l'écran. */
+.undo-toast[hidden]{display:none;}
 .undo-toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
 .undo-toast-msg{overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
 .undo-toast-btn{
@@ -3239,6 +3248,14 @@ input[type="range"]::-moz-range-thumb{
   z-index:100;
   box-shadow:0 10px 30px rgba(0,0,0,0.4);
 }
+/* Bug réel trouvé en vérifiant en direct dans le navigateur : la règle
+   display:flex ci-dessus a la MÊME spécificité (0,1,0) que le
+   [hidden]{display:none} par défaut du navigateur — à spécificité égale,
+   une feuille d'auteur l'emporte toujours sur la feuille UA, donc l'attribut
+   hidden posé par renderBulkActionsBar() (js/app.js) n'avait plus aucun
+   effet, la barre restait affichée en permanence. [hidden] ici a une
+   spécificité plus élevée (classe + attribut) et regagne la priorité. */
+.bulk-actions-bar[hidden]{display:none;}
 .bulk-actions-count{
   font-family:'Space Mono', monospace;
   font-size:12px;
