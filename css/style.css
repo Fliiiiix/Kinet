@@ -687,6 +687,35 @@ h1{
 }
 .scroll-top-btn:hover{transform:translateY(-2px); border-color:var(--violet-dim); color:var(--violet);}
 .scroll-top-btn:active{transform:translateY(0) scale(0.94);}
+
+/* Geste de rafraîchissement façon app native (retour utilisateur) — voir
+   js/ui.js. `top` (pas transform) pour la position : suivi du doigt en JS
+   pendant le tirer, en px — laisse `transform` entièrement libre pour la
+   rotation de l'icône pendant le chargement, sans que les deux ne se
+   marchent dessus dans la même propriété. Hors écran par défaut (top
+   négatif) ; jamais affiché sur desktop (aucun listener touch n'existe
+   sans écran tactile, voir 'ontouchstart' in window côté JS). */
+.pull-refresh-indicator{
+  position:fixed;
+  top:-50px; left:50%;
+  margin-left:-20px;
+  width:40px; height:40px;
+  border-radius:50%;
+  background:var(--surface);
+  border:1px solid var(--line);
+  color:var(--violet);
+  display:flex; align-items:center; justify-content:center;
+  font-size:18px;
+  z-index:45; /* sous .overlay (50), au-dessus du reste — visible même par-dessus la barre de nav mobile pendant le tirer */
+  box-shadow:0 8px 20px rgba(0,0,0,0.3);
+  transition:background .15s ease, color .15s ease;
+}
+.pull-refresh-indicator.ready{color:var(--gold); border-color:var(--gold);}
+.pull-refresh-indicator.loading{animation:pullRefreshSpin .7s linear infinite;}
+@keyframes pullRefreshSpin{to{transform:rotate(360deg);}}
+@media (prefers-reduced-motion:reduce){
+  .pull-refresh-indicator.loading{animation:none;}
+}
 input[type="text"], input[type="email"], input[type="number"], select, textarea{
   background:var(--surface);
   border:1px solid var(--line);

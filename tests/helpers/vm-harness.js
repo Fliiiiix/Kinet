@@ -41,6 +41,31 @@ function stubDocument(elements = {}){
   };
 }
 
+// Contrairement aux addEventListener() no-op de stubDocument()/createContext()
+// (suffisants pour le wiring habituel, qui n'a jamais besoin d'être
+// redéclenché depuis un test), un test qui simule un VRAI geste utilisateur
+// (ex. la séquence touchstart/touchmove/touchend du tirer-pour-rafraîchir,
+// js/ui.js) a besoin que les handlers soient réellement stockés et
+// invocables — dispatch(type, event) appelle chaque listener enregistré
+// pour ce type, dans l'ordre d'ajout, avec l'objet event fourni tel quel
+// (pas de vraie classe Event : le code testé ne lit que les propriétés
+// qu'on lui donne, ex. `e.touches[0].clientY`).
+function stubEventTarget(){
+  const listeners = {};
+  return {
+    addEventListener(type, handler){
+      (listeners[type] = listeners[type] || []).push(handler);
+    },
+    removeEventListener(type, handler){
+      if(!listeners[type]) return;
+      listeners[type] = listeners[type].filter(h => h !== handler);
+    },
+    dispatch(type, event){
+      (listeners[type] || []).forEach(h => h(event));
+    },
+  };
+}
+
 function fakeLocalStorage(){
   const store = {};
   return {
@@ -115,4 +140,4 @@ function getState(context, key){
   return vm.runInContext(key, context);
 }
 
-module.exports = { createContext, loadFiles, setState, getState, stubElement, stubDocument, fakeLocalStorage, REPO_ROOT };
+module.exports = { createContext, loadFiles, setState, getState, stubElement, stubDocument, stubEventTarget, fakeLocalStorage, REPO_ROOT };

@@ -91,6 +91,22 @@ film" a été diagnostiqué (voir le commentaire en tête de ce fichier).
   via les `overrides` de `createContext()`, qui prend le dessus sur le
   défaut.
 
+- **Simuler un vrai geste utilisateur (plusieurs événements liés dans le
+  temps)** : les `addEventListener()` par défaut de `stubDocument()`/
+  `createContext()` sont des no-op — parfaits pour qu'un simple wiring de
+  bas de fichier ne plante pas au chargement, inutilisables pour un test
+  qui doit vraiment redéclencher un handler (ex. la séquence touchstart/
+  touchmove/touchend du tirer-pour-rafraîchir, js/ui.js). `stubEventTarget()`
+  (vm-harness.js) stocke les handlers pour de vrai et expose `dispatch(type,
+  event)` pour les invoquer avec l'objet event de son choix (voir
+  `pull-to-refresh.test.js`). Piège associé : le `classList` par défaut de
+  `stubElement()` est TOUJOURS un no-op (`toggle()` ne fait rien,
+  `contains()` renvoie toujours `false`) — un test qui a besoin qu'un état
+  posé par `classList.toggle()` soit relu plus tard par `classList.contains()`
+  (ex. la classe "ready" posée pendant le tirer, relue au relâchement) doit
+  fournir son propre `classList` basé sur un vrai `Set`, sans quoi le test
+  échoue silencieusement (le code testé n'a pourtant rien de cassé).
+
 ## Ajouter un test
 
 Un nouveau bug corrigé mérite un test qui l'aurait attrapé — pas

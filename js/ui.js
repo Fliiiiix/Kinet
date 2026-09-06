@@ -447,3 +447,87 @@ if(scrollTopBtn){
     window.scrollTo({ top: 0, behavior: 'auto' });
   });
 }
+
+// --- Geste de rafraîchissement façon app native (retour utilisateur) ---
+// Tirer vers le bas en haut d'une page recharge ses données depuis
+// Supabase, comme sur une vraie app mobile — jusqu'ici il fallait recharger
+// toute la page (F5) pour ça. Tactile uniquement ('ontouchstart' absent =
+// pas d'écran tactile, rien n'est câblé) ; désactivé quand on n'est pas
+// tout en haut de la page (sinon ça déclencherait au milieu d'un scroll
+// normal), quand une modale est ouverte (elle a son propre scroll interne,
+// voir .overlay{overflow-y:auto}), ou quand le tirer démarre sur un
+// contrôle interactif (slider de note, champ de texte...) pour ne jamais
+// lui voler le geste.
+//
+// Recharge : renderRoute() (js/router.js) rejoue la route actuelle, ce qui
+// rappelle le open<Page>() correspondant — TOUS rechargent déjà leurs
+// données depuis Supabase avant de re-rendre (loadWatchlist(), etc.),
+// SAUF la route "home" (catalogue), qui ne fait que ré-afficher `films`
+// déjà en mémoire (chargé une seule fois au login) — cas spécial ici :
+// recharge explicitement films/viewings, comme au démarrage (showApp(),
+// js/auth.js).
+async function refreshCurrentPage(){
+  if(location.hash === '' || location.hash === '#' || location.hash === '#/'){
+    await Promise.all([loadFilms(), loadViewings()]);
+    buildGenreFilterOptions();
+    render();
+  }else{
+    await renderRoute();
+  }
+}
+
+if('ontouchstart' in window){
+  const PULL_THRESHOLD = 70;
+  const PULL_MAX = 100;
+  const pullIndicator = document.getElementById('pullRefreshIndicator');
+  let pullStartY = null;
+  let pulling = false;
+  let refreshing = false;
+
+  function resetPull(){
+    if(pullIndicator) pullIndicator.style.top = '-50px';
+    pullIndicator && pullIndicator.classList.remove('ready');
+    pullStartY = null;
+    pulling = false;
+  }
+
+  if(pullIndicator){
+    document.addEventListener('touchstart', (e) => {
+      if(refreshing || window.scrollY > 0) return;
+      if(document.querySelector('.overlay.open')) return; // modale ouverte : son propre scroll interne, pas ce geste
+      if(e.target.closest('input, textarea, select, button, a, [role="button"]')) return; // ne vole pas le geste à un contrôle
+      pullStartY = e.touches[0].clientY;
+      pulling = true;
+    }, { passive: true });
+
+    document.addEventListener('touchmove', (e) => {
+      if(!pulling || pullStartY == null || refreshing) return;
+      const delta = e.touches[0].clientY - pullStartY;
+      if(delta <= 0){ resetPull(); return; }
+      const dist = Math.min(delta * 0.5, PULL_MAX);
+      pullIndicator.style.top = `${dist - 50}px`;
+      pullIndicator.classList.toggle('ready', delta > PULL_THRESHOLD);
+    }, { passive: true });
+
+    document.addEventListener('touchend', async () => {
+      if(!pulling || pullStartY == null){ resetPull(); return; }
+      const shouldRefresh = pullIndicator.classList.contains('ready');
+      pulling = false;
+      pullStartY = null;
+      if(!shouldRefresh){ resetPull(); return; }
+      refreshing = true;
+      pullIndicator.style.top = '12px';
+      pullIndicator.classList.remove('ready');
+      pullIndicator.classList.add('loading');
+      try{
+        await refreshCurrentPage();
+      }catch(e){
+        console.error(e);
+      }finally{
+        pullIndicator.classList.remove('loading');
+        refreshing = false;
+        resetPull();
+      }
+    });
+  }
+}
