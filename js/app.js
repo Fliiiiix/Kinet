@@ -121,6 +121,16 @@ function buildSortOptions(){
 // complète, voir GENRE_MAP dans js/data.js) : pas la peine de proposer
 // "Western" à quelqu'un qui n'a aucun film de ce genre. Sélection
 // existante restaurée si le genre choisi est toujours représenté.
+// Valeur spéciale de #genreFilter, PAS un vrai genre (voir GENRE_MAP,
+// js/data.js — les ids TMDB sont toujours des entiers positifs, jamais
+// cette chaîne) : rattrapage des films vus mais jamais notés (retour
+// utilisateur — notamment ceux importés via watched.csv de Letterboxd,
+// voir js/importExternal.js, qui n'a justement aucune note à donner).
+// "Jamais noté" = getDisplayNote() renvoie null, peu importe la raison
+// (import sans note, ou simplement pas encore noté) — un seul critère
+// déjà utilisé partout ailleurs dans l'app plutôt qu'un nouveau champ.
+const UNRATED_FILTER_VALUE = '__unrated__';
+
 function buildGenreFilterOptions(){
   const sel = document.getElementById('genreFilter');
   const current = sel.value;
@@ -131,8 +141,15 @@ function buildGenreFilterOptions(){
     .sort((a, b) => GENRE_MAP[a].localeCompare(GENRE_MAP[b], 'fr'))
     .map(id => `<option value="${id}">${escapeHtml(GENRE_MAP[id])}</option>`)
     .join('');
-  sel.innerHTML = `<option value="">Tous les genres</option>${options}`;
-  if(current && present.has(Number(current))) sel.value = current;
+  const unratedCount = films.filter(f => getDisplayNote(f) === null).length;
+  // N'apparaît que s'il y a effectivement quelque chose à rattraper —
+  // sinon une option qui ne mène jamais nulle part n'a rien à faire là.
+  const unratedOption = unratedCount > 0
+    ? `<option value="${UNRATED_FILTER_VALUE}">⚠ Sans note (${unratedCount})</option>`
+    : '';
+  sel.innerHTML = `<option value="">Tous les genres</option>${unratedOption}${options}`;
+  if(current === UNRATED_FILTER_VALUE && unratedCount > 0) sel.value = current;
+  else if(current && present.has(Number(current))) sel.value = current;
 }
 
 // Sens du tri par critère (#sortAdvancedRow) — bouton-bascule plutôt qu'un
@@ -159,8 +176,13 @@ function render(){
   let filtered = films.filter(f => !search || getSearchTerms(f).some(t => t.includes(search)));
 
   // Filtre genre (v2.1, retour utilisateur) — voir buildGenreFilterOptions()
-  // plus haut et GENRE_MAP (js/data.js).
-  if(genreFilter){
+  // plus haut et GENRE_MAP (js/data.js). "Sans note" (retour utilisateur,
+  // rattrapage des films vus non notés) partage le même <select> mais n'est
+  // pas un genre — vérifié en premier, avant de traiter genreFilter comme
+  // un id TMDB.
+  if(genreFilter === UNRATED_FILTER_VALUE){
+    filtered = filtered.filter(f => getDisplayNote(f) === null);
+  }else if(genreFilter){
     const genreId = Number(genreFilter);
     filtered = filtered.filter(f => (f.genreIds || []).includes(genreId));
   }
