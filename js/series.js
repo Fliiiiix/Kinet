@@ -302,7 +302,10 @@ async function handleAddShow(){
 // fait via #primaryTabSeries (js/router.js), qui a son propre listener.
 // #seriesPageBack retiré en v2.1 (voir le commentaire dans index.html) —
 // plus de listener à poser dessus.
-document.getElementById('seriesAddBtn').addEventListener('click', handleAddShow);
+{
+  const seriesAddBtn = document.getElementById('seriesAddBtn');
+  seriesAddBtn.addEventListener('click', withSubmitGuard(seriesAddBtn, handleAddShow));
+}
 document.getElementById('seriesTitleInput').addEventListener('input', () => {
   clearTimeout(seriesTmdbSearchTimer);
   const query = document.getElementById('seriesTitleInput').value.trim();

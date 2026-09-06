@@ -730,7 +730,10 @@ document.getElementById('openAddBtn').addEventListener('click', () => openModal(
 document.getElementById('fabAddBtn').addEventListener('click', () => openModal(null));
 document.getElementById('closeModal').addEventListener('click', closeModal);
 document.getElementById('cancelBtn').addEventListener('click', closeModal);
-document.getElementById('saveBtn').addEventListener('click', handleSave);
+{
+  const saveBtn = document.getElementById('saveBtn');
+  saveBtn.addEventListener('click', withSubmitGuard(saveBtn, handleSave));
+}
 document.getElementById('deleteBtn').addEventListener('click', handleDelete);
 document.getElementById('overlay').addEventListener('click', (e) => {
   if(e.target.id === 'overlay') closeModal();

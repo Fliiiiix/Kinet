@@ -292,6 +292,12 @@ async function openFilmDetail(tmdbId){
 
 document.getElementById('filmDetailBack').addEventListener('click', goHome);
 document.getElementById('filmDetailRateBtn').addEventListener('click', handleFilmDetailRate);
-document.getElementById('filmDetailWatchlistBtn').addEventListener('click', handleFilmDetailAddWatchlist);
+{
+  const filmDetailWatchlistBtn = document.getElementById('filmDetailWatchlistBtn');
+  filmDetailWatchlistBtn.addEventListener('click', withSubmitGuard(filmDetailWatchlistBtn, handleFilmDetailAddWatchlist));
+}
 document.getElementById('filmDetailLikeBtn').addEventListener('click', toggleFilmLike);
-document.getElementById('filmDetailCommentBtn').addEventListener('click', addFilmComment);
+{
+  const filmDetailCommentBtn = document.getElementById('filmDetailCommentBtn');
+  filmDetailCommentBtn.addEventListener('click', withSubmitGuard(filmDetailCommentBtn, addFilmComment));
+}

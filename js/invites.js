@@ -33,7 +33,8 @@ async function renderInviteBox(groupId){
 
   if(!invite){
     box.innerHTML = `<button class="btn secondary" id="generateInviteBtn" type="button">Générer un lien d'invitation</button>`;
-    document.getElementById('generateInviteBtn').addEventListener('click', () => generateInviteLink(groupId));
+    const generateInviteBtn = document.getElementById('generateInviteBtn');
+    generateInviteBtn.addEventListener('click', withSubmitGuard(generateInviteBtn, () => generateInviteLink(groupId)));
     return;
   }
 
@@ -123,10 +124,11 @@ async function renderInvitePage(token){
       <button class="btn" id="inviteJoinBtn" type="button">Rejoindre le groupe</button>
     </div>
   `;
-  document.getElementById('inviteJoinBtn').addEventListener('click', async () => {
+  const inviteJoinBtn = document.getElementById('inviteJoinBtn');
+  inviteJoinBtn.addEventListener('click', withSubmitGuard(inviteJoinBtn, async () => {
     const groupId = await consumeInvite(token);
     if(groupId) goToGroup(groupId);
-  });
+  }));
 }
 
 async function consumeInvite(token){

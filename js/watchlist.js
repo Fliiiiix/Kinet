@@ -368,7 +368,10 @@ async function handleWlTmdbSearch(query){
 
 document.getElementById('watchlistBtn').addEventListener('click', goToWatchlist);
 document.getElementById('watchlistPageBack').addEventListener('click', goHome);
-document.getElementById('wlAddBtn').addEventListener('click', handleAddToWatchlist);
+{
+  const wlAddBtn = document.getElementById('wlAddBtn');
+  wlAddBtn.addEventListener('click', withSubmitGuard(wlAddBtn, handleAddToWatchlist));
+}
 document.getElementById('wlTitleInput').addEventListener('input', () => {
   clearTimeout(wlTmdbSearchTimer);
   const query = document.getElementById('wlTitleInput').value.trim();

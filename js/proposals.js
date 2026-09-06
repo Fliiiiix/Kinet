@@ -332,9 +332,12 @@ document.getElementById('proposalTitleInput').addEventListener('blur', () => {
   setTimeout(() => { document.getElementById('proposalTmdbResults').innerHTML = ''; }, 150);
 });
 document.getElementById('proposalTmdbClearBtn').addEventListener('click', clearProposalTmdbSelection);
-document.getElementById('proposeFilmBtn').addEventListener('click', () => {
-  if(currentGroupId) handleProposeFilm(currentGroupId);
-});
+{
+  const proposeFilmBtn = document.getElementById('proposeFilmBtn');
+  proposeFilmBtn.addEventListener('click', withSubmitGuard(proposeFilmBtn, () => {
+    if(currentGroupId) return handleProposeFilm(currentGroupId);
+  }));
+}
 
 // --- Détail d'une proposition : page à part entière (#/groupes/:id/propositions/:id) ---
 
@@ -462,7 +465,10 @@ async function addProposalComment(){
   renderGroupProposals();
 }
 
-document.getElementById('proposalCommentBtn').addEventListener('click', addProposalComment);
+{
+  const proposalCommentBtn = document.getElementById('proposalCommentBtn');
+  proposalCommentBtn.addEventListener('click', withSubmitGuard(proposalCommentBtn, addProposalComment));
+}
 
 async function deleteComment(commentId){
   if(!confirm('Supprimer ce commentaire ?')) return;

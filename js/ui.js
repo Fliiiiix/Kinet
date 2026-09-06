@@ -375,3 +375,24 @@ function makeRowClickable(el, handler){
     if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); handler(e); }
   });
 }
+
+// --- Garde anti double-soumission ---
+// Bug réel trouvé et corrigé sur "Note rapide" (js/watchlist.js) : rien ne
+// retirait le bouton/la ligne de l'écran avant la fin de la requête
+// Supabase, donc un double-clic (ou Entrée puis clic, sur mobile un tap
+// répété par lenteur réseau) pouvait insérer le même enregistrement deux
+// fois. Généralisé ici plutôt que réécrit à la main à chaque site d'appel —
+// enveloppe un handler async : désactive btn avant l'appel, le réactive une
+// fois résolu (succès ou erreur), sans effet si btn a entre-temps disparu
+// (modale fermée, ligne re-rendue par le handler lui-même en cas de succès).
+function withSubmitGuard(btn, handler){
+  return async (...args) => {
+    if(btn.disabled) return;
+    btn.disabled = true;
+    try{
+      return await handler(...args);
+    }finally{
+      btn.disabled = false;
+    }
+  };
+}

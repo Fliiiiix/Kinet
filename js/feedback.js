@@ -49,7 +49,10 @@ async function handleSubmitFeedback(){
 populateFeedbackCategorySelect();
 document.getElementById('feedbackBtn').addEventListener('click', openFeedbackModal);
 document.getElementById('closeFeedback').addEventListener('click', closeFeedbackModal);
-document.getElementById('feedbackSubmitBtn').addEventListener('click', handleSubmitFeedback);
+{
+  const feedbackSubmitBtn = document.getElementById('feedbackSubmitBtn');
+  feedbackSubmitBtn.addEventListener('click', withSubmitGuard(feedbackSubmitBtn, handleSubmitFeedback));
+}
 document.getElementById('feedbackOverlay').addEventListener('click', (e) => {
   if(e.target.id === 'feedbackOverlay') closeFeedbackModal();
 });

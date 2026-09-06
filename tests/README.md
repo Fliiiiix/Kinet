@@ -77,6 +77,19 @@ film" a été diagnostiqué (voir le commentaire en tête de ce fichier).
   la mutation faite par les fonctions testées (exécutées dans le contexte)
   reste visible depuis cette référence côté hôte, sans avoir besoin de la
   relire à chaque fois (voir `episode-notes.test.js`).
+- **Un helper de js/ui.js utilisé dans le wiring de bas de fichier d'UN
+  AUTRE fichier fait planter son chargement isolé** : la répasse anti
+  double-soumission a ajouté `withSubmitGuard(btn, handler)` (js/ui.js) au
+  wiring de bas de fichier de series.js/proposals.js/watchlist.js — un
+  test qui charge l'un de ces fichiers SANS js/ui.js (le cas courant :
+  charger juste le fichier testé) plante au chargement
+  (`ReferenceError: withSubmitGuard is not defined`), pas dans le test
+  lui-même. `createContext()` (vm-harness.js) fournit désormais un stub
+  passe-plat par défaut (`(btn, handler) => handler`) pour couvrir ce cas
+  automatiquement ; un test qui veut vraiment exercer le comportement de
+  garde (bouton désactivé pendant l'appel) passe sa propre implémentation
+  via les `overrides` de `createContext()`, qui prend le dessus sur le
+  défaut.
 
 ## Ajouter un test
 

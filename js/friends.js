@@ -246,7 +246,7 @@ function renderFriendSearchResults(){
     return friendRowHtml(p.user_id, action);
   }).join('');
   wrap.querySelectorAll('button[data-add]').forEach(btn => {
-    btn.addEventListener('click', () => sendFriendRequest(btn.dataset.add));
+    btn.addEventListener('click', withSubmitGuard(btn, () => sendFriendRequest(btn.dataset.add)));
   });
   wireFriendRowClicks(wrap);
 }
@@ -361,10 +361,10 @@ function renderFriendSuggestions(suggestions){
     s.mutual_count > 0 ? `${s.mutual_count} ami${s.mutual_count > 1 ? 's' : ''} en commun` : null
   )).join('');
   wrap.querySelectorAll('button[data-add]').forEach(btn => {
-    btn.addEventListener('click', async () => {
+    btn.addEventListener('click', withSubmitGuard(btn, async () => {
       await sendFriendRequest(btn.dataset.add);
       openFriendsSideSections();
-    });
+    }));
   });
   wireFriendRowClicks(wrap);
 }

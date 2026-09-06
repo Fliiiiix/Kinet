@@ -99,7 +99,10 @@ async function openGroups(){
 // Pas d'icône Groupes dans l'entête : on y arrive depuis la page Amis
 // (#amisGroupsLink, voir js/friends.js) — un groupe se fait avec des amis.
 document.getElementById('groupsPageBack').addEventListener('click', goHome);
-document.getElementById('createGroupBtn').addEventListener('click', handleCreateGroup);
+{
+  const createGroupBtn = document.getElementById('createGroupBtn');
+  createGroupBtn.addEventListener('click', withSubmitGuard(createGroupBtn, handleCreateGroup));
+}
 
 // --- Détail d'un groupe : membres + ajout d'amis + quitter/supprimer ---
 // (les propositions de ce groupe sont gérées par js/proposals.js, mais
@@ -201,7 +204,7 @@ function renderGroupDetail(group, members){
       ? `<div class="tmdb-empty">Tous tes amis sont déjà dans ce groupe (ou tu n'as pas encore d'ami, voir 👥 Amis).</div>`
       : candidates.map(uid => friendRowHtml(uid, `<button class="btn" data-add="${uid}" type="button">Ajouter</button>`)).join('');
     addList.querySelectorAll('button[data-add]').forEach(btn => {
-      btn.addEventListener('click', () => addMemberToGroup(group.id, btn.dataset.add));
+      btn.addEventListener('click', withSubmitGuard(btn, () => addMemberToGroup(group.id, btn.dataset.add)));
     });
   }else{
     addSection.style.display = 'none';

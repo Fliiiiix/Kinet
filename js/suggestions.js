@@ -44,7 +44,7 @@ function renderSuggestionsList(){
   const list = document.getElementById('suggestionsList');
   list.innerHTML = suggestedFilms.map(suggestionRowHtml).join('');
   list.querySelectorAll('[data-action="add-watchlist"]').forEach(btn => {
-    btn.addEventListener('click', () => addSuggestionToWatchlist(Number(btn.dataset.id)));
+    btn.addEventListener('click', withSubmitGuard(btn, () => addSuggestionToWatchlist(Number(btn.dataset.id))));
   });
 }
 

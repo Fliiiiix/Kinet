@@ -71,6 +71,15 @@ function createContext(overrides = {}){
     window: { addEventListener(){}, removeEventListener(){}, matchMedia: () => ({ matches: false, addEventListener(){} }) },
     location: { hash: '' },
     navigator: { onLine: true },
+    // Stub par défaut de withSubmitGuard (js/ui.js) : plusieurs fichiers
+    // (series.js, proposals.js, watchlist.js...) l'appellent dans leur
+    // wiring de bas de fichier depuis la répasse anti double-soumission,
+    // mais les tests qui chargent ces fichiers isolément (sans js/ui.js)
+    // planteraient sinon au chargement (ReferenceError). Un test qui
+    // veut vraiment exercer le comportement de garde (désactivation du
+    // bouton) passe sa propre implémentation via overrides plutôt que
+    // celle-ci, qui se contente de dérouler le handler tel quel.
+    withSubmitGuard: (btn, handler) => handler,
   };
   const ctx = Object.assign(base, overrides);
   return vm.createContext(ctx);

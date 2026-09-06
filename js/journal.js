@@ -121,7 +121,10 @@ async function handleAddViewing(){
   showToast('Revisionnage ajouté');
 }
 
-document.getElementById('addViewingBtn').addEventListener('click', handleAddViewing);
+{
+  const addViewingBtn = document.getElementById('addViewingBtn');
+  addViewingBtn.addEventListener('click', withSubmitGuard(addViewingBtn, handleAddViewing));
+}
 
 // --- Journal chronologique (toutes les vues, tous films confondus) ---
 
