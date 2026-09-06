@@ -428,6 +428,15 @@ function skeletonRows(count = 5){
 // listener suffit. Révélé après un scroll suffisant pour que ça vaille le
 // coup (300px — sous ce seuil, revenir en haut à la molette est aussi
 // rapide que de viser le bouton).
+// behavior:'auto' (saut instantané) plutôt que 'smooth' — vérifié en
+// testant réellement le bouton : sur le catalogue (330+ affiches en
+// `loading="lazy"`), les affiches qui finissent de charger PENDANT le
+// scroll animé changent la hauteur de contenu au-dessus du viewport, et
+// l'ancrage de scroll du navigateur (overflow-anchor, actif par défaut)
+// entre alors en conflit avec l'animation en cours — le scroll "smooth"
+// peut se figer en cours de route plutôt que d'atteindre le haut. Un saut
+// instantané n'a rien à quoi s'ancrer une fois terminé, donc rien à quoi
+// ce conflit puisse s'accrocher.
 const SCROLL_TOP_REVEAL_THRESHOLD = 300;
 const scrollTopBtn = document.getElementById('scrollTopBtn');
 if(scrollTopBtn){
@@ -435,7 +444,6 @@ if(scrollTopBtn){
     scrollTopBtn.style.display = window.scrollY > SCROLL_TOP_REVEAL_THRESHOLD ? 'flex' : 'none';
   }, { passive: true });
   scrollTopBtn.addEventListener('click', () => {
-    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    window.scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' });
+    window.scrollTo({ top: 0, behavior: 'auto' });
   });
 }
