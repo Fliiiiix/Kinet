@@ -327,6 +327,10 @@ async function removeMemberFromGroup(groupId, userId){
 }
 
 async function leaveGroup(groupId){
+  // Audit confirmations : quitter un groupe n'avait aucune confirmation,
+  // alors que retirer un AUTRE membre (juste au-dessus) en a une —
+  // pourtant symétrique (il faudrait être réinvité pour revenir).
+  if(!confirm('Quitter ce groupe ? Il faudra être réinvité pour en refaire partie.')) return;
   const { error } = await supabaseClient.from('group_members').delete().eq('group_id', groupId).eq('user_id', currentUser.id);
   if(error){
     showToast('Erreur, réessaie');

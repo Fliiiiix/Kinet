@@ -569,6 +569,10 @@ async function handleSave(){
 
 async function handleDelete(){
   if(!editingId) return;
+  // Audit confirmations : c'était la seule action destructrice de tout le
+  // site sans aucune confirmation, alors qu'elle supprime un film noté ET
+  // tout son historique de visionnages en un clic sur un bouton "danger".
+  if(!confirm('Supprimer définitivement ce film et tout son historique de visionnages ?')) return;
   const { error } = await supabaseClient.from('films').delete().eq('id', editingId).eq('user_id', currentUser.id);
   if(error){
     showToast('Erreur de suppression, réessaie');

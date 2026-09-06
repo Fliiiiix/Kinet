@@ -180,7 +180,16 @@ async function handleFriendAction(action, friendshipId){
   if(!f) return;
   if(action === 'accept') await respondToRequest(friendshipId, true);
   else if(action === 'decline') await respondToRequest(friendshipId, false);
-  else if(action === 'cancel' || action === 'remove') await removeFriendship(friendshipId);
+  else if(action === 'cancel') await removeFriendship(friendshipId);
+  // 'remove' = retirer un ami déjà accepté (pas juste annuler sa propre
+  // demande en attente, geste bien plus léger) — audit confirmations : la
+  // seule action destructrice de cette page sans aucune confirmation,
+  // alors que retirer un membre de groupe (moins définitif, on peut le
+  // réinviter) en a déjà une.
+  else if(action === 'remove'){
+    if(!confirm(`Retirer ${friendDisplayName(otherUserId(f))} de tes amis ?`)) return;
+    await removeFriendship(friendshipId);
+  }
   else if(action === 'view') await openFriendProfile(otherUserId(f));
   // Accepter/refuser change le nombre de demandes en attente (voir
   // hasPendingIncomingFriendRequest(), js/activityState.js) — le badge 👥
