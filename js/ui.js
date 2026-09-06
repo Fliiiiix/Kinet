@@ -207,6 +207,32 @@ document.addEventListener('click', (e) => {
   if(btn) setViewMode(btn.dataset.viewBtn);
 });
 
+// --- Thème clair en option (retour utilisateur) --- Sombre par défaut
+// (toute l'app est conçue dans ce sens depuis la refonte v2.0) — même
+// principe que kinetViewMode ci-dessus : préférence PAR APPAREIL, jamais
+// synchronisée à Supabase (un simple réglage d'affichage, pas une donnée à
+// partager entre appareils). try/catch (contrairement à getViewMode() plus
+// haut, un choix plus ancien non repris ici) : un thème qui ne persiste
+// pas d'une session à l'autre en navigation privée est un inconvénient
+// mineur, une exception qui empêcherait l'app de démarrer ne le serait pas.
+function getTheme(){
+  try{ return localStorage.getItem('kinetTheme') === 'light' ? 'light' : 'dark'; }
+  catch(e){ return 'dark'; }
+}
+
+function setTheme(theme){
+  document.documentElement.dataset.theme = theme;
+  try{ localStorage.setItem('kinetTheme', theme); }catch(e){}
+  const toggle = document.getElementById('lightThemeToggle');
+  if(toggle) toggle.checked = theme === 'light';
+}
+
+setTheme(getTheme());
+
+document.getElementById('lightThemeToggle').addEventListener('change', (e) => {
+  setTheme(e.target.checked ? 'light' : 'dark');
+});
+
 // --- Barème couleur du cadran (.counter) ---
 // Retenté v2.0 : la première version distinguait manuel/grille par
 // couleur (or vs teal), ce qui ne voulait rien dire pour quelqu'un qui

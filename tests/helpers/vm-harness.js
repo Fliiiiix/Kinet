@@ -38,6 +38,10 @@ function stubDocument(elements = {}){
     querySelectorAll(){ return []; }, querySelector(){ return null; },
     createElement(){ return stubElement(); },
     body: stubElement(),
+    // documentElement (<html>) : ajouté pour setTheme() (js/ui.js, thème
+    // clair en option) qui pose data-theme dessus au chargement — sans ce
+    // stub, TOUT fichier chargeant js/ui.js plante (dataset sur undefined).
+    documentElement: stubElement(),
   };
 }
 

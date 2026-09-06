@@ -131,6 +131,17 @@ film" a été diagnostiqué (voir le commentaire en tête de ce fichier).
   contenu réel des lignes n'a pas besoin d'être exact, juste de ne pas
   planter.
 
+- **`document.documentElement` (`<html>`) manquait du stub partagé** —
+  setTheme() (js/ui.js, thème clair en option) le lit dès le chargement du
+  fichier (`document.documentElement.dataset.theme = ...`) : tout test
+  chargeant js/ui.js plantait (`Cannot read properties of undefined
+  (reading 'dataset')`) tant que `stubDocument()` n'exposait pas cette
+  propriété. Ajoutée à `stubDocument()` (vm-harness.js) — mais un test qui
+  construit son PROPRE objet `document` à la main (au lieu d'appeler
+  `stubDocument()`), comme `pull-to-refresh.test.js`, doit encore l'ajouter
+  lui-même (`documentElement: stubElement()`), le correctif partagé ne le
+  couvre pas automatiquement.
+
 ## Ajouter un test
 
 Un nouveau bug corrigé mérite un test qui l'aurait attrapé — pas

@@ -35,6 +35,10 @@ function buildContext({ scrollY = 0, overlayOpen = false } = {}){
     querySelectorAll(){ return []; },
     createElement(){ return stubElement(); },
     body: stubElement(),
+    // documentElement (<html>) : setTheme() (js/ui.js, thème clair en
+    // option) le lit au chargement, absent de ce doc "fait main" (pas le
+    // stubDocument() partagé, déjà corrigé lui — voir tests/README.md).
+    documentElement: stubElement(),
   });
   const ctx = createContext({
     document: doc,
@@ -115,6 +119,7 @@ test('refreshCurrentPage() sur le catalogue (hash vide) recharge films/viewings 
     querySelectorAll(){ return []; },
     createElement(){ return stubElement(); },
     body: stubElement(),
+    documentElement: stubElement(), // setTheme() (js/ui.js) au chargement, voir plus haut
   });
   const calls = [];
   const ctx = createContext({

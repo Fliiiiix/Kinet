@@ -17,7 +17,16 @@
    parallèle dès le tout début du chargement de la page. */
 
 :root{
+  /* --ink : réservée au texte posé SUR une surface colorée (bouton/onglet
+     violet ou or, voir color:var(--ink) plus loin) + quelques liserés
+     décoratifs — toujours sombre dans les deux thèmes, puisque violet/or
+     eux-mêmes ne changent pas de thème à l'autre. --ink-surface : le VRAI
+     fond sombre (placeholders d'affiche, dégradés de carte stat/succès) —
+     seule celle-ci s'éclaircit en thème clair (voir [data-theme="light"]
+     plus bas). Les deux partagent la même valeur ici uniquement parce que
+     le thème par défaut est sombre — pas un hasard de nommage. */
   --ink:#0f0e16;
+  --ink-surface:#0f0e16;
   --surface:#1b1826;
   --surface-2:#262032;
   --surface-3:#302a3d;
@@ -70,6 +79,94 @@
      .update-banner, le padding bas des pages. Un seul chiffre à changer
      si la barre grandit un jour. */
   --mobile-tabbar-h:60px;
+  /* Triplet RGB (pas une couleur complète) pour les panneaux "vitrés" avec
+     backdrop-filter:blur (menu déroulant, .modal, barre mobile) — chacun
+     compose son propre rgba(var(--glass-rgb), alpha) avec SON alpha déjà
+     réglé (0.72/0.74/0.86 selon le composant), seule la teinte de base
+     change de thème. Thème clair en option (retour utilisateur) : sans ce
+     découplage, ces 3 panneaux resteraient un verre sombre même en thème
+     clair — leur texte (var(--text), lui bien réassigné) y deviendrait
+     illisible (texte sombre sur verre sombre). */
+  --glass-rgb:27,24,38;
+  /* Triplet RGB de --text (même logique que --glass-rgb ci-dessus) — pour
+     un liseré "toujours la couleur du texte, très estompée" sur les
+     panneaux vitrés (menu déroulant, .modal) : s'inverse correctement tout
+     seul avec le thème plutôt que de rester un blanc fixe qui disparaîtrait
+     en thème clair. */
+  --text-rgb:242,238,230;
+}
+/* Thème clair en option (retour utilisateur) — sombre par défaut, activé
+   par [data-theme="light"] sur <html> (voir setTheme(), js/ui.js). Pas de
+   variante "suit le système" : demandé comme un simple bouton, pas une
+   préférence automatique — l'attribut n'existe que si quelqu'un l'a
+   explicitement choisi, jamais posé par défaut.
+   Seuls les tokens qui échoueraient tels quels sont redéfinis ici :
+   - --ink reste identique dans les deux thèmes (texte posé sur une
+     surface violet/or, qui elle-même ne change pas de teinte de base
+     entre thèmes — voir le commentaire sur --ink dans :root).
+   - --plum/--plum-2 (blocs de couleur pleins, ex. .top-films-showcase)
+     restent identiques aussi : un bloc violet profond reste lisible et
+     voulu quel que soit le thème du reste de la page, comme une carte à
+     contraste inversé assumée plutôt qu'une surface neutre.
+   - Les accents (violet/or/teal/corail/vert/bronze) sont RE-TEINTÉS (pas
+     juste réutilisés) : leurs valeurs sombres sont choisies pour ressortir
+     sur un fond quasi noir — utilisées telles quelles comme TEXTE sur un
+     fond clair, elles échoueraient le contraste (ex. --violet actuel,
+     #8c7cff, illisible en texte sur blanc). Assombris ici pour rester
+     lisibles en texte ET rester de vrais boutons pleins avec du texte
+     blanc/--ink par-dessus — même logique de teinte, ajustée en clarté. */
+:root[data-theme="light"]{
+  --ink-surface:#efe9f5;
+  --surface:#fbfaff;
+  --surface-2:#efe9f7;
+  --surface-3:#e3daf2;
+  --line:#ddd3ee;
+  --line-soft:#e9e1f5;
+  --text:#231f2e;
+  --text-muted:#6f6884;
+  --violet:#6a4fd6;
+  --violet-dim:#4a3599;
+  --violet-wash:rgba(106,79,214,0.1);
+  --gold:#a3720e;
+  --gold-dim:#6b4f10;
+  --gold-wash:rgba(163,114,14,0.12);
+  --teal:#3f7d78;
+  --teal-wash:rgba(63,125,120,0.14);
+  --coral:#c73f2c;
+  --coral-dim:#8a3f34;
+  --green:#2f9155;
+  --green-dim:#3f7a52;
+  --green-wash:rgba(47,145,85,0.1);
+  --bronze:#9c7020;
+  --bronze-dim:#8f6a3a;
+  --bronze-wash:rgba(156,112,32,0.12);
+  --glass-rgb:251,250,255;
+  --text-rgb:35,31,46;
+}
+/* Fond de page en thème clair : même recette que le fond sombre plus bas
+   (mêmes taches de couleur, même grille de points) — pas une composition
+   différente, juste ses deux valeurs littérales (non tokenisées, seule
+   variable ici est l'union des rgba() eux-mêmes) adaptées : le point de
+   grille passe de clair-sur-sombre à sombre-sur-clair (sinon invisible sur
+   ce fond), --ink final remplacé par --ink-surface (déjà réassignée
+   au-dessus). Les taches violet/or/prune/bronze gardent LEURS mêmes rgba —
+   elles rendent en lavis pastel sur un fond clair plutôt qu'en lueur
+   saturée sur fond sombre, cohérent avec la même identité, pas une
+   composition à redessiner. */
+:root[data-theme="light"] body{
+  background:
+    radial-gradient(1100px 800px at 8% -12%, rgba(140,124,255,0.18), transparent 55%),
+    radial-gradient(950px 720px at 92% 6%, rgba(231,178,76,0.16), transparent 55%),
+    radial-gradient(1000px 750px at 45% 100%, rgba(58,31,82,0.1), transparent 58%),
+    radial-gradient(750px 580px at 96% 85%, rgba(217,170,103,0.12), transparent 52%),
+    radial-gradient(rgba(35,31,46,0.05) 1px, transparent 1px) 0 0/26px 26px,
+    var(--ink-surface);
+  /* Le raccourci background: ci-dessus réinitialise TOUS ses sous-attributs
+     (position/attachment/repeat) à leur valeur initiale s'ils ne sont pas
+     redonnés ici — sans cette ligne, le fond perdrait son attachement fixe
+     (body{}, plus bas dans ce fichier) une fois le thème clair activé,
+     redevenant un fond qui défile avec le contenu. */
+  background-attachment:fixed;
 }
 *{box-sizing:border-box; margin:0; padding:0;}
 /* Fond de page : le violet du header seul ne suffisait pas (retour
@@ -604,10 +701,10 @@ h1{
   position:absolute;
   top:calc(100% + 8px);
   right:0;
-  background:rgba(27,24,38,0.72);
+  background:rgba(var(--glass-rgb),0.72);
   backdrop-filter:blur(20px) saturate(160%);
   -webkit-backdrop-filter:blur(20px) saturate(160%);
-  border:1px solid rgba(242,238,230,0.09);
+  border:1px solid rgba(var(--text-rgb),0.09);
   border-radius:10px;
   padding:6px;
   min-width:190px;
@@ -976,7 +1073,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   display:flex;
   align-items:center;
   justify-content:center;
-  background:var(--ink);
+  background:var(--ink-surface);
   opacity:0.5;
   /* Filet de sécurité générique : le format rectangle (pas carré) laisse
      plus de marge ici, mais un débordement n'a de toute façon jamais rien
@@ -1453,10 +1550,10 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .overlay.closing{display:flex; animation:overlayOut .15s ease-in forwards;}
 .overlay.closing .modal{animation:modalOut .15s ease-in forwards;}
 .modal{
-  background:rgba(27,24,38,0.74);
+  background:rgba(var(--glass-rgb),0.74);
   backdrop-filter:blur(26px) saturate(160%);
   -webkit-backdrop-filter:blur(26px) saturate(160%);
-  border:1px solid rgba(242,238,230,0.09);
+  border:1px solid rgba(var(--text-rgb),0.09);
   border-radius:16px;
   width:100%;
   max-width:640px;
@@ -1529,7 +1626,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   display:flex;
   align-items:center;
   justify-content:center;
-  background:var(--ink);
+  background:var(--ink-surface);
   border-radius:5px;
   opacity:0.5;
 }
@@ -1622,7 +1719,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   gap:10px;
   margin-top:10px;
   padding:8px;
-  background:var(--ink);
+  background:var(--ink-surface);
   border:1px solid var(--line);
   border-radius:8px;
 }
@@ -1835,7 +1932,7 @@ input[type="range"]::-moz-range-thumb{
   white-space:pre-line;
   margin-top:8px;
   padding:10px 12px;
-  background:var(--ink);
+  background:var(--ink-surface);
   border-left:2px solid var(--teal);
   border-radius:4px;
 }
@@ -2074,7 +2171,7 @@ input[type="range"]::-moz-range-thumb{
   margin-bottom:28px;
 }
 .stat-tile{
-  background:linear-gradient(160deg, var(--ink) 0%, var(--surface) 220%);
+  background:linear-gradient(160deg, var(--ink-surface) 0%, var(--surface) 220%);
   border:1px solid var(--line);
   border-radius:10px;
   padding:14px 12px;
@@ -2124,7 +2221,7 @@ input[type="range"]::-moz-range-thumb{
    que .ach-summary (accent or) mais en bandeau plein-largeur plutôt qu'un
    bloc centré, pour rester visible sans dominer la page. */
 .chosen-banner{
-  background:var(--ink);
+  background:var(--ink-surface);
   border:1px solid var(--gold-dim);
   border-radius:10px;
   padding:12px 16px;
@@ -2312,7 +2409,7 @@ input[type="range"]::-moz-range-thumb{
   display:flex;
   align-items:flex-end;
   justify-content:center;
-  background:var(--ink);
+  background:var(--ink-surface);
   border-radius:3px 3px 0 0;
 }
 .bar-fill{
@@ -2542,7 +2639,7 @@ input[type="range"]::-moz-range-thumb{
   display:flex;
   align-items:center;
   gap:12px;
-  background:linear-gradient(160deg, var(--ink) 0%, var(--surface) 220%);
+  background:linear-gradient(160deg, var(--ink-surface) 0%, var(--surface) 220%);
   border:1px solid var(--line);
   border-radius:10px;
   padding:12px 14px;
@@ -2663,7 +2760,7 @@ input[type="range"]::-moz-range-thumb{
   gap:10px;
 }
 .ach-tier-card{
-  background:linear-gradient(160deg, var(--ink) 0%, var(--surface) 220%);
+  background:linear-gradient(160deg, var(--ink-surface) 0%, var(--surface) 220%);
   border:1px solid var(--line);
   border-radius:10px;
   padding:14px;
@@ -2756,7 +2853,7 @@ input[type="range"]::-moz-range-thumb{
   gap:10px;
 }
 .ach-hidden-card{
-  background:linear-gradient(160deg, var(--ink) 0%, var(--surface) 220%);
+  background:linear-gradient(160deg, var(--ink-surface) 0%, var(--surface) 220%);
   border:1px solid var(--line);
   border-radius:10px;
   padding:14px 12px;
@@ -3054,7 +3151,7 @@ input[type="range"]::-moz-range-thumb{
   display:flex;
   align-items:center;
   gap:8px;
-  background:var(--ink);
+  background:var(--ink-surface);
   border:1px solid var(--line);
   border-radius:7px;
   padding:7px 10px;
@@ -3985,7 +4082,7 @@ body[data-view-mode="grid"] #seriesList .new-episode-dot{display:block;}
       bloc, ils ne se chevauchent jamais spatialement. */
     height:var(--mobile-tabbar-h);
     padding-bottom:env(safe-area-inset-bottom, 0px);
-    background:rgba(27,24,38,0.86);
+    background:rgba(var(--glass-rgb),0.86);
     backdrop-filter:blur(20px) saturate(160%);
     -webkit-backdrop-filter:blur(20px) saturate(160%);
     border-top:1px solid var(--line);
