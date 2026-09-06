@@ -184,6 +184,22 @@ const HIDDEN_ACHIEVEMENTS = [
     key: 'table-ronde', icon: '🎟️', title: 'Table ronde',
     desc: 'Faire partie d\'au moins un groupe.',
     check: () => typeof groups !== 'undefined' && groups.length >= 1
+  },
+  // Note par épisode + nombre de fois vu (v2.39) n'avait encore aucun
+  // succès associé (retour utilisateur : "je veux de nouveaux succès vu
+  // qu'on a des nouvelles features") — maxEpisodeTimesWatched/
+  // notedEpisodeCount (js/series.js) calculés en un seul select groupé
+  // dans loadTrackedShows(), déjà préchargée ci-dessous comme
+  // Sérievore/Showrunner.
+  {
+    key: 'objet-de-culte', icon: '📼', title: 'Objet de culte',
+    desc: 'Avoir revu un même épisode de série au moins 3 fois.',
+    check: () => typeof maxEpisodeTimesWatched !== 'undefined' && maxEpisodeTimesWatched >= 3
+  },
+  {
+    key: 'le-noteur', icon: '🗒️', title: 'Le noteur',
+    desc: 'Avoir noté au moins 10 épisodes individuellement.',
+    check: () => typeof notedEpisodeCount !== 'undefined' && notedEpisodeCount >= 10
   }
 ];
 

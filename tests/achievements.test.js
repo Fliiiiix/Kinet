@@ -69,4 +69,31 @@ test('Table ronde : débloqué en faisant partie d\'au moins un groupe', () => {
   assert.strictEqual(one.computeAchievements().hidden.find(h => h.key === 'table-ronde').unlocked, true);
 });
 
+// --- Note par épisode + nombre de fois vu (v2.39) — retour utilisateur :
+// "je veux de nouveaux succès vu qu'on a des nouvelles features".
+// maxEpisodeTimesWatched/notedEpisodeCount (js/series.js) sont calculés en
+// un seul select groupé dans loadTrackedShows(), même préchargement que
+// Sérievore/Showrunner ci-dessus — mêmes garde-fous "jamais 0 par erreur
+// si pas chargé" à vérifier.
+test('Objet de culte : débloqué à partir de 3 visionnages d\'un même épisode', () => {
+  const few = buildContext({ maxEpisodeTimesWatched: 2 });
+  const many = buildContext({ maxEpisodeTimesWatched: 3 });
+  assert.strictEqual(few.computeAchievements().hidden.find(h => h.key === 'objet-de-culte').unlocked, false);
+  assert.strictEqual(many.computeAchievements().hidden.find(h => h.key === 'objet-de-culte').unlocked, true);
+});
+
+test('Le noteur : débloqué à partir de 10 épisodes notés individuellement', () => {
+  const few = buildContext({ notedEpisodeCount: 9 });
+  const many = buildContext({ notedEpisodeCount: 10 });
+  assert.strictEqual(few.computeAchievements().hidden.find(h => h.key === 'le-noteur').unlocked, false);
+  assert.strictEqual(many.computeAchievements().hidden.find(h => h.key === 'le-noteur').unlocked, true);
+});
+
+test('Objet de culte / Le noteur : jamais débloqués par erreur quand les données ne sont pas chargées', () => {
+  const ctx = buildContext({}); // pas de maxEpisodeTimesWatched/notedEpisodeCount du tout
+  const a = ctx.computeAchievements();
+  assert.strictEqual(a.hidden.find(h => h.key === 'objet-de-culte').unlocked, false);
+  assert.strictEqual(a.hidden.find(h => h.key === 'le-noteur').unlocked, false);
+});
+
 module.exports = run('achievements.test.js');

@@ -12,6 +12,11 @@
 
 let trackedShows = [];
 let watchedEpisodeCounts = {}; // tv_show_id -> nombre d'épisodes vus (pour la liste)
+// Agrégats globaux (toutes séries confondues), calculés par loadTrackedShows()
+// — voir js/achievements.js, succès "Ça méritait un revisionnage (bis)"/
+// "Le noteur d'épisodes".
+let maxEpisodeTimesWatched = 0; // le plus grand times_watched vu sur UN SEUL épisode, tous shows confondus
+let notedEpisodeCount = 0;      // nombre total d'épisodes ayant une note (note IS NOT NULL)
 let seriesTmdbSelected = null; // { tmdb_id, poster_url, overview, release_year, title, original_title }
 
 let currentShowId = null;       // série affichée sur #seriesDetailPage
@@ -82,17 +87,26 @@ async function loadTrackedShows(){
   // Progression de chaque série (X/Y épisodes vus) : un seul select groupé
   // plutôt qu'une requête par série — table de jointure légère, comptée
   // côté client (pas besoin d'une fonction SQL pour un simple group by
-  // sur un jeu de données personnel).
+  // sur un jeu de données personnel). note/times_watched (v2.39) inclus
+  // dans le même select — au passage, nourrit 2 nouveaux succès (v2.49,
+  // retour utilisateur : "je veux de nouveaux succès vu qu'on a des
+  // nouvelles features") sans requête dédiée : maxEpisodeTimesWatched/
+  // notedEpisodeCount (js/achievements.js) plutôt qu'un chargement séparé
+  // par série, qui n'aurait aucun sens pour un simple agrégat global.
   if(trackedShows.length > 0){
     const { data: watched, error: watchedErr } = await supabaseClient
       .from('tv_episodes_watched')
-      .select('tv_show_id');
+      .select('tv_show_id, note, times_watched');
     if(watchedErr){
       console.error(watchedErr);
     }else{
       watchedEpisodeCounts = {};
+      maxEpisodeTimesWatched = 0;
+      notedEpisodeCount = 0;
       (watched || []).forEach(row => {
         watchedEpisodeCounts[row.tv_show_id] = (watchedEpisodeCounts[row.tv_show_id] || 0) + 1;
+        if(row.times_watched > maxEpisodeTimesWatched) maxEpisodeTimesWatched = row.times_watched;
+        if(row.note != null) notedEpisodeCount++;
       });
     }
   }
