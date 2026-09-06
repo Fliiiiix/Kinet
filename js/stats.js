@@ -242,6 +242,14 @@ function critRadarPoint(index, total, radius, cx, cy){
   return { x: cx + radius * Math.cos(angle), y: cy + radius * Math.sin(angle) };
 }
 
+// Libellés raccourcis pour les 2 critères aux noms les plus longs — vérifié
+// en direct sur mobile (modal étroit) : "Esthétique visuelle" et "Ressenti
+// global" se faisaient couper net contre les bords du modal (débordaient
+// bien plus loin que les 5 autres labels). Le libellé complet reste
+// affiché juste en dessous dans la liste à barres (critReviewRowHtml()) —
+// rien n'est perdu, seul le radar (contraint en largeur) simplifie.
+const CRIT_RADAR_SHORT_LABEL = { esthetique: 'Esthétique', ressenti: 'Ressenti' };
+
 function renderCritRadar(critObj){
   const cx = 100, cy = 96, maxRadius = 72;
   const n = CRITERIA.length;
@@ -271,9 +279,10 @@ function renderCritRadar(critObj){
   // choisi selon la position x par rapport au centre, sans quoi un
   // libellé à droite du centre s'étalerait vers l'extérieur du viewBox.
   const labels = Array.from({ length: n }, (_, i) => {
-    const p = critRadarPoint(i, n, maxRadius + 20, cx, cy);
+    const p = critRadarPoint(i, n, maxRadius + 16, cx, cy);
     const anchor = Math.abs(p.x - cx) < 8 ? 'middle' : (p.x > cx ? 'start' : 'end');
-    return `<text x="${p.x.toFixed(1)}" y="${p.y.toFixed(1)}" text-anchor="${anchor}" dominant-baseline="middle" class="crit-radar-label">${escapeHtml(CRITERIA[i].label)}</text>`;
+    const label = CRIT_RADAR_SHORT_LABEL[CRITERIA[i].key] || CRITERIA[i].label;
+    return `<text x="${p.x.toFixed(1)}" y="${p.y.toFixed(1)}" text-anchor="${anchor}" dominant-baseline="middle" class="crit-radar-label">${escapeHtml(label)}</text>`;
   }).join('');
 
   return `

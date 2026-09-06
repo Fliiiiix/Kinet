@@ -2373,11 +2373,30 @@ input[type="range"]::-moz-range-thumb{
   max-width:280px;
   height:auto;
   margin:0 auto 18px;
+  /* Un <svg> a overflow:hidden par défaut (feuille de style du navigateur)
+     — les libellés, volontairement posés à un rayon plus grand que la
+     zone de données pour rester lisibles autour du radar, débordaient du
+     viewBox et se faisaient couper net sur les bords (constaté en direct :
+     "Ressenti global"/"Musique" tronqués à gauche, "Mise en scène"/
+     "Jeu d'acteur"/"Esthétique visuelle" à droite). overflow:visible laisse
+     le texte s'étendre hors du viewBox sans toucher au positionnement du
+     radar lui-même. */
+  overflow:visible;
 }
 .crit-radar-label{
   font-family:'Space Mono', monospace;
-  font-size:9px;
+  font-size:8px;
   fill:var(--text-muted);
+}
+/* Sur un modal étroit (mobile), même "Mise en scène"/"Jeu d'acteur" se
+   faisaient couper contre le bord du modal (constaté en direct) — le
+   raccourci de libellé (CRIT_RADAR_SHORT_LABEL, js/stats.js) ne suffisait
+   qu'aux 2 pires cas. Réduire max-width ici libère plus de marge ABSOLUE
+   entre le radar et le bord du modal (overflow:visible ci-dessus laisse
+   les libellés y déborder) — la largeur du modal ne change pas, seule la
+   part que le radar lui-même en réclame diminue. */
+@media (max-width:600px){
+  .crit-radar-svg{max-width:210px;}
 }
 .crit-review-list{display:flex; flex-direction:column; gap:12px; margin-bottom:22px;}
 .crit-review-row{display:flex; align-items:center; gap:12px;}

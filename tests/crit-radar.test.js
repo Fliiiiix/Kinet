@@ -63,17 +63,36 @@ test('renderCritRadar() : un score de 0 ne colle pas au centre (plancher visuel)
   assert.ok(!svgAllOne.includes('NaN'), 'aucune coordonnée NaN pour un profil à 1 partout');
 });
 
-test('renderCritRadar() : les 7 libellés de CRITERIA apparaissent tous dans le SVG généré', () => {
-  const ctx = buildContext();
-  const svg = ctx.renderCritRadar({ scenario: 0.5, mise_en_scene: 0.5, jeu: 0.5, esthetique: 0.5, son: 0.5, musique: 0.5, ressenti: 0.5 });
-  ['Scénario', 'Mise en scène', "Jeu d'acteur", 'Esthétique visuelle', 'Son', 'Musique', 'Ressenti global'].forEach(label => {
-    assert.ok(svg.includes(label), `le libellé "${label}" doit apparaître dans le radar`);
-  });
-});
 
 test('renderCritRadar() : un critère absent de l\'objet crit est traité comme 0, pas une exception', () => {
   const ctx = buildContext();
   assert.doesNotThrow(() => ctx.renderCritRadar({ scenario: 0.8 })); // les 6 autres critères manquent
+});
+
+// --- Régression mobile : libellés coupés contre le bord du modal ---
+// Constaté en direct sur un vrai modal étroit (390px) : "Esthétique
+// visuelle" et "Ressenti global" (les 2 libellés les plus longs) se
+// faisaient couper net. Le libellé complet reste affiché dans la liste à
+// barres juste en dessous (critReviewRowHtml()) — seul le radar simplifie.
+test('renderCritRadar() : "Esthétique visuelle"/"Ressenti global" sont raccourcis dans les libellés du radar (pas dans les info-bulles des points, qui gardent le nom complet)', () => {
+  const ctx = buildContext();
+  const svg = ctx.renderCritRadar({ scenario: 0.5, mise_en_scene: 0.5, jeu: 0.5, esthetique: 0.5, son: 0.5, musique: 0.5, ressenti: 0.5 });
+  // Isole les <text class="crit-radar-label"> (les libellés affichés autour
+  // du radar) des <title> des points (info-bulle au survol, qui garde
+  // volontairement le nom complet et précis) — sans ça, "Esthétique
+  // visuelle" trouvé dans un <title> ferait passer le test à tort.
+  const labelTexts = Array.from(svg.matchAll(/class="crit-radar-label">([^<]+)</g)).map(m => m[1]);
+  assert.ok(!labelTexts.includes('Esthétique visuelle'), 'le libellé complet ne doit plus apparaître dans les libellés du radar, trop long pour un modal étroit');
+  assert.ok(!labelTexts.includes('Ressenti global'), 'idem pour "Ressenti global"');
+  assert.ok(labelTexts.includes('Esthétique'), 'la version raccourcie doit apparaître');
+  assert.ok(labelTexts.includes('Ressenti'), 'la version raccourcie doit apparaître');
+  // Les 5 autres, déjà assez courts, restent inchangés.
+  ['Scénario', 'Mise en scène', "Jeu d'acteur", 'Son', 'Musique'].forEach(label => {
+    assert.ok(labelTexts.includes(label), `"${label}" doit rester tel quel (pas de raccourci nécessaire)`);
+  });
+  // Le nom complet et précis reste disponible au survol d'un point.
+  assert.ok(svg.includes('Esthétique visuelle :'), 'l\'info-bulle du point garde le nom complet');
+  assert.ok(svg.includes('Ressenti global :'), 'idem');
 });
 
 module.exports = run('crit-radar.test.js');
