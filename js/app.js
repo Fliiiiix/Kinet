@@ -237,7 +237,15 @@ function render(){
     // Genre en bronze (v2.8, retour utilisateur — "où est la couleur ?") :
     // seul segment de .film-sub à sortir du gris muet, sur la ligne la
     // plus vue de toute l'app (le catalogue).
-    const sub = (isManual ? 'Note manuelle · ancien référentiel' : '7 critères notés') + (f.releaseYear ? ` · ${f.releaseYear}` : '') + (genres ? ` · <span class="film-sub-genre">${genres}</span>` : '');
+    // "7 critères notés" supposait à tort qu'un film non manuel avait
+    // forcément sa grille remplie — faux pour un import watched.csv
+    // (Letterboxd, voir js/importExternal.js), qui crée le film avec
+    // crit:{} (aucune note du tout, pas même partielle) : chaque ligne du
+    // nouveau filtre "Sans note" (retour utilisateur) affichait pourtant
+    // "7 critères notés", trompeur. note === null (ni manuelle, ni grille
+    // remplie) couvre les deux raisons possibles d'absence de note.
+    const critLabel = note === null ? 'Pas encore noté' : (isManual ? 'Note manuelle · ancien référentiel' : '7 critères notés');
+    const sub = critLabel + (f.releaseYear ? ` · ${f.releaseYear}` : '') + (genres ? ` · <span class="film-sub-genre">${genres}</span>` : '');
     row.innerHTML = `
       <div class="holes"><span></span><span></span><span></span></div>
       ${f.posterUrl
