@@ -3455,6 +3455,7 @@ body[data-view-mode="list"] #topList .top-rank{width:26px; font-size:16px;}
 .season-block.open .season-episodes{display:block;}
 .season-episodes-actions{
   display:flex;
+  flex-wrap:wrap;
   gap:8px;
   margin:8px 0 12px;
 }
@@ -3632,6 +3633,22 @@ body[data-view-mode="list"] #topList .top-rank{width:26px; font-size:16px;}
   body[data-view-mode="list"] #wlList .film-poster-placeholder,
   body[data-view-mode="list"] #seriesList .film-poster-placeholder,
   body[data-view-mode="list"] #topList .film-poster-placeholder{width:46px; height:68px;}
+
+  /* Watchlist en vue liste sur mobile (audit responsive) : #wlList a 3
+     boutons (Rapide/Noter/Retirer, voir js/watchlist.js) contre 2 ailleurs
+     (Séries/Top) — .wl-actions{flex:none} (règle desktop plus haut dans ce
+     fichier) les empêchait de rétrécir ET la ligne ne pouvait pas non plus
+     wrapper, donc les 3 boutons se retrouvaient écrasés par-dessus le titre
+     une fois celui-ci poussé à une largeur ridicule. Même traitement que la
+     vue carte (v2.40.1, .wl-actions{flex-wrap:wrap} plus haut) : les
+     actions passent sur leur propre ligne plutôt que de cohabiter de force
+     avec le titre. */
+  body[data-view-mode="list"] #wlList .wl-row{flex-wrap:wrap;}
+  body[data-view-mode="list"] #wlList .wl-actions{
+    flex:1 1 100%;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+  }
 
   /* Recherche seule reste sur la ligne (v2.1.x, retour utilisateur :
      recherche+tri+genre tous les 3 devenaient illisibles/tronqués sur
