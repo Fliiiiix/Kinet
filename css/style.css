@@ -9,7 +9,12 @@
    à l'ancien thème cinéma que cette version abandonne.
    ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,500&family=Space+Mono:wght@400;700&display=swap');
+/* La police est chargée depuis <head> (index.html, <link rel="stylesheet">)
+   plutôt qu'un @import ici (retour utilisateur : "Chargement plus rapide au
+   démarrage") — un @import en tête de feuille de style force le navigateur
+   à d'abord télécharger ET PARSER style.css avant même de découvrir qu'il
+   lui faut aussi cette police, alors qu'un <link> dans <head> part en
+   parallèle dès le tout début du chargement de la page. */
 
 :root{
   --ink:#0f0e16;
@@ -544,6 +549,9 @@ h1{
 .sort-dir-toggle{display:flex; gap:4px;}
 .sort-dir-toggle .btn{padding:8px 12px;}
 .sort-dir-toggle .btn.active{border-color:var(--violet); color:var(--violet);}
+/* Bouton "Sélectionner" (actions groupées), même traitement pressé que les
+   autres bascules .btn.active ci-dessus. */
+#bulkSelectBtn.active{border-color:var(--violet); color:var(--violet); background:var(--violet-wash);}
 .toolbar-actions{
   display:flex;
   align-items:center;
@@ -923,6 +931,21 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
    bords, supprimées d'index.html/js/app.js). Élément gardé dans le DOM
    généré par render() (skeleton de chargement inclus) — juste masqué. */
 .film-row .holes{display:none;}
+/* Case à cocher des actions groupées (retour utilisateur) — position:absolute
+   plutôt qu'un 5e item de la grille nommée ci-dessus (.film-row a des
+   grid-template-areas fixes à 4 zones, poster/main/star/counter, pareil en
+   mode grille juste plus bas) : l'ajouter comme item de grille demanderait
+   de réécrire ces zones rien que pour ce mode optionnel. .film-row a déjà
+   position:relative, sert d'ancre sans toucher au flux normal — visible
+   dans les deux modes (grille/liste) sans CSS spécifique à chacun. */
+.bulk-select-checkbox{
+  position:absolute;
+  top:10px; left:10px;
+  z-index:2;
+  width:18px; height:18px;
+  cursor:pointer;
+  accent-color:var(--violet);
+}
 /* Taille volontairement généreuse : l'affiche est le seul élément vraiment
    "cinéma" d'une ligne de liste, le reste (titre, badges, note) est du
    texte. Classe partagée par toutes les listes de films de l'app
@@ -3191,6 +3214,40 @@ input[type="range"]::-moz-range-thumb{
 .undo-toast-btn:hover{background:var(--violet); color:var(--surface-2);}
 @media (max-width:600px){
   .undo-toast{bottom:calc(24px + var(--mobile-tabbar-h) + env(safe-area-inset-bottom, 0px));}
+}
+
+/* Barre d'actions groupées sur le catalogue (retour utilisateur), voir
+   js/app.js (#bulkSelectBtn/#bulkActionsBar) — même position fixe en bas
+   que .toast/.undo-toast, mais assez large pour 4 boutons + le décompte,
+   jamais affichée en même temps qu'un toast normal (les deux mécanismes ne
+   se déclenchent jamais ensemble). */
+.bulk-actions-bar{
+  position:fixed;
+  bottom:24px;
+  left:50%;
+  transform:translateX(-50%);
+  background:var(--surface-2);
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:10px 16px;
+  display:flex;
+  align-items:center;
+  gap:16px;
+  flex-wrap:wrap;
+  justify-content:center;
+  max-width:calc(100vw - 32px);
+  z-index:100;
+  box-shadow:0 10px 30px rgba(0,0,0,0.4);
+}
+.bulk-actions-count{
+  font-family:'Space Mono', monospace;
+  font-size:12px;
+  color:var(--text-muted);
+  white-space:nowrap;
+}
+.bulk-actions-buttons{display:flex; gap:8px; flex-wrap:wrap;}
+@media (max-width:600px){
+  .bulk-actions-bar{bottom:calc(24px + var(--mobile-tabbar-h) + env(safe-area-inset-bottom, 0px));}
 }
 
 /* --- Happenings (js/happenings.js) --- */

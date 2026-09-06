@@ -150,6 +150,42 @@ function buildGenreFilterOptions(){
   sel.innerHTML = `<option value="">Tous les genres</option>${unratedOption}${options}`;
   if(current === UNRATED_FILTER_VALUE && unratedCount > 0) sel.value = current;
   else if(current && present.has(Number(current))) sel.value = current;
+  // buildYearFilterOptions() (juste en dessous) doit être reconstruite
+  // exactement aux mêmes moments que ce select (toute mutation du
+  // catalogue) — appelée ici plutôt que dupliquée aux ~9 sites d'appel de
+  // buildGenreFilterOptions() (auth.js, handleSave/handleDelete/import
+  // Letterboxd/Trakt/watchlist...), pour ne jamais risquer que les deux
+  // dérivent l'une de l'autre.
+  buildYearFilterOptions();
+}
+
+// Options de #yearFilter (retour utilisateur : "Filtre catalogue par
+// année/décennie") — même principe que buildGenreFilterOptions() : seules
+// les années RÉELLEMENT présentes au catalogue, groupées par décennie
+// (<optgroup>) pour rester lisible même avec 30-40 années différentes
+// plutôt qu'une liste plate à faire défiler. Le filtre lui-même reste sur
+// une année exacte (pas un bucket "2020s") — une décennie n'est ici qu'un
+// regroupement visuel du <select>, pas une valeur de filtre à part.
+function buildYearFilterOptions(){
+  const sel = document.getElementById('yearFilter');
+  const current = sel.value;
+  const years = new Set();
+  films.forEach(f => { if(f.releaseYear) years.add(f.releaseYear); });
+  const decades = new Map(); // début de décennie (ex. 2020) -> [années]
+  Array.from(years).sort((a, b) => b - a).forEach(y => {
+    const decadeStart = Math.floor(y / 10) * 10;
+    if(!decades.has(decadeStart)) decades.set(decadeStart, []);
+    decades.get(decadeStart).push(y);
+  });
+  const optgroups = Array.from(decades.entries())
+    .sort((a, b) => b[0] - a[0])
+    .map(([decadeStart, ys]) => `
+      <optgroup label="${decadeStart}s">
+        ${ys.map(y => `<option value="${y}">${y}</option>`).join('')}
+      </optgroup>
+    `).join('');
+  sel.innerHTML = `<option value="">Toutes les années</option>${optgroups}`;
+  if(current && years.has(Number(current))) sel.value = current;
 }
 
 // Sens du tri par critère (#sortAdvancedRow) — bouton-bascule plutôt qu'un
@@ -165,11 +201,13 @@ function render(){
   const critKey = isAdvanced ? document.getElementById('sortCriterion').value : null;
   const critFilterMin = isAdvanced ? parseFloat(document.getElementById('critFilterMin').value) : 0;
   const genreFilter = document.getElementById('genreFilter').value;
+  const yearFilter = document.getElementById('yearFilter').value;
 
   // Point d'état sur le bouton Filtres (v2.1.x, mobile — voir index.html) :
-  // seul indice qu'un tri/genre non-défaut est actif une fois la feuille
-  // repliée, tri "note-desc" étant la valeur par défaut de #sortBy.
-  document.getElementById('filtersToggleBtn').classList.toggle('has-active-filter', sortBy !== 'note-desc' || !!genreFilter);
+  // seul indice qu'un tri/genre/année non-défaut est actif une fois la
+  // feuille repliée, tri "note-desc" étant la valeur par défaut de #sortBy.
+  document.getElementById('filtersToggleBtn').classList.toggle('has-active-filter', sortBy !== 'note-desc' || !!genreFilter || !!yearFilter);
+  renderBulkActionsBar();
 
   // Matche le titre FR ou le titre VO (ex. "créatures féroces" trouve aussi
   // "Fierce Creatures"), accents/casse ignorés — voir getSearchTerms().
@@ -185,6 +223,13 @@ function render(){
   }else if(genreFilter){
     const genreId = Number(genreFilter);
     filtered = filtered.filter(f => (f.genreIds || []).includes(genreId));
+  }
+
+  // Filtre année (retour utilisateur : "Filtre catalogue par
+  // année/décennie") — voir buildYearFilterOptions() plus haut.
+  if(yearFilter){
+    const year = Number(yearFilter);
+    filtered = filtered.filter(f => f.releaseYear === year);
   }
 
   // Seuil sur le critère en cours de tri (voir #sortAdvancedRow) — un film
@@ -208,7 +253,7 @@ function render(){
     return 0;
   });
 
-  const isFiltered = !!search || !!genreFilter || (isAdvanced && critFilterMin > 0);
+  const isFiltered = !!search || !!genreFilter || !!yearFilter || (isAdvanced && critFilterMin > 0);
   countLine.textContent = `${filtered.length} film${filtered.length>1?'s':''} ${isFiltered ? '(filtré)' : 'au catalogue'}`;
 
   if(filtered.length === 0){
@@ -248,6 +293,7 @@ function render(){
     const sub = critLabel + (f.releaseYear ? ` · ${f.releaseYear}` : '') + (genres ? ` · <span class="film-sub-genre">${genres}</span>` : '');
     row.innerHTML = `
       <div class="holes"><span></span><span></span><span></span></div>
+      ${bulkSelectMode ? `<input type="checkbox" class="bulk-select-checkbox" data-id="${f.id}" aria-label="Sélectionner ${escapeHtml(f.title)}" ${selectedFilmIds.has(f.id) ? 'checked' : ''}>` : ''}
       ${f.posterUrl
         ? `<img class="film-poster" src="${f.posterUrl}" alt="" loading="lazy">`
         : `<div class="film-poster film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
@@ -260,8 +306,20 @@ function render(){
     `;
     makeRowClickable(row, (e) => {
       if(e.target.classList.contains('star-btn')) return;
+      if(e.target.classList.contains('bulk-select-checkbox')) return; // déjà géré par son propre listener 'change' ci-dessous
+      // Actions groupées (retour utilisateur) : en mode sélection, la ligne
+      // entière coche/décoche au lieu d'ouvrir la fiche — cocher UN PAR UN
+      // 50 films avec une case minuscule serait pénible, toute la ligne
+      // (déjà cliquable) est une cible bien plus grande.
+      if(bulkSelectMode){ toggleFilmSelection(f.id); render(); return; }
       openModal(f.id);
     });
+    if(bulkSelectMode){
+      row.querySelector('.bulk-select-checkbox').addEventListener('change', () => {
+        toggleFilmSelection(f.id);
+        render();
+      });
+    }
     if(happening){
       row.querySelector('.happening-badge').addEventListener('click', (e) => {
         e.stopPropagation();
@@ -313,6 +371,116 @@ function renderPagination(totalPages){
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 }
+
+// --- Actions groupées sur le catalogue (retour utilisateur) --- Mode
+// bascule (#bulkSelectBtn, toolbar) : chaque ligne du catalogue affiche une
+// case à cocher au lieu d'ouvrir la fiche au clic (voir render() plus
+// haut) ; #bulkActionsBar apparaît dès qu'au moins un film est coché.
+// selectedFilmIds ne survit PAS à une sortie du mode sélection
+// (toggleBulkSelectMode la vide) — repartir d'une sélection vide à chaque
+// activation évite la confusion "pourquoi ces films-là sont déjà cochés".
+let bulkSelectMode = false;
+let selectedFilmIds = new Set();
+
+function toggleBulkSelectMode(){
+  bulkSelectMode = !bulkSelectMode;
+  selectedFilmIds.clear();
+  const btn = document.getElementById('bulkSelectBtn');
+  btn.classList.toggle('active', bulkSelectMode);
+  btn.setAttribute('aria-pressed', String(bulkSelectMode));
+  render();
+}
+
+function toggleFilmSelection(id){
+  if(selectedFilmIds.has(id)) selectedFilmIds.delete(id);
+  else selectedFilmIds.add(id);
+}
+
+function renderBulkActionsBar(){
+  const bar = document.getElementById('bulkActionsBar');
+  if(!bulkSelectMode || selectedFilmIds.size === 0){
+    bar.hidden = true;
+    return;
+  }
+  bar.hidden = false;
+  const n = selectedFilmIds.size;
+  document.getElementById('bulkActionsCount').textContent = `${n} film${n > 1 ? 's' : ''} sélectionné${n > 1 ? 's' : ''}`;
+}
+
+async function handleBulkFavorite(fav){
+  if(blockIfOffline()) return; // js/offline.js — lecture seule hors ligne
+  if(selectedFilmIds.size === 0) return;
+  const ids = Array.from(selectedFilmIds);
+  const { error } = await supabaseClient.from('films').update({ fav }).in('id', ids).eq('user_id', currentUser.id);
+  if(error){
+    showToast('Erreur, réessaie');
+    console.error(error);
+    return;
+  }
+  films.forEach(f => { if(selectedFilmIds.has(f.id)) f.fav = fav; });
+  showToast(fav ? 'Ajoutés aux favoris' : 'Retirés des favoris');
+  render();
+}
+
+// Bulk delete : un confirm() bloquant (comme handleDelete(), voir l'audit
+// confirmations v2.7) plutôt que le toast d'annulation (v2.8) — supprimer
+// potentiellement des dizaines de films d'un coup est un geste bien plus
+// lourd que les cas visés par le toast (un seul item de watchlist/journal),
+// une fenêtre de quelques secondes pour annuler serait un filet trop faible.
+async function handleBulkDelete(){
+  if(blockIfOffline()) return;
+  if(selectedFilmIds.size === 0) return;
+  const n = selectedFilmIds.size;
+  if(!confirm(`Supprimer définitivement ${n} film${n > 1 ? 's' : ''} et leur historique de visionnages ?`)) return;
+  const ids = Array.from(selectedFilmIds);
+  const { error } = await supabaseClient.from('films').delete().in('id', ids).eq('user_id', currentUser.id);
+  if(error){
+    showToast('Erreur de suppression, réessaie');
+    console.error(error);
+    return;
+  }
+  films = films.filter(f => !selectedFilmIds.has(f.id));
+  viewings = viewings.filter(v => !selectedFilmIds.has(v.filmId)); // supprimés en cascade côté base
+  selectedFilmIds.clear();
+  buildGenreFilterOptions(); // les genres supprimés peuvent ne plus être représentés au catalogue
+  render();
+  showToast('Films supprimés');
+}
+
+// Déclenche le téléchargement d'un export JSON (même format que
+// exportFilms() ci-dessous, dont le corps est maintenant un simple appel à
+// ce helper partagé) — filenameSuffix distingue un export complet d'un
+// export de sélection sans dupliquer la mécanique blob/lien/révocation.
+function downloadFilmsJson(filmsToExport, filenameSuffix){
+  const data = {
+    app: 'critique-films',
+    version: 3,
+    exportedAt: new Date().toISOString(),
+    films: filmsToExport
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const dateStr = new Date().toISOString().slice(0, 10);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `critique-films${filenameSuffix}-${dateStr}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function handleBulkExport(){
+  if(selectedFilmIds.size === 0) return;
+  downloadFilmsJson(films.filter(f => selectedFilmIds.has(f.id)), '-selection');
+  showToast('Sélection exportée');
+}
+
+document.getElementById('bulkSelectBtn').addEventListener('click', toggleBulkSelectMode);
+document.getElementById('bulkFavBtn').addEventListener('click', () => handleBulkFavorite(true));
+document.getElementById('bulkUnfavBtn').addEventListener('click', () => handleBulkFavorite(false));
+document.getElementById('bulkDeleteBtn').addEventListener('click', handleBulkDelete);
+document.getElementById('bulkExportBtn').addEventListener('click', handleBulkExport);
 
 function escapeHtml(str){
   const d = document.createElement('div');
@@ -590,22 +758,9 @@ async function handleDelete(){
 // --- Export / Import JSON ---
 
 function exportFilms(){
-  const data = {
-    app: 'critique-films',
-    version: 3,
-    exportedAt: new Date().toISOString(),
-    films
-  };
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const dateStr = new Date().toISOString().slice(0, 10);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `critique-films-${dateStr}.json`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
+  // Corps factorisé dans downloadFilmsJson() (plus haut) — partagé avec
+  // l'export d'une sélection (actions groupées, retour utilisateur).
+  downloadFilmsJson(films, '');
   showToast('Export téléchargé');
 }
 
@@ -797,6 +952,7 @@ document.getElementById('sortBy').addEventListener('change', () => {
 });
 document.getElementById('sortCriterion').addEventListener('change', () => { currentPage = 1; render(); });
 document.getElementById('genreFilter').addEventListener('change', () => { currentPage = 1; render(); });
+document.getElementById('yearFilter').addEventListener('change', () => { currentPage = 1; render(); });
 
 // --- Feuille Filtres (v2.1.x, mobile) — voir #toolbarFilters, index.html ---
 // #sortBy/#genreFilter eux-mêmes gardent leurs listeners ci-dessus tels

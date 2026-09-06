@@ -12,8 +12,9 @@ async function loadViewings(){
     .order('watched_at', { ascending: false });
   if(error){
     // Repli hors ligne (js/offline.js) : mêmes principes que loadFilms()
-    // dans js/app.js — pas de toast ici, celui de loadFilms() (appelée
-    // juste avant depuis showApp()) suffit à prévenir l'utilisateur.
+    // dans js/app.js — pas de toast ici, celui de loadFilms() (chargée EN
+    // PARALLÈLE depuis showApp(), voir js/auth.js) suffit à prévenir
+    // l'utilisateur.
     const cached = loadOfflineCache('viewings');
     if(cached){
       viewings = cached.data;

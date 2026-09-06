@@ -43,13 +43,21 @@ async function showApp(){
   document.getElementById('userBar').style.display = '';
   document.getElementById('mobileTabbar').style.display = '';
   document.getElementById('primaryTabs').style.display = '';
-  await loadOrCreateProfile();
-  // Écarts admin (seuils/succès/happenings modifiés, voir js/admin.js) : ne
-  // concernent que le compte propriétaire, chargés avant render() pour que
-  // badges/succès reflètent tout de suite les éventuels réglages.
-  if(isAdmin()) await loadAdminConfig();
-  await loadFilms();
-  await loadViewings();
+  // Chargement plus rapide au démarrage (retour utilisateur) : ces 4
+  // requêtes sont indépendantes (profil, films, visionnages, écarts admin —
+  // aucune ne lit ce qu'une autre écrit), les lancer en parallèle plutôt
+  // qu'en séquence (l'ordre précédent, un aller-retour après l'autre) ne
+  // fait payer, dans les faits, que le plus lent des quatre au lieu de leur
+  // somme. Écarts admin (seuils/succès/happenings modifiés, voir
+  // js/admin.js) : ne concernent que le compte propriétaire, chargés avant
+  // render() pour que badges/succès reflètent tout de suite les éventuels
+  // réglages.
+  await Promise.all([
+    loadOrCreateProfile(),
+    loadFilms(),
+    loadViewings(),
+    isAdmin() ? loadAdminConfig() : Promise.resolve()
+  ]);
   buildGenreFilterOptions(); // js/app.js — avant render(), pour que le select soit déjà rempli au 1er affichage
   render();
   await renderRoute(); // gère un lien direct vers une page Groupes (F5, etc.)
