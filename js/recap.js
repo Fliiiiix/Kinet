@@ -241,11 +241,34 @@ async function renderRecapCanvas(recap){
   ctx.textAlign = 'left';
 }
 
+// --- Partage direct (retour utilisateur) --- En plus du téléchargement
+// déjà là : sur mobile surtout, envoyer l'image direct par message sans
+// repasser par "télécharger puis rouvrir depuis les fichiers". Le bouton
+// reste caché tant qu'on n'a pas VÉRIFIÉ que le navigateur peut vraiment
+// partager un fichier (pas juste du texte/un lien, ce que navigator.share
+// seul ne garantit pas) — la plupart des navigateurs desktop n'ont pas
+// cette capacité, un bouton "Partager" qui échouerait à chaque clic serait
+// pire qu'aucun bouton.
+async function canShareFiles(){
+  if(!navigator.canShare) return false;
+  try{
+    // Fichier factice minimal, jamais affiché ni envoyé nulle part — sert
+    // uniquement à interroger canShare() avec un VRAI File du bon type,
+    // seule façon fiable de savoir si le partage de fichiers est supporté
+    // (contrairement à juste vérifier l'existence de navigator.share).
+    const probe = new File([new Uint8Array([0])], 'probe.png', { type: 'image/png' });
+    return navigator.canShare({ files: [probe] });
+  }catch(e){
+    return false;
+  }
+}
+
 async function openRecap(){
   closeOverlay('statsOverlay');
   const recap = computeRecap(new Date().getFullYear());
   const canvas = document.getElementById('recapCanvas');
   const downloadBtn = document.getElementById('downloadRecapBtn');
+  const shareBtn = document.getElementById('shareRecapBtn');
   if(!recap){
     // Case limite (rien de vu cette année, ex. tout début janvier ou
     // catalogue neuf) : le canvas reste vide, message clair à la place
@@ -261,10 +284,12 @@ async function openRecap(){
     ctx.fillText('Rien à résumer pour l\'instant.', canvas.width / 2, canvas.height / 2);
     ctx.textAlign = 'left';
     downloadBtn.style.display = 'none';
+    shareBtn.style.display = 'none';
     openOverlay('recapOverlay');
     return;
   }
   downloadBtn.style.display = '';
+  shareBtn.style.display = (await canShareFiles()) ? '' : 'none';
   openOverlay('recapOverlay');
   await renderRecapCanvas(recap);
 }
@@ -294,3 +319,19 @@ document.getElementById('downloadRecapBtn').addEventListener('click', () => {
     console.error(e);
   }
 });
+document.getElementById('shareRecapBtn').addEventListener('click', withSubmitGuard(document.getElementById('shareRecapBtn'), async () => {
+  const canvas = document.getElementById('recapCanvas');
+  const year = new Date().getFullYear();
+  try{
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+    if(!blob) throw new Error('canvas.toBlob() a renvoyé null');
+    const file = new File([blob], `kinet-bilan-${year}.png`, { type: 'image/png' });
+    await navigator.share({ files: [file], title: `Mon bilan cinéphile ${year}` });
+  }catch(e){
+    // AbortError : l'utilisateur a juste fermé la feuille de partage sans
+    // rien choisir — pas une erreur, aucun toast à afficher pour ça.
+    if(e.name === 'AbortError') return;
+    showToast('Impossible de partager l\'image, réessaie');
+    console.error(e);
+  }
+}));

@@ -125,4 +125,37 @@ test('recapAriaLabel() : gère les cas singuliers/absents (1 film, pas de note, 
   assert.ok(!label.includes('genre préféré'), 'pas de genre dominant -> pas mentionné');
 });
 
+// --- Partage direct (retour utilisateur) --- canShareFiles() décide si le
+// bouton "Partager" apparaît — ne doit JAMAIS s'afficher sur un navigateur
+// qui ne peut pas vraiment partager de fichier (la plupart des navigateurs
+// desktop), sans quoi cliquer dessus échouerait à coup sûr.
+test('canShareFiles() : false si navigator.canShare n\'existe pas du tout (desktop typique)', async () => {
+  const ctx = createContext({
+    document: stubDocument(), getDisplayNote(){ return null; }, GENRE_MAP: {}, openOverlay(){}, closeOverlay(){}, showToast(){},
+    navigator: {}, // pas de canShare du tout
+  });
+  loadFiles(ctx, ['js/recap.js']);
+  assert.strictEqual(await ctx.canShareFiles(), false);
+});
+
+test('canShareFiles() : true si navigator.canShare({files}) répond true pour un vrai File', async () => {
+  const ctx = createContext({
+    document: stubDocument(), getDisplayNote(){ return null; }, GENRE_MAP: {}, openOverlay(){}, closeOverlay(){}, showToast(){},
+    File, // global Node natif (disponible depuis Node 20+) — un vrai File, pas un stub
+    navigator: { canShare: (data) => !!(data && data.files && data.files[0] instanceof File) },
+  });
+  loadFiles(ctx, ['js/recap.js']);
+  assert.strictEqual(await ctx.canShareFiles(), true);
+});
+
+test('canShareFiles() : false si navigator.canShare lève une exception plutôt que de la laisser remonter', async () => {
+  const ctx = createContext({
+    document: stubDocument(), getDisplayNote(){ return null; }, GENRE_MAP: {}, openOverlay(){}, closeOverlay(){}, showToast(){},
+    File,
+    navigator: { canShare(){ throw new Error('non supporté'); } },
+  });
+  loadFiles(ctx, ['js/recap.js']);
+  assert.strictEqual(await ctx.canShareFiles(), false);
+});
+
 module.exports = run('recap.test.js');
