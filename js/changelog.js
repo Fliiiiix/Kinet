@@ -8,8 +8,23 @@
 // colonne dédiée sur user_activity_state, pas de localStorage (un badge
 // doit suivre l'utilisateur d'un appareil à l'autre).
 
-let changelogEntries = [];       // entrées publiées, les plus récentes d'abord
-let latestChangelogEntry = null;
+let changelogEntries = [];       // entrées publiées des 7 derniers jours, les plus récentes d'abord
+let latestChangelogEntry = null; // la plus récente DANS cette fenêtre de 7 jours — sert à détecter "y a-t-il du nouveau non lu"
+// La VRAIE dernière version publiée, quel que soit son âge — sert
+// UNIQUEMENT au numéro affiché près du logo (#versionTagValue). Distincte
+// de latestChangelogEntry ci-dessus : sans ça, une fois la dernière
+// annonce sortie de la fenêtre de 7 jours (aucune nouvelle publiée
+// depuis), le tag retomberait sur le "2.0" codé en dur dans index.html —
+// une régression visible bien plus gênante que l'absence d'annonce.
+let latestPublishedVersion = null;
+
+// Visibilité publique limitée à 7 jours (retour utilisateur) — passé ce
+// délai, une Nouveauté disparaît de la liste/modale vues par un utilisateur
+// normal (plus un vrai "quoi de neuf" que des archives à faire défiler).
+// N'affecte QUE cette vue publique : l'onglet Nouveautés de la modale admin
+// (loadAdminChangelogEntries(), js/admin.js) reste un historique complet,
+// sans limite d'âge, pour pouvoir gérer/éditer une entrée plus ancienne.
+const CHANGELOG_PUBLIC_VISIBILITY_DAYS = 7;
 
 function rowToChangelogEntry(row){
   return {
@@ -21,19 +36,29 @@ function rowToChangelogEntry(row){
   };
 }
 
+// Un seul aller-retour (pas de requête séparée par fenêtre) : on récupère
+// les entrées publiées les plus récentes (limit large mais borné — cette
+// app n'en produira jamais des centaines) puis on filtre les 7 derniers
+// jours côté client pour la liste visible, tout en gardant la toute
+// première (non filtrée) pour latestPublishedVersion ci-dessus.
 async function loadChangelogEntries(){
   const { data, error } = await supabaseClient
     .from('changelog_entries')
     .select('id, version, title, body, published_at')
     .eq('published', true)
-    .order('published_at', { ascending: false });
+    .order('published_at', { ascending: false })
+    .limit(50);
   if(error){
     console.error(error);
     changelogEntries = [];
     latestChangelogEntry = null;
+    latestPublishedVersion = null;
     return;
   }
-  changelogEntries = data.map(rowToChangelogEntry);
+  const all = data.map(rowToChangelogEntry);
+  latestPublishedVersion = all.length > 0 ? all[0].version : null;
+  const cutoff = Date.now() - CHANGELOG_PUBLIC_VISIBILITY_DAYS * 24 * 60 * 60 * 1000;
+  changelogEntries = all.filter(e => new Date(e.publishedAt).getTime() >= cutoff);
   latestChangelogEntry = changelogEntries[0] || null;
 }
 
@@ -65,9 +90,9 @@ function renderChangelogModal(){
 // mettre à jour à la main à chaque déploiement — voir renderChangelogModal
 // ci-dessus pour le contenu détaillé.
 function updateVersionTag(){
-  if(!latestChangelogEntry) return; // aucune entrée publiée : garde la valeur codée en dur du HTML
+  if(!latestPublishedVersion) return; // aucune entrée publiée du tout : garde la valeur codée en dur du HTML
   const el = document.getElementById('versionTagValue');
-  if(el) el.textContent = latestChangelogEntry.version;
+  if(el) el.textContent = latestPublishedVersion;
 }
 
 async function markChangelogSeen(){
