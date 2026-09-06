@@ -660,6 +660,33 @@ h1{
 }
 .fab:hover{transform:scale(1.06); box-shadow:0 10px 28px rgba(140,124,255,0.35), 0 0 32px 6px rgba(231,178,76,0.3);}
 .fab:active{transform:scale(0.92);}
+
+/* Retour en haut (retour utilisateur : le catalogue peut dépasser 300
+   films) — voir js/ui.js. Même coin que .fab (bas-droite), sans conflit :
+   .fab est display:none par défaut, ne réapparaît qu'en dessous de 600px
+   (media query plus bas), où ce bouton-ci passe alors à gauche pour ne
+   pas les superposer. */
+.scroll-top-btn{
+  align-items:center;
+  justify-content:center;
+  position:fixed;
+  bottom:22px;
+  right:22px;
+  width:44px;
+  height:44px;
+  border-radius:50%;
+  background:var(--surface);
+  color:var(--text);
+  border:1px solid var(--line);
+  font-size:18px;
+  line-height:1;
+  cursor:pointer;
+  box-shadow:0 8px 20px rgba(0,0,0,0.3);
+  z-index:35;
+  transition:transform .15s ease, opacity .15s ease;
+}
+.scroll-top-btn:hover{transform:translateY(-2px); border-color:var(--violet-dim); color:var(--violet);}
+.scroll-top-btn:active{transform:translateY(0) scale(0.94);}
 input[type="text"], input[type="email"], input[type="number"], select, textarea{
   background:var(--surface);
   border:1px solid var(--line);
@@ -3610,6 +3637,10 @@ body[data-view-mode="list"] #topList .top-rank{width:26px; font-size:16px;}
   .fab{bottom:calc(22px + var(--mobile-tabbar-h) + env(safe-area-inset-bottom, 0px));}
   .update-banner{bottom:calc(var(--mobile-tabbar-h) + env(safe-area-inset-bottom, 0px));}
   .toast{bottom:calc(24px + var(--mobile-tabbar-h) + env(safe-area-inset-bottom, 0px));}
+  /* .fab reprend le coin bas-droite ici (masqué par défaut, visible
+     seulement ≤600px) — passe le retour-en-haut à gauche plutôt que de
+     superposer les deux, en le décalant lui aussi au-dessus de la barre. */
+  .scroll-top-btn{left:18px; right:auto; bottom:calc(18px + var(--mobile-tabbar-h) + env(safe-area-inset-bottom, 0px));}
 
   /* Grille plus serrée sur mobile : 2 colonnes plutôt que la largeur
      minimale de 158px, qui laisserait une seule colonne trop large sur un

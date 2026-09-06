@@ -420,3 +420,22 @@ function skeletonRows(count = 5){
   }
   return html;
 }
+
+// --- Retour en haut (retour utilisateur : le catalogue peut dépasser 300
+// films) --- Un seul bouton global (#scrollTopBtn, index.html) plutôt
+// qu'un par page : toute page défile au niveau de la fenêtre (aucun
+// conteneur interne n'a son propre scroll dans cette app), donc un seul
+// listener suffit. Révélé après un scroll suffisant pour que ça vaille le
+// coup (300px — sous ce seuil, revenir en haut à la molette est aussi
+// rapide que de viser le bouton).
+const SCROLL_TOP_REVEAL_THRESHOLD = 300;
+const scrollTopBtn = document.getElementById('scrollTopBtn');
+if(scrollTopBtn){
+  window.addEventListener('scroll', () => {
+    scrollTopBtn.style.display = window.scrollY > SCROLL_TOP_REVEAL_THRESHOLD ? 'flex' : 'none';
+  }, { passive: true });
+  scrollTopBtn.addEventListener('click', () => {
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    window.scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' });
+  });
+}
