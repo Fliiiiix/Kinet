@@ -204,8 +204,12 @@ function renderUpcomingCalendar(){
       renderUpcomingCalendar();
     });
   });
+  // makeRowClickable() (js/ui.js) plutôt qu'un simple addEventListener('click')
+  // : ces mini-affiches cliquables (audit accessibilité) étaient inatteignables
+  // au clavier — ni tabindex, ni activation par Entrée/Espace, alors que
+  // c'est la seule action possible sur une case du calendrier.
   wrap.querySelectorAll('[data-cal-show]').forEach(el => {
-    el.addEventListener('click', () => goToSeriesDetail(parseInt(el.dataset.calShow, 10)));
+    makeRowClickable(el, () => goToSeriesDetail(parseInt(el.dataset.calShow, 10)));
   });
 }
 

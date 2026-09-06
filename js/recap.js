@@ -92,8 +92,29 @@ function cssVar(name){
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 }
 
+// --- Accessibilité (audit) --- Un <canvas> n'expose RIEN à un lecteur
+// d'écran par défaut (contrairement au SVG de renderLineChart(), js/stats.js,
+// qui embarque au moins des <title> par point) : sans texte alternatif, tout
+// le contenu du bilan (chiffres, genre préféré, coups de cœur) serait
+// invisible pour quelqu'un au clavier/lecteur d'écran. role="img" +
+// aria-label reconstruit la même information en une phrase plutôt que de
+// dupliquer un bloc de texte cliqué visuellement.
+function recapAriaLabel(recap){
+  const parts = [
+    `Bilan cinéphile ${recap.year}`,
+    `${recap.total} ${recap.total > 1 ? 'films vus' : 'film vu'}`,
+  ];
+  if(recap.avgNote != null) parts.push(`note moyenne ${recap.avgNote.toFixed(1)} sur 5`);
+  parts.push(`${recap.favCount} ${recap.favCount > 1 ? 'favoris' : 'favori'}`);
+  if(recap.topGenreLabel) parts.push(`genre préféré ${recap.topGenreLabel}`);
+  if(recap.topFilms.length > 0) parts.push(`coups de cœur : ${recap.topFilms.map(f => f.title).join(', ')}`);
+  return parts.join(', ');
+}
+
 async function renderRecapCanvas(recap){
   const canvas = document.getElementById('recapCanvas');
+  canvas.setAttribute('role', 'img');
+  canvas.setAttribute('aria-label', recapAriaLabel(recap));
   const ctx = canvas.getContext('2d');
   const W = canvas.width, H = canvas.height;
 
@@ -229,6 +250,8 @@ async function openRecap(){
     // Case limite (rien de vu cette année, ex. tout début janvier ou
     // catalogue neuf) : le canvas reste vide, message clair à la place
     // plutôt qu'une image blanche muette.
+    canvas.setAttribute('role', 'img');
+    canvas.setAttribute('aria-label', 'Rien à résumer pour l\'instant.');
     const ctx = canvas.getContext('2d');
     ctx.fillStyle = cssVar('--ink') || '#0f0e16';
     ctx.fillRect(0, 0, canvas.width, canvas.height);

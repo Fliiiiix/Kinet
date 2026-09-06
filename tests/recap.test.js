@@ -98,4 +98,31 @@ test('computeRecap() : top films limité à 5, triés par note décroissante', (
   assert.strictEqual(recap.topFilms[4].title, 'Film 3');
 });
 
+// --- Accessibilité (audit) --- Un <canvas> n'expose rien à un lecteur
+// d'écran par défaut : recapAriaLabel() reconstruit la même information en
+// texte, posée en aria-label sur le canvas (voir renderRecapCanvas()).
+test('recapAriaLabel() : reconstruit toutes les infos du bilan en une phrase', () => {
+  const ctx = buildContext();
+  const recap = {
+    year: 2026, total: 3, avgNote: 4.2, favCount: 1, topGenreLabel: 'Drame',
+    topFilms: [{ title: 'Paprika' }, { title: 'Whiplash' }],
+  };
+  const label = ctx.recapAriaLabel(recap);
+  assert.ok(label.includes('2026'));
+  assert.ok(label.includes('3 films vus'));
+  assert.ok(label.includes('4.2'));
+  assert.ok(label.includes('1 favori'), 'singulier attendu pour 1 favori');
+  assert.ok(label.includes('Drame'));
+  assert.ok(label.includes('Paprika') && label.includes('Whiplash'));
+});
+
+test('recapAriaLabel() : gère les cas singuliers/absents (1 film, pas de note, pas de genre)', () => {
+  const ctx = buildContext();
+  const recap = { year: 2026, total: 1, avgNote: null, favCount: 0, topGenreLabel: null, topFilms: [] };
+  const label = ctx.recapAriaLabel(recap);
+  assert.ok(label.includes('1 film vu'), 'singulier, pas "1 films vus"');
+  assert.ok(!label.includes('note moyenne'), 'pas de note -> pas de mention de moyenne');
+  assert.ok(!label.includes('genre préféré'), 'pas de genre dominant -> pas mentionné');
+});
+
 module.exports = run('recap.test.js');
