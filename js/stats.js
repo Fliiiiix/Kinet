@@ -224,6 +224,69 @@ function wireStatsDistribution(content, list, distribution){
 // non. `film` est déjà l'objet complet (rowToFilm(), js/app.js) — jamais
 // une nouvelle requête réseau ici, la liste qui a produit la ligne cliquée
 // l'a déjà.
+// Graphique radar des 7 critères (retour utilisateur) — un SVG à la main,
+// même règle que renderLineChart() (aucune lib de graphiques dans ce
+// projet). Complète la liste à barres déjà là (critReviewRowHtml()) plutôt
+// que de la remplacer : le radar donne la FORME du profil d'un coup d'œil
+// (un film équilibré vs un film "un seul point fort"), les barres gardent
+// la valeur précise par critère — les deux se lisent bien ensemble sans
+// se faire concurrence.
+//
+// 7 axes espacés régulièrement (2π/7), en partant du haut (12h) et dans le
+// sens horaire — ordre de CRITERIA (js/data.js) tel quel. viewBox fixe
+// (200x200) plutôt que preserveAspectRatio="none" comme renderLineChart() :
+// un radar déformé (axes étirés différemment en x/y) perd tout son sens,
+// contrairement à une simple courbe.
+function critRadarPoint(index, total, radius, cx, cy){
+  const angle = -Math.PI / 2 + index * (2 * Math.PI / total);
+  return { x: cx + radius * Math.cos(angle), y: cy + radius * Math.sin(angle) };
+}
+
+function renderCritRadar(critObj){
+  const cx = 100, cy = 96, maxRadius = 72;
+  const n = CRITERIA.length;
+  const values = CRITERIA.map(c => (critObj && typeof critObj[c.key] === 'number') ? critObj[c.key] : 0);
+
+  // Grille de fond : 3 heptagones concentriques (repères 1/3, 2/3, 1) +
+  // les axes eux-mêmes, du centre à chaque sommet à valeur max.
+  const gridRings = [1 / 3, 2 / 3, 1].map(frac => {
+    const pts = Array.from({ length: n }, (_, i) => critRadarPoint(i, n, maxRadius * frac, cx, cy));
+    return `<polygon points="${pts.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')}" fill="none" stroke="var(--line)" stroke-width="1" vector-effect="non-scaling-stroke"/>`;
+  }).join('');
+  const axisLines = Array.from({ length: n }, (_, i) => {
+    const p = critRadarPoint(i, n, maxRadius, cx, cy);
+    return `<line x1="${cx}" y1="${cy}" x2="${p.x.toFixed(1)}" y2="${p.y.toFixed(1)}" stroke="var(--line)" stroke-width="1" vector-effect="non-scaling-stroke"/>`;
+  }).join('');
+
+  // Polygone de données : un sommet par critère, à son propre rayon
+  // (valeur 0-1 × maxRadius) — jamais à 0 pile (un score à 0 collapse sur
+  // le centre, indiscernable d'un point manquant) : léger plancher visuel
+  // pour rester lisible sans fausser la lecture des autres valeurs.
+  const dataPoints = values.map((v, i) => critRadarPoint(i, n, Math.max(v, 0.03) * maxRadius, cx, cy));
+  const dataPolygon = `<polygon points="${dataPoints.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')}" fill="var(--violet)" fill-opacity="0.25" stroke="var(--violet)" stroke-width="2" vector-effect="non-scaling-stroke"/>`;
+  const dataDots = dataPoints.map((p, i) => `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3" fill="var(--violet)"><title>${escapeHtml(CRITERIA[i].label)} : ${values[i].toFixed(2)}</title></circle>`).join('');
+
+  // Libellés autour du radar, à un rayon légèrement plus grand que les
+  // données (maxRadius + marge) — ancrage horizontal (start/middle/end)
+  // choisi selon la position x par rapport au centre, sans quoi un
+  // libellé à droite du centre s'étalerait vers l'extérieur du viewBox.
+  const labels = Array.from({ length: n }, (_, i) => {
+    const p = critRadarPoint(i, n, maxRadius + 20, cx, cy);
+    const anchor = Math.abs(p.x - cx) < 8 ? 'middle' : (p.x > cx ? 'start' : 'end');
+    return `<text x="${p.x.toFixed(1)}" y="${p.y.toFixed(1)}" text-anchor="${anchor}" dominant-baseline="middle" class="crit-radar-label">${escapeHtml(CRITERIA[i].label)}</text>`;
+  }).join('');
+
+  return `
+    <svg viewBox="0 0 200 192" class="crit-radar-svg">
+      ${gridRings}
+      ${axisLines}
+      ${dataPolygon}
+      ${dataDots}
+      ${labels}
+    </svg>
+  `;
+}
+
 function critReviewRowHtml(label, val){
   const pct = Math.round(Math.max(0, Math.min(1, val)) * 100);
   return `
@@ -241,7 +304,7 @@ function openFilmReviewDetail(film){
 
   const critHtml = isManual
     ? `<div class="wl-note">Note manuelle — pas de détail par critère.</div>`
-    : `<div class="crit-review-list">${CRITERIA.map(c => critReviewRowHtml(c.label, (film.crit && typeof film.crit[c.key] === 'number') ? film.crit[c.key] : 0)).join('')}</div>`;
+    : `${renderCritRadar(film.crit)}<div class="crit-review-list">${CRITERIA.map(c => critReviewRowHtml(c.label, (film.crit && typeof film.crit[c.key] === 'number') ? film.crit[c.key] : 0)).join('')}</div>`;
 
   content.innerHTML = `
     <div class="film-review-head">

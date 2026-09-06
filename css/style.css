@@ -2363,6 +2363,22 @@ input[type="range"]::-moz-range-thumb{
   margin-bottom:20px;
 }
 .film-review-head .film-poster{width:56px; flex:none;}
+/* Radar des 7 critères (retour utilisateur) — complète la liste à barres
+   juste en dessous, voir renderCritRadar()/critReviewRowHtml() (js/stats.js).
+   max-width empêche le radar de s'étirer inutilement sur un modal large,
+   la marge le centre. */
+.crit-radar-svg{
+  display:block;
+  width:100%;
+  max-width:280px;
+  height:auto;
+  margin:0 auto 18px;
+}
+.crit-radar-label{
+  font-family:'Space Mono', monospace;
+  font-size:9px;
+  fill:var(--text-muted);
+}
 .crit-review-list{display:flex; flex-direction:column; gap:12px; margin-bottom:22px;}
 .crit-review-row{display:flex; align-items:center; gap:12px;}
 .crit-review-label{
