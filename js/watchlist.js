@@ -93,9 +93,10 @@ function renderWatchlist(){
       quickForm.style.display = 'none';
       quickInput.value = '';
     });
-    row.querySelector('[data-action="quick-confirm"]').addEventListener('click', () => handleQuickRate(item, quickInput.value));
+    const quickConfirmBtn = row.querySelector('[data-action="quick-confirm"]');
+    quickConfirmBtn.addEventListener('click', () => handleQuickRate(item, quickInput.value, quickConfirmBtn, quickInput));
     quickInput.addEventListener('keydown', (e) => {
-      if(e.key === 'Enter'){ e.preventDefault(); handleQuickRate(item, quickInput.value); }
+      if(e.key === 'Enter'){ e.preventDefault(); handleQuickRate(item, quickInput.value, quickConfirmBtn, quickInput); }
     });
     row.querySelector('[data-action="rate"]').addEventListener('click', () => startRatingFromWatchlist(item));
     row.querySelector('[data-action="remove"]').addEventListener('click', () => handleRemoveFromWatchlist(item.id));
@@ -169,8 +170,15 @@ async function handleRemoveFromWatchlist(id){
 // complète à 7 critères) --- Crée directement le film en note manuelle,
 // symétrique de la branche création de handleSave() (js/app.js) mais sans
 // passer par le formulaire/la modale : un seul champ, un seul clic.
-async function handleQuickRate(item, rawValue){
+async function handleQuickRate(item, rawValue, confirmBtn, inputEl){
   if(blockIfOffline()) return; // js/offline.js — lecture seule hors ligne
+  // Garde anti double-soumission : le clic "OK" et la touche Entrée
+  // appellent tous les deux cette fonction, et rien ne retire la ligne de
+  // l'écran avant la fin de l'await ci-dessous (renderWatchlist() n'arrive
+  // qu'au tout dernier moment) — sans ce verrou, un double-clic ou un Entrée
+  // suivi d'un clic insère le même film deux fois. Comparable au filet déjà
+  // en place ailleurs (ex. bendBtn.disabled dans js/happenings.js).
+  if(confirmBtn && confirmBtn.disabled) return;
   const value = rawValue.trim();
   if(value === ''){
     showToast('Indique une note avant de valider');
@@ -181,6 +189,8 @@ async function handleQuickRate(item, rawValue){
     showToast('Note invalide');
     return;
   }
+  if(confirmBtn) confirmBtn.disabled = true;
+  if(inputEl) inputEl.disabled = true;
   const tmdbFields = item.tmdbId
     ? { tmdb_id: item.tmdbId, poster_url: item.posterUrl, overview: item.overview, release_year: item.releaseYear, original_title: item.originalTitle, genre_ids: [] }
     : { tmdb_id: null, poster_url: null, overview: null, release_year: null, original_title: null, genre_ids: [] };
@@ -193,6 +203,8 @@ async function handleQuickRate(item, rawValue){
   if(error){
     showToast('Erreur de sauvegarde, réessaie');
     console.error(error);
+    if(confirmBtn) confirmBtn.disabled = false;
+    if(inputEl) inputEl.disabled = false;
     return;
   }
   films.push(rowToFilm(data));

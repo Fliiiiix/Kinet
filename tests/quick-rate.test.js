@@ -100,4 +100,23 @@ test('handleQuickRate() : une valeur vide refuse d\'enregistrer (pas d\'insert)'
   assert.strictEqual(addViewingCalls.length, 0);
 });
 
+// --- Régression : double-soumission (clic "OK" + Entrée, ou double-clic) ---
+// Rien ne retire la ligne de l'écran avant la fin de l'await dans
+// handleQuickRate() (renderWatchlist() n'arrive qu'au tout dernier moment) —
+// sans le verrou confirmBtn.disabled, deux appels concurrents avant la
+// résolution du premier inséreraient le même film deux fois.
+test('handleQuickRate() : un second appel pendant que le premier est en cours n\'insère pas deux fois (bouton déjà désactivé)', async () => {
+  const { ctx, insertedFilms } = buildContext();
+  const item = getState(ctx, 'watchlist')[0];
+  const fakeBtn = { disabled: false };
+  const fakeInput = { disabled: false };
+  const first = ctx.handleQuickRate(item, '4', fakeBtn, fakeInput);
+  assert.strictEqual(fakeBtn.disabled, true, 'le bouton doit être désactivé dès le début de l\'appel, avant même la résolution de l\'insert');
+  // Deuxième appel synchrone AVANT que `first` ne se résolve — simule un
+  // double-clic ou Entrée+clic quasi simultanés.
+  await ctx.handleQuickRate(item, '4', fakeBtn, fakeInput);
+  await first;
+  assert.strictEqual(insertedFilms.length, 1, 'un seul insert doit avoir eu lieu malgré les deux appels');
+});
+
 module.exports = run('quick-rate.test.js');

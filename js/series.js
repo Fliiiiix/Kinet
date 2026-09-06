@@ -492,6 +492,7 @@ function renderSeasonEpisodes(seasonNumber){
           ${checked ? `
           <div class="episode-extra">
             <input type="number" class="episode-note-input" min="0" max="5" step="0.5" placeholder="note"
+              aria-label="Note pour l'épisode ${ep.episode_number}"
               data-season="${seasonNumber}" data-episode="${ep.episode_number}"
               value="${extra && extra.note != null ? extra.note : ''}">
             <div class="episode-watch-count">
