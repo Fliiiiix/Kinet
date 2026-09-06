@@ -112,6 +112,21 @@ async function loadTrackedShows(){
   }
 }
 
+// --- Badge "nouvel épisode" (retour utilisateur) --- Signal léger, dérivé
+// de données déjà chargées (aucun appel TMDB dédié) : une série encore en
+// cours dont le nombre d'épisodes connus dépasse le nombre d'épisodes vus
+// a probablement un épisode récent pas encore rattrapé. Instantané comme
+// le reste de la liste (number_of_episodes n'est rafraîchi qu'à l'ouverture
+// de la fiche détail, voir refreshShowMeta()) — un signal utile même
+// approximatif vaut mieux qu'aucun signal ici. Jamais affiché sur une série
+// terminée : "plus rien à rattraper de nouveau" par définition.
+function hasNewEpisode(show){
+  if(isShowEnded(show.status)) return false;
+  if(show.numberOfEpisodes == null) return false;
+  const watchedCount = watchedEpisodeCounts[show.id] || 0;
+  return watchedCount < show.numberOfEpisodes;
+}
+
 function renderTrackedShows(){
   const list = document.getElementById('seriesList');
   if(trackedShows.length === 0){
@@ -138,7 +153,7 @@ function renderTrackedShows(){
           ? `<img class="film-poster" src="${show.posterUrl}" alt="" loading="lazy">`
           : `<div class="film-poster film-poster-placeholder">${TV_PLACEHOLDER_SVG}</div>`}
         <div class="wl-main">
-          <div class="wl-title">${escapeHtml(show.title)}${show.firstAirYear ? ` <span class="wl-year">(${show.firstAirYear})</span>` : ''}</div>
+          <div class="wl-title">${escapeHtml(show.title)}${show.firstAirYear ? ` <span class="wl-year">(${show.firstAirYear})</span>` : ''}${hasNewEpisode(show) ? ` <span class="new-episode-badge">Nouvel épisode</span>` : ''}</div>
           <div class="wl-note">${progress}${show.status ? ` · ${escapeHtml(showStatusLabel(show.status))}` : ''}</div>
         </div>
         <!-- Note visible direct sur la liste (v2.1, retour utilisateur :
@@ -431,9 +446,28 @@ async function loadWatchedEpisodes(showId){
   });
 }
 
+// --- Note de saison calculée (retour utilisateur) --- Jamais stockée :
+// recalculée à la volée depuis watchedEpisodeExtras (note par épisode,
+// v2.39), même principe que la note d'un film dérivée de ses critères
+// plutôt que dupliquée en base. Uniquement les épisodes VUS ET notés de
+// cette saison — null tant qu'aucun n'a de note, pour ne jamais afficher
+// un "0.0" qui laisserait croire à une vraie moyenne sur une saison pas
+// encore notée. Reste un complément discret dans l'en-tête de saison,
+// jamais aussi visible que la note globale de la série (voir le rappel
+// "l'essentiel est la note globale" dans le reste de l'app).
+function seasonAverageNote(seasonNumber){
+  const notes = Array.from(watchedEpisodeSet)
+    .filter(k => k.startsWith(`${seasonNumber}-`))
+    .map(k => watchedEpisodeExtras[k] && watchedEpisodeExtras[k].note)
+    .filter(n => n != null);
+  if(notes.length === 0) return null;
+  return notes.reduce((a, b) => a + b, 0) / notes.length;
+}
+
 function seasonProgressLabel(seasonNumber, episodeCount){
   const watched = Array.from(watchedEpisodeSet).filter(k => k.startsWith(`${seasonNumber}-`)).length;
-  return `${watched}/${episodeCount} vus`;
+  const avg = seasonAverageNote(seasonNumber);
+  return `${watched}/${episodeCount} vus${avg != null ? ` · ★ ${avg.toFixed(1)}` : ''}`;
 }
 
 function renderSeasonsList(){
@@ -602,6 +636,12 @@ async function updateEpisodeNote(seasonNumber, episodeNumber, rawValue){
     return;
   }
   if(watchedEpisodeExtras[key]) watchedEpisodeExtras[key].note = note;
+  // Note de saison calculée (retour utilisateur) : recalculée depuis les
+  // notes d'épisode, voir seasonAverageNote() — sans cet appel, l'en-tête
+  // de saison n'afficherait la nouvelle moyenne qu'au prochain repli/dépli
+  // de l'accordéon.
+  const season = currentShowSeasons.find(s => s.season_number === seasonNumber);
+  if(season) updateSeasonProgressUI(seasonNumber, season.episode_count);
 }
 
 // --- Nombre de fois vu par épisode (v2.39, retour utilisateur) — compteur

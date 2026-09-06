@@ -158,4 +158,78 @@ test('loadWatchedEpisodes() : se rabat sur season_number/episode_number si note/
   assert.strictEqual(watchedSet.size, 2);
 });
 
+// --- Note de saison calculée (retour utilisateur) ---
+// seasonAverageNote()/seasonProgressLabel() : moyenne des notes d'épisode
+// (v2.39) déjà cochées et notées d'une saison, jamais stockée — recalculée
+// à la volée, même principe que la note d'un film dérivée de ses critères.
+
+test('seasonAverageNote() : moyenne des seuls épisodes VUS ET notés de la saison demandée', () => {
+  const { ctx } = buildContext();
+  setState(ctx, {
+    watchedEpisodeSet: new Set(['1-1', '1-2', '1-3', '2-1']),
+    watchedEpisodeExtras: {
+      '1-1': { note: 4, timesWatched: 1 },
+      '1-2': { note: 3, timesWatched: 1 },
+      '1-3': { note: null, timesWatched: 1 }, // vu mais pas noté -> exclu de la moyenne
+      '2-1': { note: 5, timesWatched: 1 },    // autre saison -> ignoré
+    },
+  });
+  assert.strictEqual(ctx.seasonAverageNote(1), 3.5);
+  assert.strictEqual(ctx.seasonAverageNote(2), 5);
+});
+
+test('seasonAverageNote() : null quand aucun épisode de la saison n\'a de note (jamais un faux "0.0")', () => {
+  const { ctx } = buildContext();
+  setState(ctx, {
+    watchedEpisodeSet: new Set(['1-1']),
+    watchedEpisodeExtras: { '1-1': { note: null, timesWatched: 1 } },
+  });
+  assert.strictEqual(ctx.seasonAverageNote(1), null);
+  assert.strictEqual(ctx.seasonAverageNote(3), null, 'saison sans aucun épisode vu -> null aussi');
+});
+
+test('seasonProgressLabel() : inclut la moyenne seulement si elle existe', () => {
+  const { ctx } = buildContext();
+  setState(ctx, {
+    watchedEpisodeSet: new Set(['1-1', '1-2']),
+    watchedEpisodeExtras: {
+      '1-1': { note: 4, timesWatched: 1 },
+      '1-2': { note: 2, timesWatched: 1 },
+    },
+  });
+  assert.strictEqual(ctx.seasonProgressLabel(1, 10), '2/10 vus · ★ 3.0');
+  setState(ctx, { watchedEpisodeSet: new Set(), watchedEpisodeExtras: {} });
+  assert.strictEqual(ctx.seasonProgressLabel(1, 10), '0/10 vus', 'pas de "· ★" si rien de noté');
+});
+
+test('updateEpisodeNote() : rafraîchit l\'en-tête de saison (★ moyenne) tout de suite, pas seulement au prochain repli/dépli', async () => {
+  const { stubDocument, stubElement } = require('./helpers/vm-harness');
+  const progressEl = stubElement();
+  // Clé avec un tiret ("seasonProgress-1") : construite via un objet mutable
+  // plutôt qu'un littéral, un identifiant JS ne peut pas contenir "-".
+  const elements = {};
+  elements['seasonProgress-1'] = progressEl;
+  const updateCalls = [];
+  function makeQuery(){
+    const call = { update: null };
+    updateCalls.push(call);
+    const chain = { update(p){ call.update = p; return chain; }, eq(){ return chain; }, then(r){ return Promise.resolve({ error: null }).then(r); } };
+    return chain;
+  }
+  const ctx = createContext({
+    document: stubDocument(elements),
+    goToSeries(){}, blockIfOffline(){ return false; }, showToast(){}, escapeHtml(s){ return s; },
+    supabaseClient: { from: () => makeQuery() },
+  });
+  loadFiles(ctx, ['js/series.js']);
+  setState(ctx, {
+    currentShowId: 42,
+    currentShowSeasons: [{ season_number: 1, episode_count: 10 }],
+    watchedEpisodeSet: new Set(['1-1']),
+    watchedEpisodeExtras: { '1-1': { note: null, timesWatched: 1 } },
+  });
+  await ctx.updateEpisodeNote(1, 1, '4');
+  assert.strictEqual(progressEl.textContent, '1/10 vus · ★ 4.0');
+});
+
 module.exports = run('episode-notes.test.js');
