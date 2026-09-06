@@ -147,13 +147,19 @@ function renderTrackedShows(){
     const progress = show.numberOfEpisodes
       ? `${watchedCount}/${show.numberOfEpisodes} épisode${show.numberOfEpisodes > 1 ? 's' : ''} vus`
       : `${watchedCount} épisode${watchedCount > 1 ? 's' : ''} vus`;
+    const newEp = hasNewEpisode(show);
     return `
       <div class="wl-row" data-id="${show.id}">
+        <!-- Pastille sur l'affiche (.new-episode-dot) : cachée par défaut,
+             révélée seulement en mode grille (css/style.css) — en mode
+             liste le badge texte du titre juste en dessous suffit déjà,
+             pas la peine de doubler le signal. -->
+        ${newEp ? `<span class="new-episode-dot" title="Nouvel épisode" aria-hidden="true"></span>` : ''}
         ${show.posterUrl
           ? `<img class="film-poster" src="${show.posterUrl}" alt="" loading="lazy">`
           : `<div class="film-poster film-poster-placeholder">${TV_PLACEHOLDER_SVG}</div>`}
         <div class="wl-main">
-          <div class="wl-title">${escapeHtml(show.title)}${show.firstAirYear ? ` <span class="wl-year">(${show.firstAirYear})</span>` : ''}${hasNewEpisode(show) ? ` <span class="new-episode-badge">Nouvel épisode</span>` : ''}</div>
+          <div class="wl-title">${escapeHtml(show.title)}${show.firstAirYear ? ` <span class="wl-year">(${show.firstAirYear})</span>` : ''}${newEp ? ` <span class="new-episode-badge">Nouvel épisode</span>` : ''}</div>
           <div class="wl-note">${progress}${show.status ? ` · ${escapeHtml(showStatusLabel(show.status))}` : ''}</div>
         </div>
         <!-- Note visible direct sur la liste (v2.1, retour utilisateur :

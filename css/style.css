@@ -3651,6 +3651,24 @@ body[data-view-mode="list"] #topList .top-rank{width:26px; font-size:16px;}
   border:1px solid var(--gold-dim);
   vertical-align:middle;
 }
+/* Pastille sur l'affiche, mode grille seulement (body[data-view-mode]) :
+   .wl-title est tronqué sur une seule ligne en grille (voir plus haut,
+   "cartes de hauteur inégale") -- .new-episode-badge textuel juste au-dessus
+   peut disparaître dans l'ellipsis d'un titre long. .wl-row a déjà
+   position:relative (perspective de .counter), sert d'ancre sans wrapper
+   supplémentaire autour de l'affiche. Cachée par défaut (mode liste) : le
+   badge texte du titre y suffit déjà, inutile de doubler le signal. */
+.new-episode-dot{
+  display:none;
+  position:absolute;
+  top:6px; left:6px;
+  width:10px; height:10px;
+  border-radius:50%;
+  background:var(--gold);
+  box-shadow:0 0 0 2px var(--surface-2);
+  z-index:1;
+}
+body[data-view-mode="grid"] #seriesList .new-episode-dot{display:block;}
 
 /* --- Accordéon de saisons (#seriesSeasonsList) --- */
 .season-block{
