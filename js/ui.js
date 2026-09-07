@@ -241,15 +241,6 @@ document.getElementById('lightThemeToggle').addEventListener('change', (e) => {
 // mémoriser (il resterait où il est déjà dans le DOM, jamais déplacé par
 // applyHeaderNavOrder() ci-dessous, qui ne touche que les ids listés ici).
 const HEADER_NAV_DEFAULT_ORDER = ['globalSearchBtn', 'watchlistBtn', 'upcomingBtn', 'friendsBtn', 'topBtn', 'feedbackBtn', 'changelogBtn'];
-const HEADER_NAV_LABELS = {
-  globalSearchBtn: 'Rechercher',
-  watchlistBtn: 'À voir',
-  upcomingBtn: 'Bientôt',
-  friendsBtn: 'Amis',
-  topBtn: 'Top films',
-  feedbackBtn: 'Avis',
-  changelogBtn: 'Nouveautés',
-};
 
 function getHeaderNavOrder(){
   let saved = null;
@@ -282,99 +273,109 @@ function saveHeaderNavOrder(order){
   applyHeaderNavOrder();
 }
 
-// Glisser-déposer direct sur les icônes (retour utilisateur — "en prenant
-// les icônes avec clic + maintien souris et on glisse où on veut", pas des
-// boutons ↑/↓) : Pointer Events plutôt que l'API HTML5 Drag and Drop
-// (draggable="true") — celle-ci ne fonctionne pas au toucher sans
-// polyfill, alors que pointerdown/move/up couvrent souris ET tactile avec
-// le même code, cohérent avec le reste de l'app (jamais deux chemins
-// séparés desktop/mobile). Réutilise l'icône (.nav-pip) du VRAI bouton
-// d'entête plutôt que de redessiner les tracés SVG une 2e fois.
-function headerOrderItemHtml(id){
-  const realBtn = document.getElementById(id);
-  const pip = realBtn ? realBtn.querySelector('.nav-pip') : null;
-  return `
-    <div class="header-order-dnd-item" data-id="${id}">
-      <span class="header-order-drag-handle" aria-hidden="true">⠿</span>
-      ${pip ? pip.outerHTML : ''}
-      <span class="header-order-dnd-label">${escapeHtml(HEADER_NAV_LABELS[id] || id)}</span>
-    </div>
-  `;
+// --- Édition EN PLACE de l'entête (retour utilisateur : "si on clique
+// dessus on revient sur la page d'accueil sauf que cette fois on peut
+// modifier les icones", avec un indicateur pour comprendre qu'il faut les
+// sélectionner/déplacer) — plus de liste séparée qui duplique les icônes
+// (ancienne #headerOrderOverlay) : le glisser-déposer agit directement sur
+// les VRAIS .header-nav-btn déjà visibles. Pointer Events plutôt que l'API
+// HTML5 Drag and Drop (draggable="true") — celle-ci ne fonctionne pas au
+// toucher sans polyfill, alors que pointerdown/move/up couvrent souris ET
+// tactile avec le même code, cohérent avec le reste de l'app.
+let headerEditMode = false;
+
+// Accessible depuis "Ton profil" → Paramètres (#openHeaderOrderBtn) —
+// ferme le profil ET ramène sur l'accueil (demande explicite : un contexte
+// propre pour éditer, pas par-dessus une page de contenu quelconque).
+// .edit-mode (css/style.css) fait trembler les icônes — c'est l'indicateur
+// lui-même, pas juste une classe technique.
+function enterHeaderEditMode(){
+  closeProfileModal();
+  goHome();
+  headerEditMode = true;
+  const nav = document.querySelector('.header-nav');
+  if(nav) nav.classList.add('edit-mode');
+  const banner = document.getElementById('headerEditBanner');
+  if(banner) banner.style.display = '';
 }
 
-function renderHeaderOrderList(){
-  const wrap = document.getElementById('headerOrderDndList');
-  if(!wrap) return;
-  wrap.innerHTML = getHeaderNavOrder().map(headerOrderItemHtml).join('');
-  wireHeaderOrderDrag(wrap);
+function exitHeaderEditMode(){
+  headerEditMode = false;
+  const nav = document.querySelector('.header-nav');
+  if(nav) nav.classList.remove('edit-mode');
+  const banner = document.getElementById('headerEditBanner');
+  if(banner) banner.style.display = 'none';
 }
 
-// Technique "liste triable" classique en vanilla JS : au lieu de calculer
-// un index d'insertion à la main, on déplace l'élément en cours de
-// glisser-déposer directement dans le DOM (insertBefore/appendChild) dès
-// que le pointeur franchit le milieu d'un voisin — le navigateur se charge
-// de la mise en page, aucune animation ni transform à gérer soi-même.
-// L'ORDRE FINAL est relu directement depuis le DOM au relâchement (l'ordre
-// des .header-order-dnd-item est, par construction, celui qu'on vient de
-// glisser), pas depuis un état séparé à garder synchronisé.
-function wireHeaderOrderDrag(wrap){
+// Technique "liste triable" déjà utilisée ailleurs dans l'app, mais
+// géométrie HORIZONTALE (une rangée d'icônes, pas une liste verticale) :
+// clientX comparé au milieu (rect.left + width/2) de chaque voisin plutôt
+// que clientY. L'ORDRE FINAL est relu directement depuis le DOM au
+// relâchement, pas depuis un état séparé à garder synchronisé.
+// installHeaderBtn (PWA, affiché seulement quand pertinent) exclu des
+// voisins ET jamais lui-même déplaçable — un bouton dont la présence même
+// est déjà conditionnelle n'a rien à faire dans un ordre à mémoriser (même
+// exclusion que HEADER_NAV_DEFAULT_ORDER) ; il reste cliquable normalement
+// pendant l'édition, voir le bloqueur de clic plus bas.
+function wireHeaderNavDrag(){
+  const nav = document.querySelector('.header-nav');
+  if(!nav) return;
   let draggedEl = null;
 
-  wrap.querySelectorAll('.header-order-dnd-item').forEach(item => {
-    item.addEventListener('pointerdown', (e) => {
-      draggedEl = item;
-      item.classList.add('dragging');
-      // setPointerCapture : garde les événements move/up adressés à CET
-      // élément même si le pointeur sort de ses limites pendant le
-      // glisser — sans ça, un geste un peu rapide "perdrait" le drag dès
-      // que le curseur quitte la ligne de départ.
-      item.setPointerCapture(e.pointerId);
-    });
+  nav.addEventListener('pointerdown', (e) => {
+    if(!headerEditMode) return;
+    const btn = e.target.closest('.header-nav-btn');
+    if(!btn || btn.id === 'installHeaderBtn') return;
+    draggedEl = btn;
+    btn.classList.add('dragging');
+    // setPointerCapture : garde les événements move/up adressés à CET
+    // élément même si le pointeur sort de ses limites pendant le glisser.
+    btn.setPointerCapture(e.pointerId);
   });
 
-  wrap.addEventListener('pointermove', (e) => {
+  nav.addEventListener('pointermove', (e) => {
     if(!draggedEl) return;
-    const siblings = Array.from(wrap.querySelectorAll('.header-order-dnd-item:not(.dragging)'));
+    const siblings = Array.from(nav.querySelectorAll('.header-nav-btn:not(.dragging)'))
+      .filter(el => el.id !== 'installHeaderBtn');
     const after = siblings.find(sib => {
       const rect = sib.getBoundingClientRect();
-      return e.clientY < rect.top + rect.height / 2;
+      return e.clientX < rect.left + rect.width / 2;
     });
-    if(after) wrap.insertBefore(draggedEl, after);
-    else wrap.appendChild(draggedEl);
+    if(after) nav.insertBefore(draggedEl, after);
+    else nav.appendChild(draggedEl);
   });
 
   function endDrag(){
     if(!draggedEl) return;
     draggedEl.classList.remove('dragging');
     draggedEl = null;
-    const newOrder = Array.from(wrap.querySelectorAll('.header-order-dnd-item')).map(el => el.dataset.id);
+    const newOrder = Array.from(nav.querySelectorAll('.header-nav-btn'))
+      .map(el => el.id)
+      .filter(id => HEADER_NAV_DEFAULT_ORDER.includes(id));
     saveHeaderNavOrder(newOrder);
   }
-  wrap.addEventListener('pointerup', endDrag);
+  nav.addEventListener('pointerup', endDrag);
   // pointercancel (ex. une notification système interrompt le geste) :
   // sans ce filet, draggedEl resterait "collé" en mode glisser jusqu'au
   // prochain pointerdown, un état incohérent invisible mais bien réel.
-  wrap.addEventListener('pointercancel', endDrag);
-}
+  nav.addEventListener('pointercancel', endDrag);
 
-// Accessible depuis "Ton profil" (#openHeaderOrderBtn, retour utilisateur :
-// un simple bouton là-bas, pas la liste entière) — même pattern que
-// openJournal()/closeJournal() (js/journal.js) : referme le profil
-// d'abord (pas deux modales de tailles différentes superposées), le
-// rouvre à la fermeture pour revenir là où on était.
-function openHeaderOrderOverlay(){
-  closeProfileModal();
-  renderHeaderOrderList();
-  openOverlay('headerOrderOverlay');
+  // Pendant l'édition, un clic sur une icône ne doit JAMAIS naviguer —
+  // chaque bouton a déjà son propre listener posé par son fichier
+  // propriétaire (js/watchlist.js, js/friends.js...). Écouteur en phase de
+  // CAPTURE (3e argument `true`) : s'exécute avant que ces listeners
+  // (posés en phase normale) n'aient la moindre chance de tourner.
+  nav.addEventListener('click', (e) => {
+    if(!headerEditMode) return;
+    if(e.target.closest('#installHeaderBtn')) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+  }, true);
 }
-function closeHeaderOrderOverlay(){
-  closeOverlay('headerOrderOverlay', () => openProfileModal());
-}
-document.getElementById('openHeaderOrderBtn').addEventListener('click', openHeaderOrderOverlay);
-document.getElementById('closeHeaderOrderOverlay').addEventListener('click', closeHeaderOrderOverlay);
-document.getElementById('headerOrderOverlay').addEventListener('click', (e) => {
-  if(e.target.id === 'headerOrderOverlay') closeHeaderOrderOverlay();
-});
+wireHeaderNavDrag();
+
+document.getElementById('openHeaderOrderBtn').addEventListener('click', enterHeaderEditMode);
+document.getElementById('exitHeaderEditBtn').addEventListener('click', exitHeaderEditMode);
 
 applyHeaderNavOrder();
 

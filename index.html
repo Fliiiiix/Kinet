@@ -193,6 +193,19 @@
   </div>
 </header>
 
+<!-- Édition en place de l'entête (retour utilisateur : accessible depuis
+     "Ton profil" → Paramètres → #openHeaderOrderBtn, qui ferme le profil,
+     ramène sur l'accueil et active directement le glisser-déposer sur les
+     vraies icônes ci-dessus — voir .header-nav.edit-mode et
+     enterHeaderEditMode()/exitHeaderEditMode() dans js/ui.js). Masqué par
+     défaut, affiché uniquement pendant l'édition ; "Terminé" est la seule
+     sortie explicite (en plus du tremblement des icônes, sert lui-même
+     d'indicateur qu'un mode spécial est actif). -->
+<div class="container header-edit-banner" id="headerEditBanner" style="display:none;">
+  <span>↕ Maintiens une icône puis glisse-la pour changer l'ordre de l'entête.</span>
+  <button class="btn secondary" id="exitHeaderEditBtn" type="button">Terminé</button>
+</div>
+
 <!-- Digest de retour (js/activityState.js) : ce qui s'est passé côté
      amis/groupes depuis la dernière visite, peuplé/affiché par
      maybeShowDigest() (appelée depuis showApp(), js/auth.js). Hors des
@@ -1174,20 +1187,30 @@
       </div>
     </div>
 
-    <!-- Thème clair en option (retour utilisateur) — sombre par défaut,
-         voir getTheme()/setTheme() dans js/ui.js, même principe que
-         kinetViewMode (grille/liste) : préférence par appareil. -->
-    <label class="manual-toggle-label">
-      <input type="checkbox" id="lightThemeToggle">
-      <span>Thème clair</span>
-    </label>
-
-    <!-- Personnaliser l'ordre des icônes de l'entête (retour utilisateur :
-         un simple bouton ici, pas la liste entière — "ça prend tout
-         l'espace" dans le profil) — ouvre #headerOrderOverlay, où le
-         réglage se fait par glisser-déposer direct sur les icônes, voir
-         js/ui.js. -->
-    <button class="btn secondary" type="button" id="openHeaderOrderBtn">↕ Réorganiser les icônes de l'entête</button>
+    <!-- Paramètres (retour utilisateur : "dans le profil on ait une
+         section paramètre" plutôt que des réglages épars) — regroupe le
+         thème et l'entête, les deux seuls réglages "par appareil" de cette
+         modale (tout ce qui précède, c'est l'identité/le compte). -->
+    <div class="profile-activity-section">
+      <div class="stats-section-title">Paramètres</div>
+      <!-- Thème clair en option (retour utilisateur) — sombre par défaut,
+           voir getTheme()/setTheme() dans js/ui.js, même principe que
+           kinetViewMode (grille/liste) : préférence par appareil. -->
+      <label class="manual-toggle-label">
+        <input type="checkbox" id="lightThemeToggle">
+        <span>Thème clair</span>
+      </label>
+      <!-- Réorganiser les icônes de l'entête (retour utilisateur : "si on
+           clique dessus on revient sur la page d'accueil sauf que cette
+           fois on peut modifier les icones", avec un indicateur pour
+           comprendre qu'il faut les sélectionner/déplacer) — ferme cette
+           modale, ramène sur l'accueil (goHome()) et active le
+           glisser-déposer DIRECTEMENT sur les vraies icônes (icônes en
+           tremblement + #headerEditBanner, voir .header-nav.edit-mode et
+           enterHeaderEditMode() dans js/ui.js). Ancienne #headerOrderOverlay
+           (une liste séparée dupliquant les icônes/libellés) retirée. -->
+      <button class="btn secondary" type="button" id="openHeaderOrderBtn">↕ Réorganiser les icônes de l'entête</button>
+    </div>
 
     <!-- Top films (v2.3, retour utilisateur : "un top films comme
          Letterboxd, mis en avant par choix pas par note") — jusqu'à 4,
@@ -1411,25 +1434,6 @@
       <button class="close-x" id="closeChangelog" aria-label="Fermer">✕</button>
     </div>
     <div id="changelogList"></div>
-  </div>
-</div>
-
-<!-- Réorganiser l'entête (retour utilisateur) — ouverte depuis "Ton
-     profil" (#openHeaderOrderBtn), un simple bouton là-bas plutôt que la
-     liste entière. Réglage par glisser-déposer direct sur les icônes
-     (pointerdown/pointermove/pointerup, voir js/ui.js) : aucune librairie,
-     cohérent avec le reste du projet. installHeaderBtn (PWA, affiché
-     seulement quand pertinent) n'apparaît délibérément pas dans la liste —
-     un bouton dont la présence même est déjà conditionnelle n'a rien à
-     faire dans un ordre à mémoriser. -->
-<div class="overlay" id="headerOrderOverlay">
-  <div class="modal" style="max-width:440px;">
-    <div class="modal-head">
-      <h2>Réorganiser l'entête</h2>
-      <button class="close-x" id="closeHeaderOrderOverlay" aria-label="Fermer">✕</button>
-    </div>
-    <p class="auth-intro">Glisse une icône pour changer son ordre.</p>
-    <div class="header-order-dnd-list" id="headerOrderDndList"></div>
   </div>
 </div>
 

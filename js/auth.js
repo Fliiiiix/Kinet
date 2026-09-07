@@ -35,6 +35,10 @@ function showAuthScreen(){
   document.getElementById('userBar').style.display = 'none';
   document.getElementById('mobileTabbar').style.display = 'none';
   document.getElementById('primaryTabs').style.display = 'none';
+  // Réorganisation de l'entête (js/ui.js) : jamais laisser le bandeau/mode
+  // édition "collé" après une déconnexion — le prochain compte connecté
+  // sur cet appareil ne doit pas hériter d'un mode resté actif par accident.
+  exitHeaderEditMode();
   if(location.hash) location.hash = ''; // pas de page Groupes fantôme à la prochaine connexion
 }
 

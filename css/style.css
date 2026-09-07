@@ -1713,40 +1713,51 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .top-film-chip-actions button:hover:not(:disabled){border-color:var(--violet-dim); color:var(--text);}
 .top-film-chip-actions button:disabled{opacity:0.3; cursor:default;}
 .top-film-chip-actions button[data-action="remove"]:hover:not(:disabled){border-color:var(--coral-dim); color:var(--coral);}
-/* Réorganiser l'entête par glisser-déposer (retour utilisateur), voir
-   wireHeaderOrderDrag() dans js/ui.js — même carte que .top-film-chip
-   (fond/rayon assortis) mais sans affiche, avec une poignée dédiée plutôt
-   que la ligne entière : évite qu'un simple clic sur le libellé démarre un
-   glisser par accident. touch-action:none indispensable au tactile — sans
-   lui, le navigateur intercepte le geste pour faire défiler la page avant
-   même que pointermove ne soit reçu. */
-.header-order-dnd-list{display:flex; flex-direction:column; gap:6px;}
-.header-order-dnd-item{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  padding:10px 12px;
-  border-radius:8px;
-  background:var(--surface-2);
-  border:1px solid var(--line);
-  touch-action:none;
-  user-select:none;
-}
-.header-order-drag-handle{
-  color:var(--text-muted);
-  font-size:16px;
-  line-height:1;
+/* Réorganiser l'entête EN PLACE (retour utilisateur : "si on clique dessus
+   on revient sur la page d'accueil sauf que cette fois on peut modifier
+   les icones") — plus de liste séparée à part (ancienne
+   .header-order-dnd-*, retirée) : le glisser-déposer agit directement sur
+   les VRAIS .header-nav-btn, activé/désactivé par enterHeaderEditMode()/
+   exitHeaderEditMode() (js/ui.js) qui posent/retirent .edit-mode sur
+   .header-nav. touch-action:none indispensable au tactile — sans lui, le
+   navigateur intercepte le geste pour faire défiler la page avant même
+   que pointermove ne soit reçu. */
+.header-nav.edit-mode .header-nav-btn{touch-action:none; user-select:none;}
+/* Tremblement ("jiggle") : sert D'INDICATEUR — sans lui, rien ne dit
+   qu'une icône normalement fixe devient soudain saisissable. Même
+   vocabulaire que l'édition d'écran d'accueil iOS/Android, déjà connu.
+   installHeaderBtn exclu (PWA, affiché seulement quand pertinent — voir
+   HEADER_NAV_DEFAULT_ORDER, js/ui.js) : ni réordonnable, ni concerné par
+   ce mode, reste cliquable normalement. Décalage de phase sur les boutons
+   pairs : le même mouvement rejoué en même temps sur toute la rangée
+   paraîtrait mécanique plutôt que "vivant". */
+.header-nav.edit-mode .header-nav-btn:not(#installHeaderBtn){
+  animation:headerNavJiggle .22s ease-in-out infinite alternate;
   cursor:grab;
-  flex:none;
 }
-.header-order-dnd-item .nav-pip{flex:none;}
-.header-order-dnd-label{font-size:13.5px;}
-.header-order-dnd-item.dragging{
-  opacity:0.6;
-  border-color:var(--violet-dim);
+.header-nav.edit-mode .header-nav-btn:not(#installHeaderBtn):nth-child(even){animation-delay:-.11s;}
+@keyframes headerNavJiggle{
+  from{transform:rotate(-2deg);}
+  to{transform:rotate(2deg);}
+}
+.header-nav.edit-mode .header-nav-btn.dragging{
+  animation:none;
   cursor:grabbing;
+  opacity:0.6;
+  position:relative;
+  z-index:2;
 }
-.header-order-dnd-item.dragging .header-order-drag-handle{cursor:grabbing;}
+/* Pas d'animation autonome sous prefers-reduced-motion (même règle que
+   .reveal/.brand-mark-*) — le contour pointillé prend seul le relais comme
+   indicateur "sélectionnable". */
+@media (prefers-reduced-motion:reduce){
+  .header-nav.edit-mode .header-nav-btn:not(#installHeaderBtn){
+    animation:none;
+    outline:2px dashed var(--violet-dim);
+    outline-offset:3px;
+    border-radius:999px;
+  }
+}
 .tmdb-selected{
   display:flex;
   align-items:center;
@@ -2339,6 +2350,22 @@ input[type="range"]::-moz-range-thumb{
   transition:background .15s, color .15s;
 }
 .install-banner-dismiss:hover{background:var(--surface-2); color:var(--text);}
+/* Bandeau d'édition de l'entête (retour utilisateur, voir index.html et
+   enterHeaderEditMode()/js/ui.js) — même gabarit/accent que .install-banner
+   (violet : un outil qu'on active soi-même, pas un avertissement). */
+.header-edit-banner{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  flex-wrap:wrap;
+  background:linear-gradient(120deg, var(--violet-wash) 0%, var(--surface) 65%);
+  border:1px solid var(--violet-dim);
+  border-radius:10px;
+  padding:14px 24px;
+  margin:16px auto;
+  font-size:13.5px;
+}
 /* Bandeau de mise à jour (js/offline.js) — fixe, accent --gold comme
    .digest-banner : une info à traiter, ni la marque (violet) ni un
    avertissement (coral). z-index au-dessus des modales (300) : une
