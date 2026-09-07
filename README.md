@@ -289,6 +289,42 @@ utilisateur rejetée par la policy RLS. Nécessite
 Le **titre "Kinet"** (entête) est lui aussi cliquable — retour à
 l'accueil en un clic depuis n'importe quelle page.
 
+## Tuto d'accueil ("Premiers pas")
+
+À la toute première connexion d'un **vrai nouveau compte** (retour
+utilisateur), un tuto interactif se lance automatiquement : un bref écran
+de **Bienvenue** (jamais imposé — "Plus tard" toujours disponible) suivi
+d'une visite guidée de 5 gestes réels, montrés directement sur les
+**vraies icônes de l'app** — jamais une liste séparée qui les duplique. Un
+voile dimme toute la page sauf l'icône visée, mise en avant par un clone
+purement décoratif (jamais interactif, voir `js/onboarding.js`) posé
+par-dessus, avec une bulle "Étape X/5" (Suivant/Précédent/Passer). Les 5
+étapes : noter un film, la watchlist, les séries, amis/groupes, le profil.
+Les cibles diffèrent entre ordinateur (icônes de l'entête) et téléphone
+(barre de navigation du bas + bouton flottant "+"), redétectées à chaque
+étape — un redimensionnement de fenêtre en cours de route répointe la
+bonne icône plutôt que de viser un élément devenu invisible.
+
+**Détection d'un vrai nouveau compte** (retour utilisateur explicite : "si
+je me connecte d'un autre PC avec le même compte, ne pas le compter comme
+nouvel utilisateur") — un flag **par compte**, jamais par appareil ni
+`localStorage` : `profiles.onboarding_seen`, posé à `false` uniquement à
+la création d'un profil (`fetchOrCreateProfile()`, `js/profile.js`), remis
+à `true` seulement quand ce tuto se termine ou est explicitement passé.
+Se connecter avec le même compte depuis un nouvel appareil relit cette
+même valeur côté Supabase — le tuto ne réapparaît jamais pour un compte
+qui l'a déjà vu/passé, quel que soit l'appareil.
+
+Revoir le tuto à tout moment : bouton **"🧭 Revoir le tuto"** dans Ton
+profil → Paramètres — saute directement la Bienvenue (un compte qui le
+redemande connaît déjà Kinet) et ne touche jamais `onboarding_seen` (un
+choix explicite de relecture, pas un signal de "nouveau compte"). Jamais
+en même temps que la modale Nouveautés automatique (`js/changelog.js`) :
+un compte flambant neuf qui aurait aussi une Nouveauté non lue ne voit que
+le tuto d'abord, la Nouveauté reste accessible via son icône et se
+proposera d'elle-même au prochain login. Nécessite
+`supabase/migrations/040_add_onboarding_seen.sql`.
+
 ## Statistiques
 
 Dans la modale profil, **📊 Statistiques** (section "Mon activité") ouvre un

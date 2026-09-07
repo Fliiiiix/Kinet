@@ -80,6 +80,13 @@ async function showApp(){
   maybeShowDigest();
   maybeShowInactivityReminder();
   initChangelog();
+  // Tuto d'accueil (js/onboarding.js) : APRÈS initChangelog() dans cet
+  // ordre de lecture, mais la vraie garantie qu'ils ne s'empilent jamais
+  // vit dans initChangelog() elle-même (elle ne s'auto-ouvre pas tant que
+  // currentProfile.onboarding_seen est encore false) — currentProfile est
+  // déjà chargé pour les deux au moment où l'un ou l'autre s'exécute, peu
+  // importe l'ordre exact des deux appels.
+  maybeStartOnboarding();
 }
 
 function handleSession(session){

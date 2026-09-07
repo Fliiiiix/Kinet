@@ -141,7 +141,13 @@ async function initChangelog(){
   // #mobileTabbar — #changelogBtn est caché sous le seuil mobile, la
   // Nouveauté vit désormais dans "Mon activité", voir index.html).
   document.getElementById('mobileTabProfile').classList.toggle('has-unread', unread);
-  if(unread) openChangelogModal();
+  // Jamais en même temps que le tuto d'accueil (js/onboarding.js) — un
+  // compte flambant neuf peut très bien avoir aussi une Nouveauté non lue,
+  // les deux modales s'ouvriraient l'une par-dessus l'autre sans ce
+  // garde-fou. Le badge reste posé (juste au-dessus) : la Nouveauté reste
+  // consultable à la main via l'icône, et se proposera d'elle-même au
+  // prochain login une fois le tuto vu/passé (onboarding_seen alors true).
+  if(unread && !(currentProfile && currentProfile.onboarding_seen === false)) openChangelogModal();
 }
 
 document.getElementById('changelogBtn').addEventListener('click', openChangelogModal);

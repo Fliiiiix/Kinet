@@ -65,6 +65,12 @@ create table public.profiles (
   -- interrogé seul, pas la granularité qui justifierait une table à part —
   -- même raisonnement que films.genre_ids, migrations/029).
   top_films integer[] not null default '{}',
+  -- Tuto d'accueil interactif (migrations/040, voir js/onboarding.js) : par
+  -- compte, jamais par appareil — un vrai nouveau compte reçoit false
+  -- explicitement à l'insertion (fetchOrCreateProfile(), js/profile.js) ;
+  -- default true ici ne sert qu'à un install neuf via ce fichier (aucune
+  -- ligne existante à couvrir, contrairement au backfill de la migration).
+  onboarding_seen boolean not null default true,
   created_at timestamptz not null default now(),
   constraint profiles_top_films_max4
     check (array_length(top_films, 1) is null or array_length(top_films, 1) <= 4)

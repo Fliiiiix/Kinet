@@ -36,10 +36,15 @@ async function fetchOrCreateProfile(){
     currentProfile = data;
   }else{
     // Première connexion pour ce compte : profil par défaut (pseudo = préfixe email).
+    // onboarding_seen: false posé EXPLICITEMENT ici (pas le défaut de la
+    // colonne, voir migrations/040) — c'est ce flag, par compte et jamais
+    // par appareil, que showApp() (js/auth.js) relit pour décider de
+    // lancer le tuto d'accueil ; un vrai nouveau compte doit toujours
+    // l'avoir à false, indépendamment de ce que vaut le défaut SQL.
     const defaultName = currentUser.email.split('@')[0];
     const { data: created, error: insErr } = await supabaseClient
       .from('profiles')
-      .insert({ user_id: currentUser.id, display_name: defaultName })
+      .insert({ user_id: currentUser.id, display_name: defaultName, onboarding_seen: false })
       .select()
       .single();
     if(insErr){
@@ -54,6 +59,10 @@ async function fetchOrCreateProfile(){
         currentProfile = existing;
       }else{
         console.error(insErr);
+        // Sans onboarding_seen ici (undefined) : maybeStartOnboarding()
+        // (js/auth.js) ne lance JAMAIS le tuto sur ce repli synthétique
+        // (elle exige strictement === false) — volontaire, un double échec
+        // réseau n'est pas le moment d'empiler un tuto par-dessus.
         currentProfile = { user_id: currentUser.id, display_name: defaultName, avatar_url: null };
       }
     }else{

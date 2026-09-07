@@ -633,7 +633,12 @@ let allEvents = [];
 let siteStats = null;
 let siteStatsLoaded = false;
 
-const EVENT_TYPE_LABELS = { signup: 'Inscription', pwa_install: 'Installation', error: 'Erreur' };
+const EVENT_TYPE_LABELS = {
+  signup: 'Inscription', pwa_install: 'Installation', error: 'Erreur',
+  // Tuto d'accueil (js/onboarding.js) — detail ('first'/'replay') distingue
+  // une vraie première visite d'un "Revoir le tuto" depuis Paramètres.
+  onboarding_completed: 'Tuto terminé', onboarding_skipped: 'Tuto passé'
+};
 
 async function loadSiteStats(){
   const [statsRes, eventsRes] = await Promise.all([

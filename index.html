@@ -260,6 +260,14 @@
   <button class="btn" id="updateBannerBtn" type="button">Actualiser</button>
 </div>
 
+<!-- Tuto d'accueil interactif (retour utilisateur, voir js/onboarding.js) —
+     entièrement construit en JS à l'ouverture (voile + clone décoratif de
+     la vraie icône visée + carte), rien à préparer ici statiquement. Le
+     conteneur lui-même existe déjà (plutôt que créé/détruit à la volée)
+     pour que la table Échap centralisée (js/ui.js) puisse le traiter
+     comme n'importe quelle autre modale (classe "open", même convention). -->
+<div class="onboarding-layer" id="onboardingLayer"></div>
+
 <!-- Barre de navigation mobile (v2.1.x, retour utilisateur : "j'ai tout au
      même endroit puis mon avatar et pseudo ça fait très tâche... on
      trouve ces icônes en dessous de Films et Séries c'est étrange, il
@@ -1189,8 +1197,9 @@
 
     <!-- Paramètres (retour utilisateur : "dans le profil on ait une
          section paramètre" plutôt que des réglages épars) — regroupe le
-         thème et l'entête, les deux seuls réglages "par appareil" de cette
-         modale (tout ce qui précède, c'est l'identité/le compte). -->
+         thème, l'entête et le tuto, les seuls réglages "par appareil" ou
+         "à revoir soi-même" de cette modale (tout ce qui précède, c'est
+         l'identité/le compte). -->
     <div class="profile-activity-section">
       <div class="stats-section-title">Paramètres</div>
       <!-- Thème clair en option (retour utilisateur) — sombre par défaut,
@@ -1210,6 +1219,13 @@
            enterHeaderEditMode() dans js/ui.js). Ancienne #headerOrderOverlay
            (une liste séparée dupliquant les icônes/libellés) retirée. -->
       <button class="btn secondary" type="button" id="openHeaderOrderBtn">↕ Réorganiser les icônes de l'entête</button>
+      <!-- Revoir le tuto d'accueil (retour utilisateur : "qu'on remette le
+           tuto dispo qlq part dans les paramètres") — ferme cette modale,
+           ramène sur l'accueil et rejoue la visite guidée SANS l'écran de
+           Bienvenue (un compte qui redemande le tuto connaît déjà Kinet) ;
+           ne touche jamais profiles.onboarding_seen, voir startOnboarding()
+           dans js/onboarding.js. -->
+      <button class="btn secondary" type="button" id="replayOnboardingBtn" style="margin-top:8px;">🧭 Revoir le tuto</button>
     </div>
 
     <!-- Top films (v2.3, retour utilisateur : "un top films comme
@@ -1639,6 +1655,11 @@
      et après app.js/data.js pour getSearchTerms()/normalizeSearch()/
      FILM_PLACEHOLDER_SVG. Voir js/globalSearch.js. -->
 <script src="js/globalSearch.js?v=140"></script>
+<!-- Tuto d'accueil interactif — avant auth.js dont showApp() appelle
+     maybeStartOnboarding() ; après ui.js/router.js/profile.js/logging.js
+     dont il réutilise respectivement openOverlay-style/goHome/
+     closeProfileModal/logEvent. -->
+<script src="js/onboarding.js?v=140"></script>
 <script src="js/auth.js?v=140"></script>
 </body>
 </html>

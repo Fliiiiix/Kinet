@@ -109,7 +109,13 @@ document.addEventListener('keydown', (e) => {
     // cinéphile n'avaient jamais rejoint cette table au moment de leur
     // ajout, contrairement à toutes les autres modales de l'app.
     globalSearchOverlay: () => closeOverlay('globalSearchOverlay'),
-    recapOverlay: () => closeRecap()
+    recapOverlay: () => closeRecap(),
+    // Tuto d'accueil (js/onboarding.js) : pas un .overlay (voile+carte
+    // construits à part, voir css/style.css) mais même convention de
+    // classe "open" sur son conteneur, pour rejoindre cette table sans
+    // logique séparée. skipOnboarding() est idempotent (comme les autres
+    // close*() ici) : ne fait rien si le tuto n'est pas ouvert.
+    onboardingLayer: () => skipOnboarding()
   };
   for(const id in closers){
     if(document.getElementById(id).classList.contains('open')){

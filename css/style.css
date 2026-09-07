@@ -1567,6 +1567,135 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 @media (prefers-reduced-motion:reduce){
   .overlay.open, .modal, .overlay.closing, .overlay.closing .modal{animation:none;}
 }
+
+/* --- Tuto d'accueil interactif (retour utilisateur, voir js/onboarding.js) ---
+   Pas un .overlay/.modal classique (ceux-ci centrent toujours un rectangle
+   fixe) : ce tuto doit dimmer TOUTE la page sauf une icône RÉELLE déjà
+   existante, jamais dupliquée pour de vrai — juste "montrée" via un clone
+   purement décoratif (même technique que le ghost du glisser-déposer de
+   l'entête, js/ui.js), posé par-dessus un voile plein écran. #onboardingLayer
+   lui-même ne capte aucun clic (pointer-events:none) — ce sont ses enfants
+   qui décident individuellement (le voile capte, le clone jamais, la carte
+   oui) : l'ORDRE dans le DOM (voile, puis clone, puis carte) suffit à les
+   empiler visuellement dans le bon sens, sans le moindre z-index à gérer
+   entre eux ni de bloqueur de clic séparé à poser/retirer. */
+.onboarding-layer{
+  position:fixed; inset:0;
+  /* Au-dessus de .overlay (50) et .update-banner (400) : le tuto doit
+     rester lisible même si une notification de mise à jour traîne. Sous
+     .skip-link (2100, doit rester joignable par-dessus TOUTE modale). */
+  z-index:900;
+  display:none;
+  pointer-events:none;
+}
+.onboarding-layer.open{display:block;}
+/* .closing reste display:block (comme .overlay.closing) — sans ce doublon,
+   retirer .open pour lancer la sortie repasserait le voile en display:none
+   AVANT que overlayOut/modalOut n'aient eu la moindre chance de jouer. */
+.onboarding-layer.closing{display:block;}
+.onboarding-backdrop{
+  position:fixed; inset:0;
+  background:rgba(6,5,10,0.55);
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+  pointer-events:auto;
+  animation:overlayIn .15s ease-out;
+}
+.onboarding-layer.closing .onboarding-backdrop{animation:overlayOut .15s ease-in forwards;}
+
+/* Clone décoratif de l'icône/bouton visé — jamais le vrai élément, jamais
+   interactif (pointer-events:none posé ici, aria-hidden + id retiré posés
+   en JS). Garde ses classes d'origine (.header-nav-btn, .mobile-tab...) le
+   temps du clone : leur propre CSS (fond, rayon, icône) s'applique donc
+   sans rien redéfinir ici, un halo violet ("Halation", cohérent avec
+   .btn:hover) suffit à signaler "regarde ici". position:fixed + left/top
+   posés en JS sur le rect EXACT de la vraie cible au moment de la prise. */
+.onboarding-clone{
+  position:fixed;
+  pointer-events:none;
+  box-shadow:0 0 0 4px rgba(140,124,255,0.55), 0 0 26px 6px rgba(140,124,255,0.35);
+}
+
+.onboarding-card{
+  position:fixed;
+  pointer-events:auto;
+  width:270px;
+  max-width:calc(100vw - 32px);
+  background:rgba(var(--glass-rgb),0.92);
+  backdrop-filter:blur(20px) saturate(160%);
+  -webkit-backdrop-filter:blur(20px) saturate(160%);
+  border:1px solid rgba(var(--text-rgb),0.09);
+  border-radius:14px;
+  padding:18px;
+  box-shadow:0 20px 44px rgba(0,0,0,0.4);
+  animation:modalIn .18s cubic-bezier(.2,.8,.3,1);
+}
+.onboarding-layer.closing .onboarding-card{animation:modalOut .15s ease-in forwards;}
+/* Bienvenue/clôture (pas de cible précise) : carte centrée plutôt que
+   positionnée près d'un élément — voir showOnboardingCenter(), js/onboarding.js. */
+.onboarding-card.onboarding-card-center{
+  left:50%; top:50%; transform:translate(-50%,-50%);
+  width:300px;
+  text-align:center;
+}
+@media (prefers-reduced-motion:reduce){
+  .onboarding-backdrop, .onboarding-card,
+  .onboarding-layer.closing .onboarding-backdrop, .onboarding-layer.closing .onboarding-card{animation:none;}
+}
+
+.onboarding-eyebrow{
+  font-family:'Space Mono', monospace;
+  font-size:11px; letter-spacing:0.06em; text-transform:uppercase;
+  color:var(--violet);
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:8px;
+}
+.onboarding-title{
+  font-family:'Bricolage Grotesque', sans-serif;
+  font-weight:700; font-size:17px;
+  margin-bottom:8px;
+  text-wrap:balance;
+}
+.onboarding-body{
+  font-size:13px; line-height:1.6;
+  color:var(--text-muted);
+  margin-bottom:16px;
+}
+.onboarding-foot{display:flex; align-items:center; justify-content:space-between; gap:10px;}
+.onboarding-card-center .onboarding-foot{justify-content:center;}
+.onboarding-link-btn{
+  background:none; border:none; padding:0;
+  font-family:'Instrument Sans', sans-serif;
+  font-size:12.5px; font-weight:600;
+  color:var(--text-muted);
+  cursor:pointer;
+}
+.onboarding-link-btn:hover{color:var(--text);}
+.onboarding-actions{display:flex; align-items:center; gap:8px;}
+.onboarding-icon-badge{
+  width:44px; height:44px; border-radius:50%;
+  background:var(--violet-wash); color:var(--violet);
+  display:flex; align-items:center; justify-content:center;
+  margin:0 auto 14px;
+}
+.onboarding-icon-badge svg{width:22px; height:22px;}
+/* Petite pointe triangulaire (carré tourné à 45°) reliant la carte à la
+   cible qu'elle décrit — même fond/liseré que .onboarding-card pour se
+   fondre dedans plutôt que de dessiner un triangle plein. */
+.onboarding-arrow{
+  position:absolute; width:13px; height:13px;
+  background:rgba(var(--glass-rgb),0.92);
+  border:1px solid rgba(var(--text-rgb),0.09);
+  border-right:none; border-bottom:none;
+}
+.onboarding-arrow.place-bottom{top:-7px; left:50%; margin-left:-6.5px; transform:rotate(45deg);}
+.onboarding-arrow.place-top{bottom:-7px; left:50%; margin-left:-6.5px; transform:rotate(225deg);}
+
+@media (max-width:600px){
+  .onboarding-card{width:250px; padding:16px;}
+  .onboarding-card.onboarding-card-center{width:270px;}
+}
+
 .modal-head{
   display:flex;
   justify-content:space-between;
