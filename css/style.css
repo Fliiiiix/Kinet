@@ -1740,16 +1740,35 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   from{transform:rotate(-2deg);}
   to{transform:rotate(2deg);}
 }
+/* Pendant le glisser, le VRAI bouton devient un simple emplacement vide
+   (le ghost ci-dessous porte tout le visuel) — juste assez visible
+   (contour pointillé) pour montrer où l'icône atterrira si on relâche là. */
 .header-nav.edit-mode .header-nav-btn.dragging{
   animation:none;
   cursor:grabbing;
-  opacity:0.6;
-  position:relative;
-  z-index:2;
+  opacity:0.25;
+  outline:1.5px dashed var(--violet-dim);
+  outline-offset:-1px;
+}
+/* Ghost (retour utilisateur : "je dois pouvoir une fois prise la déplacer
+   librement") — clone en position:fixed qui suit le pointeur au pixel
+   près (translate posé en JS, voir wireHeaderNavDrag()) pendant que le
+   vrai bouton, sous lui, continue de porter le réordonnancement sans
+   bouger visuellement. left/top/width/height posés en JS (calqués sur le
+   bouton d'origine au moment de la prise). */
+.header-nav-drag-ghost{
+  position:fixed;
+  z-index:1000;
+  pointer-events:none;
+  box-shadow:0 14px 32px rgba(0,0,0,0.35);
+  cursor:grabbing;
 }
 /* Pas d'animation autonome sous prefers-reduced-motion (même règle que
-   .reveal/.brand-mark-*) — le contour pointillé prend seul le relais comme
-   indicateur "sélectionnable". */
+   .reveal/.brand-mark-*) — le contour pointillé (déjà posé sur .dragging
+   ci-dessus, et ici sur les icônes encore "au repos") prend seul le relais
+   comme indicateur "sélectionnable" ; le ghost continue de suivre le
+   pointeur (translate n'est pas une animation autonome, c'est le geste
+   lui-même — même règle que starPulse/savePulse ailleurs dans ce fichier). */
 @media (prefers-reduced-motion:reduce){
   .header-nav.edit-mode .header-nav-btn:not(#installHeaderBtn){
     animation:none;

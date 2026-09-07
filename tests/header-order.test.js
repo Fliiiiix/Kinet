@@ -41,19 +41,33 @@ function realClassList(){
   };
 }
 
+// style/cloneNode/remove/removeAttribute/setAttribute : nécessaires depuis
+// que pointerdown crée un "ghost" (clone en position:fixed qui suit le
+// pointeur, retour utilisateur — "je dois pouvoir une fois prise la
+// déplacer librement", voir wireHeaderNavDrag() dans js/ui.js). Ces tests
+// ne vérifient PAS le positionnement du ghost lui-même (géométrie de
+// layout, même limite documentée en tête de fichier) — seulement que
+// pointerdown/pointerup ne plantent plus maintenant qu'ils manipulent ces
+// méthodes en plus de classList/dataset.
 function makeItem(id){
-  return Object.assign(stubEventTarget(), {
+  const item = Object.assign(stubEventTarget(), {
     id,
     dataset: { id },
     classList: realClassList(),
+    style: {},
     setPointerCapture(){},
-    getBoundingClientRect(){ return { left: 0, width: 40 }; }, // jamais lue par les tests ci-dessous (pas de pointermove déclenché)
+    getBoundingClientRect(){ return { left: 0, top: 0, width: 40, height: 40 }; }, // jamais lue pour la géométrie par les tests ci-dessous (pas de pointermove déclenché)
     closest(sel){
       if(sel === '.header-nav-btn') return this;
       if(sel === '#installHeaderBtn') return this.id === 'installHeaderBtn' ? this : null;
       return null;
     },
+    cloneNode(){ return makeItem(id); },
+    remove(){},
+    removeAttribute(){},
+    setAttribute(){},
   });
+  return item;
 }
 
 // Conteneur "DOM" minimal représentant .header-nav — garde une vraie liste
@@ -131,6 +145,12 @@ function buildDragContext(){
     if(id === 'headerEditBanner') return banner;
     return nav.querySelectorAll('.header-nav-btn').find(el => el.id === id) || stubElement();
   };
+  // Suit les ghosts (retour utilisateur : "je dois pouvoir une fois prise
+  // la déplacer librement" — clone en position:fixed qui suit le pointeur,
+  // ajouté à document.body au pointerdown, retiré au relâchement, voir
+  // wireHeaderNavDrag() dans js/ui.js) sans dupliquer le nav réel.
+  const bodyAppended = [];
+  doc.body = stubElement({ appendChild(el){ bodyAppended.push(el); } });
   const ctx = createContext({
     document: doc,
     localStorage: fakeLocalStorage(),
@@ -140,7 +160,7 @@ function buildDragContext(){
     goHome(){ goHomeCalls.push(true); },
   });
   loadFiles(ctx, ['js/ui.js']);
-  return { ctx, nav, banner, closeProfileModalCalls, goHomeCalls };
+  return { ctx, nav, banner, closeProfileModalCalls, goHomeCalls, bodyAppended };
 }
 
 test('getHeaderNavOrder() : ordre par défaut si rien n\'est enregistré', () => {
@@ -275,6 +295,30 @@ test('bloqueur de clic : hors édition, un clic sur une icône n\'est jamais int
   const event = { target: item, preventDefault(){ prevented = true; }, stopImmediatePropagation(){} };
   nav.dispatch('click', event);
   assert.ok(!prevented);
+});
+
+test('wireHeaderNavDrag() : pointerdown crée un ghost (document.body), pointerup le retire', () => {
+  const { ctx, nav, bodyAppended } = buildDragContext();
+  ctx.enterHeaderEditMode();
+  const item = nav.querySelectorAll('.header-nav-btn:not(.dragging)').find(el => el.id === 'watchlistBtn');
+  nav.dispatch('pointerdown', { pointerId: 1, target: item, clientX: 100, clientY: 10 });
+  assert.strictEqual(bodyAppended.length, 1);
+  const ghost = bodyAppended[0];
+  assert.ok(ghost.classList.contains('header-nav-drag-ghost'));
+  let removed = false;
+  ghost.remove = () => { removed = true; };
+  nav.dispatch('pointerup', {});
+  assert.ok(removed, 'le ghost doit être retiré au relâchement');
+});
+
+test('wireHeaderNavDrag() : le ghost suit le pointeur (transform posé sur pointermove)', () => {
+  const { ctx, nav, bodyAppended } = buildDragContext();
+  ctx.enterHeaderEditMode();
+  const item = nav.querySelectorAll('.header-nav-btn:not(.dragging)').find(el => el.id === 'watchlistBtn');
+  nav.dispatch('pointerdown', { pointerId: 1, target: item, clientX: 100, clientY: 10 });
+  const ghost = bodyAppended[0];
+  nav.dispatch('pointermove', { clientX: 160, clientY: 40 });
+  assert.ok(ghost.style.transform.includes('translate(60px, 30px)'), `transform inattendu : ${ghost.style.transform}`);
 });
 
 test('bloqueur de clic : installHeaderBtn reste cliquable même pendant l\'édition', () => {

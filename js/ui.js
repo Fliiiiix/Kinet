@@ -317,10 +317,23 @@ function exitHeaderEditMode(){
 // est déjà conditionnelle n'a rien à faire dans un ordre à mémoriser (même
 // exclusion que HEADER_NAV_DEFAULT_ORDER) ; il reste cliquable normalement
 // pendant l'édition, voir le bloqueur de clic plus bas.
+//
+// "Ghost" (retour utilisateur — "je dois pouvoir une fois prise la
+// déplacer librement", sans lui l'icône ne bougeait qu'au moment de
+// franchir le milieu d'un voisin, "l'impression de forcer") : un clone
+// visuel en position:fixed qui suit le pointeur au pixel près (translate
+// relatif au point de départ). Le VRAI bouton reste dans le flux — rendu
+// quasi invisible par .dragging — pour continuer à porter le
+// réordonnancement (insertBefore/appendChild) sans lui-même bouger à
+// l'écran ; seul le ghost, purement décoratif (aria-hidden, id retiré pour
+// ne jamais dupliquer un id dans le DOM), donne l'impression de tenir
+// l'icône en main.
 function wireHeaderNavDrag(){
   const nav = document.querySelector('.header-nav');
   if(!nav) return;
   let draggedEl = null;
+  let ghost = null;
+  let dragStartX = 0, dragStartY = 0;
 
   nav.addEventListener('pointerdown', (e) => {
     if(!headerEditMode) return;
@@ -331,10 +344,26 @@ function wireHeaderNavDrag(){
     // setPointerCapture : garde les événements move/up adressés à CET
     // élément même si le pointeur sort de ses limites pendant le glisser.
     btn.setPointerCapture(e.pointerId);
+
+    const rect = btn.getBoundingClientRect();
+    dragStartX = e.clientX;
+    dragStartY = e.clientY;
+    ghost = btn.cloneNode(true);
+    ghost.removeAttribute('id'); // jamais deux ids identiques dans le DOM en même temps
+    ghost.setAttribute('aria-hidden', 'true');
+    ghost.tabIndex = -1;
+    ghost.classList.add('header-nav-drag-ghost');
+    ghost.style.left = rect.left + 'px';
+    ghost.style.top = rect.top + 'px';
+    ghost.style.width = rect.width + 'px';
+    ghost.style.height = rect.height + 'px';
+    ghost.style.transform = 'scale(1.06)';
+    document.body.appendChild(ghost);
   });
 
   nav.addEventListener('pointermove', (e) => {
     if(!draggedEl) return;
+    if(ghost) ghost.style.transform = `translate(${e.clientX - dragStartX}px, ${e.clientY - dragStartY}px) scale(1.06)`;
     const siblings = Array.from(nav.querySelectorAll('.header-nav-btn:not(.dragging)'))
       .filter(el => el.id !== 'installHeaderBtn');
     const after = siblings.find(sib => {
@@ -349,6 +378,7 @@ function wireHeaderNavDrag(){
     if(!draggedEl) return;
     draggedEl.classList.remove('dragging');
     draggedEl = null;
+    if(ghost){ ghost.remove(); ghost = null; }
     const newOrder = Array.from(nav.querySelectorAll('.header-nav-btn'))
       .map(el => el.id)
       .filter(id => HEADER_NAV_DEFAULT_ORDER.includes(id));
