@@ -247,21 +247,57 @@ côté de son titre dans la liste. Nécessite
 Pas de bouton "Profil" séparé dans l'entête : la **photo de profil**
 elle-même (agrandie, en haut à droite) fait office de bouton — cliquer
 dessus ouvre la modale profil. Sans avatar renseigné, une icône 👤 la
-remplace pour rester visible et cliquable. La modale permet de définir un
-pseudo et un avatar — deux onglets ("Depuis cet appareil" / "URL ou un de
-tes films", voir `setAvatarSourceTab()` dans `js/profile.js`) qui remplissent
-tous les deux le même champ URL au final : le premier **uploade un fichier
-depuis l'appareil** (5 Mo max, voir plus bas), le second accepte soit une URL
-d'image collée, soit l'affiche d'un film déjà noté. Regroupés en 2 onglets
-plutôt que 3 champs toujours affichés (retour direct, moins de place prise
-dans la modale). Regroupe aussi les vues sur **mon activité** (section "Mon activité" :
-📊 Statistiques, 🏆 Succès, 📅 Journal — voir plus bas), le lien du **profil
-public** (voir plus bas) et la **déconnexion** (sur la ligne
-d'Annuler/Enregistrer, à gauche — plus dans l'entête). Chaque utilisateur a
-son propre profil, isolé par RLS comme le reste — l'app supporte plusieurs
-comptes indépendants (chacun avec son catalogue privé) dès lors qu'ils se
-connectent avec leur propre email. Nécessite
+remplace pour rester visible et cliquable.
+
+**Refonte (retour utilisateur : "illisible et beaucoup trop confus, bien
+catégoriser")** — la modale s'ouvre sur une carte d'identité (avatar +
+pseudo), puis des rangées groupées en cartes plutôt que des boutons
+empilés :
+- **Identité** : le crayon posé sur l'avatar déplie le choix de photo
+  (replié par défaut, pour ne pas prendre toute la place à chaque
+  ouverture) — deux onglets ("Depuis cet appareil" / "URL ou un de tes
+  films", voir `setAvatarSourceTab()` dans `js/profile.js`) qui remplissent
+  tous les deux le même champ URL au final : le premier **uploade un
+  fichier depuis l'appareil** (5 Mo max, voir plus bas), le second accepte
+  soit une URL d'image collée, soit l'affiche d'un film déjà noté. Un
+  aperçu de l'avatar (`updateAvatarPreview()`) reflète le choix en direct
+  en tête de modale.
+- **Profil public** (voir plus bas) : la case et, une fois activée, le
+  lien à partager et le top films — regroupés dans la même carte, l'un ne
+  servant pas sans l'autre.
+- **Mon activité** : Statistiques, Succès, Journal (voir plus bas).
+- **Compte** : Admin (si concerné) et l'entrée vers **Paramètres** (voir
+  juste après) — thème, entête, accessibilité, aide, installation et
+  déconnexion vivent désormais dans un écran séparé, pas mêlés à
+  l'identité.
+
+Chaque utilisateur a son propre profil, isolé par RLS comme le reste —
+l'app supporte plusieurs comptes indépendants (chacun avec son catalogue
+privé) dès lors qu'ils se connectent avec leur propre email. Nécessite
 `supabase/migrations/005_add_profiles.sql`.
+
+## Paramètres
+
+Écran séparé de "Ton profil" (retour utilisateur : "commencer une vraie
+section paramètre" plutôt que des réglages perdus au milieu du profil),
+ouvert depuis Ton profil → Compte → Paramètres (`js/settings.js`) — une
+flèche retour (pas un ✕) referme cet écran et rouvre "Ton profil", même
+convention que Statistiques/Succès/Journal.
+
+- **Apparence** : thème clair en option — sombre par défaut, voir
+  `getTheme()`/`setTheme()` dans `js/ui.js`, préférence par appareil
+  (`localStorage`, jamais synchronisée à Supabase).
+- **Entête** : réorganiser les icônes (voir plus bas, section dédiée).
+- **Accessibilité** : "Réduire les animations" — s'ajoute au réglage
+  système déjà respecté partout ailleurs (`prefers-reduced-motion`), pour
+  qui préfère l'activer directement dans Kinet. Voir
+  `getReduceMotion()`/`setReduceMotion()` dans `js/ui.js` : pose une classe
+  `reduce-motion` sur `<html>`, neutralisée par une seule règle CSS globale
+  plutôt que de dupliquer chaque `@media (prefers-reduced-motion:reduce)`
+  déjà écrite dans `css/style.css`.
+- **Aide** : revoir le tuto d'accueil (voir "Tuto d'accueil" plus haut).
+- **Application** : installer Kinet (voir "Installation en app" plus bas).
+- **Compte** : déconnexion, seule en bas de l'écran, séparée du reste.
 
 ### Upload d'avatar (Supabase Storage)
 
@@ -732,22 +768,27 @@ de dupliquer un mini-aperçu à chaque endroit. Nécessite
 
 ## Profil public
 
-Dans la modale profil, la case **"Profil public (lien à partager, lecture
-seule)"** génère un lien (`#/u/:userId`) menant à une page **accessible
-sans connexion** — seule page de toute l'app dans ce cas. La coche
-n'enregistre qu'au clic sur "Enregistrer", comme le pseudo/l'avatar. La
-page publique montre pseudo, avatar, quelques tuiles (films notés / note
-moyenne / favoris) et le catalogue trié par note — jamais l'email ni les
-commentaires (`review`), désactivé par défaut (opt-in).
+Dans la modale profil, la rangée **"Profil public"** (interrupteur, section
+du même nom) génère un lien (`#/u/:userId`) menant à une page **accessible
+sans connexion** — seule page de toute l'app dans ce cas. L'interrupteur
+n'enregistre qu'au clic sur "Enregistrer", comme le pseudo/l'avatar ; une
+fois activé, la carte se déplie pour montrer le lien (+ bouton "Copier") et
+le top films juste en dessous — repliés tant que le profil public est
+désactivé, l'un ne servant pas sans l'autre (retour utilisateur, refonte du
+profil). La page publique montre pseudo, avatar, quelques tuiles (films
+notés / note moyenne / favoris) et le catalogue trié par note — jamais
+l'email ni les commentaires (`review`), désactivé par défaut (opt-in).
 
 **Top films** (v2.3, retour utilisateur : "un top films comme Letterboxd,
-mis en avant par choix pas par note") : dans la modale profil, sous la case
-"Profil public", jusqu'à 4 films **choisis à la main** dans son propre
-catalogue déjà noté (recherche + boutons monter/descendre/retirer),
-affichés en haut de la page publique dans l'ordre choisi — distincts du
-catalogue trié par note juste en dessous. Cliquables vers leur fiche film
-uniquement si le visiteur est connecté (la fiche film n'est pas accessible
-sans session, contrairement à cette page).
+mis en avant par choix pas par note") : jusqu'à 4 films **choisis à la
+main** dans son propre catalogue déjà noté (recherche + poignée de
+glisser-déposer pour réordonner, voir `wireTopFilmsDrag()` dans
+`js/profile.js` — même technique que le glisser-déposer de l'entête, un
+clone décoratif suit le pointeur pendant que la vraie ligne porte le
+réordonnancement), affichés en haut de la page publique dans l'ordre
+choisi — distincts du catalogue trié par note juste en dessous. Cliquables
+vers leur fiche film uniquement si le visiteur est connecté (la fiche film
+n'est pas accessible sans session, contrairement à cette page).
 
 **Comment le vérifier soi-même** : cocher la case, "Enregistrer", copier le
 lien affiché (bouton "Copier"), puis l'ouvrir dans une fenêtre privée/

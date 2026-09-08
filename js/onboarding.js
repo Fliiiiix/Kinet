@@ -111,7 +111,14 @@ function maybeStartOnboarding(){
 // ne touchera jamais onboarding_seen à la fermeture.
 function startOnboarding({ replay }){
   if(onboardingState) return; // déjà ouvert (double-clic...) — jamais deux tutos empilés
+  // "Revoir le tuto" vit dans Paramètres (#settingsOverlay), pas
+  // directement dans "Ton profil" — les deux closeOverlay() sont
+  // idempotents (aucun effet si déjà fermée), fermer les deux
+  // inconditionnellement évite de dépendre de LAQUELLE des deux était
+  // ouverte au moment du clic (le vrai déclenchement automatique après
+  // connexion, lui, ne passe par aucune des deux).
   closeProfileModal();
+  closeOverlay('settingsOverlay');
   goHome();
   onboardingState = { phase: replay ? 'spot' : 'welcome', stepIndex: 0, replay: !!replay };
   const layer = document.getElementById('onboardingLayer');

@@ -194,6 +194,21 @@
    propre fond opaque par-dessus (.film-row, etc.) — la densité du
    catalogue n'en souffre pas, c'est le VIDE entre les éléments qui prend
    vie. */
+/* Réduire les animations (retour utilisateur, Ton profil → Paramètres →
+   Accessibilité) : un réglage DANS Kinet, pour qui préfère l'activer ici
+   plutôt que dans les réglages de son système — voir setReduceMotion(),
+   js/ui.js. Coupe tout à la racine (durées quasi nulles, !important)
+   plutôt que de dupliquer chacune des règles @media
+   (prefers-reduced-motion:reduce) déjà écrites dans ce fichier pour le
+   réglage système : les deux mènent au même résultat par des chemins
+   différents, sans avoir à maintenir la logique à deux endroits. -->
+html.reduce-motion *, html.reduce-motion *::before, html.reduce-motion *::after{
+  animation-duration:0.001ms !important;
+  animation-iteration-count:1 !important;
+  transition-duration:0.001ms !important;
+  scroll-behavior:auto !important;
+}
+
 body{
   background:
     radial-gradient(1100px 800px at 8% -12%, rgba(140,124,255,0.28), transparent 55%),
@@ -1814,10 +1829,11 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   .skeleton-poster, .skeleton-line{animation:none; background:var(--surface-2);}
 }
 /* Top films (v2.3) — chaque film choisi réutilise le gabarit .tmdb-result
-   (poster + titre + année) mais sans son survol cliquable-en-bloc, remplacé
-   par 3 actions dédiées (monter/descendre/retirer) — voir
-   renderTopFilmsPicker(), js/profile.js. */
-.top-films-picker{display:flex; flex-direction:column; gap:4px;}
+   (poster + titre + année). Réordonnable par glisser-déposer direct sur la
+   poignée (retour utilisateur, même geste/même technique que l'entête —
+   voir wireTopFilmsDrag(), js/profile.js) : plus de boutons monter/
+   descendre, juste une poignée et un retrait. */
+.top-films-picker{display:flex; flex-direction:column; gap:4px; touch-action:none;}
 .top-film-chip{
   display:flex;
   align-items:center;
@@ -1827,8 +1843,29 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   background:var(--surface-2);
 }
 .top-film-chip img, .top-film-chip .tmdb-poster-placeholder{width:32px; height:48px; object-fit:cover; border-radius:5px; flex:none;}
-.top-film-chip-actions{display:flex; gap:4px; flex:none;}
-.top-film-chip-actions button{
+.top-film-grip{
+  color:var(--text-muted);
+  cursor:grab;
+  flex:none;
+  padding:4px;
+  font-size:14px;
+  line-height:1;
+  touch-action:none;
+}
+.top-film-chip.dragging{opacity:0.25; outline:1.5px dashed var(--violet-dim); outline-offset:-1px;}
+/* Clone décoratif pendant le glisser — même principe que
+   .header-nav-drag-ghost (js/ui.js) : jamais le vrai élément, juste un
+   aperçu qui suit le pointeur pendant que la vraie ligne, sous lui,
+   continue de porter le réordonnancement. */
+.top-film-drag-ghost{
+  position:fixed;
+  z-index:1000;
+  pointer-events:none;
+  box-shadow:0 14px 32px rgba(0,0,0,0.35);
+  border-radius:8px;
+  cursor:grabbing;
+}
+.top-film-chip-remove{
   width:26px; height:26px;
   border:1px solid var(--line);
   background:var(--surface);
@@ -1837,11 +1874,10 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   cursor:pointer;
   font-size:12px;
   display:flex; align-items:center; justify-content:center;
+  flex:none;
   transition:border-color .15s, color .15s;
 }
-.top-film-chip-actions button:hover:not(:disabled){border-color:var(--violet-dim); color:var(--text);}
-.top-film-chip-actions button:disabled{opacity:0.3; cursor:default;}
-.top-film-chip-actions button[data-action="remove"]:hover:not(:disabled){border-color:var(--coral-dim); color:var(--coral);}
+.top-film-chip-remove:hover{border-color:var(--coral-dim); color:var(--coral);}
 /* Réorganiser l'entête EN PLACE (retour utilisateur : "si on clique dessus
    on revient sur la page d'accueil sauf que cette fois on peut modifier
    les icones") — plus de liste séparée à part (ancienne
@@ -2153,32 +2189,133 @@ input[type="range"]::-moz-range-thumb{
   padding-top:18px;
   border-top:1px solid var(--line);
 }
-/* Vues sur mon activité passée (Statistiques/Succès/Journal) : pas des
-   actions du quotidien, donc regroupées ici plutôt que mêlées à la toolbar
-   du catalogue — voir aussi js/router.js. */
-.profile-activity-section{
-  margin-top:20px;
-  padding-top:16px;
-  border-top:1px solid var(--line);
-}
-.profile-activity-links{
-  display:flex;
-  flex-wrap:wrap;
-  gap:8px;
-  margin-top:10px;
-}
 /* Masqués par défaut (desktop) : Top films/Avis/Nouveautés sont déjà dans
    l'entête (#topBtn/#feedbackBtn/#changelogBtn) — les doublonner ici ne
    servait à personne (retour utilisateur, audit). Révélés sous le seuil
    mobile (voir @media (max-width:600px) plus bas), seul endroit où
-   l'entête a disparu et où ces boutons sont le seul chemin qui reste. */
-.profile-mobile-only{display:none;}
-/* Installation en app (js/pwa.js) — même bloc .profile-activity-section
-   que "Mon activité" juste au-dessus, .wl-note réutilisée telle quelle
-   pour le texte descriptif/les instructions (pas de nouvelle classe pour
-   un simple paragraphe secondaire). */
-#installSectionContent .wl-note{margin-top:0; margin-bottom:10px; max-width:52ch;}
+   l'entête a disparu et où ces boutons sont le seul chemin qui reste.
+   .mm-row.profile-mobile-only (spécificité à 2 classes, pas juste
+   .profile-mobile-only) : sans ça, .mm-row{display:flex} plus bas dans ce
+   fichier l'emporterait par ordre de déclaration à spécificité égale, et
+   ces 3 rangées resteraient visibles sur desktop — bug constaté en
+   vérifiant la refonte du profil en direct avant déploiement. */
+.mm-row.profile-mobile-only{display:none;}
+/* Installation en app (js/pwa.js) — .wl-note réutilisée telle quelle pour
+   le texte descriptif/les instructions (pas de nouvelle classe pour un
+   simple paragraphe secondaire). */
+#installSectionContent .wl-note{margin-top:0; margin-bottom:10px; max-width:52ch; font-size:12.5px;}
 #installSectionContent .wl-note:last-child{margin-bottom:0;}
+
+/* ============================================================
+   Ton profil / Paramètres — refonte (retour utilisateur : "illisible et
+   beaucoup trop confus", "bien catégoriser", inspirée des drafts validés).
+   Deux idées portent tout ce bloc : une carte d'identité en tête de "Ton
+   profil" (avatar + pseudo, plus un formulaire), et des RANGÉES groupées
+   en cartes (icône + libellé + interrupteur/flèche) partout ailleurs —
+   remplace les boutons empilés (.profile-activity-links, retiré) et les
+   cases à cocher nues (.manual-toggle-label reste utilisée ailleurs dans
+   l'app, mais plus ici). ============================================ */
+
+/* --- Carte d'identité --- */
+.pf-header{display:flex; flex-direction:column; align-items:center; text-align:center; margin-bottom:18px;}
+.pf-avatar-wrap{position:relative; width:76px; height:76px; margin-bottom:10px; flex:none;}
+.pf-avatar-wrap img, .pf-avatar-wrap .user-avatar-fallback{width:76px; height:76px; border-radius:50%;}
+.pf-avatar-wrap img{object-fit:cover; border:2px solid var(--line);}
+.pf-avatar-wrap .user-avatar-fallback{
+  border:2px solid var(--line); background:var(--surface-2);
+  display:flex; align-items:center; justify-content:center; color:var(--text-muted);
+}
+.pf-avatar-wrap .user-avatar-fallback svg{width:32px; height:32px;}
+.pf-avatar-edit{
+  position:absolute; right:-2px; bottom:-2px; width:26px; height:26px; border-radius:50%;
+  background:var(--violet); color:var(--ink); border:2px solid var(--surface);
+  display:flex; align-items:center; justify-content:center; cursor:pointer; transition:background .15s;
+}
+.pf-avatar-edit:hover{background:#a297ff;}
+.pf-avatar-edit svg{width:13px; height:13px;}
+.pf-name-input{
+  font-family:'Bricolage Grotesque', sans-serif; font-weight:700; font-size:19px; text-align:center;
+  background:none; border:none; border-bottom:1px solid transparent; color:var(--text);
+  padding:2px 6px; width:auto; max-width:100%;
+}
+.pf-name-input:hover{border-bottom-color:var(--line);}
+.pf-name-input:focus{border-bottom-color:var(--violet-dim); outline:none;}
+.pf-name-hint{font-size:11.5px; color:var(--text-muted); margin-top:2px;}
+
+.pf-avatar-panel{
+  background:var(--surface-2); border:1px solid var(--line); border-radius:12px;
+  padding:14px; margin-bottom:18px; display:none;
+}
+.pf-avatar-panel.open{display:block;}
+
+/* --- Rangées groupées en cartes (Paramètres, Mon activité, Compte...) --- */
+.mm-section{margin-top:18px;}
+.mm-section-title{
+  font-family:'Space Mono', monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase;
+  color:var(--text-muted); margin-bottom:8px;
+}
+.mm-card{background:var(--surface-2); border:1px solid var(--line); border-radius:13px; overflow:hidden;}
+.mm-row{
+  display:flex; align-items:center; gap:12px; width:100%;
+  padding:12px 14px; background:none; border:none; text-align:left; cursor:pointer;
+  font-family:'Instrument Sans', sans-serif; color:var(--text); transition:background .12s;
+}
+.mm-row + .mm-row, .mm-row + .pf-public-panel{border-top:1px solid var(--line);}
+.mm-row:hover{background:var(--surface-3);}
+.mm-row.mm-row-danger:hover{background:var(--coral-wash, rgba(255,107,87,0.08));}
+.mm-icon{width:30px; height:30px; border-radius:9px; display:flex; align-items:center; justify-content:center; flex:none;}
+.mm-icon svg{width:16px; height:16px;}
+.mm-icon.ic-violet{background:var(--violet-wash); color:var(--violet);}
+.mm-icon.ic-gold{background:var(--gold-wash); color:var(--gold);}
+.mm-icon.ic-teal{background:var(--teal-wash); color:var(--teal);}
+.mm-icon.ic-bronze{background:var(--bronze-wash); color:var(--bronze);}
+.mm-icon.ic-coral{background:rgba(255,107,87,0.12); color:var(--coral);}
+.mm-row-body{flex:1; min-width:0;}
+.mm-row-title{font-size:13.5px; font-weight:600;}
+.mm-row-sub{font-size:11.5px; color:var(--text-muted); margin-top:1px;}
+.mm-chevron{color:var(--text-muted); flex:none; display:flex;}
+.mm-chevron svg{width:16px; height:16px;}
+
+/* Interrupteur : un vrai <input type="checkbox"> caché visuellement (pas
+   display:none — resterait accessible au clavier/lecteur d'écran) plutôt
+   qu'un <div> custom — le <label class="mm-row"> qui l'entoure suffit à
+   rendre TOUTE la rangée cliquable nativement, sans le moindre JS. */
+.mm-switch-input{position:absolute; opacity:0; width:1px; height:1px; overflow:hidden;}
+.mm-switch{
+  width:38px; height:22px; border-radius:999px; background:var(--surface-3); border:1px solid var(--line);
+  position:relative; flex:none; transition:background .15s, border-color .15s;
+}
+.mm-switch::after{
+  content:''; position:absolute; top:1px; left:1px; width:18px; height:18px; border-radius:50%;
+  background:var(--text-muted); transition:transform .15s, background .15s;
+}
+.mm-switch-input:checked + .mm-switch{background:var(--violet); border-color:var(--violet);}
+.mm-switch-input:checked + .mm-switch::after{transform:translateX(16px); background:var(--ink);}
+.mm-switch-input:focus-visible + .mm-switch{outline:2px solid var(--violet); outline-offset:2px;}
+
+/* --- Profil public : panneau qui se déplie sous sa rangée --- */
+.pf-public-panel{display:none; padding:14px; background:var(--surface); border-top:1px solid var(--line);}
+.pf-public-panel.open{display:block;}
+.pf-link-row{
+  display:flex; align-items:center; gap:10px; background:var(--surface-3); border:1px solid var(--line);
+  border-radius:9px; padding:8px 10px; margin-bottom:14px;
+}
+.pf-link-row span{font-family:'Space Mono', monospace; font-size:11.5px; color:var(--teal); flex:1; overflow-wrap:anywhere;}
+.pf-link-row button{font-size:11.5px; font-weight:700; color:var(--violet); background:none; border:none; cursor:pointer; flex:none;}
+.pf-public-note{font-size:11.5px; color:var(--text-muted); line-height:1.5; margin-bottom:14px;}
+.pf-top-title{font-size:12.5px; font-weight:600; margin-bottom:2px;}
+.pf-top-sub{font-size:11.5px; color:var(--text-muted); margin-bottom:10px;}
+
+/* --- En-tête "Paramètres" avec flèche retour (au lieu du close-x) --- */
+.modal-head-back{display:flex; align-items:center; gap:10px; margin-bottom:20px;}
+.modal-head-back h2{flex:1;}
+.modal-back-btn{
+  width:30px; height:30px; border-radius:9px; border:1px solid var(--line); background:var(--surface-2);
+  color:var(--text-muted); display:flex; align-items:center; justify-content:center; flex:none; cursor:pointer;
+  transition:color .15s, border-color .15s;
+}
+.modal-back-btn:hover{color:var(--text); border-color:var(--violet-dim);}
+.modal-back-btn svg{width:16px; height:16px;}
 .modal-footer .right{display:flex; gap:10px;}
 .live-score{
   font-family:'Space Mono', monospace;
@@ -4286,7 +4423,7 @@ body[data-view-mode="grid"] #seriesList .new-episode-dot{display:block;}
   .user-bar{display:none;}
   /* .user-bar disparu ci-dessus : Top films/Avis/Nouveautés (entête)
      n'ont plus aucun accès sur mobile à part ici (modale profil). */
-  .profile-mobile-only{display:inline-block;}
+  .mm-row.profile-mobile-only{display:flex;}
   .mobile-tabbar{
     display:flex;
     position:fixed;
@@ -4438,18 +4575,6 @@ body[data-view-mode="grid"] #seriesList .new-episode-dot{display:block;}
   .modal-footer{flex-wrap:wrap; gap:12px 16px;}
   .live-score{flex:1 1 100%;}
   .modal-footer .right{flex:1 1 100%; flex-wrap:wrap; justify-content:flex-end;}
-
-  /* Modale profil (.profile-modal-footer, v2.0.9) : Déconnexion vit hors
-     de .right (voir index.html — regroupement volontaire, distinct
-     d'Annuler/Enregistrer), donc la règle juste au-dessus ne s'y applique
-     qu'à moitié : .right passait en pleine largeur, Déconnexion restait à
-     sa taille naturelle, seule sur sa ligne — visuellement détachée du
-     reste plutôt qu'"au même niveau" (signalé par l'utilisateur). Colonne
-     dédiée : Annuler/Enregistrer d'abord (l'action probable), Déconnexion
-     ensuite, même largeur pleine que le reste plutôt que perdue à part. */
-  .profile-modal-footer{flex-direction:column; align-items:stretch;}
-  .profile-modal-footer .right{order:1; flex-basis:auto;}
-  .profile-modal-footer #logoutBtn{order:2; width:100%; margin-top:2px;}
 }
 
 @media (max-width:380px){

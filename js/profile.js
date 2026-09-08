@@ -114,30 +114,65 @@ function renderUserBar(){
 
 function openProfileModal(){
   document.getElementById('displayNameInput').value = (currentProfile && currentProfile.display_name) || '';
-  document.getElementById('avatarUrlInput').value = (currentProfile && currentProfile.avatar_url) || '';
+  const avatarUrl = (currentProfile && currentProfile.avatar_url) || '';
+  document.getElementById('avatarUrlInput').value = avatarUrl;
   document.getElementById('avatarFileInput').value = '';
   document.getElementById('avatarUploadStatus').textContent = '';
   document.getElementById('avatarUploadStatus').classList.remove('error');
   document.getElementById('avatarFilmSearch').value = '';
   document.getElementById('avatarFilmResults').innerHTML = '';
   setAvatarSourceTab('file');
+  updateAvatarPreview(avatarUrl);
+  // Replié par défaut (retour utilisateur : "ça prend toute la place") —
+  // se déplie seulement au clic sur le crayon, voir toggleAvatarPanel().
+  setAvatarPanelOpen(false);
   document.getElementById('publicProfileToggle').checked = !!(currentProfile && currentProfile.public_profile);
   updatePublicProfileLinkVisibility();
   // Ordre des icônes de l'entête (js/ui.js) : rien à préparer ici — le
-  // bouton "↕ Réorganiser..." (section Paramètres) ferme cette modale et
-  // active directement le glisser-déposer sur les vraies icônes de
-  // l'entête, voir enterHeaderEditMode().
+  // bouton "Réorganiser..." (Paramètres) ferme les deux modales et active
+  // directement le glisser-déposer sur les vraies icônes de l'entête, voir
+  // enterHeaderEditMode().
   topFilmsSelection = (currentProfile && Array.isArray(currentProfile.top_films)) ? currentProfile.top_films.slice() : [];
   document.getElementById('topFilmsSearch').value = '';
   document.getElementById('topFilmsResults').innerHTML = '';
   renderTopFilmsPicker();
   // Bouton Admin (js/admin.js) : masqué pour tout le monde sauf ADMIN_EMAIL.
   document.getElementById('adminBtn').style.display = isAdmin() ? '' : 'none';
-  // Installation en app (js/pwa.js) : reconstruit à chaque ouverture — le
-  // prompt natif peut être devenu disponible depuis la dernière fois.
-  updateInstallUI();
   openOverlay('profileOverlay');
 }
+
+// --- Panneau avatar repliable (retour utilisateur : refonte du profil,
+// "beaucoup trop confus") — les 2 onglets d'upload restaient toujours
+// grands ouverts alors qu'on les touche rarement. Replié par défaut,
+// déplié au clic sur le crayon posé sur l'avatar (#toggleAvatarPanelBtn).
+function setAvatarPanelOpen(open){
+  document.getElementById('avatarPanel').classList.toggle('open', open);
+  document.getElementById('toggleAvatarPanelBtn').setAttribute('aria-expanded', open ? 'true' : 'false');
+}
+document.getElementById('toggleAvatarPanelBtn').addEventListener('click', () => {
+  const panel = document.getElementById('avatarPanel');
+  setAvatarPanelOpen(!panel.classList.contains('open'));
+});
+
+// Aperçu en tête de modale (nouveau, refonte du profil) : reflète
+// avatarUrlInput en direct — appelée à l'ouverture, après un upload
+// réussi, après le choix d'une affiche de film, et à chaque frappe dans le
+// champ URL (voir le listener plus bas). avatarUrlInput reste la seule
+// source de vérité envoyée à la sauvegarde, ceci n'en est qu'un reflet
+// visuel, jamais une 2e donnée à garder synchronisée à part.
+function updateAvatarPreview(url){
+  const img = document.getElementById('profileAvatarPreview');
+  const fallback = document.getElementById('profileAvatarFallback');
+  if(url){
+    img.src = url;
+    img.style.display = '';
+    fallback.style.display = 'none';
+  }else{
+    img.style.display = 'none';
+    fallback.style.display = '';
+  }
+}
+document.getElementById('avatarUrlInput').addEventListener('input', (e) => updateAvatarPreview(e.target.value.trim()));
 
 // --- Onglets "Depuis cet appareil" / "URL ou un de tes films" ---
 // Regroupe ce qui était 3 champs toujours visibles (URL, fichier, affiche
@@ -196,7 +231,9 @@ async function handleAvatarFileUpload(e){
   // ?t=... : l'URL publique est la même à chaque upload (chemin fixe) —
   // sans ça, le cache du navigateur (ou d'un autre visiteur) pourrait
   // garder l'ancienne image malgré le remplacement côté Storage.
-  document.getElementById('avatarUrlInput').value = `${data.publicUrl}?t=${Date.now()}`;
+  const publicUrl = `${data.publicUrl}?t=${Date.now()}`;
+  document.getElementById('avatarUrlInput').value = publicUrl;
+  updateAvatarPreview(publicUrl);
   status.textContent = 'Image envoyée ✓';
   e.target.value = '';
 }
@@ -212,7 +249,7 @@ function publicProfileUrl(){
 
 function updatePublicProfileLinkVisibility(){
   const on = document.getElementById('publicProfileToggle').checked;
-  document.getElementById('publicProfileLinkHint').style.display = on ? '' : 'none';
+  document.getElementById('publicProfileLinkHint').classList.toggle('open', on);
   if(on) document.getElementById('publicProfileLinkText').textContent = publicProfileUrl();
 }
 document.getElementById('publicProfileToggle').addEventListener('change', updatePublicProfileLinkVisibility);
@@ -254,6 +291,7 @@ function renderAvatarFilmResults(query){
     `;
     item.addEventListener('click', () => {
       document.getElementById('avatarUrlInput').value = f.posterUrl;
+      updateAvatarPreview(f.posterUrl);
       document.getElementById('avatarUploadStatus').textContent = '';
       wrap.innerHTML = '';
       document.getElementById('avatarFilmSearch').value = '';
@@ -274,6 +312,9 @@ document.getElementById('avatarFilmSearch').addEventListener('input', (e) => {
 // persisté seulement au clic sur "Enregistrer" comme le reste du formulaire
 // profil — voir handleSaveProfile().
 
+// Réordonnable par glisser-déposer direct sur la poignée (retour
+// utilisateur, même geste que l'entête) — remplace les anciens boutons
+// monter/descendre, voir wireTopFilmsDrag() plus bas.
 function renderTopFilmsPicker(){
   const wrap = document.getElementById('topFilmsPicker');
   if(topFilmsSelection.length === 0){
@@ -283,11 +324,12 @@ function renderTopFilmsPicker(){
     // catalogue (suppression depuis) n'a plus de match ici — ignoré à
     // l'affichage, disparaît pour de bon au prochain "Enregistrer" (le
     // tableau sauvegardé ne contient que ce qui reste rendu).
-    wrap.innerHTML = topFilmsSelection.map((tmdbId, idx) => {
+    wrap.innerHTML = topFilmsSelection.map((tmdbId) => {
       const f = films.find(x => x.tmdbId === tmdbId);
       if(!f) return '';
       return `
         <div class="top-film-chip" data-tmdb-id="${tmdbId}">
+          <span class="top-film-grip" aria-hidden="true">⠿</span>
           ${f.posterUrl
             ? `<img src="${f.posterUrl}" alt="">`
             : `<div class="tmdb-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
@@ -295,11 +337,7 @@ function renderTopFilmsPicker(){
             <div class="tmdb-result-title">${escapeHtml(f.title)}</div>
             ${f.releaseYear ? `<div class="tmdb-result-year">${f.releaseYear}</div>` : ''}
           </div>
-          <div class="top-film-chip-actions">
-            <button type="button" data-action="up" ${idx === 0 ? 'disabled' : ''} title="Monter" aria-label="Monter">↑</button>
-            <button type="button" data-action="down" ${idx === topFilmsSelection.length - 1 ? 'disabled' : ''} title="Descendre" aria-label="Descendre">↓</button>
-            <button type="button" data-action="remove" title="Retirer" aria-label="Retirer">✕</button>
-          </div>
+          <button type="button" class="top-film-chip-remove" data-action="remove" title="Retirer" aria-label="Retirer">✕</button>
         </div>
       `;
     }).join('');
@@ -309,20 +347,81 @@ function renderTopFilmsPicker(){
     : 'Chercher un film déjà noté…';
   wrap.querySelectorAll('.top-film-chip').forEach(chip => {
     const tmdbId = parseInt(chip.dataset.tmdbId, 10);
-    chip.querySelectorAll('button[data-action]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const idx = topFilmsSelection.indexOf(tmdbId);
-        if(btn.dataset.action === 'remove'){
-          topFilmsSelection.splice(idx, 1);
-        }else if(btn.dataset.action === 'up' && idx > 0){
-          [topFilmsSelection[idx - 1], topFilmsSelection[idx]] = [topFilmsSelection[idx], topFilmsSelection[idx - 1]];
-        }else if(btn.dataset.action === 'down' && idx < topFilmsSelection.length - 1){
-          [topFilmsSelection[idx + 1], topFilmsSelection[idx]] = [topFilmsSelection[idx], topFilmsSelection[idx + 1]];
-        }
-        renderTopFilmsPicker();
-      });
+    chip.querySelector('button[data-action="remove"]').addEventListener('click', () => {
+      const idx = topFilmsSelection.indexOf(tmdbId);
+      if(idx > -1) topFilmsSelection.splice(idx, 1);
+      renderTopFilmsPicker();
     });
   });
+  // wireTopFilmsDrag() N'EST PAS rappelée ici : #topFilmsPicker lui-même
+  // ne change jamais d'identité (seul son innerHTML est reconstruit à
+  // chaque rendu) — la câbler une seule fois pour de bon, plus bas dans ce
+  // fichier, évite d'empiler un jeu de listeners en double à chaque
+  // ouverture de la modale ou chaque retrait de film.
+}
+
+// Glisser-déposer direct sur la poignée (retour utilisateur : "prend le
+// temps de tout bien faire comme sur la draft") — même technique déjà
+// éprouvée pour l'entête (wireHeaderNavDrag(), js/ui.js) : un clone
+// décoratif en position:fixed suit le pointeur (.top-film-drag-ghost)
+// pendant que la VRAIE ligne, sous lui, porte le réordonnancement
+// (insertBefore direct dans le DOM) sans elle-même bouger à l'écran.
+// L'ordre final est relu du DOM au relâchement, jamais recalculé à part.
+// Câblée UNE SEULE FOIS (voir l'appel tout en bas de ce fichier) : le
+// conteneur #topFilmsPicker ne change jamais d'identité, seul son contenu
+// est reconstruit à chaque rendu (renderTopFilmsPicker() ci-dessus) — la
+// délégation d'événements (closest() sur la poignée/la ligne, jamais un
+// listener posé sur un .top-film-chip précis) retrouve les bons éléments
+// à chaque geste sans avoir besoin d'être reposée.
+function wireTopFilmsDrag(wrap){
+  let draggedEl = null;
+  let ghost = null;
+  let startX = 0, startY = 0;
+
+  wrap.addEventListener('pointerdown', (e) => {
+    const grip = e.target.closest('.top-film-grip');
+    if(!grip) return;
+    const chip = grip.closest('.top-film-chip');
+    if(!chip) return;
+    draggedEl = chip;
+    chip.classList.add('dragging');
+    chip.setPointerCapture(e.pointerId);
+
+    const rect = chip.getBoundingClientRect();
+    startX = e.clientX;
+    startY = e.clientY;
+    ghost = chip.cloneNode(true);
+    ghost.removeAttribute('data-tmdb-id');
+    ghost.setAttribute('aria-hidden', 'true');
+    ghost.classList.add('top-film-drag-ghost');
+    ghost.style.left = rect.left + 'px';
+    ghost.style.top = rect.top + 'px';
+    ghost.style.width = rect.width + 'px';
+    ghost.style.margin = '0';
+    document.body.appendChild(ghost);
+  });
+
+  wrap.addEventListener('pointermove', (e) => {
+    if(!draggedEl) return;
+    if(ghost) ghost.style.transform = `translate(${e.clientX - startX}px, ${e.clientY - startY}px)`;
+    const siblings = Array.from(wrap.querySelectorAll('.top-film-chip:not(.dragging)'));
+    const after = siblings.find(sib => {
+      const rect = sib.getBoundingClientRect();
+      return e.clientY < rect.top + rect.height / 2;
+    });
+    if(after) wrap.insertBefore(draggedEl, after);
+    else wrap.appendChild(draggedEl);
+  });
+
+  function endDrag(){
+    if(!draggedEl) return;
+    draggedEl.classList.remove('dragging');
+    draggedEl = null;
+    if(ghost){ ghost.remove(); ghost = null; }
+    topFilmsSelection = Array.from(wrap.querySelectorAll('.top-film-chip')).map(chip => parseInt(chip.dataset.tmdbId, 10));
+  }
+  wrap.addEventListener('pointerup', endDrag);
+  wrap.addEventListener('pointercancel', endDrag);
 }
 
 function renderTopFilmsResults(query){
@@ -364,6 +463,7 @@ function renderTopFilmsResults(query){
 document.getElementById('topFilmsSearch').addEventListener('input', (e) => {
   renderTopFilmsResults(e.target.value);
 });
+wireTopFilmsDrag(document.getElementById('topFilmsPicker'));
 
 function closeProfileModal(){
   closeOverlay('profileOverlay');

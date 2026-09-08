@@ -59,7 +59,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,500&family=Space+Mono:wght@400;700&display=swap">
-<link rel="stylesheet" href="css/style.css?v=140">
+<link rel="stylesheet" href="css/style.css?v=141">
 </head>
 <body>
 
@@ -1143,18 +1143,39 @@
      ces trois modales referme d'abord celle-ci (openStats/openAchievements/
      openJournal appellent closeProfileModal()) plutôt que de les empiler :
      deux modales de tailles différentes superposées, ça se voit. -->
+<!-- Ton profil / Paramètres — refonte (retour utilisateur : "illisible et
+     beaucoup trop confus... bien catégoriser"). Deux modales désormais :
+     "Ton profil" (identité, ce que les autres voient, raccourcis vers ton
+     activité et ton compte) et #settingsOverlay plus bas (comment l'app se
+     comporte pour toi — thème, entête, accessibilité, aide, installation,
+     déconnexion). Voir js/settings.js pour l'ouverture/fermeture de la
+     seconde, et le commentaire en tête de css/style.css (section "Ton
+     profil / Paramètres — refonte") pour le système de rangées réutilisé
+     partout ci-dessous. -->
 <div class="overlay" id="profileOverlay">
   <div class="modal">
     <div class="modal-head">
       <h2>Ton profil</h2>
       <button class="close-x" id="closeProfile" aria-label="Fermer">✕</button>
     </div>
-    <div class="field">
-      <label for="displayNameInput">Pseudo</label>
-      <input type="text" id="displayNameInput" placeholder="Ton pseudo">
+
+    <!-- Carte d'identité : avatar + pseudo, comme une vraie carte de
+         profil plutôt qu'un formulaire — le crayon déplie le choix
+         d'avatar (#avatarPanel), replié par défaut pour ne pas prendre
+         toute la place à chaque ouverture (retour utilisateur). -->
+    <div class="pf-header">
+      <div class="pf-avatar-wrap">
+        <img id="profileAvatarPreview" alt="" style="display:none;">
+        <span class="user-avatar-fallback" id="profileAvatarFallback"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8.5" r="3.8"></circle><path d="M4.5 20c0-4.1 3.4-6.8 7.5-6.8s7.5 2.7 7.5 6.8"></path></svg></span>
+        <button class="pf-avatar-edit" type="button" id="toggleAvatarPanelBtn" title="Changer l'avatar" aria-label="Changer l'avatar" aria-expanded="false" aria-controls="avatarPanel">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15.5 4.5l4 4L8 20l-4.5 1L4.5 16.5 15.5 4.5z"></path></svg>
+        </button>
+      </div>
+      <input type="text" id="displayNameInput" class="pf-name-input" placeholder="Ton pseudo">
+      <div class="pf-name-hint">Clique sur le crayon pour changer de photo</div>
     </div>
-    <div class="field">
-      <label>Avatar</label>
+
+    <div class="pf-avatar-panel" id="avatarPanel">
       <!-- 3 champs à part (URL / fichier / affiche d'un film) tenaient trop
            de place — regroupés en 2 onglets. avatarUrlInput reste la seule
            source de vérité envoyée à la sauvegarde (handleSaveProfile) :
@@ -1180,71 +1201,60 @@
       </div>
     </div>
 
-    <!-- Opt-in, false par défaut côté base (supabase/migrations/016) —
-         seule donnée de l'app lisible sans connexion une fois activée, voir
-         js/publicProfile.js. -->
-    <label class="manual-toggle-label">
-      <input type="checkbox" id="publicProfileToggle">
-      <span>Profil public (lien à partager, lecture seule)</span>
-    </label>
-    <div class="manual-toggle-hint" id="publicProfileLinkHint" style="display:none;">
-      Pseudo, avatar et tes films notés (titre, affiche, note) seront visibles par quiconque a le lien, jamais ton email ni tes commentaires.
-      <div class="public-profile-link-row">
-        <span id="publicProfileLinkText"></span>
-        <button class="crit-help-toggle" id="copyPublicProfileLink" type="button">Copier</button>
+    <!-- Profil public : la case ET, si activée, le lien + le top films —
+         l'un ne sert pas sans l'autre, regroupés dans la même carte plutôt
+         que dispersés (retour utilisateur). Opt-in, false par défaut côté
+         base (supabase/migrations/016) — seule donnée de l'app lisible
+         sans connexion une fois activée, voir js/publicProfile.js. -->
+    <div class="mm-section">
+      <div class="mm-section-title">Profil public</div>
+      <div class="mm-card">
+        <label class="mm-row" for="publicProfileToggle">
+          <span class="mm-icon ic-violet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18M12 3c2.5 2.7 3.8 6 3.8 9s-1.3 6.3-3.8 9c-2.5-2.7-3.8-6-3.8-9s1.3-6.3 3.8-9z"></path></svg></span>
+          <span class="mm-row-body">
+            <span class="mm-row-title">Profil public</span>
+            <span class="mm-row-sub">Lien à partager, en lecture seule.</span>
+          </span>
+          <input type="checkbox" id="publicProfileToggle" class="mm-switch-input">
+          <span class="mm-switch" aria-hidden="true"></span>
+        </label>
+        <div class="pf-public-panel" id="publicProfileLinkHint">
+          <p class="pf-public-note">Pseudo, avatar et tes films notés (titre, affiche, note) seront visibles par quiconque a le lien, jamais ton email ni tes commentaires.</p>
+          <div class="pf-link-row">
+            <span id="publicProfileLinkText"></span>
+            <button id="copyPublicProfileLink" type="button">Copier</button>
+          </div>
+          <!-- Top films (v2.3, retour utilisateur : "un top films comme
+               Letterboxd, mis en avant par choix pas par note") — jusqu'à 4,
+               choisis dans le catalogue déjà noté. Réordonnable par
+               glisser-déposer, voir wireTopFilmsDrag() dans js/profile.js. -->
+          <div class="pf-top-title">Tes meilleurs films</div>
+          <div class="pf-top-sub">Jusqu'à 4, mis en avant sur ton profil public. Glisse pour réordonner.</div>
+          <div class="top-films-picker" id="topFilmsPicker"></div>
+          <input type="text" id="topFilmsSearch" placeholder="Chercher un film déjà noté…" style="margin-top:8px;">
+          <div class="tmdb-results" id="topFilmsResults"></div>
+        </div>
       </div>
     </div>
 
-    <!-- Paramètres (retour utilisateur : "dans le profil on ait une
-         section paramètre" plutôt que des réglages épars) — regroupe le
-         thème, l'entête et le tuto, les seuls réglages "par appareil" ou
-         "à revoir soi-même" de cette modale (tout ce qui précède, c'est
-         l'identité/le compte). -->
-    <div class="profile-activity-section">
-      <div class="stats-section-title">Paramètres</div>
-      <!-- Thème clair en option (retour utilisateur) — sombre par défaut,
-           voir getTheme()/setTheme() dans js/ui.js, même principe que
-           kinetViewMode (grille/liste) : préférence par appareil. -->
-      <label class="manual-toggle-label">
-        <input type="checkbox" id="lightThemeToggle">
-        <span>Thème clair</span>
-      </label>
-      <!-- Réorganiser les icônes de l'entête (retour utilisateur : "si on
-           clique dessus on revient sur la page d'accueil sauf que cette
-           fois on peut modifier les icones", avec un indicateur pour
-           comprendre qu'il faut les sélectionner/déplacer) — ferme cette
-           modale, ramène sur l'accueil (goHome()) et active le
-           glisser-déposer DIRECTEMENT sur les vraies icônes (icônes en
-           tremblement + #headerEditBanner, voir .header-nav.edit-mode et
-           enterHeaderEditMode() dans js/ui.js). Ancienne #headerOrderOverlay
-           (une liste séparée dupliquant les icônes/libellés) retirée. -->
-      <button class="btn secondary" type="button" id="openHeaderOrderBtn">↕ Réorganiser les icônes de l'entête</button>
-      <!-- Revoir le tuto d'accueil (retour utilisateur : "qu'on remette le
-           tuto dispo qlq part dans les paramètres") — ferme cette modale,
-           ramène sur l'accueil et rejoue la visite guidée SANS l'écran de
-           Bienvenue (un compte qui redemande le tuto connaît déjà Kinet) ;
-           ne touche jamais profiles.onboarding_seen, voir startOnboarding()
-           dans js/onboarding.js. -->
-      <button class="btn secondary" type="button" id="replayOnboardingBtn" style="margin-top:8px;">🧭 Revoir le tuto</button>
-    </div>
-
-    <!-- Top films (v2.3, retour utilisateur : "un top films comme
-         Letterboxd, mis en avant par choix pas par note") — jusqu'à 4,
-         choisis dans le catalogue déjà noté, mis en avant sur le profil
-         public ci-dessus (voir js/publicProfile.js, migrations/032). -->
-    <div class="field">
-      <label>Top films (jusqu'à 4, mis en avant sur ton profil public)</label>
-      <div class="top-films-picker" id="topFilmsPicker"></div>
-      <input type="text" id="topFilmsSearch" placeholder="Chercher un film déjà noté…" style="margin-top:8px;">
-      <div class="tmdb-results" id="topFilmsResults"></div>
-    </div>
-
-    <div class="profile-activity-section">
-      <div class="stats-section-title">Mon activité</div>
-      <div class="profile-activity-links">
-        <button class="btn secondary" id="statsBtn" type="button">📊 Statistiques</button>
-        <button class="btn secondary" id="achievementsBtn" type="button">🏆 Succès</button>
-        <button class="btn secondary" id="journalBtn" type="button">📅 Journal</button>
+    <div class="mm-section">
+      <div class="mm-section-title">Mon activité</div>
+      <div class="mm-card">
+        <button class="mm-row" id="statsBtn" type="button">
+          <span class="mm-icon ic-teal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M12 20V4M20 20v-7"></path></svg></span>
+          <span class="mm-row-body"><span class="mm-row-title">Statistiques</span><span class="mm-row-sub">Répartition de tes notes, genres, évolution.</span></span>
+          <span class="mm-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg></span>
+        </button>
+        <button class="mm-row" id="achievementsBtn" type="button">
+          <span class="mm-icon ic-gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5l2.6 5.4 5.9.7-4.3 4.1 1 5.9L12 16.6l-5.2 2.9 1-5.9-4.3-4.1 5.9-.7L12 3.5z"></path></svg></span>
+          <span class="mm-row-body"><span class="mm-row-title">Succès</span><span class="mm-row-sub">Paliers débloqués et secrets trouvés.</span></span>
+          <span class="mm-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg></span>
+        </button>
+        <button class="mm-row" id="journalBtn" type="button">
+          <span class="mm-icon ic-violet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5.5" width="17" height="15" rx="2"></rect><path d="M3.5 10h17"></path><path d="M8 3.5v4"></path><path d="M16 3.5v4"></path></svg></span>
+          <span class="mm-row-body"><span class="mm-row-title">Journal</span><span class="mm-row-sub">Historique de tes visionnages.</span></span>
+          <span class="mm-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg></span>
+        </button>
         <!-- v2.1.x — Top films/Avis/Nouveautés vivaient UNIQUEMENT dans la
              rangée d'icônes de l'entête (#topBtn/#feedbackBtn/#changelogBtn),
              invisible sur mobile (#userBar disparaît entièrement, remplacé
@@ -1255,40 +1265,155 @@
              ici n'aidait personne. Referment cette modale avant de
              naviguer/ouvrir une autre modale, comme Statistiques/Succès
              juste au-dessus. -->
-        <button class="btn secondary profile-mobile-only" id="profileTopFilmsLinkBtn" type="button">🎖️ Top films</button>
-        <button class="btn secondary profile-mobile-only" id="profileFeedbackLinkBtn" type="button">💬 Donner un avis</button>
-        <button class="btn secondary profile-mobile-only" id="profileChangelogLinkBtn" type="button">📣 Nouveautés</button>
-        <!-- Réservé au compte admin (ADMIN_EMAIL, js/admin.js) — masqué par
-             défaut, affiché par openProfileModal() si isAdmin(). -->
-        <button class="btn secondary" id="adminBtn" type="button" style="display:none;">🛠️ Admin</button>
+        <button class="mm-row profile-mobile-only" id="profileTopFilmsLinkBtn" type="button">
+          <span class="mm-icon ic-bronze"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4h8v4a4 4 0 01-8 0V4z"></path><path d="M8 5H5.5a2.5 2.5 0 002.5 2.5"></path><path d="M16 5h2.5A2.5 2.5 0 0116 7.5"></path><path d="M12 12v3.5"></path><path d="M9.5 20h5"></path><path d="M10.3 15.5h3.4l.8 4.5H9.5l.8-4.5z"></path></svg></span>
+          <span class="mm-row-body"><span class="mm-row-title">Top films</span></span>
+          <span class="mm-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg></span>
+        </button>
+        <button class="mm-row profile-mobile-only" id="profileFeedbackLinkBtn" type="button">
+          <span class="mm-icon ic-violet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H8l-4 4V5z"></path></svg></span>
+          <span class="mm-row-body"><span class="mm-row-title">Donner un avis</span></span>
+          <span class="mm-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg></span>
+        </button>
+        <button class="mm-row profile-mobile-only" id="profileChangelogLinkBtn" type="button">
+          <span class="mm-icon ic-gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 11 18-5v12L3 14v-3z"></path><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"></path></svg></span>
+          <span class="mm-row-body"><span class="mm-row-title">Nouveautés</span></span>
+          <span class="mm-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg></span>
+        </button>
       </div>
     </div>
 
-    <!-- Installation en app (PWA, v2.0.7) : pas d'endroit dédié évident
-         ailleurs sur le site (demande explicite mais laissée libre) — la
-         modale profil est l'endroit qu'on ouvre déjà pour "gérer son
-         rapport à l'app" (identité, activité, déconnexion), cohérent avec
-         un réglage qu'on configure une fois puis oublie. Contenu entièrement
-         dynamique (js/pwa.js → updateInstallUI()) : le bouton natif
-         n'existe que si le navigateur propose beforeinstallprompt, sinon
-         instructions manuelles (iOS n'a pas de prompt natif). -->
-    <div class="profile-activity-section" id="installSection">
-      <div class="stats-section-title">Installer Kinet</div>
-      <div id="installSectionContent"></div>
+    <div class="mm-section">
+      <div class="mm-section-title">Compte</div>
+      <div class="mm-card">
+        <!-- Réservé au compte admin (ADMIN_EMAIL, js/admin.js) — masqué par
+             défaut, affiché par openProfileModal() si isAdmin(). -->
+        <button class="mm-row" id="adminBtn" type="button" style="display:none;">
+          <span class="mm-icon ic-bronze"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a4 4 0 00-5.4 5.4L4 17v3h3l5.3-5.3a4 4 0 005.4-5.4l-2.6 2.6-2-2 2.6-2.6z"></path></svg></span>
+          <span class="mm-row-body"><span class="mm-row-title">Admin</span><span class="mm-row-sub">Succès, happenings, avis, statistiques du site.</span></span>
+          <span class="mm-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg></span>
+        </button>
+        <!-- Ouvre #settingsOverlay (js/settings.js) : thème, entête,
+             accessibilité, aide, installation, déconnexion — tout ce qui
+             règle le COMPORTEMENT de l'app plutôt que ton identité, retiré
+             d'ici (retour utilisateur : "commencer une vraie section
+             paramètre"). -->
+        <button class="mm-row" id="openSettingsBtn" type="button">
+          <span class="mm-icon ic-violet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 13a7.7 7.7 0 000-2l2-1.5-2-3.5-2.4 1a7.5 7.5 0 00-1.7-1L15 3h-4l-.3 2.5a7.5 7.5 0 00-1.7 1l-2.4-1-2 3.5L6.6 11a7.7 7.7 0 000 2l-2 1.5 2 3.5 2.4-1a7.5 7.5 0 001.7 1L11 21h4l.3-2.5a7.5 7.5 0 001.7-1l2.4 1 2-3.5-2-1.5z"></path></svg></span>
+          <span class="mm-row-body"><span class="mm-row-title">Paramètres</span><span class="mm-row-sub">Thème, entête, accessibilité, aide.</span></span>
+          <span class="mm-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg></span>
+        </button>
+      </div>
     </div>
 
-    <!-- profile-modal-footer : classe dédiée (v2.0.9) — la règle mobile
-         générique de .modal-footer .right (pensée pour le footer du
-         formulaire film, voir plus bas) forçait Annuler/Enregistrer en
-         pleine largeur sans rien prévoir d'équivalent pour Déconnexion
-         (hors .right) : elle restait seule sur sa ligne, visuellement
-         détachée plutôt qu'"au même niveau" — signalé par l'utilisateur.
-         Voir style.css pour le comportement mobile dédié. -->
-    <div class="modal-footer profile-modal-footer">
-      <button class="btn secondary" id="logoutBtn" type="button">Déconnexion</button>
+    <div class="modal-footer">
+      <button class="btn secondary" id="cancelProfileBtn">Annuler</button>
       <div class="right">
-        <button class="btn secondary" id="cancelProfileBtn">Annuler</button>
         <button class="btn" id="saveProfileBtn">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Paramètres — écran séparé (retour utilisateur : "commencer une vraie
+     section paramètre"), pas un sous-titre au milieu de "Ton profil".
+     Flèche retour plutôt que ✕ : referme cette modale et rouvre "Ton
+     profil" (même convention que Statistiques/Succès/Journal, voir
+     closeSettingsModal() dans js/settings.js). -->
+<div class="overlay" id="settingsOverlay">
+  <div class="modal">
+    <div class="modal-head-back">
+      <button class="modal-back-btn" id="closeSettings" aria-label="Retour à Ton profil">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg>
+      </button>
+      <h2>Paramètres</h2>
+    </div>
+
+    <div class="mm-section" style="margin-top:0;">
+      <div class="mm-section-title">Apparence</div>
+      <div class="mm-card">
+        <!-- Thème clair en option (retour utilisateur) — sombre par défaut,
+             voir getTheme()/setTheme() dans js/ui.js, même principe que
+             kinetViewMode (grille/liste) : préférence par appareil. -->
+        <label class="mm-row" for="lightThemeToggle">
+          <span class="mm-icon ic-gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 3v2M12 19v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M3 12h2M19 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"></path></svg></span>
+          <span class="mm-row-body"><span class="mm-row-title">Thème clair</span><span class="mm-row-sub">Sombre par défaut, à toi de choisir.</span></span>
+          <input type="checkbox" id="lightThemeToggle" class="mm-switch-input">
+          <span class="mm-switch" aria-hidden="true"></span>
+        </label>
+      </div>
+    </div>
+
+    <div class="mm-section">
+      <div class="mm-section-title">Entête</div>
+      <div class="mm-card">
+        <!-- Réorganiser les icônes de l'entête (retour utilisateur : "si on
+             clique dessus on revient sur la page d'accueil sauf que cette
+             fois on peut modifier les icones", avec un indicateur pour
+             comprendre qu'il faut les sélectionner/déplacer) — ferme cette
+             modale, ramène sur l'accueil (goHome()) et active le
+             glisser-déposer DIRECTEMENT sur les vraies icônes (icônes en
+             tremblement + #headerEditBanner, voir .header-nav.edit-mode et
+             enterHeaderEditMode() dans js/ui.js). -->
+        <button class="mm-row" id="openHeaderOrderBtn" type="button">
+          <span class="mm-icon ic-violet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 15l5 5 5-5M7 9l5-5 5 5"></path></svg></span>
+          <span class="mm-row-body"><span class="mm-row-title">Réorganiser les icônes</span><span class="mm-row-sub">Glisse-les directement dans l'entête.</span></span>
+          <span class="mm-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg></span>
+        </button>
+      </div>
+    </div>
+
+    <div class="mm-section">
+      <div class="mm-section-title">Accessibilité</div>
+      <div class="mm-card">
+        <!-- Réduire les animations (retour utilisateur, proposition validée
+             sur draft) — s'ajoute au réglage système déjà respecté partout
+             ailleurs (prefers-reduced-motion), pour qui préfère l'activer
+             directement dans Kinet. Voir getReduceMotion()/setReduceMotion()
+             dans js/ui.js. -->
+        <label class="mm-row" for="reduceMotionToggle">
+          <span class="mm-icon ic-teal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"></path><circle cx="12" cy="12" r="3"></circle></svg></span>
+          <span class="mm-row-body"><span class="mm-row-title">Réduire les animations</span><span class="mm-row-sub">S'ajoute au réglage de ton système.</span></span>
+          <input type="checkbox" id="reduceMotionToggle" class="mm-switch-input">
+          <span class="mm-switch" aria-hidden="true"></span>
+        </label>
+      </div>
+    </div>
+
+    <div class="mm-section">
+      <div class="mm-section-title">Aide</div>
+      <div class="mm-card">
+        <!-- Revoir le tuto d'accueil (retour utilisateur : "qu'on remette le
+             tuto dispo qlq part dans les paramètres") — ferme cette modale,
+             ramène sur l'accueil et rejoue la visite guidée SANS l'écran de
+             Bienvenue (un compte qui redemande le tuto connaît déjà Kinet) ;
+             ne touche jamais profiles.onboarding_seen, voir startOnboarding()
+             dans js/onboarding.js. -->
+        <button class="mm-row" id="replayOnboardingBtn" type="button">
+          <span class="mm-icon ic-bronze"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="m14.5 9.5-2 5-3 2 2-5 3-2z"></path></svg></span>
+          <span class="mm-row-body"><span class="mm-row-title">Revoir le tuto</span><span class="mm-row-sub">La visite guidée de bienvenue.</span></span>
+          <span class="mm-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg></span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Installation en app (PWA, v2.0.7) — contenu entièrement dynamique
+         (js/pwa.js → updateInstallUI()) : le bouton natif n'existe que si
+         le navigateur propose beforeinstallprompt, sinon instructions
+         manuelles (iOS n'a pas de prompt natif). -->
+    <div class="mm-section" id="installSection">
+      <div class="mm-section-title">Application</div>
+      <div class="mm-card" style="padding:14px;">
+        <div id="installSectionContent"></div>
+      </div>
+    </div>
+
+    <div class="mm-section">
+      <div class="mm-card">
+        <button class="mm-row mm-row-danger" id="logoutBtn" type="button">
+          <span class="mm-icon ic-coral"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"></path><path d="M16 17l5-5-5-5"></path><path d="M21 12H9"></path></svg></span>
+          <span class="mm-row-body"><span class="mm-row-title">Déconnexion</span></span>
+        </button>
       </div>
     </div>
   </div>
@@ -1558,108 +1683,111 @@
 <!-- ?v=N sur chaque js/*.js ci-dessous (voir le commentaire dans <head>) —
      à incrémenter à chaque déploiement, même numéro pour tous les fichiers. -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/supabaseConfig.js?v=140"></script>
+<script src="js/supabaseConfig.js?v=141"></script>
 <!-- Juste après supabaseConfig.js (a besoin de supabaseClient) et avant
      tout le reste : capte les erreurs de chargement des scripts suivants,
      pas seulement celles de l'app une fois démarrée — voir js/logging.js. -->
-<script src="js/logging.js?v=140"></script>
-<script src="js/tmdbConfig.js?v=140"></script>
-<script src="js/data.js?v=140"></script>
-<script src="js/happenings.js?v=140"></script>
+<script src="js/logging.js?v=141"></script>
+<script src="js/tmdbConfig.js?v=141"></script>
+<script src="js/data.js?v=141"></script>
+<script src="js/happenings.js?v=141"></script>
 <!-- Avant app.js et les 6 autres modules qui ouvrent/ferment une modale
      (openOverlay/closeOverlay) — l'ordre exact importe peu au runtime
      (rien n'y est appelé au chargement), gardé en premier des scripts
      "app" pour la lisibilité, comme un utilitaire partagé. -->
-<script src="js/ui.js?v=140"></script>
+<script src="js/ui.js?v=141"></script>
 <!-- Avant app.js/journal.js/watchlist.js, qui appellent saveOfflineCache()/
      loadOfflineCache()/blockIfOffline() (v1.6, mode hors ligne lecture
      seule) — l'ordre exact importe peu au runtime (rien n'y est appelé au
      chargement, seulement des listeners posés pour plus tard), gardé ici
      pour la lisibilité, comme ui.js juste au-dessus. -->
-<script src="js/offlineQueue.js?v=140"></script>
-<script src="js/offline.js?v=140"></script>
-<script src="js/app.js?v=140"></script>
-<script src="js/tmdb.js?v=140"></script>
-<script src="js/stats.js?v=140"></script>
-<script src="js/achievements.js?v=140"></script>
-<script src="js/journal.js?v=140"></script>
+<script src="js/offlineQueue.js?v=141"></script>
+<script src="js/offline.js?v=141"></script>
+<script src="js/app.js?v=141"></script>
+<script src="js/tmdb.js?v=141"></script>
+<script src="js/stats.js?v=141"></script>
+<script src="js/achievements.js?v=141"></script>
+<script src="js/journal.js?v=141"></script>
 <!-- Après app.js (showToast) — appelée par js/profile.js juste après. -->
-<script src="js/pwa.js?v=140"></script>
-<script src="js/profile.js?v=140"></script>
+<script src="js/pwa.js?v=141"></script>
+<script src="js/profile.js?v=141"></script>
+<!-- Paramètres — après profile.js (referme/rouvre "Ton profil") et pwa.js
+     (updateInstallUI()), voir js/settings.js. -->
+<script src="js/settings.js?v=141"></script>
 <!-- Après profile.js (closeProfileModal/openProfileModal) et data.js
      (FEEDBACK_CATEGORIES) — même raisonnement que pwa.js juste au-dessus. -->
-<script src="js/feedback.js?v=140"></script>
+<script src="js/feedback.js?v=141"></script>
 <!-- Bilan cinéphile partageable (v2.43) — après journal.js (viewings) et
      profile.js (currentProfile), voir js/recap.js. -->
-<script src="js/recap.js?v=140"></script>
+<script src="js/recap.js?v=141"></script>
 <!-- N'a besoin que de ui.js (openOverlay/closeOverlay) et app.js
      (showToast), chargés bien avant — placé ici pour rester groupé avec
      les autres modales accessibles depuis le chrome plutôt que pour une
      vraie dépendance. -->
-<script src="js/share.js?v=140"></script>
+<script src="js/share.js?v=141"></script>
 <!-- Après happenings.js/achievements.js (définitions) et profile.js
      (closeProfileModal) : admin.js s'appuie sur les trois au clic, jamais au
      chargement — l'ordre exact importe peu, gardé groupé ici pour la
      lisibilité. -->
-<script src="js/admin.js?v=140"></script>
-<script src="js/router.js?v=140"></script>
-<script src="js/publicProfile.js?v=140"></script>
-<script src="js/top.js?v=140"></script>
-<script src="js/friends.js?v=140"></script>
+<script src="js/admin.js?v=141"></script>
+<script src="js/router.js?v=141"></script>
+<script src="js/publicProfile.js?v=141"></script>
+<script src="js/top.js?v=141"></script>
+<script src="js/friends.js?v=141"></script>
 <!-- Après friends.js (cacheProfile/friendDisplayName/friendAvatarHtml) et
      journal.js (formatViewingDate), avant groups.js qui l'appelle depuis
      openGroupDetail() — l'ordre exact importe peu au runtime (tout est en
      fonctions globales appelées après chargement complet), gardé groupé
      ici pour la lisibilité. -->
-<script src="js/activity.js?v=140"></script>
-<script src="js/watchlist.js?v=140"></script>
+<script src="js/activity.js?v=141"></script>
+<script src="js/watchlist.js?v=141"></script>
 <!-- Après watchlist.js (loadWatchlist/watchlist, réutilisés pour exclure
      ce qui y est déjà) et app.js (getDisplayNote, chargé plus haut) — voir
      js/suggestions.js. Avant auth.js, qui appelle loadSuggestions() depuis
      showApp(). -->
-<script src="js/suggestions.js?v=140"></script>
+<script src="js/suggestions.js?v=141"></script>
 <!-- Import externe (Letterboxd pour l'instant) — après watchlist.js/app.js/
      tmdb.js/journal.js dont il réutilise films/watchlist/searchTmdb()/
      addViewing(). Voir js/importExternal.js. -->
-<script src="js/importExternal.js?v=140"></script>
+<script src="js/importExternal.js?v=141"></script>
 <!-- Fiche film (v2.1) — voir js/filmDetail.js. Regroupée ici avec
      friends.js/watchlist.js dont elle réutilise les helpers (même
      remarque que suggestions.js juste au-dessus : l'ordre exact n'importe
      pas au runtime, tout est en fonctions appelées après chargement
      complet — router.js, plus haut, appelle déjà openFriends()/
      openWatchlist() en aval de leur propre script de la même façon). -->
-<script src="js/filmDetail.js?v=140"></script>
+<script src="js/filmDetail.js?v=141"></script>
 <!-- Après watchlist.js : js/upcoming.js réutilise le tableau watchlist déjà
      chargé (voir plus bas). -->
-<script src="js/series.js?v=140"></script>
+<script src="js/series.js?v=141"></script>
 <!-- Après watchlist.js ET series.js — a besoin des deux tableaux chargés
      (loadWatchlist()/loadTrackedShows()), voir js/upcoming.js. -->
-<script src="js/upcoming.js?v=140"></script>
-<script src="js/groups.js?v=140"></script>
-<script src="js/proposals.js?v=140"></script>
+<script src="js/upcoming.js?v=141"></script>
+<script src="js/groups.js?v=141"></script>
+<script src="js/proposals.js?v=141"></script>
 <!-- Après groups.js (renderInviteBox appelée depuis renderGroupDetail) et
      proposals.js (chosenProposal) — voir js/invites.js. -->
-<script src="js/invites.js?v=140"></script>
+<script src="js/invites.js?v=141"></script>
 <!-- Après activity.js (rowToActivityEvent/renderActivityRowHtml) et
      friends.js (friendProfiles/cacheProfile) qu'elle réutilise pour le
      digest, avant auth.js qui appelle refreshActivityBadge()/
      maybeShowDigest() depuis showApp(). -->
-<script src="js/activityState.js?v=140"></script>
+<script src="js/activityState.js?v=141"></script>
 <!-- Après activityState.js (loadActivityState/activityState réutilisés
      pour son propre badge "vu") et avant auth.js qui appelle
      initChangelog() depuis showApp(). -->
-<script src="js/changelog.js?v=140"></script>
+<script src="js/changelog.js?v=141"></script>
 <!-- Recherche globale unifiée (v2.42) — après series.js/friends.js/
      groups.js dont elle réutilise les tableaux déjà chargés et les
      fonctions d'ouverture (openFriendProfile/goToSeriesDetail/goToGroup),
      et après app.js/data.js pour getSearchTerms()/normalizeSearch()/
      FILM_PLACEHOLDER_SVG. Voir js/globalSearch.js. -->
-<script src="js/globalSearch.js?v=140"></script>
+<script src="js/globalSearch.js?v=141"></script>
 <!-- Tuto d'accueil interactif — avant auth.js dont showApp() appelle
      maybeStartOnboarding() ; après ui.js/router.js/profile.js/logging.js
      dont il réutilise respectivement openOverlay-style/goHome/
      closeProfileModal/logEvent. -->
-<script src="js/onboarding.js?v=140"></script>
-<script src="js/auth.js?v=140"></script>
+<script src="js/onboarding.js?v=141"></script>
+<script src="js/auth.js?v=141"></script>
 </body>
 </html>

@@ -135,10 +135,12 @@ async function signInWithGoogle(){
 }
 
 async function handleLogout(){
-  // Le bouton vit maintenant dans la modale profil (voir js/profile.js) —
-  // on la referme avant de couper la session, sinon elle resterait ouverte
-  // par-dessus l'écran de connexion.
+  // Le bouton vit dans Paramètres (voir js/settings.js) — on referme les
+  // deux modales (idempotent si l'une des deux est déjà fermée) avant de
+  // couper la session, sinon l'une resterait ouverte par-dessus l'écran de
+  // connexion.
   closeProfileModal();
+  closeOverlay('settingsOverlay');
   await supabaseClient.auth.signOut();
 }
 

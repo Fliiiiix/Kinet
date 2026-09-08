@@ -110,6 +110,7 @@ document.addEventListener('keydown', (e) => {
     // ajout, contrairement à toutes les autres modales de l'app.
     globalSearchOverlay: () => closeOverlay('globalSearchOverlay'),
     recapOverlay: () => closeRecap(),
+    settingsOverlay: () => closeSettingsModal(),
     // Tuto d'accueil (js/onboarding.js) : pas un .overlay (voile+carte
     // construits à part, voir css/style.css) mais même convention de
     // classe "open" sur son conteneur, pour rejoindre cette table sans
@@ -235,6 +236,33 @@ function setTheme(theme){
 
 setTheme(getTheme());
 
+// --- Réduire les animations (retour utilisateur, Paramètres, proposition
+// validée sur draft) --- Même principe que getTheme()/setTheme()
+// ci-dessus : préférence PAR APPAREIL (localStorage), jamais synchronisée
+// à Supabase. S'ajoute au réglage système déjà respecté partout ailleurs
+// (prefers-reduced-motion) — coupe tout via une seule règle CSS globale
+// (html.reduce-motion, voir css/style.css) plutôt que de dupliquer chacune
+// des règles @media (prefers-reduced-motion:reduce) déjà écrites dans ce
+// fichier pour le réglage système : les deux mènent au même résultat par
+// des chemins différents, sans avoir à maintenir la logique à deux endroits.
+function getReduceMotion(){
+  try{ return localStorage.getItem('kinetReduceMotion') === '1'; }
+  catch(e){ return false; }
+}
+
+function setReduceMotion(on){
+  document.documentElement.classList.toggle('reduce-motion', on);
+  try{ localStorage.setItem('kinetReduceMotion', on ? '1' : '0'); }catch(e){}
+  const toggle = document.getElementById('reduceMotionToggle');
+  if(toggle) toggle.checked = on;
+}
+
+setReduceMotion(getReduceMotion());
+
+document.getElementById('reduceMotionToggle').addEventListener('change', (e) => {
+  setReduceMotion(e.target.checked);
+});
+
 document.getElementById('lightThemeToggle').addEventListener('change', (e) => {
   setTheme(e.target.checked ? 'light' : 'dark');
 });
@@ -296,7 +324,14 @@ let headerEditMode = false;
 // .edit-mode (css/style.css) fait trembler les icônes — c'est l'indicateur
 // lui-même, pas juste une classe technique.
 function enterHeaderEditMode(){
+  // Vit dans Paramètres (#settingsOverlay), pas directement dans "Ton
+  // profil" — les deux closeOverlay() sont idempotents (aucun effet si
+  // déjà fermée), fermer les deux inconditionnellement évite de dépendre
+  // de LAQUELLE des deux était ouverte au moment du clic. Pas
+  // closeSettingsModal() : elle rouvrirait "Ton profil" juste après, alors
+  // qu'on part vers l'accueil pour de bon.
   closeProfileModal();
+  closeOverlay('settingsOverlay');
   goHome();
   headerEditMode = true;
   const nav = document.querySelector('.header-nav');

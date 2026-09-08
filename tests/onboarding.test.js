@@ -85,6 +85,10 @@ function buildContext(opts){
       matchMedia: (q) => ({ matches: q.indexOf('prefers-reduced-motion') !== -1 ? reducedMotion : mobile }),
     },
     closeProfileModal(){ closeProfileModalCalls.push(true); },
+    // "Revoir le tuto" vit dans Paramètres (#settingsOverlay, js/settings.js)
+    // depuis la refonte du profil — startOnboarding() ferme aussi cette
+    // modale (idempotent, no-op ici) en plus du profil.
+    closeOverlay(){},
     goHome(){ goHomeCalls.push(true); },
     logEvent(type, detail){ logEventCalls.push({ type, detail }); },
     supabaseClient,
