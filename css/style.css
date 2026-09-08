@@ -201,7 +201,7 @@
    plutôt que de dupliquer chacune des règles @media
    (prefers-reduced-motion:reduce) déjà écrites dans ce fichier pour le
    réglage système : les deux mènent au même résultat par des chemins
-   différents, sans avoir à maintenir la logique à deux endroits. -->
+   différents, sans avoir à maintenir la logique à deux endroits. */
 html.reduce-motion *, html.reduce-motion *::before, html.reduce-motion *::after{
   animation-duration:0.001ms !important;
   animation-iteration-count:1 !important;
