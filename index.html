@@ -59,7 +59,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,500&family=Space+Mono:wght@400;700&display=swap">
-<link rel="stylesheet" href="css/style.css?v=142">
+<link rel="stylesheet" href="css/style.css?v=143">
 </head>
 <body>
 
@@ -1201,39 +1201,23 @@
       </div>
     </div>
 
-    <!-- Profil public : la case ET, si activée, le lien + le top films —
-         l'un ne sert pas sans l'autre, regroupés dans la même carte plutôt
-         que dispersés (retour utilisateur). Opt-in, false par défaut côté
-         base (supabase/migrations/016) — seule donnée de l'app lisible
-         sans connexion une fois activée, voir js/publicProfile.js. -->
+    <!-- Top films (v2.3, retour utilisateur : "un top films comme
+         Letterboxd, mis en avant par choix pas par note") — TOUJOURS
+         visible désormais (retour utilisateur : "j'aimerais qu'il soit
+         plus visible"), plus caché derrière le profil public : visible par
+         tes amis dès que choisi (voir openFriendProfile(), js/friends.js),
+         et par tout le monde en plus une fois "Profil public" activé plus
+         bas (#topFilmsVisibilityNote reflète les deux, mis à jour par
+         updateTopFilmsVisibilityNote() dans js/profile.js). Jusqu'à 4,
+         choisis dans le catalogue déjà noté, réordonnables par
+         glisser-déposer — voir wireTopFilmsDrag() dans js/profile.js. -->
     <div class="mm-section">
-      <div class="mm-section-title">Profil public</div>
-      <div class="mm-card">
-        <label class="mm-row" for="publicProfileToggle">
-          <span class="mm-icon ic-violet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18M12 3c2.5 2.7 3.8 6 3.8 9s-1.3 6.3-3.8 9c-2.5-2.7-3.8-6-3.8-9s1.3-6.3 3.8-9z"></path></svg></span>
-          <span class="mm-row-body">
-            <span class="mm-row-title">Profil public</span>
-            <span class="mm-row-sub">Lien à partager, en lecture seule.</span>
-          </span>
-          <input type="checkbox" id="publicProfileToggle" class="mm-switch-input">
-          <span class="mm-switch" aria-hidden="true"></span>
-        </label>
-        <div class="pf-public-panel" id="publicProfileLinkHint">
-          <p class="pf-public-note">Pseudo, avatar et tes films notés (titre, affiche, note) seront visibles par quiconque a le lien, jamais ton email ni tes commentaires.</p>
-          <div class="pf-link-row">
-            <span id="publicProfileLinkText"></span>
-            <button id="copyPublicProfileLink" type="button">Copier</button>
-          </div>
-          <!-- Top films (v2.3, retour utilisateur : "un top films comme
-               Letterboxd, mis en avant par choix pas par note") — jusqu'à 4,
-               choisis dans le catalogue déjà noté. Réordonnable par
-               glisser-déposer, voir wireTopFilmsDrag() dans js/profile.js. -->
-          <div class="pf-top-title">Tes meilleurs films</div>
-          <div class="pf-top-sub">Jusqu'à 4, mis en avant sur ton profil public. Glisse pour réordonner.</div>
-          <div class="top-films-picker" id="topFilmsPicker"></div>
-          <input type="text" id="topFilmsSearch" placeholder="Chercher un film déjà noté…" style="margin-top:8px;">
-          <div class="tmdb-results" id="topFilmsResults"></div>
-        </div>
+      <div class="mm-section-title">Tes meilleurs films</div>
+      <div class="mm-card" style="padding:14px;">
+        <p class="pf-top-sub" id="topFilmsVisibilityNote" style="margin-bottom:12px;"></p>
+        <div class="top-films-picker" id="topFilmsPicker"></div>
+        <input type="text" id="topFilmsSearch" placeholder="Chercher un film déjà noté…" style="margin-top:8px;">
+        <div class="tmdb-results" id="topFilmsResults"></div>
       </div>
     </div>
 
@@ -1280,6 +1264,36 @@
           <span class="mm-row-body"><span class="mm-row-title">Nouveautés</span></span>
           <span class="mm-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg></span>
         </button>
+      </div>
+    </div>
+
+    <!-- Profil public : descendu plus bas (retour utilisateur : "je
+         voudrais que le bouton soit plus bas") — c'est un réglage occasionnel,
+         pas ce qu'on vient chercher en premier ici. Lien simplifié (retour
+         utilisateur : "je trouve le lien de trop, il gêne") : plus d'URL
+         affichée en clair, juste un bouton "Copier" — publicProfileUrl()
+         (js/profile.js) la calcule à la volée, jamais besoin de l'afficher
+         pour la copier. Opt-in, false par défaut côté base
+         (supabase/migrations/016) — seule donnée de l'app lisible sans
+         connexion une fois activée, voir js/publicProfile.js. -->
+    <div class="mm-section">
+      <div class="mm-card">
+        <label class="mm-row" for="publicProfileToggle">
+          <span class="mm-icon ic-violet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18M12 3c2.5 2.7 3.8 6 3.8 9s-1.3 6.3-3.8 9c-2.5-2.7-3.8-6-3.8-9s1.3-6.3 3.8-9z"></path></svg></span>
+          <span class="mm-row-body">
+            <span class="mm-row-title">Profil public</span>
+            <span class="mm-row-sub">Visible de tous, lien à partager.</span>
+          </span>
+          <input type="checkbox" id="publicProfileToggle" class="mm-switch-input">
+          <span class="mm-switch" aria-hidden="true"></span>
+        </label>
+        <div class="pf-public-panel" id="publicProfileLinkHint">
+          <p class="pf-public-note">Pseudo, avatar et tes films notés seront visibles par quiconque a le lien, jamais ton email ni tes commentaires.</p>
+          <button class="pf-copy-link-btn" id="copyPublicProfileLink" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 007.5.5l2-2a5 5 0 00-7-7l-1 1"></path><path d="M14 11a5 5 0 00-7.5-.5l-2 2a5 5 0 007 7l1-1"></path></svg>
+            Copier le lien à partager
+          </button>
+        </div>
       </div>
     </div>
 
@@ -1683,111 +1697,111 @@
 <!-- ?v=N sur chaque js/*.js ci-dessous (voir le commentaire dans <head>) —
      à incrémenter à chaque déploiement, même numéro pour tous les fichiers. -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/supabaseConfig.js?v=142"></script>
+<script src="js/supabaseConfig.js?v=143"></script>
 <!-- Juste après supabaseConfig.js (a besoin de supabaseClient) et avant
      tout le reste : capte les erreurs de chargement des scripts suivants,
      pas seulement celles de l'app une fois démarrée — voir js/logging.js. -->
-<script src="js/logging.js?v=142"></script>
-<script src="js/tmdbConfig.js?v=142"></script>
-<script src="js/data.js?v=142"></script>
-<script src="js/happenings.js?v=142"></script>
+<script src="js/logging.js?v=143"></script>
+<script src="js/tmdbConfig.js?v=143"></script>
+<script src="js/data.js?v=143"></script>
+<script src="js/happenings.js?v=143"></script>
 <!-- Avant app.js et les 6 autres modules qui ouvrent/ferment une modale
      (openOverlay/closeOverlay) — l'ordre exact importe peu au runtime
      (rien n'y est appelé au chargement), gardé en premier des scripts
      "app" pour la lisibilité, comme un utilitaire partagé. -->
-<script src="js/ui.js?v=142"></script>
+<script src="js/ui.js?v=143"></script>
 <!-- Avant app.js/journal.js/watchlist.js, qui appellent saveOfflineCache()/
      loadOfflineCache()/blockIfOffline() (v1.6, mode hors ligne lecture
      seule) — l'ordre exact importe peu au runtime (rien n'y est appelé au
      chargement, seulement des listeners posés pour plus tard), gardé ici
      pour la lisibilité, comme ui.js juste au-dessus. -->
-<script src="js/offlineQueue.js?v=142"></script>
-<script src="js/offline.js?v=142"></script>
-<script src="js/app.js?v=142"></script>
-<script src="js/tmdb.js?v=142"></script>
-<script src="js/stats.js?v=142"></script>
-<script src="js/achievements.js?v=142"></script>
-<script src="js/journal.js?v=142"></script>
+<script src="js/offlineQueue.js?v=143"></script>
+<script src="js/offline.js?v=143"></script>
+<script src="js/app.js?v=143"></script>
+<script src="js/tmdb.js?v=143"></script>
+<script src="js/stats.js?v=143"></script>
+<script src="js/achievements.js?v=143"></script>
+<script src="js/journal.js?v=143"></script>
 <!-- Après app.js (showToast) — appelée par js/profile.js juste après. -->
-<script src="js/pwa.js?v=142"></script>
-<script src="js/profile.js?v=142"></script>
+<script src="js/pwa.js?v=143"></script>
+<script src="js/profile.js?v=143"></script>
 <!-- Paramètres — après profile.js (referme/rouvre "Ton profil") et pwa.js
      (updateInstallUI()), voir js/settings.js. -->
-<script src="js/settings.js?v=142"></script>
+<script src="js/settings.js?v=143"></script>
 <!-- Après profile.js (closeProfileModal/openProfileModal) et data.js
      (FEEDBACK_CATEGORIES) — même raisonnement que pwa.js juste au-dessus. -->
-<script src="js/feedback.js?v=142"></script>
+<script src="js/feedback.js?v=143"></script>
 <!-- Bilan cinéphile partageable (v2.43) — après journal.js (viewings) et
      profile.js (currentProfile), voir js/recap.js. -->
-<script src="js/recap.js?v=142"></script>
+<script src="js/recap.js?v=143"></script>
 <!-- N'a besoin que de ui.js (openOverlay/closeOverlay) et app.js
      (showToast), chargés bien avant — placé ici pour rester groupé avec
      les autres modales accessibles depuis le chrome plutôt que pour une
      vraie dépendance. -->
-<script src="js/share.js?v=142"></script>
+<script src="js/share.js?v=143"></script>
 <!-- Après happenings.js/achievements.js (définitions) et profile.js
      (closeProfileModal) : admin.js s'appuie sur les trois au clic, jamais au
      chargement — l'ordre exact importe peu, gardé groupé ici pour la
      lisibilité. -->
-<script src="js/admin.js?v=142"></script>
-<script src="js/router.js?v=142"></script>
-<script src="js/publicProfile.js?v=142"></script>
-<script src="js/top.js?v=142"></script>
-<script src="js/friends.js?v=142"></script>
+<script src="js/admin.js?v=143"></script>
+<script src="js/router.js?v=143"></script>
+<script src="js/publicProfile.js?v=143"></script>
+<script src="js/top.js?v=143"></script>
+<script src="js/friends.js?v=143"></script>
 <!-- Après friends.js (cacheProfile/friendDisplayName/friendAvatarHtml) et
      journal.js (formatViewingDate), avant groups.js qui l'appelle depuis
      openGroupDetail() — l'ordre exact importe peu au runtime (tout est en
      fonctions globales appelées après chargement complet), gardé groupé
      ici pour la lisibilité. -->
-<script src="js/activity.js?v=142"></script>
-<script src="js/watchlist.js?v=142"></script>
+<script src="js/activity.js?v=143"></script>
+<script src="js/watchlist.js?v=143"></script>
 <!-- Après watchlist.js (loadWatchlist/watchlist, réutilisés pour exclure
      ce qui y est déjà) et app.js (getDisplayNote, chargé plus haut) — voir
      js/suggestions.js. Avant auth.js, qui appelle loadSuggestions() depuis
      showApp(). -->
-<script src="js/suggestions.js?v=142"></script>
+<script src="js/suggestions.js?v=143"></script>
 <!-- Import externe (Letterboxd pour l'instant) — après watchlist.js/app.js/
      tmdb.js/journal.js dont il réutilise films/watchlist/searchTmdb()/
      addViewing(). Voir js/importExternal.js. -->
-<script src="js/importExternal.js?v=142"></script>
+<script src="js/importExternal.js?v=143"></script>
 <!-- Fiche film (v2.1) — voir js/filmDetail.js. Regroupée ici avec
      friends.js/watchlist.js dont elle réutilise les helpers (même
      remarque que suggestions.js juste au-dessus : l'ordre exact n'importe
      pas au runtime, tout est en fonctions appelées après chargement
      complet — router.js, plus haut, appelle déjà openFriends()/
      openWatchlist() en aval de leur propre script de la même façon). -->
-<script src="js/filmDetail.js?v=142"></script>
+<script src="js/filmDetail.js?v=143"></script>
 <!-- Après watchlist.js : js/upcoming.js réutilise le tableau watchlist déjà
      chargé (voir plus bas). -->
-<script src="js/series.js?v=142"></script>
+<script src="js/series.js?v=143"></script>
 <!-- Après watchlist.js ET series.js — a besoin des deux tableaux chargés
      (loadWatchlist()/loadTrackedShows()), voir js/upcoming.js. -->
-<script src="js/upcoming.js?v=142"></script>
-<script src="js/groups.js?v=142"></script>
-<script src="js/proposals.js?v=142"></script>
+<script src="js/upcoming.js?v=143"></script>
+<script src="js/groups.js?v=143"></script>
+<script src="js/proposals.js?v=143"></script>
 <!-- Après groups.js (renderInviteBox appelée depuis renderGroupDetail) et
      proposals.js (chosenProposal) — voir js/invites.js. -->
-<script src="js/invites.js?v=142"></script>
+<script src="js/invites.js?v=143"></script>
 <!-- Après activity.js (rowToActivityEvent/renderActivityRowHtml) et
      friends.js (friendProfiles/cacheProfile) qu'elle réutilise pour le
      digest, avant auth.js qui appelle refreshActivityBadge()/
      maybeShowDigest() depuis showApp(). -->
-<script src="js/activityState.js?v=142"></script>
+<script src="js/activityState.js?v=143"></script>
 <!-- Après activityState.js (loadActivityState/activityState réutilisés
      pour son propre badge "vu") et avant auth.js qui appelle
      initChangelog() depuis showApp(). -->
-<script src="js/changelog.js?v=142"></script>
+<script src="js/changelog.js?v=143"></script>
 <!-- Recherche globale unifiée (v2.42) — après series.js/friends.js/
      groups.js dont elle réutilise les tableaux déjà chargés et les
      fonctions d'ouverture (openFriendProfile/goToSeriesDetail/goToGroup),
      et après app.js/data.js pour getSearchTerms()/normalizeSearch()/
      FILM_PLACEHOLDER_SVG. Voir js/globalSearch.js. -->
-<script src="js/globalSearch.js?v=142"></script>
+<script src="js/globalSearch.js?v=143"></script>
 <!-- Tuto d'accueil interactif — avant auth.js dont showApp() appelle
      maybeStartOnboarding() ; après ui.js/router.js/profile.js/logging.js
      dont il réutilise respectivement openOverlay-style/goHome/
      closeProfileModal/logEvent. -->
-<script src="js/onboarding.js?v=142"></script>
-<script src="js/auth.js?v=142"></script>
+<script src="js/onboarding.js?v=143"></script>
+<script src="js/auth.js?v=143"></script>
 </body>
 </html>

@@ -465,9 +465,16 @@ async function openFriendProfile(userId){
   content.innerHTML = skeletonRows(4);
   openOverlay('friendProfileOverlay');
 
-  const [{ data, error }, compat] = await Promise.all([
+  const [{ data, error }, compat, { data: friendProfile }] = await Promise.all([
     supabaseClient.from('films').select('*').eq('user_id', userId).order('added', { ascending: false }),
-    loadFriendCompatibility(userId)
+    loadFriendCompatibility(userId),
+    // Top films d'un ami : montré ici quel que soit son réglage "Profil
+    // public" (retour utilisateur : "avec un profil pas public, seul les
+    // amis voient le top4") — cette modale n'est atteignable QUE depuis la
+    // liste "Amis" pour une amitié acceptée, jamais publiquement, donc
+    // aucune fuite au-delà de ce que RLS "Friends can view shared films"
+    // permet déjà pour le reste de cette fonction.
+    supabaseClient.from('profiles').select('top_films').eq('user_id', userId).maybeSingle()
   ]);
   if(error){
     content.innerHTML = `<div class="empty-state">Impossible de charger ce catalogue.</div>`;
@@ -476,6 +483,13 @@ async function openFriendProfile(userId){
   }
 
   const friendFilms = data.map(rowToFilm);
+  // Résolu contre friendFilms (déjà chargé juste au-dessus) plutôt que via
+  // get_public_profile() : même logique de résolution que cette fonction
+  // SQL (matcher par tmdb_id, garder l'ordre choisi), mais sans dépendre de
+  // public_profile côté ami — voir le commentaire sur la requête ci-dessus.
+  const friendTopFilmIds = (friendProfile && Array.isArray(friendProfile.top_films)) ? friendProfile.top_films : [];
+  const friendFilmsByTmdbId = new Map(friendFilms.filter(f => f.tmdbId).map(f => [f.tmdbId, f]));
+  const friendTopFilms = friendTopFilmIds.map(id => friendFilmsByTmdbId.get(id)).filter(Boolean);
   const statsEl = document.createElement('div');
   renderStatsInto(statsEl, friendFilms);
 
@@ -489,6 +503,33 @@ async function openFriendProfile(userId){
     : sortedFriendFilms.map(statsFilmRowHtml).join('');
 
   content.innerHTML = '';
+
+  // Placé en premier (retour utilisateur : le top4 doit être plus visible) —
+  // mêmes classes .top-films-showcase que le profil public (js/publicProfile.js)
+  // pour une présentation cohérente entre les deux endroits où un top4 peut
+  // s'afficher.
+  if(friendTopFilms.length > 0){
+    const topWrap = document.createElement('div');
+    topWrap.className = 'stats-section reveal';
+    topWrap.innerHTML = `
+      <div class="stats-section-title">Ses meilleurs films</div>
+      <div class="top-films-showcase">
+        ${friendTopFilms.map(f => `
+          <div class="top-films-showcase-item" data-tmdb-id="${f.tmdbId}">
+            ${f.posterUrl
+              ? `<img src="${f.posterUrl}" alt="">`
+              : `<div class="film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
+            <div class="top-films-showcase-title">${escapeHtml(f.title)}</div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+    content.appendChild(topWrap);
+    topWrap.querySelectorAll('.top-films-showcase-item[data-tmdb-id]').forEach(item => {
+      makeRowClickable(item, () => goToFilmDetail(parseInt(item.dataset.tmdbId, 10)));
+    });
+  }
+
   if(compat){
     // compat.compatibility peut être SQL null (donc JS null) même avec des
     // films en commun (common_count > 0) : ça arrive si, pour chacun de ces

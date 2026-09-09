@@ -87,7 +87,7 @@ function buildContext(overrides){
     userAvatarBtn, profileOverlay,
     displayNameInput: stubElement(), avatarFileInput: stubElement({ value:'' }),
     avatarUploadStatus: stubElement(), avatarFilmSearch: stubEventTarget(),
-    avatarFilmResults: stubElement(), publicProfileLinkText: stubElement(),
+    avatarFilmResults: stubElement(), topFilmsVisibilityNote: stubElement(),
     copyPublicProfileLink: stubEventTarget(), topFilmsSearch: stubEventTarget(),
     topFilmsResults: stubElement(), adminBtn: stubElement(),
     closeProfile: stubEventTarget(), cancelProfileBtn: stubEventTarget(), saveProfileBtn: stubEventTarget(),
@@ -113,7 +113,7 @@ function buildContext(overrides){
   }, overrides.contextProps));
 
   loadFiles(ctx, ['js/profile.js']);
-  return { ctx, avatarPanel, toggleAvatarPanelBtn, profileAvatarPreview, profileAvatarFallback, publicProfileLinkHint, publicProfileToggle, topFilmsPicker };
+  return { ctx, avatarPanel, toggleAvatarPanelBtn, profileAvatarPreview, profileAvatarFallback, publicProfileLinkHint, publicProfileToggle, topFilmsPicker, topFilmsVisibilityNote: elements.topFilmsVisibilityNote };
 }
 
 test('setAvatarPanelOpen(true) : déplie le panneau avatar et pose aria-expanded', () => {
@@ -167,6 +167,21 @@ test('updatePublicProfileLinkVisibility() : retire .open quand la case est déco
   publicProfileToggle.checked = false;
   ctx.updatePublicProfileLinkVisibility();
   assert.ok(!publicProfileLinkHint.classList.contains('open'));
+});
+
+test('updateTopFilmsVisibilityNote() : profil pas public -> mentionne les amis, pas "tout le monde"', () => {
+  const { ctx, publicProfileToggle, topFilmsVisibilityNote } = buildContext();
+  publicProfileToggle.checked = false;
+  ctx.updateTopFilmsVisibilityNote();
+  assert.ok(topFilmsVisibilityNote.textContent.includes('amis'));
+  assert.ok(!topFilmsVisibilityNote.textContent.includes('tout le monde activé'));
+});
+
+test('updateTopFilmsVisibilityNote() : profil public -> mentionne "tout le monde"', () => {
+  const { ctx, publicProfileToggle, topFilmsVisibilityNote } = buildContext();
+  publicProfileToggle.checked = true;
+  ctx.updateTopFilmsVisibilityNote();
+  assert.ok(topFilmsVisibilityNote.textContent.includes('tout le monde'));
 });
 
 test('wireTopFilmsDrag() : pointerdown SUR LA POIGNÉE démarre le glisser, ailleurs sur la ligne ne fait rien', () => {

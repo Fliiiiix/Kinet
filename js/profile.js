@@ -136,6 +136,7 @@ function openProfileModal(){
   document.getElementById('topFilmsSearch').value = '';
   document.getElementById('topFilmsResults').innerHTML = '';
   renderTopFilmsPicker();
+  updateTopFilmsVisibilityNote();
   // Bouton Admin (js/admin.js) : masqué pour tout le monde sauf ADMIN_EMAIL.
   document.getElementById('adminBtn').style.display = isAdmin() ? '' : 'none';
   openOverlay('profileOverlay');
@@ -247,12 +248,28 @@ function publicProfileUrl(){
   return `${location.origin}${location.pathname}#/u/${currentUser.id}`;
 }
 
+// Retour utilisateur : "je voudrais qu'avec un profil public tout le monde
+// voit le top4, et pas public seul les amis" — le top films (section "Tes
+// meilleurs films", plus haut dans la modale) n'est plus caché derrière
+// Profil public, mais sa visibilité dépend du réglage plus bas ; ce texte le
+// rappelle sans obliger à faire défiler jusqu'au switch pour comprendre.
+// Lu à l'ouverture de la modale et à chaque bascule du switch — jamais une
+// 2e source de vérité, juste un reflet de publicProfileToggle.checked.
+function updateTopFilmsVisibilityNote(){
+  const on = document.getElementById('publicProfileToggle').checked;
+  document.getElementById('topFilmsVisibilityNote').textContent = on
+    ? 'Visibles par tout le monde (profil public activé).'
+    : 'Visibles par tes amis. Active « Profil public » plus bas pour les montrer à tout le monde.';
+}
+
 function updatePublicProfileLinkVisibility(){
   const on = document.getElementById('publicProfileToggle').checked;
   document.getElementById('publicProfileLinkHint').classList.toggle('open', on);
-  if(on) document.getElementById('publicProfileLinkText').textContent = publicProfileUrl();
 }
-document.getElementById('publicProfileToggle').addEventListener('change', updatePublicProfileLinkVisibility);
+document.getElementById('publicProfileToggle').addEventListener('change', () => {
+  updatePublicProfileLinkVisibility();
+  updateTopFilmsVisibilityNote();
+});
 
 document.getElementById('copyPublicProfileLink').addEventListener('click', async () => {
   try{

@@ -209,6 +209,13 @@ html.reduce-motion *, html.reduce-motion *::before, html.reduce-motion *::after{
   scroll-behavior:auto !important;
 }
 
+/* Verrou de défilement du fond pendant une modale/le tuto (retour
+   utilisateur : "pendant le tuto je peux quand même scroll") — posé/retiré
+   par lockBodyScroll()/unlockBodyScroll() (js/ui.js). Sur html ET body :
+   certains navigateurs mobiles ignorent overflow:hidden posé sur un seul
+   des deux. */
+html.scroll-locked, html.scroll-locked body{overflow:hidden;}
+
 body{
   background:
     radial-gradient(1100px 800px at 8% -12%, rgba(140,124,255,0.28), transparent 55%),
@@ -1602,6 +1609,24 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   z-index:900;
   display:none;
   pointer-events:none;
+  /* Bug retour utilisateur ("thème clair... on ne voit pas les icônes") :
+     le voile est délibérément TOUJOURS sombre (un vrai moment "spotlight"),
+     mais le clone décoratif de l'icône visée héritait des tokens du thème
+     ACTUEL — en thème clair, ses couleurs pensées pour un fond clair
+     devenaient illisibles posées sur ce voile sombre. Les variables sont
+     réassignées ici, sur le conteneur : tout ce qui vit dedans (clone
+     compris, via ses classes d'origine comme .nav-pip-violet) hérite de
+     CES valeurs sombres plutôt que de celles du thème choisi, quel qu'il
+     soit — les tokens CSS suivent l'arbre du DOM, pas la feuille de style
+     d'origine de chaque classe. */
+  --violet:#8c7cff; --violet-dim:#5b4fb0; --violet-wash:rgba(140,124,255,0.12);
+  --gold:#e7b24c; --gold-dim:#8a6a2e; --gold-wash:rgba(231,178,76,0.1);
+  --teal:#6fa39f; --teal-wash:rgba(111,163,159,0.14);
+  --bronze:#d9aa67; --bronze-dim:#8f6a3a; --bronze-wash:rgba(217,170,103,0.12);
+  --coral:#ff6b57; --coral-dim:#8a3f34;
+  --ink:#0f0e16; --surface:#1b1826; --surface-2:#262032; --surface-3:#302a3d;
+  --line:#342f42; --text:#f2eee6; --text-muted:#9a93a8;
+  --glass-rgb:27,24,38; --text-rgb:242,238,230;
 }
 .onboarding-layer.open{display:block;}
 /* .closing reste display:block (comme .overlay.closing) — sans ce doublon,
@@ -2296,13 +2321,20 @@ input[type="range"]::-moz-range-thumb{
 /* --- Profil public : panneau qui se déplie sous sa rangée --- */
 .pf-public-panel{display:none; padding:14px; background:var(--surface); border-top:1px solid var(--line);}
 .pf-public-panel.open{display:block;}
-.pf-link-row{
-  display:flex; align-items:center; gap:10px; background:var(--surface-3); border:1px solid var(--line);
-  border-radius:9px; padding:8px 10px; margin-bottom:14px;
-}
-.pf-link-row span{font-family:'Space Mono', monospace; font-size:11.5px; color:var(--teal); flex:1; overflow-wrap:anywhere;}
-.pf-link-row button{font-size:11.5px; font-weight:700; color:var(--violet); background:none; border:none; cursor:pointer; flex:none;}
 .pf-public-note{font-size:11.5px; color:var(--text-muted); line-height:1.5; margin-bottom:14px;}
+/* Bouton unique "Copier le lien" (retour utilisateur : afficher l'URL en
+   clair "de trop, ça gêne") — publicProfileUrl() (js/profile.js) la calcule
+   à la demande, jamais besoin de la montrer pour la copier. */
+.pf-copy-link-btn{
+  display:flex; align-items:center; justify-content:center; gap:8px; width:100%;
+  padding:10px 14px; background:var(--violet-wash); color:var(--violet); border:1px solid var(--violet-dim);
+  border-radius:9px; font-family:'Instrument Sans', sans-serif; font-size:12.5px; font-weight:700; cursor:pointer;
+  transition:background .12s;
+}
+.pf-copy-link-btn:hover{background:var(--violet-dim); color:var(--text);}
+.pf-copy-link-btn svg{width:15px; height:15px; flex:none;}
+.pf-top-title{font-size:12.5px; font-weight:600; margin-bottom:2px;}
+.pf-top-sub{font-size:11.5px; color:var(--text-muted); margin-bottom:10px;}
 .pf-top-title{font-size:12.5px; font-weight:600; margin-bottom:2px;}
 .pf-top-sub{font-size:11.5px; color:var(--text-muted); margin-bottom:10px;}
 
@@ -4032,6 +4064,17 @@ body[data-view-mode="grid"] #filmList .film-row{
   grid-template-areas:"poster" "main" "footer";
   row-gap:10px;
   padding:12px;
+  /* Bug retour utilisateur (S25, "à voir" en grille : affiches
+     disproportionnées) : une carte de grille a par défaut min-width:auto
+     (pas 0), et .film-title/.wl-title en dessous sont en white-space:nowrap
+     (troncature avec ellipsis, voir plus bas) — leur largeur MINIMALE de
+     contenu, sans ce 0, vaut alors leur texte COMPLET non coupé, pas
+     seulement la largeur visible tronquée. Un titre un peu long forçait
+     donc sa carte (et la colonne de grille entière, qui hérite de ce
+     minimum) à s'élargir bien au-delà des colonnes voisines — 2 colonnes
+     de tailles très différentes plutôt que 2 cases égales, l'affiche de
+     la plus large paraissant "disproportionnée" à côté de l'autre. */
+  min-width:0;
 }
 body[data-view-mode="grid"] #filmList .film-poster,
 body[data-view-mode="grid"] #filmList .film-poster-placeholder{
@@ -4055,6 +4098,12 @@ body[data-view-mode="grid"] #topList .wl-row{
   flex-direction:column;
   align-items:stretch;
   padding:12px;
+  /* min-width:0 — même bug/raisonnement que .film-row juste au-dessus
+     (S25, "affiches disproportionnées") : sans lui, un titre long en
+     white-space:nowrap forçait sa carte (et sa colonne de grille) à
+     déborder de sa juste part, laissant les cartes voisines rétrécir en
+     comparaison. */
+  min-width:0;
 }
 body[data-view-mode="grid"] #wlList .film-poster,
 body[data-view-mode="grid"] #seriesList .film-poster,
@@ -4580,8 +4629,21 @@ body[data-view-mode="grid"] #seriesList .new-episode-dot{display:block;}
 @media (max-width:380px){
   .ach-tier-grid, .ach-hidden-grid{grid-template-columns:1fr;}
   .stat-tiles{grid-template-columns:1fr 1fr;}
-  /* Même une carte reste trop large à 2 par rangée sous 380px : mieux vaut
-     une seule colonne, plus lisible, qu'une affiche écrasée. */
+}
+
+/* Bug retour utilisateur (S25, "à voir" en grille : "les affiches sont
+   disproportionnées par rapport au reste") : le seuil précédent (380px)
+   faisait basculer la grille à 1 SEULE colonne, où l'affiche (width:100%,
+   aspect-ratio:2/3) s'étirait bord à bord — énorme à côté d'un titre/note
+   de taille normale en dessous. Or beaucoup de téléphones courants,
+   S25 compris, ont une largeur CSS ~360-390px (voir le commentaire sur
+   .toolbar-search plus haut, déjà mesuré sur cet appareil) : largement
+   assez pour 2 colonnes propres (2× minmax(158px) + le gap:12px du bloc
+   ≤600px tiennent déjà sous 360px), le seuil de repli à 380px les faisait
+   basculer en 1 colonne pour rien. Repli à 1 colonne repoussé à une
+   largeur vraiment étroite (ex. iPhone SE 1re/2e génération, ~320-374px)
+   où 2 colonnes deviendraient vraiment trop serrées. */
+@media (max-width:340px){
   body[data-view-mode="grid"] #filmList,
   body[data-view-mode="grid"] #wlList,
   body[data-view-mode="grid"] #seriesList,

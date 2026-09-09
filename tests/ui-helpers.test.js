@@ -84,4 +84,68 @@ test('skeletonRows() : 5 lignes par défaut si aucun compte n\'est précisé', (
   assert.strictEqual((html.match(/skeleton-row/g) || []).length, 5);
 });
 
+// --- lockBodyScroll()/unlockBodyScroll() (retour utilisateur : "pendant le
+// tuto je peux quand même scroll vers le bas") — un vrai classList (pas le
+// stub par défaut, toujours contains() -> false) pour vérifier la classe
+// posée/retirée, pas seulement que ça ne plante pas.
+function realClassList(){
+  const classes = new Set();
+  return {
+    add: (c) => classes.add(c),
+    remove: (c) => classes.delete(c),
+    toggle(c, force){ if(force === undefined) force = !classes.has(c); if(force) classes.add(c); else classes.delete(c); },
+    contains: (c) => classes.has(c),
+  };
+}
+
+function buildDocWithRealDocumentElement(elements){
+  const documentElement = stubElement({ classList: realClassList() });
+  const doc = stubDocument(elements || {});
+  doc.documentElement = documentElement;
+  return { doc, documentElement };
+}
+
+test('lockBodyScroll()/unlockBodyScroll() : posent/retirent .scroll-locked sur <html>', () => {
+  const { doc: document, documentElement } = buildDocWithRealDocumentElement();
+  const ctx = createContext({ document });
+  loadFiles(ctx, ['js/ui.js']);
+  ctx.lockBodyScroll();
+  assert.ok(documentElement.classList.contains('scroll-locked'));
+  ctx.unlockBodyScroll();
+  assert.ok(!documentElement.classList.contains('scroll-locked'));
+});
+
+test('lockBodyScroll()/unlockBodyScroll() : compteur — deux voiles superposés ne déverrouillent qu\'au 2e unlock', () => {
+  const { doc: document, documentElement } = buildDocWithRealDocumentElement();
+  const ctx = createContext({ document });
+  loadFiles(ctx, ['js/ui.js']);
+  ctx.lockBodyScroll();
+  ctx.lockBodyScroll();
+  ctx.unlockBodyScroll();
+  assert.ok(documentElement.classList.contains('scroll-locked'), 'encore un voile ouvert -> le fond doit rester verrouillé');
+  ctx.unlockBodyScroll();
+  assert.ok(!documentElement.classList.contains('scroll-locked'));
+});
+
+test('lockBodyScroll()/unlockBodyScroll() : un unlock en trop (compteur déjà à 0) ne descend jamais en négatif', () => {
+  const { doc: document, documentElement } = buildDocWithRealDocumentElement();
+  const ctx = createContext({ document });
+  loadFiles(ctx, ['js/ui.js']);
+  ctx.unlockBodyScroll();
+  ctx.lockBodyScroll();
+  ctx.unlockBodyScroll();
+  assert.ok(!documentElement.classList.contains('scroll-locked'));
+});
+
+test('openOverlay()/closeOverlay() : verrouillent/déverrouillent le fond en plus de la classe .open', () => {
+  const overlayEl = stubElement({ classList: realClassList() });
+  const { doc: document, documentElement } = buildDocWithRealDocumentElement({ myOverlay: overlayEl });
+  const ctx = createContext({ document });
+  loadFiles(ctx, ['js/ui.js']);
+  ctx.openOverlay('myOverlay');
+  assert.ok(documentElement.classList.contains('scroll-locked'));
+  ctx.closeOverlay('myOverlay');
+  assert.ok(!documentElement.classList.contains('scroll-locked'));
+});
+
 module.exports = run('ui-helpers.test.js');

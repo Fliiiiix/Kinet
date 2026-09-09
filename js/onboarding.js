@@ -124,6 +124,12 @@ function startOnboarding({ replay }){
   const layer = document.getElementById('onboardingLayer');
   layer.classList.remove('closing');
   layer.classList.add('open');
+  // lockBodyScroll()/unlockBodyScroll() (js/ui.js) : #onboardingLayer gère
+  // 'open'/'closing' lui-même plutôt que via openOverlay() (sa mécanique de
+  // clone/carte n'a rien d'une modale classique), mais le fond doit rester
+  // aussi immobile que derrière une vraie modale — retour utilisateur : "je
+  // peux quand même scroll vers le bas, ça n'a pas de sens".
+  lockBodyScroll();
   renderOnboardingStep();
 }
 
@@ -277,10 +283,40 @@ function positionOnboardingCard(card, targetRect, place){
   const cw = card.offsetWidth, ch = card.offsetHeight;
   let top = place === 'top' ? (targetRect.top - ch - gap) : (targetRect.bottom + gap);
   top = Math.max(margin, Math.min(top, window.innerHeight - ch - margin));
-  let left = targetRect.left + targetRect.width / 2 - cw / 2;
-  left = Math.max(margin, Math.min(left, window.innerWidth - cw - margin));
+  const idealLeft = targetRect.left + targetRect.width / 2 - cw / 2;
+  const left = Math.max(margin, Math.min(idealLeft, window.innerWidth - cw - margin));
   card.style.top = top + 'px';
   card.style.left = left + 'px';
+
+  // Pointe de la carte (retour utilisateur : "la flèche ne pointe pas
+  // dessus", constaté sur le bouton "+" flottant — coin bas-droit sur
+  // mobile). Par défaut la pointe reste au milieu de la CARTE (voir
+  // .onboarding-arrow.place-* dans css/style.css) : correct tant que la
+  // carte est centrée sur la cible, mais dès qu'une cible proche d'un bord
+  // force le clamp ci-dessus, la carte se décale sans que la pointe suive
+  // — recalculée ici sur le vrai centre de la cible, en coordonnées
+  // RELATIVES à la carte (post-clamp), et elle-même clampée pour ne
+  // jamais sortir du bord arrondi de la carte.
+  const arrow = card.querySelector('.onboarding-arrow');
+  if(arrow){
+    const arrowMargin = 14;
+    // Moitié de la largeur de .onboarding-arrow (13px, voir css/style.css) —
+    // le CSS centre la pointe par défaut avec left:50%; margin-left:-6.5px
+    // (son PROPRE milieu, pas son bord gauche, tombe au point visé). Un 1er
+    // correctif avait juste mis marginLeft à 0 en gardant ce même
+    // arrowLeft : ça posait le BORD gauche de la pointe sur le centre de la
+    // cible au lieu de son milieu à elle, un décalage visible de 6.5px vers
+    // la droite — repéré en repassant sur ce fix après un nouveau retour
+    // utilisateur ("la flèche ne pointe toujours pas dessus"). Remettre le
+    // même -6.5px que le CSS, sur un `left` recalculé plutôt que figé à
+    // 50%, corrige les deux à la fois.
+    const arrowHalfWidth = 6.5;
+    const targetCenterX = targetRect.left + targetRect.width / 2;
+    let arrowLeft = targetCenterX - left;
+    arrowLeft = Math.max(arrowMargin, Math.min(arrowLeft, cw - arrowMargin));
+    arrow.style.left = arrowLeft + 'px';
+    arrow.style.marginLeft = -arrowHalfWidth + 'px';
+  }
 }
 
 function handleOnboardingAction(act){
@@ -333,6 +369,7 @@ function finishOnboarding(){
 function closeOnboardingLayer(markSeen){
   const layer = document.getElementById('onboardingLayer');
   layer.classList.remove('open');
+  unlockBodyScroll();
   const finalize = () => {
     layer.classList.remove('closing');
     layer.innerHTML = '';

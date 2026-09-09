@@ -64,6 +64,7 @@ function buildContext(opts){
   const goHomeCalls = [];
   const logEventCalls = [];
   const updateCalls = [];
+  const scrollLockCalls = [];
   let mobile = !!opts.mobile;
   let reducedMotion = !!opts.reducedMotion;
 
@@ -91,6 +92,12 @@ function buildContext(opts){
     closeOverlay(){},
     goHome(){ goHomeCalls.push(true); },
     logEvent(type, detail){ logEventCalls.push({ type, detail }); },
+    // Vit dans js/ui.js (pas rechargé ici, voir le commentaire en tête de
+    // fichier) — juste assez stubbé pour vérifier que startOnboarding()/
+    // closeOnboardingLayer() les appellent bien, retour utilisateur : "je
+    // peux quand même scroll pendant le tuto".
+    lockBodyScroll(){ scrollLockCalls.push('lock'); },
+    unlockBodyScroll(){ scrollLockCalls.push('unlock'); },
     supabaseClient,
     OVERLAY_CLOSE_MS: 30,
     currentUser: { id:'u1' },
@@ -98,7 +105,7 @@ function buildContext(opts){
   }, opts.contextProps));
 
   loadFiles(ctx, ['js/onboarding.js']);
-  return { ctx, layer, closeProfileModalCalls, goHomeCalls, logEventCalls, updateCalls, setMobile:(v) => { mobile = v; } };
+  return { ctx, layer, closeProfileModalCalls, goHomeCalls, logEventCalls, updateCalls, scrollLockCalls, setMobile:(v) => { mobile = v; } };
 }
 
 test('maybeStartOnboarding() : lance le tuto quand onboarding_seen est explicitement false', () => {
@@ -121,11 +128,14 @@ test('maybeStartOnboarding() : ne fait rien si onboarding_seen est absent (repli
 });
 
 test('startOnboarding({replay:false}) : referme le profil, ramène sur l\'accueil, ouvre sur la Bienvenue', () => {
-  const { ctx, layer, closeProfileModalCalls, goHomeCalls } = buildContext();
+  const { ctx, layer, closeProfileModalCalls, goHomeCalls, scrollLockCalls } = buildContext();
   ctx.startOnboarding({ replay:false });
   assert.strictEqual(closeProfileModalCalls.length, 1);
   assert.strictEqual(goHomeCalls.length, 1);
   assert.ok(layer.classList.contains('open'));
+  // Retour utilisateur : "je peux quand même scroll pendant le tuto" — le
+  // fond doit être verrouillé dès l'ouverture, voir lockBodyScroll() (js/ui.js).
+  assert.deepStrictEqual(scrollLockCalls, ['lock']);
   const state = getState(ctx, 'onboardingState');
   assert.strictEqual(state.phase, 'welcome');
   assert.strictEqual(state.replay, false);
@@ -182,12 +192,16 @@ test('advanceOnboarding(1) répété jusqu\'au bout des étapes passe en clôtur
 });
 
 test('skipOnboarding() en première visite : marque onboarding_seen vu (mémoire + Supabase), log "first"', async () => {
-  const { ctx, layer, logEventCalls, updateCalls } = buildContext({ reducedMotion:true, profile:{ onboarding_seen:false } });
+  const { ctx, layer, logEventCalls, updateCalls, scrollLockCalls } = buildContext({ reducedMotion:true, profile:{ onboarding_seen:false } });
   ctx.startOnboarding({ replay:false });
   ctx.skipOnboarding();
   await new Promise(r => setTimeout(r, 5));
   assert.deepStrictEqual(logEventCalls, [{ type:'onboarding_skipped', detail:'first' }]);
   assert.strictEqual(updateCalls.length, 1);
+  // Verrou posé à l'ouverture, retiré à la fermeture (closeOnboardingLayer,
+  // partagé par skip/finish) — jamais le fond qui reste bloqué une fois le
+  // tuto refermé.
+  assert.deepStrictEqual(scrollLockCalls, ['lock', 'unlock']);
   // JSON.parse(JSON.stringify(...)) : updateCalls[0].payload vient du
   // contexte vm (autre "realm") — deepStrictEqual échouerait sur un objet
   // de structure identique mais construit dans un autre realm que celui-ci,
@@ -266,6 +280,66 @@ test('onboardingStepPlace() : une étape qui pointe la même place des deux côt
   const mobileCtx = buildContext({ mobile:true }).ctx;
   assert.strictEqual(desktopCtx.onboardingStepPlace(step), 'bottom');
   assert.strictEqual(mobileCtx.onboardingStepPlace(step), 'bottom');
+});
+
+// --- positionOnboardingCard() : appelée directement avec une fausse carte
+// construite à la main (offsetWidth/offsetHeight/style en dur, pas
+// document.createElement()) — contourne la limite documentée en tête de
+// fichier (stubDocument().createElement() ne permet pas de retrouver un
+// enfant injecté en innerHTML). Couvre le vrai bug rapporté : "sur
+// mobile, la flèche du tuto ne pointe pas sur la 1re icône" — le bouton
+// "+" flottant vit dans le coin bas-droit, la carte s'y retrouve clampée
+// contre le bord de l'écran, et l'ancienne pointe (fixe au milieu de la
+// CARTE en CSS) ne désignait plus la cible.
+function makeFakeCard(arrowStyle){
+  const arrow = { style: arrowStyle || {} };
+  return {
+    offsetWidth: 260, offsetHeight: 140,
+    style: {},
+    querySelector(sel){ return sel === '.onboarding-arrow' ? arrow : null; },
+    __arrow: arrow,
+  };
+}
+
+test('positionOnboardingCard() : cible centrée dans l\'écran, la carte n\'est pas clampée, la pointe reste au milieu', () => {
+  const { ctx } = buildContext();
+  const card = makeFakeCard();
+  // Cible confortablement au centre d'un écran 1200x800.
+  ctx.positionOnboardingCard(card, { left:580, top:100, width:40, height:24, bottom:124, right:620 }, 'bottom');
+  // Carte centrée sur la cible (600) : left = 600 - 260/2 = 470.
+  assert.strictEqual(card.style.left, '470px');
+  // Pointe au vrai centre de la cible (600), relatif à la carte (470) : 130 — soit déjà le milieu de la carte (260/2).
+  assert.strictEqual(card.__arrow.style.left, '130px');
+  // marginLeft:-6.5px (moitié des 13px de large de .onboarding-arrow, voir
+  // css/style.css) : sans lui, c'est le BORD gauche de la pointe qui tombe
+  // sur `left`, pas son milieu à elle — un 1er correctif l'avait remis à 0
+  // par erreur (retour utilisateur : "la flèche ne pointe toujours pas").
+  assert.strictEqual(card.__arrow.style.marginLeft, '-6.5px');
+});
+
+test('positionOnboardingCard() : cible dans le coin bas-droit (le bouton "+" flottant mobile) — la pointe suit la cible, pas le milieu de la carte clampée', () => {
+  const { ctx } = buildContext();
+  const card = makeFakeCard();
+  // window.innerWidth=1200 (voir buildContext) — cible tout à droite, comme le FAB.
+  const targetRect = { left:1150, top:700, width:44, height:44, bottom:744, right:1194 };
+  ctx.positionOnboardingCard(card, targetRect, 'top');
+  // Carte clampée au bord droit : left = 1200 - 260 - 8 = 932 (jamais 1150+22-130=1042, qui déborderait).
+  assert.strictEqual(card.style.left, '932px');
+  // Centre réel de la cible : 1150 + 22 = 1172. Relatif à la carte clampée (932) : 240 — PAS 130 (le milieu de
+  // la carte) : c'est exactement l'écart qui manquait avant ce correctif.
+  const targetCenterX = targetRect.left + targetRect.width / 2;
+  const expectedArrowLeft = targetCenterX - 932;
+  assert.strictEqual(card.__arrow.style.left, expectedArrowLeft + 'px');
+  assert.notStrictEqual(expectedArrowLeft, 130, 'la pointe ne doit plus coïncider avec le simple milieu de la carte une fois clampée');
+  assert.strictEqual(card.__arrow.style.marginLeft, '-6.5px');
+});
+
+test('positionOnboardingCard() : la pointe reste clampée à l\'intérieur de la carte (jamais collée à son bord arrondi)', () => {
+  const { ctx } = buildContext();
+  const card = makeFakeCard();
+  // Cible extrême, hors écran à droite : la pointe ne doit jamais dépasser cw - 14.
+  ctx.positionOnboardingCard(card, { left:5000, top:100, width:10, height:10, bottom:110, right:5010 }, 'bottom');
+  assert.strictEqual(card.__arrow.style.left, (260 - 14) + 'px');
 });
 
 module.exports = run('onboarding.test.js');

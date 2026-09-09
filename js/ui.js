@@ -31,11 +31,32 @@ const OVERLAY_CLOSE_MS = 200; // > durée de overlayOut/modalOut (150ms), filet 
 // se déclenche, et volerait le focus à la modale ouverte par-dessus.
 const overlayReturnFocus = {};
 
+// --- Verrou de défilement du fond (retour utilisateur : "pendant le tuto
+// je peux quand même scroll vers le bas, ça n'a pas de sens") — un voile
+// plein écran en position:fixed n'empêche PAS nativement un balayage
+// tactile de faire défiler la page EN DESSOUS sur mobile : il n'y a rien à
+// faire défiler DANS le voile lui-même (pas plus grand que l'écran), le
+// geste remonte donc naturellement au prochain conteneur défilable trouvé,
+// html/body. Compteur plutôt qu'un simple booléen : deux voiles peuvent se
+// chevaucher un court instant (ex. fermeture du tuto pendant qu'une autre
+// modale finit de s'ouvrir) — ne déverrouiller qu'une fois le DERNIER
+// refermé, jamais dès le premier.
+let scrollLockCount = 0;
+function lockBodyScroll(){
+  scrollLockCount++;
+  document.documentElement.classList.add('scroll-locked');
+}
+function unlockBodyScroll(){
+  scrollLockCount = Math.max(0, scrollLockCount - 1);
+  if(scrollLockCount === 0) document.documentElement.classList.remove('scroll-locked');
+}
+
 function openOverlay(id){
   const el = document.getElementById(id);
   overlayReturnFocus[id] = document.activeElement;
   el.classList.remove('closing'); // une fermeture pouvait être en cours
   el.classList.add('open');
+  lockBodyScroll();
   const modal = el.querySelector('.modal');
   const focusable = modal && modal.querySelector(
     'input, textarea, select, button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])'
@@ -53,6 +74,7 @@ function closeOverlay(id, extraCleanup){
     return;
   }
   el.classList.remove('open');
+  unlockBodyScroll();
   const restoreFocus = () => {
     const target = overlayReturnFocus[id];
     delete overlayReturnFocus[id];
