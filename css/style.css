@@ -1627,6 +1627,21 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   --ink:#0f0e16; --surface:#1b1826; --surface-2:#262032; --surface-3:#302a3d;
   --line:#342f42; --text:#f2eee6; --text-muted:#9a93a8;
   --glass-rgb:27,24,38; --text-rgb:242,238,230;
+  /* Bug retour utilisateur (2e passe, "Rappel terminé... illisible") : les
+     variables ci-dessus ne suffisaient PAS partout. Redéfinir --text ne
+     change RIEN pour un élément qui n'écrit jamais color:var(--text) lui-
+     même — .onboarding-title, par ex., n'a pas de color: du tout, donc
+     hérite du color RÉEL (déjà résolu, pas la variable) de son ancêtre le
+     plus proche qui en déclare un : ici, body{color:var(--text)}, avec le
+     --text du THÈME ACTUEL (non réassigné, lui) — texte sombre du thème
+     clair sur une carte forcée sombre par ce bloc, quasi invisible. Poser
+     color:var(--text) ICI, sur le conteneur, donne à TOUT ce qui vit
+     dedans et n'a pas sa propre couleur (comme .onboarding-title) un point
+     de départ déjà résolu avec les bonnes variables — les éléments qui
+     déclarent leur propre color:var(--text-muted)/var(--violet) (le corps,
+     l'eyebrow...) continuent de le faire normalement, rien ne change pour
+     eux. */
+  color:var(--text);
 }
 .onboarding-layer.open{display:block;}
 /* .closing reste display:block (comme .overlay.closing) — sans ce doublon,
@@ -1653,8 +1668,19 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .onboarding-clone{
   position:fixed;
   pointer-events:none;
-  box-shadow:0 0 0 4px rgba(140,124,255,0.55), 0 0 26px 6px rgba(140,124,255,0.35);
+  /* Halo plus marqué (retour utilisateur : "visibles mais pas assez à mon
+     goût") — anneau et lueur renforcés (0.55→0.8, 0.35→0.55). */
+  box-shadow:0 0 0 4px rgba(140,124,255,0.8), 0 0 30px 8px rgba(140,124,255,0.55);
+  /* Un bouton NON actif (onglet non sélectionné, avatar de repli...) est
+     délibérément discret dans son état normal (var(--text-muted), parfois
+     opacity:0.6) — correct hors spotlight, mais ici c'est justement LUI le
+     centre d'attention : cette règle (jamais !important, donc battue par
+     toute couleur PROPRE à un descendant comme .nav-pip-violet, qui reste
+     coloré comme avant) relève le plancher pour tout le reste — icônes/
+     texte en gris discret sans couleur de badge à eux. */
+  color:var(--text);
 }
+.onboarding-clone, .onboarding-clone *{opacity:1 !important;}
 
 .onboarding-card{
   position:fixed;
@@ -1858,22 +1884,46 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
    poignée (retour utilisateur, même geste/même technique que l'entête —
    voir wireTopFilmsDrag(), js/profile.js) : plus de boutons monter/
    descendre, juste une poignée et un retrait. */
-.top-films-picker{display:flex; flex-direction:column; gap:4px; touch-action:none;}
+/* user-select:none (retour utilisateur : "ça fait comme si on sélectionnait
+   du texte") — même paire que .header-nav.edit-mode .header-nav-btn
+   (glisser-déposer de l'entête, plus haut dans ce fichier) : oubliée ici à
+   tort, un pointerdown+move sur du texte sélectionne par défaut dans
+   n'importe quel navigateur, touch-action:none (déjà là) empêche le SCROLL
+   pendant le glisser mais pas la sélection de texte, un problème distinct. */
+.top-films-picker{display:flex; flex-direction:column; gap:8px; touch-action:none; user-select:none;}
 .top-film-chip{
   display:flex;
   align-items:center;
   gap:10px;
-  padding:6px;
-  border-radius:8px;
+  /* Mis en avant en TAILLE, pas juste en emplacement (retour utilisateur :
+     "je voudrais qu'ils prennent la ligne en entière") — affiche et texte
+     agrandis plutôt qu'une simple ligne compacte comme le reste des
+     réglages du profil. */
+  padding:10px;
+  border-radius:10px;
   background:var(--surface-2);
 }
-.top-film-chip img, .top-film-chip .tmdb-poster-placeholder{width:32px; height:48px; object-fit:cover; border-radius:5px; flex:none;}
+.top-film-chip img, .top-film-chip .tmdb-poster-placeholder{width:52px; height:78px; object-fit:cover; border-radius:6px; flex:none;}
+/* flex:1 — .tmdb-result-info (partagée avec les résultats de recherche
+   TMDB, jamais stylée nulle part, un <div> sans layout propre) reste sinon
+   à sa largeur de contenu par défaut (flex:0 1 auto) : le texte se
+   retrouve collé à l'affiche plutôt que d'étirer la ligne, exactement ce
+   qui empêchait la puce de "prendre la ligne en entier". Scopé à
+   .top-film-chip seulement — les 6 autres usages (résultats de recherche
+   watchlist/séries/propositions/profil/avatar) restent des lignes
+   compactes, inchangées. */
+.top-film-chip .tmdb-result-info{flex:1; min-width:0;}
+.top-film-chip .tmdb-result-title{
+  font-size:15px; font-weight:700;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.top-film-chip .tmdb-result-year{font-size:13px;}
 .top-film-grip{
   color:var(--text-muted);
   cursor:grab;
   flex:none;
   padding:4px;
-  font-size:14px;
+  font-size:18px;
   line-height:1;
   touch-action:none;
 }
