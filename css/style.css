@@ -3153,6 +3153,10 @@ input[type="range"]::-moz-range-thumb{
    l'affiche plutôt que d'étager affiche/radar/barres sur 3 niveaux.
    Voir renderCritRadar()/critReviewRowHtml() (js/stats.js). */
 .film-review-poster-col .crit-radar-svg{max-width:100%; margin:0;}
+/* Cas note manuelle (pas de radar/grille, juste ce texte) : .wl-note n'a
+   qu'un margin-top ailleurs dans l'app, jamais de margin-bottom (repéré en
+   vérifiant : le texte touchait presque "Commentaire" juste en dessous). */
+.film-review-main-col .wl-note{margin-bottom:16px;}
 .crit-radar-svg{
   display:block;
   width:100%;
@@ -4200,6 +4204,36 @@ input[type="range"]::-moz-range-thumb{
   100%{transform:rotateY(1800deg) scale(1);}
 }
 
+/* The Truman Show : le ciel peint (teal, la couleur la plus "ciel" déjà
+   dans la palette) qui bascule vers le noir du dehors, une seule fois au
+   clic. Palette Kinet telle quelle, jamais une couleur littérale ajoutée
+   juste pour cette scène. */
+.truman-sky{
+  height:90px;
+  border-radius:10px;
+  margin-top:8px;
+  background:linear-gradient(to bottom, var(--teal), var(--surface-2));
+  transition:background 1s ease;
+}
+.truman-sky.opened{background:linear-gradient(to bottom, var(--ink), var(--surface));}
+
+/* Inception : la toupie, en boucle tant que la modale reste ouverte (voir
+   runInceptionHappening() : jamais d'arrêt ni de chute scriptée, l'ambiguïté
+   EST le gag). Même exception prefers-reduced-motion que le couloir d'Old
+   Boy plus haut (animation autonome lancée par le clic) : figée via la
+   classe .static posée en JS, neutralisée ici en repli. */
+.inception-top{
+  font-size:60px;
+  text-align:center;
+  margin:16px 0;
+  animation:inceptionSpin 0.6s linear infinite;
+}
+.inception-top.static{animation:none;}
+@keyframes inceptionSpin{
+  from{transform:rotate(0deg);}
+  to{transform:rotate(360deg);}
+}
+
 /* The Whale : reste un peu trop longtemps... */
 .happening-fly{
   position:fixed;
@@ -4296,6 +4330,8 @@ input[type="range"]::-moz-range-thumb{
   .oldboy-corridor-track{animation:none; transform:translateX(-140px);}
   .whiplash-metronome-arm{animation:none; transform:rotate(18deg);}
   .paprika-parade-track{animation:none; transform:translateX(-260px);}
+  .inception-top{animation:none;}
+  .truman-sky{transition:none;}
 }
 
 /* ============================================================

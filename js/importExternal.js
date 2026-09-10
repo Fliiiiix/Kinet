@@ -78,7 +78,13 @@ function detectLetterboxdType(filename, headers){
   if(headers.includes('Rewatch') && headers.includes('Watched Date')) return 'diary';
   if(headers.includes('Review')) return 'reviews';
   if(headers.includes('Rating')) return 'ratings';
-  if(headers.includes('Name') && headers.includes('Year')) return 'watched'; // watched.csv ou watchlist.csv : indiscernables par colonnes seules
+  // watched.csv et watchlist.csv ont EXACTEMENT les mêmes colonnes (Date,
+  // Name, Year, Letterboxd URI) : sans indice dans le nom du fichier, rien
+  // ne permet de choisir entre les deux. Type dédié plutôt qu'un choix
+  // silencieux (l'ancien code retournait 'watched' par défaut, un mauvais
+  // repli aurait mélangé watchlist et films vus sans que rien ne le signale) :
+  // importLetterboxdFile() explique la situation plutôt que de deviner.
+  if(headers.includes('Name') && headers.includes('Year')) return 'watched_or_watchlist';
   return null;
 }
 
@@ -446,6 +452,14 @@ async function importLetterboxdFile(file){
   };
   if(UNSUPPORTED_MESSAGES[type]){
     showToast(UNSUPPORTED_MESSAGES[type]);
+    return;
+  }
+  // watched.csv et watchlist.csv sont indiscernables par leurs colonnes
+  // (voir detectLetterboxdType()) : averti explicitement plutôt que de
+  // deviner en silence, avec l'action pour corriger si le repli est faux.
+  if(type === 'watched_or_watchlist'){
+    showToast('Nom de fichier peu clair : traité comme des films VUS (comme watched.csv). Si c\'était plutôt ta watchlist, renomme le fichier en "watchlist.csv" et réimporte-le.');
+    await importLetterboxdRatings(records);
     return;
   }
   showToast('Import en cours…');

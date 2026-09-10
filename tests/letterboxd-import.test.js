@@ -111,6 +111,10 @@ function buildContext(){
     ['profile.csv', ['Date Joined', 'Username'], 'profile'],
     ['comments.csv', ['Date', 'Comment', 'Name'], 'comments'],
     ['un-fichier-quelconque.csv', ['Colonne A', 'Colonne B'], null],
+    // watched.csv et watchlist.csv ont EXACTEMENT les mêmes colonnes, sans
+    // indice dans le nom du fichier : type dédié plutôt qu'un choix silencieux
+    // (voir importLetterboxdFile(), qui prévient explicitement dans ce cas).
+    ['export.csv', ['Date', 'Name', 'Year', 'Letterboxd URI'], 'watched_or_watchlist'],
   ];
   for(const [filename, headers, expected] of cases){
     test(`detectLetterboxdType(${filename}) -> ${expected}`, () => {

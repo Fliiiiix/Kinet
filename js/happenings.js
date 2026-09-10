@@ -72,6 +72,18 @@ const HAPPENINGS = [
     trigger: 'click',
     icon: '🪙',
     run: runDarkKnightHappening
+  },
+  {
+    tmdbId: 37165, // The Truman Show (1998)
+    trigger: 'click',
+    icon: '🚪',
+    run: runTrumanShowHappening
+  },
+  {
+    tmdbId: 27205, // Inception (2010)
+    trigger: 'click',
+    icon: '🌀',
+    run: runInceptionHappening
   }
 ];
 
@@ -667,6 +679,59 @@ function runDarkKnightHappening(){
       const caption = document.getElementById('dkCaption');
       if(caption) caption.textContent = 'Les deux côtés sont identiques. Il n\'a jamais vraiment laissé le hasard décider.';
     }, reduced ? 0 : 900);
+  });
+}
+
+// --- The Truman Show : l'escalier au bord du décor, la porte dans le ciel
+// peint. Un seul basculement de couleur au clic (le "ciel" devient le
+// "dehors"), jamais répété : pas d'exception prefers-reduced-motion à gérer
+// en JS, la transition CSS est simplement coupée sous cette préférence (voir
+// .truman-sky, css/style.css).
+function runTrumanShowHappening(){
+  const overlay = document.createElement('div');
+  overlay.className = 'overlay open';
+  overlay.innerHTML = `
+    <div class="modal happening-modal">
+      <div class="modal-head">
+        <h2>🚪 Un bout du monde, et une porte.</h2>
+        <button class="close-x" data-close aria-label="Fermer">✕</button>
+      </div>
+      <div class="truman-sky" id="trumanSky"></div>
+      <p class="happening-caption" id="trumanCaption">Truman regarde l'escalier qui monte vers le ciel peint.</p>
+      <button class="btn" id="trumanDoorBtn" type="button">Monter les marches</button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', (e) => {
+    if(e.target === overlay || e.target.closest('[data-close]')) overlay.remove();
+  });
+  document.getElementById('trumanDoorBtn').addEventListener('click', () => {
+    document.getElementById('trumanDoorBtn').remove();
+    document.getElementById('trumanSky').classList.add('opened');
+    document.getElementById('trumanCaption').textContent =
+      '« Au cas où je ne vous revois plus : bon après-midi, bonsoir, et bonne nuit. »';
+  });
+}
+
+// --- Inception : la toupie qui tourne, jamais vue tomber ni tenir. Fermer
+// la fenêtre est la seule façon de trancher, et ça ne tranche rien.
+function runInceptionHappening(){
+  const reduced = prefersReducedMotion();
+  const overlay = document.createElement('div');
+  overlay.className = 'overlay open';
+  overlay.innerHTML = `
+    <div class="modal happening-modal">
+      <div class="modal-head">
+        <h2>🌀 Elle tourne encore.</h2>
+        <button class="close-x" data-close aria-label="Fermer">✕</button>
+      </div>
+      <div class="inception-top${reduced ? ' static' : ''}">🌀</div>
+      <p class="happening-caption">Ferme cette fenêtre avant de savoir si elle tombe. Tu ne sauras jamais.</p>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', (e) => {
+    if(e.target === overlay || e.target.closest('[data-close]')) overlay.remove();
   });
 }
 
