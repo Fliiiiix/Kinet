@@ -596,16 +596,20 @@ h1{
 @media (prefers-reduced-motion: reduce){
   .reveal{opacity:1; transform:none; transition:none;}
 }
+/* Même repasse que .modal-head/.mm-section (retour utilisateur : "on
+   manque d'espace") — .page-header est la coquille de titre partagée par
+   toutes les pages à bascule (à voir, séries, amis, groupes...), même
+   levier qu'un seul point de changement pour toutes. */
 .page-header{
   display:flex;
   align-items:center;
   gap:16px;
-  margin-bottom:24px;
+  margin-bottom:32px;
 }
 .page-header h2{
   font-family:'Bricolage Grotesque', sans-serif;
   font-weight:700;
-  font-size:22px;
+  font-size:24px;
   flex:1;
   min-width:0;
 }
@@ -1622,6 +1626,10 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
    d'un coup. */
 .overlay.closing{display:flex; animation:overlayOut .15s ease-in forwards;}
 .overlay.closing .modal{animation:modalOut .15s ease-in forwards;}
+/* padding 28px -> 34px (retour utilisateur : "on manque d'espace, ça
+   manque d'être épuré") — .modal est LA coquille partagée par toutes les
+   fenêtres de l'app (profil, stats, succès, journal, film, admin...), un
+   seul chiffre ici change la respiration de chacune d'un coup. */
 .modal{
   background:rgba(var(--glass-rgb),0.74);
   backdrop-filter:blur(26px) saturate(160%);
@@ -1630,7 +1638,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   border-radius:16px;
   width:100%;
   max-width:640px;
-  padding:28px;
+  padding:34px;
   animation:modalIn .18s cubic-bezier(.2,.8,.3,1);
 }
 @keyframes overlayIn{from{opacity:0;} to{opacity:1;}}
@@ -1817,13 +1825,13 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   display:flex;
   justify-content:space-between;
   align-items:flex-start;
-  margin-bottom:20px;
+  margin-bottom:26px;
   gap:12px;
 }
 .modal-head h2{
   font-family:'Bricolage Grotesque', sans-serif;
   font-weight:700;
-  font-size:22px;
+  font-size:24px;
 }
 .close-x{
   background:none; border:none; color:var(--text-muted);
@@ -2375,15 +2383,19 @@ input[type="range"]::-moz-range-thumb{
 .pf-avatar-panel.open{display:block;}
 
 /* --- Rangées groupées en cartes (Paramètres, Mon activité, Compte...) --- */
-.mm-section{margin-top:18px;}
+/* margin-top 18px -> 28px, padding des lignes 12px -> 15px (même retour
+   utilisateur que .modal juste plus haut) : les sections d'un même écran
+   (Ton profil, Paramètres...) se touchaient presque, chaque ligne
+   cliquable était un peu comprimée. */
+.mm-section{margin-top:28px;}
 .mm-section-title{
   font-family:'Space Mono', monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase;
-  color:var(--text-muted); margin-bottom:8px;
+  color:var(--text-muted); margin-bottom:10px;
 }
 .mm-card{background:var(--surface-2); border:1px solid var(--line); border-radius:13px; overflow:hidden;}
 .mm-row{
   display:flex; align-items:center; gap:12px; width:100%;
-  padding:12px 14px; background:none; border:none; text-align:left; cursor:pointer;
+  padding:15px 16px; background:none; border:none; text-align:left; cursor:pointer;
   font-family:'Instrument Sans', sans-serif; color:var(--text); transition:background .12s;
 }
 .mm-row + .mm-row, .mm-row + .pf-public-panel{border-top:1px solid var(--line);}
@@ -3476,6 +3488,8 @@ input[type="range"]::-moz-range-thumb{
    les autres (amis, groupes...) n'ont pas de bouton de bascule et
    n'ont donc jamais à changer de disposition.
    ============================================================ */
+/* padding/margin un peu plus généreux (retour utilisateur : "on manque
+   d'espace") — alignés sur .film-row, la même ligne mais côté catalogue. */
 .wl-row{
   display:flex;
   align-items:center;
@@ -3483,8 +3497,8 @@ input[type="range"]::-moz-range-thumb{
   background:linear-gradient(160deg, var(--surface) 0%, var(--surface-2) 220%);
   border:1px solid var(--line);
   border-radius:12px;
-  padding:12px 14px;
-  margin-bottom:8px;
+  padding:15px 18px;
+  margin-bottom:10px;
   position:relative;
   perspective:500px; /* v2.8 : vraie profondeur pour la bascule de .counter, voir counterFlip plus haut */
 }
@@ -4770,7 +4784,7 @@ body[data-view-mode="grid"] #seriesList .new-episode-dot{display:block;}
   }
 
   .overlay{padding:20px 12px;}
-  .modal{padding:20px;}
+  .modal{padding:24px;}
   .ach-tier-grid, .ach-hidden-grid{grid-template-columns:1fr 1fr;}
   body[data-view-mode="grid"] #wlList .wl-actions{width:100%;}
   .journal-row{flex-wrap:wrap;}
