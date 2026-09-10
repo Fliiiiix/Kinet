@@ -4522,21 +4522,33 @@ body[data-view-mode="list"] #wlList .wl-actions{flex:none;}
 body[data-view-mode="list"] #wlList .wl-actions .btn{flex:none;}
 body[data-view-mode="list"] #topList .top-rank{width:26px; font-size:16px;}
 
-/* --- Détail d'une série (#/series/:id, js/series.js) --- */
+/* --- Détail d'une série (#/series/:id, js/series.js) et fiche film
+   communautaire (#/film/:tmdbId, js/filmDetail.js, classe partagée) ---
+   Repris en grille (retour utilisateur, backlog : "même mise en page que
+   les films") pour rejoindre le même langage que .film-modal-layout et
+   .film-review-layout, avec une affiche nettement plus grande que
+   l'ancien 130×195px fixe plutôt qu'une simple vignette à côté du texte. */
 .series-hero{
-  display:flex;
-  gap:20px;
+  display:grid;
+  grid-template-columns:180px 1fr;
+  gap:28px;
+  align-items:start;
   margin-bottom:28px;
 }
 .series-hero-poster{
-  width:130px; height:195px;
-  flex:none;
-  border-radius:10px;
+  width:100%;
+  aspect-ratio:2/3;
+  height:auto;
+  border-radius:12px;
   object-fit:cover;
   border:1px solid var(--line);
   font-size:40px;
 }
-.series-hero-info{flex:1; min-width:0; padding-top:2px;}
+.series-hero-info{min-width:0; padding-top:2px;}
+@media (max-width:600px){
+  .series-hero{grid-template-columns:1fr;}
+  .series-hero-poster{width:140px; margin:0 auto;}
+}
 .series-hero-meta{
   display:flex;
   flex-wrap:wrap;
@@ -4560,6 +4572,10 @@ body[data-view-mode="list"] #topList .top-rank{width:26px; font-size:16px;}
 }
 .film-detail-note-row:last-child{margin-bottom:0;}
 .film-detail-note-row .counter{flex:none;}
+/* Renvoie vers openFilmReviewDetail() (js/stats.js) : cette fiche
+   communautaire n'affichait jusqu'ici que le chiffre de "Ta note", jamais
+   le détail par critère (retour utilisateur, backlog). */
+.film-detail-my-review-btn{width:100%; margin-top:2px;}
 #filmDetailLikeBtn.active{border-color:var(--coral-dim); color:var(--coral);}
 /* Statut TMDB, coloré comme .rate-* mais avec un vocabulaire différent :
    ici il ne s'agit pas d'un barème de qualité, juste de savoir si la

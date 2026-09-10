@@ -80,8 +80,18 @@ async function renderFilmDetailNotes(){
     <div class="film-detail-note-row">
       <div class="counter ${noteColorClass(myNote)}">${myNote.toFixed(1)}</div>
       <div class="wl-note">Ta note</div>
-    </div>` : ''}
+    </div>
+    <button class="btn secondary film-detail-my-review-btn" type="button" id="filmDetailMyReviewBtn">Voir le détail de ta critique</button>` : ''}
   `;
+
+  // Réutilise openFilmReviewDetail() (js/stats.js) plutôt que de dupliquer
+  // une troisième fois le radar/la grille de critères ici (déjà présents
+  // dans la modale d'ajout ET dans cette fiche critique). Cette page
+  // communautaire n'affichait jusqu'ici que le chiffre de la note, jamais
+  // le détail par critère (retour utilisateur, backlog).
+  if(myFilm){
+    document.getElementById('filmDetailMyReviewBtn').addEventListener('click', () => openFilmReviewDetail(myFilm));
+  }
 }
 
 // S'assure que friendProfiles (js/friends.js) connaît bien tous les
