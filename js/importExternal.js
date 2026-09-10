@@ -148,13 +148,14 @@ function groupLetterboxdEntries(records){
 // TMDB (proxy de "c'est le vrai film que tout le monde connaît, pas une
 // featurette/un bonus obscur") comme critère principal, avec un bonus pour
 // un titre EXACTEMENT identique (FR ou VO) qui reste un signal fiable sans
-// être trompé par une simple inclusion de texte comme ci-dessus.
+// être trompé par une simple inclusion de texte comme ci-dessus. Score
+// partagé avec searchTmdbGeneric() (js/tmdb.js, tmdbRelevanceScore()) qui
+// reclasse aussi les résultats AFFICHÉS pour la même raison.
 function bestTmdbCandidate(results, title){
   const queryNorm = normalizeSearch(title);
   let best = null, bestScore = -Infinity;
   for(const r of results){
-    const exactMatch = normalizeSearch(r.title || '') === queryNorm || normalizeSearch(r.original_title || '') === queryNorm;
-    const score = (exactMatch ? 1e6 : 0) + (r.popularity || 0);
+    const score = tmdbRelevanceScore(r, queryNorm);
     if(score > bestScore){ bestScore = score; best = r; }
   }
   return best;

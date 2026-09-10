@@ -42,4 +42,26 @@ for(const [title, year] of [['Fight Club', 1999], ['Parasite', 2019], ['Whiplash
   });
 }
 
+// Bug réel constaté (retour utilisateur, "encore un problème avec City of
+// God") : "City of God" (le titre anglais, tel qu'exporté par Letterboxd)
+// ne correspond LITTÉRALEMENT ni au titre FR ("La Cité de Dieu") ni au
+// titre original ("Cidade de Deus") renvoyés par TMDB. Le classement
+// "pertinence texte" brut de TMDB reléguait le vrai film derrière une
+// poignée de résultats obscurs dont le titre contient littéralement "city
+// of god". Vérifié ici à deux niveaux : la désambiguïsation d'import
+// (matchLetterboxdToTmdb, toujours protégée par le filtre année) ET
+// l'affichage brut des résultats de recherche (searchTmdb, PAS filtré par
+// année : c'était le chemin réellement cassé, voir tmdbRelevanceScore()
+// dans js/tmdb.js).
+test('City of God (2002) -> La Cité de Dieu, via l\'import (avec année)', async () => {
+  const m = await ctx.matchLetterboxdToTmdb('City of God', 2002);
+  assert.ok(m, 'aucun résultat pour City of God');
+  assert.strictEqual(m.id, 598, `reçu "${m.title}" (id=${m.id}) au lieu de La Cité de Dieu`);
+});
+test('City of God : présent dans les 6 premiers résultats affichés (recherche manuelle, sans année)', async () => {
+  const results = await ctx.searchTmdb('City of God');
+  const found = results.find(r => r.id === 598);
+  assert.ok(found, `La Cité de Dieu (id=598) absente des ${results.length} résultats affichés : ${results.map(r => r.title).join(', ')}`);
+});
+
 run('tmdb-matching.live.js').then(ok => { if(!ok) process.exitCode = 1; });

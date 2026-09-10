@@ -8,6 +8,24 @@
 let tmdbSelected = null; // { tmdb_id, poster_url, overview, release_year, title, original_title, genre_ids }
 let tmdbSearchTimer = null;
 
+// Score de pertinence d'un résultat TMDB déjà normalisé (forme
+// {title, original_title, popularity, ...} ci-dessous) par rapport à une
+// recherche. Partagé entre l'affichage des résultats juste en dessous ET
+// bestTmdbCandidate() (js/importExternal.js, désambiguïsation à l'import)
+// plutôt que deux logiques de pertinence différentes pour le même problème.
+// Un titre EXACTEMENT identique (FR ou VO) l'emporte toujours sur tout le
+// reste ; sinon la popularité TMDB départage, nécessaire car le classement
+// "pertinence texte" brut de TMDB peut reléguer un film très populaire loin
+// derrière des résultats obscurs qui ne partagent qu'un mot avec la requête
+// (retour utilisateur, bug réel constaté : chercher "City of God" ne
+// remontait pas "La Cité de Dieu"/"Cidade de Deus" dans les 6 premiers
+// résultats affichés, TMDB renvoyant d'abord une poignée de résultats sans
+// rapport dont le titre contient littéralement "city of god"/"city... god").
+function tmdbRelevanceScore(r, queryNorm){
+  const exactMatch = normalizeSearch(r.title || '') === queryNorm || normalizeSearch(r.original_title || '') === queryNorm;
+  return (exactMatch ? 1e6 : 0) + (r.popularity || 0);
+}
+
 // Point d'entrée générique films/séries — /search/movie et /search/tv ne
 // renvoient pas les mêmes noms de champs (title/release_date côté films,
 // name/first_air_date côté séries) : on normalise ici une bonne fois vers
@@ -26,7 +44,7 @@ async function searchTmdbGeneric(query, mediaType){
     throw new Error(res.status === 401 ? 'Clé TMDB invalide ou non configurée (voir js/tmdbConfig.js)' : `Erreur TMDB (${res.status})`);
   }
   const data = await res.json();
-  return (data.results || []).slice(0, 6).map(r => {
+  const mapped = (data.results || []).map(r => {
     const title = mediaType === 'tv' ? r.name : r.title;
     const originalTitle = mediaType === 'tv' ? r.original_name : r.original_title;
     const dateStr = mediaType === 'tv' ? r.first_air_date : r.release_date;
@@ -42,12 +60,18 @@ async function searchTmdbGeneric(query, mediaType){
       // renvoie déjà, aucun appel supplémentaire nécessaire. Non pertinent
       // côté séries (taxonomie TMDB différente, jamais utilisé pour elles).
       genre_ids: r.genre_ids || [],
-      // Popularité TMDB brute — utilisée par bestTmdbCandidate() (js/
-      // importExternal.js) pour départager plusieurs fiches candidates au
-      // même titre/année (ex. le vrai film vs un making-of homonyme).
+      // Popularité TMDB brute, voir tmdbRelevanceScore() ci-dessus.
       popularity: typeof r.popularity === 'number' ? r.popularity : 0
     };
   });
+  // Reclassé par pertinence (voir tmdbRelevanceScore()) AVANT de couper à 6.
+  // Sur l'ordre brut de TMDB, le vrai film pouvait rester invisible, coupé
+  // au-delà des 6 affichés. On garde le classement de TMDB comme
+  // ensemble de candidats plausibles (aucun résultat de plus n'est ajouté),
+  // seul l'ORDRE change, vers celui déjà utilisé pour l'import.
+  const queryNorm = normalizeSearch(query);
+  mapped.sort((a, b) => tmdbRelevanceScore(b, queryNorm) - tmdbRelevanceScore(a, queryNorm));
+  return mapped.slice(0, 6);
 }
 
 async function searchTmdb(query){

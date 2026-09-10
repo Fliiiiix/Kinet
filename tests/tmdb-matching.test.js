@@ -13,10 +13,22 @@ const { test, run } = createSuite();
 
 const FIXTURES = require('./fixtures/tmdb-search-results.json');
 
+// Même formule que tmdbRelevanceScore() (js/tmdb.js), pas chargé ici (ce
+// fichier mocke searchTmdb directement, voir plus bas : charger le vrai
+// js/tmdb.js écraserait ce mock par la vraie fonction réseau).
+function normalizeSearch(s){
+  return s.normalize('NFD').replace(new RegExp('[' + String.fromCharCode(0x0300) + '-' + String.fromCharCode(0x036f) + ']', 'g'), '').toLowerCase();
+}
+function tmdbRelevanceScore(r, queryNorm){
+  const exactMatch = normalizeSearch(r.title || '') === queryNorm || normalizeSearch(r.original_title || '') === queryNorm;
+  return (exactMatch ? 1e6 : 0) + (r.popularity || 0);
+}
+
 function buildContext(searchResultsByTitle){
   const ctx = createContext({
     document: stubDocument(),
-    normalizeSearch: (s) => s.normalize('NFD').replace(new RegExp('[' + String.fromCharCode(0x0300) + '-' + String.fromCharCode(0x036f) + ']', 'g'), '').toLowerCase(),
+    normalizeSearch,
+    tmdbRelevanceScore,
     searchTmdb: async (title) => searchResultsByTitle[title] || [],
     // Non utilisés par bestTmdbCandidate/matchLetterboxdToTmdb mais lus au
     // chargement du fichier par d'autres fonctions qu'on n'appelle pas ici.

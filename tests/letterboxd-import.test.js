@@ -46,6 +46,14 @@ function buildContext(){
     // fromCharCode plutôt qu'une plage Unicode littérale dans le source,
     // pour éviter tout souci d'encodage de ce fichier de test.
     normalizeSearch: (s) => s.normalize('NFD').replace(new RegExp('[' + String.fromCharCode(0x0300) + '-' + String.fromCharCode(0x036f) + ']', 'g'), '').toLowerCase(),
+    // Même formule que tmdbRelevanceScore() (js/tmdb.js), pas chargé ici
+    // (searchTmdb est mocké directement plus bas : charger le vrai
+    // js/tmdb.js écraserait ce mock par la vraie fonction réseau).
+    tmdbRelevanceScore: (r, queryNorm) => {
+      const norm = (s) => s.normalize('NFD').replace(new RegExp('[' + String.fromCharCode(0x0300) + '-' + String.fromCharCode(0x036f) + ']', 'g'), '').toLowerCase();
+      const exactMatch = norm(r.title || '') === queryNorm || norm(r.original_title || '') === queryNorm;
+      return (exactMatch ? 1e6 : 0) + (r.popularity || 0);
+    },
     blockIfOffline: () => false,
     films: state.films,
     rowToFilm: (row) => ({ id: row.id, tmdbId: row.tmdb_id, title: row.title, manualNote: row.manual_note, review: row.review }),
