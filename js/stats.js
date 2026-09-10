@@ -411,40 +411,62 @@ function renderCritRadar(critObj){
   `;
 }
 
+// Valeur affichée sur la même échelle 0..1 que le curseur d'origine
+// (buildCriteriaInputs(), js/app.js), pas reprojetée sur 0-5 : c'est la
+// valeur telle que notée, pas la note globale du film.
 function critReviewRowHtml(label, val){
-  const pct = Math.round(Math.max(0, Math.min(1, val)) * 100);
+  const clamped = Math.max(0, Math.min(1, val));
+  const pct = Math.round(clamped * 100);
   return `
     <div class="crit-review-row">
-      <div class="crit-review-label">${escapeHtml(label)}</div>
+      <div class="crit-review-row-top">
+        <span class="crit-review-label">${escapeHtml(label)}</span>
+        <span class="crit-review-value">${clamped.toFixed(2)}</span>
+      </div>
       <div class="crit-review-bar"><div class="crit-review-fill" style="width:${pct}%"></div></div>
     </div>
   `;
 }
 
+// Même disposition que .film-modal (affiche à gauche, contenu à droite,
+// voir css/style.css) : c'est la même "fiche film" en lecture seule,
+// avec le radar posé sous l'affiche (les deux visualisent les mêmes 7
+// critères) et les barres réparties sur 2 colonnes plutôt qu'empilées.
 function openFilmReviewDetail(film){
   const content = document.getElementById('filmReviewContent');
   const note = getDisplayNote(film);
   const isManual = film.manualNote != null;
 
+  const posterHtml = film.posterUrl
+    ? `<img class="film-poster" src="${film.posterUrl}" alt="" loading="lazy">`
+    : `<div class="film-poster film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`;
+
   const critHtml = isManual
-    ? `<div class="wl-note">Note manuelle — pas de détail par critère.</div>`
-    : `${renderCritRadar(film.crit)}<div class="crit-review-list">${CRITERIA.map(c => critReviewRowHtml(c.label, (film.crit && typeof film.crit[c.key] === 'number') ? film.crit[c.key] : 0)).join('')}</div>`;
+    ? `<div class="wl-note">Note manuelle : pas de détail par critère.</div>`
+    : `<div class="crit-review-list">${CRITERIA.map(c => critReviewRowHtml(c.label, (film.crit && typeof film.crit[c.key] === 'number') ? film.crit[c.key] : 0)).join('')}</div>`;
 
   content.innerHTML = `
-    <div class="film-review-head">
-      ${film.posterUrl
-        ? `<img class="film-poster" src="${film.posterUrl}" alt="" loading="lazy">`
-        : `<div class="film-poster film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
-      <div class="film-main">
-        <div class="film-title">${escapeHtml(film.title)}</div>
-        <div class="film-sub">${film.releaseYear || ''}</div>
+    <div class="film-review-layout">
+      <div class="film-review-poster-col">
+        ${posterHtml}
+        ${!isManual ? renderCritRadar(film.crit) : ''}
       </div>
-      <div class="counter ${noteColorClass(note)}">${note !== null ? note.toFixed(1) : '—'}</div>
+      <div class="film-review-main-col">
+        <div class="film-review-title">${escapeHtml(film.title)}</div>
+        <div class="film-review-year">${film.releaseYear || ''}</div>
+        <div class="crit-dial-hero">
+          <div class="counter crit-dial-hero-counter ${noteColorClass(note)}">${note !== null ? note.toFixed(1) : '—'}</div>
+          <div class="crit-dial-hero-text">
+            <div class="crit-dial-hero-label">Note globale</div>
+            <div class="crit-dial-hero-hint">${note !== null ? `${note.toFixed(1)} / 5` : 'Pas encore notée'}</div>
+          </div>
+        </div>
+        ${critHtml}
+        <div class="stats-section-title">Commentaire</div>
+        ${film.review ? `<div class="crit-review-comment">${escapeHtml(film.review)}</div>` : `<div class="tmdb-empty">Pas de commentaire.</div>`}
+        ${film.tmdbId ? `<button class="btn secondary film-review-open-detail" type="button" data-tmdb-id="${film.tmdbId}">Voir la fiche du film</button>` : ''}
+      </div>
     </div>
-    ${critHtml}
-    <div class="stats-section-title">Commentaire</div>
-    ${film.review ? `<div class="crit-review-comment">${escapeHtml(film.review)}</div>` : `<div class="tmdb-empty">Pas de commentaire.</div>`}
-    ${film.tmdbId ? `<button class="btn secondary film-review-open-detail" type="button" data-tmdb-id="${film.tmdbId}">Voir la fiche du film</button>` : ''}
   `;
 
   const detailBtn = content.querySelector('.film-review-open-detail');

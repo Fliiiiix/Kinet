@@ -59,7 +59,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,500&family=Space+Mono:wght@400;700&display=swap">
-<link rel="stylesheet" href="css/style.css?v=149">
+<link rel="stylesheet" href="css/style.css?v=150">
 </head>
 <body>
 
@@ -1683,7 +1683,7 @@
      égal, l'ordre du DOM tranche l'empilement) — revenir en arrière doit
      retrouver la liste/les stats telles quelles, pas les recharger. -->
 <div class="overlay" id="filmReviewOverlay">
-  <div class="modal">
+  <div class="modal film-review-modal">
     <div class="modal-head">
       <h2>Critique</h2>
       <button class="close-x" id="closeFilmReview" aria-label="Fermer">✕</button>
@@ -1757,111 +1757,111 @@
 <!-- ?v=N sur chaque js/*.js ci-dessous (voir le commentaire dans <head>) —
      à incrémenter à chaque déploiement, même numéro pour tous les fichiers. -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/supabaseConfig.js?v=149"></script>
+<script src="js/supabaseConfig.js?v=150"></script>
 <!-- Juste après supabaseConfig.js (a besoin de supabaseClient) et avant
      tout le reste : capte les erreurs de chargement des scripts suivants,
      pas seulement celles de l'app une fois démarrée — voir js/logging.js. -->
-<script src="js/logging.js?v=149"></script>
-<script src="js/tmdbConfig.js?v=149"></script>
-<script src="js/data.js?v=149"></script>
-<script src="js/happenings.js?v=149"></script>
+<script src="js/logging.js?v=150"></script>
+<script src="js/tmdbConfig.js?v=150"></script>
+<script src="js/data.js?v=150"></script>
+<script src="js/happenings.js?v=150"></script>
 <!-- Avant app.js et les 6 autres modules qui ouvrent/ferment une modale
      (openOverlay/closeOverlay) — l'ordre exact importe peu au runtime
      (rien n'y est appelé au chargement), gardé en premier des scripts
      "app" pour la lisibilité, comme un utilitaire partagé. -->
-<script src="js/ui.js?v=149"></script>
+<script src="js/ui.js?v=150"></script>
 <!-- Avant app.js/journal.js/watchlist.js, qui appellent saveOfflineCache()/
      loadOfflineCache()/blockIfOffline() (v1.6, mode hors ligne lecture
      seule) — l'ordre exact importe peu au runtime (rien n'y est appelé au
      chargement, seulement des listeners posés pour plus tard), gardé ici
      pour la lisibilité, comme ui.js juste au-dessus. -->
-<script src="js/offlineQueue.js?v=149"></script>
-<script src="js/offline.js?v=149"></script>
-<script src="js/app.js?v=149"></script>
-<script src="js/tmdb.js?v=149"></script>
-<script src="js/stats.js?v=149"></script>
-<script src="js/achievements.js?v=149"></script>
-<script src="js/journal.js?v=149"></script>
+<script src="js/offlineQueue.js?v=150"></script>
+<script src="js/offline.js?v=150"></script>
+<script src="js/app.js?v=150"></script>
+<script src="js/tmdb.js?v=150"></script>
+<script src="js/stats.js?v=150"></script>
+<script src="js/achievements.js?v=150"></script>
+<script src="js/journal.js?v=150"></script>
 <!-- Après app.js (showToast) — appelée par js/profile.js juste après. -->
-<script src="js/pwa.js?v=149"></script>
-<script src="js/profile.js?v=149"></script>
+<script src="js/pwa.js?v=150"></script>
+<script src="js/profile.js?v=150"></script>
 <!-- Paramètres — après profile.js (referme/rouvre "Ton profil") et pwa.js
      (updateInstallUI()), voir js/settings.js. -->
-<script src="js/settings.js?v=149"></script>
+<script src="js/settings.js?v=150"></script>
 <!-- Après profile.js (closeProfileModal/openProfileModal) et data.js
      (FEEDBACK_CATEGORIES) — même raisonnement que pwa.js juste au-dessus. -->
-<script src="js/feedback.js?v=149"></script>
+<script src="js/feedback.js?v=150"></script>
 <!-- Bilan cinéphile partageable (v2.43) — après journal.js (viewings) et
      profile.js (currentProfile), voir js/recap.js. -->
-<script src="js/recap.js?v=149"></script>
+<script src="js/recap.js?v=150"></script>
 <!-- N'a besoin que de ui.js (openOverlay/closeOverlay) et app.js
      (showToast), chargés bien avant — placé ici pour rester groupé avec
      les autres modales accessibles depuis le chrome plutôt que pour une
      vraie dépendance. -->
-<script src="js/share.js?v=149"></script>
+<script src="js/share.js?v=150"></script>
 <!-- Après happenings.js/achievements.js (définitions) et profile.js
      (closeProfileModal) : admin.js s'appuie sur les trois au clic, jamais au
      chargement — l'ordre exact importe peu, gardé groupé ici pour la
      lisibilité. -->
-<script src="js/admin.js?v=149"></script>
-<script src="js/router.js?v=149"></script>
-<script src="js/publicProfile.js?v=149"></script>
-<script src="js/top.js?v=149"></script>
-<script src="js/friends.js?v=149"></script>
+<script src="js/admin.js?v=150"></script>
+<script src="js/router.js?v=150"></script>
+<script src="js/publicProfile.js?v=150"></script>
+<script src="js/top.js?v=150"></script>
+<script src="js/friends.js?v=150"></script>
 <!-- Après friends.js (cacheProfile/friendDisplayName/friendAvatarHtml) et
      journal.js (formatViewingDate), avant groups.js qui l'appelle depuis
      openGroupDetail() — l'ordre exact importe peu au runtime (tout est en
      fonctions globales appelées après chargement complet), gardé groupé
      ici pour la lisibilité. -->
-<script src="js/activity.js?v=149"></script>
-<script src="js/watchlist.js?v=149"></script>
+<script src="js/activity.js?v=150"></script>
+<script src="js/watchlist.js?v=150"></script>
 <!-- Après watchlist.js (loadWatchlist/watchlist, réutilisés pour exclure
      ce qui y est déjà) et app.js (getDisplayNote, chargé plus haut) — voir
      js/suggestions.js. Avant auth.js, qui appelle loadSuggestions() depuis
      showApp(). -->
-<script src="js/suggestions.js?v=149"></script>
+<script src="js/suggestions.js?v=150"></script>
 <!-- Import externe (Letterboxd pour l'instant) — après watchlist.js/app.js/
      tmdb.js/journal.js dont il réutilise films/watchlist/searchTmdb()/
      addViewing(). Voir js/importExternal.js. -->
-<script src="js/importExternal.js?v=149"></script>
+<script src="js/importExternal.js?v=150"></script>
 <!-- Fiche film (v2.1) — voir js/filmDetail.js. Regroupée ici avec
      friends.js/watchlist.js dont elle réutilise les helpers (même
      remarque que suggestions.js juste au-dessus : l'ordre exact n'importe
      pas au runtime, tout est en fonctions appelées après chargement
      complet — router.js, plus haut, appelle déjà openFriends()/
      openWatchlist() en aval de leur propre script de la même façon). -->
-<script src="js/filmDetail.js?v=149"></script>
+<script src="js/filmDetail.js?v=150"></script>
 <!-- Après watchlist.js : js/upcoming.js réutilise le tableau watchlist déjà
      chargé (voir plus bas). -->
-<script src="js/series.js?v=149"></script>
+<script src="js/series.js?v=150"></script>
 <!-- Après watchlist.js ET series.js — a besoin des deux tableaux chargés
      (loadWatchlist()/loadTrackedShows()), voir js/upcoming.js. -->
-<script src="js/upcoming.js?v=149"></script>
-<script src="js/groups.js?v=149"></script>
-<script src="js/proposals.js?v=149"></script>
+<script src="js/upcoming.js?v=150"></script>
+<script src="js/groups.js?v=150"></script>
+<script src="js/proposals.js?v=150"></script>
 <!-- Après groups.js (renderInviteBox appelée depuis renderGroupDetail) et
      proposals.js (chosenProposal) — voir js/invites.js. -->
-<script src="js/invites.js?v=149"></script>
+<script src="js/invites.js?v=150"></script>
 <!-- Après activity.js (rowToActivityEvent/renderActivityRowHtml) et
      friends.js (friendProfiles/cacheProfile) qu'elle réutilise pour le
      digest, avant auth.js qui appelle refreshActivityBadge()/
      maybeShowDigest() depuis showApp(). -->
-<script src="js/activityState.js?v=149"></script>
+<script src="js/activityState.js?v=150"></script>
 <!-- Après activityState.js (loadActivityState/activityState réutilisés
      pour son propre badge "vu") et avant auth.js qui appelle
      initChangelog() depuis showApp(). -->
-<script src="js/changelog.js?v=149"></script>
+<script src="js/changelog.js?v=150"></script>
 <!-- Recherche globale unifiée (v2.42) — après series.js/friends.js/
      groups.js dont elle réutilise les tableaux déjà chargés et les
      fonctions d'ouverture (openFriendProfile/goToSeriesDetail/goToGroup),
      et après app.js/data.js pour getSearchTerms()/normalizeSearch()/
      FILM_PLACEHOLDER_SVG. Voir js/globalSearch.js. -->
-<script src="js/globalSearch.js?v=149"></script>
+<script src="js/globalSearch.js?v=150"></script>
 <!-- Tuto d'accueil interactif — avant auth.js dont showApp() appelle
      maybeStartOnboarding() ; après ui.js/router.js/profile.js/logging.js
      dont il réutilise respectivement openOverlay-style/goHome/
      closeProfileModal/logEvent. -->
-<script src="js/onboarding.js?v=149"></script>
-<script src="js/auth.js?v=149"></script>
+<script src="js/onboarding.js?v=150"></script>
+<script src="js/auth.js?v=150"></script>
 </body>
 </html>

@@ -2149,12 +2149,18 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
    encore au-dessus le titre... là tu t'es contenté de grossir la note").
    La vraie mise en page cette fois : affiche à gauche, titre/note/
    critères à droite, dans une modale élargie pour lui laisser la place
-   (.film-modal, 860px plutôt que 640px). */
-.modal.film-modal{max-width:860px;}
+   (.film-modal). Deuxième retour, la note noter-avec-des-critères étant
+   LE cœur de l'app : "trop dans la longueur", "prend beaucoup plus de
+   largeur", critères "sur la même ligne comme la draft". La modale
+   passe à 1080px (plutôt que 640px de base) et les 7 critères se
+   répartissent sur 2 colonnes (#criteriaWrap ci-dessous) au lieu d'une
+   pile verticale unique : la même info, sur environ la moitié de la
+   hauteur. */
+.modal.film-modal{max-width:1080px;}
 .film-modal-layout{
   display:grid;
-  grid-template-columns:200px 1fr;
-  gap:28px;
+  grid-template-columns:220px 1fr;
+  gap:36px;
   align-items:start;
 }
 /* .film-modal-poster réécrit width/height/border-radius de .film-poster
@@ -2168,6 +2174,25 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   height:auto;
   border-radius:12px;
   object-fit:cover;
+}
+/* Les 7 critères sur 2 colonnes plutôt qu'une pile verticale unique :
+   c'est ce qui fait vraiment gagner la largeur supplémentaire de la
+   modale en hauteur récupérée. Repli à 1 colonne avant même que
+   .film-modal-layout ne s'empile (voir le second seuil plus bas) : entre
+   les deux seuils, la colonne de contenu devient trop étroite pour 2
+   critères lisibles côte à côte alors que l'affiche est encore à côté. */
+#criteriaWrap{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  column-gap:32px;
+  margin-top:8px;
+}
+.criterion{
+  border-top:1px solid var(--line);
+  padding:14px 0;
+}
+@media (max-width:900px){
+  #criteriaWrap{grid-template-columns:1fr;}
 }
 @media (max-width:760px){
   .film-modal-layout{grid-template-columns:1fr;}
@@ -2202,11 +2227,9 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   margin-top:2px;
 }
 
-.criterion{
-  border-top:1px solid var(--line);
-  padding:14px 0;
-}
-.criterion:first-of-type{border-top:1px solid var(--line); margin-top:8px;}
+/* .criterion (grille 2 colonnes, bordure/espacement) : voir la règle
+   juste au-dessus de #criteriaWrap, avec le reste de la mise en page de
+   la modale film. */
 .crit-head{
   display:flex;
   justify-content:space-between;
@@ -3109,24 +3132,31 @@ input[type="range"]::-moz-range-thumb{
   margin-bottom:10px;
 }
 /* Détail d'une critique (#filmReviewOverlay, js/stats.js) — note par
-   critère + commentaire d'un film noté, en lecture seule. */
-.film-review-head{
-  display:flex;
-  align-items:center;
-  gap:14px;
-  margin-bottom:20px;
+   critère + commentaire d'un film noté, en lecture seule. Même principe
+   que .film-modal (affiche à gauche, contenu à droite, voir plus haut) :
+   c'est la même idée de "fiche film" que dans la modale d'ajout/édition,
+   pas la peine d'inventer une deuxième disposition pour elle. */
+.modal.film-review-modal{max-width:900px;}
+.film-review-layout{
+  display:grid;
+  grid-template-columns:200px 1fr;
+  gap:32px;
+  align-items:start;
 }
-.film-review-head .film-poster{width:56px; flex:none;}
-/* Radar des 7 critères (retour utilisateur) — complète la liste à barres
-   juste en dessous, voir renderCritRadar()/critReviewRowHtml() (js/stats.js).
-   max-width empêche le radar de s'étirer inutilement sur un modal large,
-   la marge le centre. */
+.film-review-poster-col{display:flex; flex-direction:column; gap:16px;}
+.film-review-poster-col .film-poster{width:100%; aspect-ratio:2/3; border-radius:12px;}
+.film-review-title{font-family:'Bricolage Grotesque', sans-serif; font-weight:700; font-size:22px; line-height:1.2;}
+.film-review-year{font-size:13px; color:var(--text-muted); margin-top:2px; margin-bottom:18px;}
+/* Radar des 7 critères (retour utilisateur), sous l'affiche plutôt
+   qu'empilé en pleine largeur au-dessus de la liste à barres : les deux
+   visualisent les mêmes 7 valeurs, ils restent dans la même colonne que
+   l'affiche plutôt que d'étager affiche/radar/barres sur 3 niveaux.
+   Voir renderCritRadar()/critReviewRowHtml() (js/stats.js). */
+.film-review-poster-col .crit-radar-svg{max-width:100%; margin:0;}
 .crit-radar-svg{
   display:block;
   width:100%;
-  max-width:280px;
   height:auto;
-  margin:0 auto 18px;
   /* Un <svg> a overflow:hidden par défaut (feuille de style du navigateur)
      — les libellés, volontairement posés à un rayon plus grand que la
      zone de données pour rester lisibles autour du radar, débordaient du
@@ -3142,27 +3172,25 @@ input[type="range"]::-moz-range-thumb{
   font-size:8px;
   fill:var(--text-muted);
 }
-/* Sur un modal étroit (mobile), même "Mise en scène"/"Jeu d'acteur" se
-   faisaient couper contre le bord du modal (constaté en direct) — le
-   raccourci de libellé (CRIT_RADAR_SHORT_LABEL, js/stats.js) ne suffisait
-   qu'aux 2 pires cas. Réduire max-width ici libère plus de marge ABSOLUE
-   entre le radar et le bord du modal (overflow:visible ci-dessus laisse
-   les libellés y déborder) — la largeur du modal ne change pas, seule la
-   part que le radar lui-même en réclame diminue. */
-@media (max-width:600px){
-  .crit-radar-svg{max-width:210px;}
+.crit-review-list{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  column-gap:28px;
+  row-gap:14px;
+  margin-bottom:22px;
 }
-.crit-review-list{display:flex; flex-direction:column; gap:12px; margin-bottom:22px;}
-.crit-review-row{display:flex; align-items:center; gap:12px;}
-.crit-review-label{
-  width:130px;
-  flex:none;
+.crit-review-row{display:flex; flex-direction:column; gap:6px;}
+.crit-review-row-top{display:flex; justify-content:space-between; align-items:baseline; gap:8px;}
+.crit-review-label{font-size:12.5px; color:var(--text-muted);}
+.crit-review-value{
+  font-family:'Space Mono', monospace;
+  font-weight:700;
   font-size:12.5px;
-  color:var(--text-muted);
+  color:var(--gold);
+  flex:none;
 }
 .crit-review-bar{
-  flex:1;
-  height:6px;
+  height:5px;
   background:rgba(0,0,0,0.28);
   border-radius:3px;
   overflow:hidden;
@@ -3179,6 +3207,17 @@ input[type="range"]::-moz-range-thumb{
   margin-bottom:18px;
 }
 .film-review-open-detail{width:100%;}
+/* Sous ce seuil, la colonne affiche+radar redevient un bandeau en tête
+   (même convention que .film-modal-layout/.detail-card ailleurs dans
+   l'app) : petite affiche à gauche, radar réduit à côté plutôt que deux
+   blocs centrés l'un sous l'autre en pleine largeur. */
+@media (max-width:640px){
+  .film-review-layout{grid-template-columns:1fr;}
+  .film-review-poster-col{flex-direction:row; align-items:flex-start;}
+  .film-review-poster-col .film-poster{width:110px; flex:none;}
+  .film-review-poster-col .crit-radar-svg{max-width:180px;}
+  .crit-review-list{grid-template-columns:1fr;}
+}
 /* Comparaison année sur année (retour utilisateur) — voir
    renderYearComparison() (js/stats.js). Deux colonnes symétriques plutôt
    qu'un tableau : peu de valeurs par côté, une carte se lit plus vite
