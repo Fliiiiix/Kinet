@@ -590,8 +590,20 @@ function updateLiveScore(){
   }else{
     note = computeNote(readCriteriaFromForm());
   }
-  document.getElementById('liveScoreLabel').textContent = isManualMode() ? 'Note manuelle' : 'Note calculée';
-  document.getElementById('liveScore').textContent = (note !== null && !isNaN(note)) ? note.toFixed(1) : '—';
+  const label = isManualMode() ? 'Note manuelle' : 'Note calculée';
+  const display = (note !== null && !isNaN(note)) ? note.toFixed(1) : '—';
+  document.getElementById('liveScoreLabel').textContent = label;
+  document.getElementById('liveScore').textContent = display;
+  // Cadran en vedette (retour utilisateur, voir le commentaire sur
+  // .crit-dial-hero dans index.html) — même noteColorClass() (js/ui.js)
+  // que .counter partout ailleurs, jamais une couleur à part pour lui.
+  const hero = document.getElementById('critDialHero');
+  hero.textContent = display;
+  hero.className = 'counter crit-dial-hero-counter ' + noteColorClass(note);
+  document.getElementById('critDialHeroLabel').textContent = label;
+  document.getElementById('critDialHeroHint').textContent = isManualMode()
+    ? 'Glisse le curseur ci-dessous, elle bouge en direct.'
+    : 'Ajuste les critères ci-dessous, elle bouge en direct.';
 }
 
 // prefillTmdb (v2.1) : lancer une nouvelle fiche déjà pré-remplie depuis un

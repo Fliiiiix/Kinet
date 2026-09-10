@@ -2142,6 +2142,34 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   flex:1;
 }
 
+/* Cadran en vedette (retour utilisateur : "dans la draft tu m'as fait une
+   super fiche film... je ne le vois nulle part") — réutilise le VRAI
+   .counter de l'app (chaque affiche du catalogue en a un), juste agrandi,
+   plutôt qu'un nouveau composant. Mis à jour par updateLiveScore()
+   (js/app.js), déjà appelée à chaque glissement de curseur. */
+.crit-dial-hero{
+  display:flex; align-items:center; gap:18px;
+  padding:20px 0;
+  margin-bottom:8px;
+  border-bottom:1px solid var(--line);
+}
+.crit-dial-hero-counter{
+  width:80px; height:80px;
+  font-size:24px;
+  border-width:3px;
+  flex:none;
+}
+.crit-dial-hero-label{
+  font-family:'Bricolage Grotesque', sans-serif;
+  font-weight:700;
+  font-size:15px;
+}
+.crit-dial-hero-hint{
+  font-size:12px;
+  color:var(--text-muted);
+  margin-top:2px;
+}
+
 .criterion{
   border-top:1px solid var(--line);
   padding:14px 0;
