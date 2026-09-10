@@ -2479,7 +2479,13 @@ input[type="range"]::-moz-range-thumb{
   grid-template-columns:repeat(auto-fill, minmax(90px, 1fr));
   gap:14px;
 }
-.top-films-showcase-item{display:flex; flex-direction:column; gap:6px;}
+/* min-width:0 — même bug/raisonnement que .film-row/.wl-row en grille
+   plus bas dans ce fichier (S25, "affiches disproportionnées") : cet item
+   est lui aussi un enfant direct d'une grille CSS avec un titre en
+   white-space:nowrap juste en dessous, minmax(90px,1fr) étant même plus
+   étroit — un titre long y déborderait sa juste part encore plus
+   facilement sans ce 0. */
+.top-films-showcase-item{display:flex; flex-direction:column; gap:6px; min-width:0;}
 .top-films-showcase-item img,
 .top-films-showcase-item .film-poster-placeholder{
   width:100%;
@@ -2516,7 +2522,9 @@ input[type="range"]::-moz-range-thumb{
   grid-template-columns:repeat(auto-fill, minmax(110px, 1fr));
   gap:14px;
 }
-.poster-wall-item{position:relative; display:flex; flex-direction:column; gap:6px;}
+/* min-width:0 — même raison que .top-films-showcase-item juste au-dessus
+   (.poster-wall-caption est aussi en white-space:nowrap). */
+.poster-wall-item{position:relative; display:flex; flex-direction:column; gap:6px; min-width:0;}
 .poster-wall-item img,
 .poster-wall-item .film-poster-placeholder{
   width:100%;
