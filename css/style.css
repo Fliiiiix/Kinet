@@ -2089,12 +2089,13 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .tmdb-selected img{width:32px; height:48px; object-fit:cover; border-radius:5px; flex:none;}
 .tmdb-selected-info{flex:1; min-width:0;}
 #tmdbSelectedTitle{font-size:13px;}
-/* Fiche confirmée dans la modale principale (édition/ajout d'un film) :
-   seule occurrence de .tmdb-selected qui mérite une vraie affiche plutôt
-   qu'une vignette (watchlist/proposition restent des formulaires rapides,
-   pas la peine d'y répéter le même traitement). */
-#tmdbSelected{padding:12px; gap:14px;}
-#tmdbSelected img{width:56px; height:84px; border-radius:8px;}
+/* #tmdbSelected (modale principale d'ajout/édition) : plus le même
+   gabarit que .tmdb-selected (watchlist/séries/proposition, une vignette
+   + ce texte côte à côte) depuis que l'affiche a sa propre colonne dédiée
+   (.film-modal-poster-col, voir index.html et plus bas) : ce bloc-ci ne
+   contient plus que le texte, pas la peine de reprendre un fond/bordure
+   de carte en plus de celle déjà posée par .film-modal-poster-col. */
+#tmdbSelected{margin-top:10px;}
 #tmdbSelectedTitle{font-family:'Bricolage Grotesque', sans-serif; font-weight:600; font-size:16px;}
 
 /* La note manuelle est une échappatoire exceptionnelle (voir le commentaire
@@ -2140,6 +2141,37 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   color:var(--teal);
   overflow-wrap:anywhere;
   flex:1;
+}
+
+/* Modale "Nouveau/Modifier un film" (retour utilisateur : "dans la draft
+   tu m'as fait une super fiche film avec sur la droite les critères et à
+   gauche en grand l'affiche du film, au-dessus des critères la note et
+   encore au-dessus le titre... là tu t'es contenté de grossir la note").
+   La vraie mise en page cette fois : affiche à gauche, titre/note/
+   critères à droite, dans une modale élargie pour lui laisser la place
+   (.film-modal, 860px plutôt que 640px). */
+.modal.film-modal{max-width:860px;}
+.film-modal-layout{
+  display:grid;
+  grid-template-columns:200px 1fr;
+  gap:28px;
+  align-items:start;
+}
+/* .film-modal-poster réécrit width/height/border-radius de .film-poster
+   (52×78px, pensé pour une vignette de ligne de catalogue) : cette classe
+   vient après elle dans le fichier, donc l'emporte à spécificité égale.
+   .film-poster-placeholder (icône centrée, fond neutre, voir plus haut)
+   continue de s'appliquer normalement, seule la taille change. */
+.film-modal-poster{
+  width:100%;
+  aspect-ratio:2/3;
+  height:auto;
+  border-radius:12px;
+  object-fit:cover;
+}
+@media (max-width:760px){
+  .film-modal-layout{grid-template-columns:1fr;}
+  .film-modal-poster-col{width:140px; margin:0 auto;}
 }
 
 /* Cadran en vedette (retour utilisateur : "dans la draft tu m'as fait une

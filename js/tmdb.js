@@ -150,16 +150,30 @@ function clearTmdbSelection(){
   updateTmdbSelectedUI();
 }
 
+// L'affiche (colonne dédiée, voir .film-modal-poster-col dans index.html)
+// est découplée de la boîte texte (titre + "Retirer la fiche TMDB") : la
+// première reste TOUJOURS visible (une vraie affiche une fois choisie,
+// sinon le repli neutre .film-poster-placeholder déjà utilisé partout
+// ailleurs dans l'app), la seconde ne s'affiche qu'une fois une fiche
+// choisie, comme avant.
 function updateTmdbSelectedUI(){
   const box = document.getElementById('tmdbSelected');
   const img = document.getElementById('tmdbSelectedPoster');
+  const placeholder = document.getElementById('filmModalPosterPlaceholder');
+  const posterUrl = tmdbSelected ? tmdbSelected.poster_url : null;
+  if(posterUrl){
+    img.src = posterUrl;
+    img.style.display = '';
+    placeholder.style.display = 'none';
+  }else{
+    img.style.display = 'none';
+    placeholder.style.display = '';
+  }
   if(!tmdbSelected){
     box.style.display = 'none';
     return;
   }
   box.style.display = '';
-  img.src = tmdbSelected.poster_url || '';
-  img.style.display = tmdbSelected.poster_url ? '' : 'none';
   document.getElementById('tmdbSelectedTitle').textContent =
     tmdbSelected.title + (tmdbSelected.release_year ? ` (${tmdbSelected.release_year})` : '');
 }
