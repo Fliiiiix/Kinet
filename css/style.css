@@ -616,7 +616,7 @@ h1{
   align-items:center;
   flex-wrap:wrap;
   gap:12px;
-  margin-bottom:24px;
+  margin-bottom:32px;
 }
 .toolbar-search{
   display:flex;
@@ -1170,7 +1170,14 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   letter-spacing:0.03em;
 }
 /* v2.8 : le genre sort du gris muet — voir render() dans js/app.js. */
-.film-sub-genre{color:var(--bronze); font-weight:600;}
+/* Repasse (retour utilisateur, discipline des couleurs : "chaque couleur
+   un seul rôle") : le bronze redevient RARE (favori/palier), comme le
+   documente déjà .film-fav plus bas — il ne peut plus l'être s'il colore
+   aussi le genre sur CHAQUE ligne du catalogue, l'écran le plus vu de
+   toute l'app. Revient sur le choix explicite de v2.8 ("où est la
+   couleur ?") : la couleur reste bien là (cadran vert/or/corail, étoile
+   bronze, icônes de l'entête), juste plus diluée sur un simple libellé. */
+.film-sub-genre{color:var(--text-muted); font-weight:600;}
 .star-btn{
   grid-area:star;
   flex:none;
@@ -4196,13 +4203,18 @@ input[type="range"]::-moz-range-thumb{
    .star-btn ou .wl-actions, .counter) — aucune fonction de rendu n'a
    besoin de savoir dans quel mode elle dessine.
    ============================================================ */
+/* gap:22px (16px avant) — retour utilisateur : "on manque d'espace, ça
+   manque d'être épuré". La grille la plus vue de l'app (catalogue) avait
+   des cartes qui se touchaient presque ; ce seul chiffre change pour
+   #filmList/#wlList/#seriesList/#topList d'un coup, aucune règle à
+   dupliquer par page. */
 body[data-view-mode="grid"] #filmList,
 body[data-view-mode="grid"] #wlList,
 body[data-view-mode="grid"] #seriesList,
 body[data-view-mode="grid"] #topList{
   display:grid;
   grid-template-columns:repeat(auto-fill, minmax(158px, 1fr));
-  gap:16px;
+  gap:22px;
   align-items:start;
 }
 body[data-view-mode="grid"] #filmList .film-row{
@@ -4658,7 +4670,7 @@ body[data-view-mode="grid"] #seriesList .new-episode-dot{display:block;}
   body[data-view-mode="grid"] #filmList,
   body[data-view-mode="grid"] #wlList,
   body[data-view-mode="grid"] #seriesList,
-  body[data-view-mode="grid"] #topList{grid-template-columns:repeat(2, 1fr); gap:12px;}
+  body[data-view-mode="grid"] #topList{grid-template-columns:repeat(2, 1fr); gap:16px;}
   /* Bannière plus compacte sur mobile — affiche resserrée pour laisser de
      la place au texte sans forcer le retour à la ligne (qui casserait la
      bannière plutôt que de simplement la rétrécir). */
