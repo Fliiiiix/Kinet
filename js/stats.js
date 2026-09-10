@@ -88,19 +88,45 @@ function monthLabel(key){
 // opts.clickable (v2.2, retour utilisateur : voir la liste des films
 // derrière une barre, ex. "notés 4") — seules les barres non vides le
 // deviennent, cliquer une barre vide n'aurait rien à montrer.
+// opts.maxLabels (retour utilisateur, même repli que renderLineChart() plus
+// bas) : au-delà de ce nombre de barres, un libellé sous CHAQUE colonne
+// déborde de sa largeur et chevauche ses voisins (vérifié en direct avec
+// l'historique "Films ajoutés par mois" sur 24 mois, illisible). Les barres
+// elles-mêmes restent toutes affichées (scroll horizontal déjà en place,
+// voir .bar-chart). Seul un sous-ensemble de libellés est gardé, toujours
+// le premier et le dernier, la valeur exacte de chaque mois reste lisible
+// au survol (title déjà posé sur .bar-col). Sans opts.maxLabels (ex. la
+// distribution des notes, toujours 11 barres fixes), tous les libellés
+// restent affichés comme avant.
 function renderBarChart(items, opts = {}){
   const max = Math.max(1, ...items.map(i => i.count));
   const clickable = !!opts.clickable;
+  const maxLabels = opts.maxLabels || items.length;
+  const lastIdx = items.length - 1;
+  const labelStep = Math.max(1, Math.ceil(lastIdx / Math.max(1, maxLabels - 1)) || 1);
+  // Même filet que renderLineChart() plus bas : si le dernier index tombe
+  // trop près du dernier repère automatique (pas un multiple exact de
+  // labelStep), les deux libellés se retrouvent côte à côte au lieu d'être
+  // espacés régulièrement.
+  const shownIdx = new Set();
+  for(let i = 0; i < lastIdx; i += labelStep) shownIdx.add(i);
+  let orderedBarIdx = [...shownIdx].sort((a, b) => a - b);
+  while(orderedBarIdx.length && lastIdx - orderedBarIdx[orderedBarIdx.length - 1] < labelStep){
+    shownIdx.delete(orderedBarIdx.pop());
+  }
+  shownIdx.add(0);
+  shownIdx.add(lastIdx);
   return `
     <div class="bar-chart">
       ${items.map((i, idx) => {
         const active = clickable && i.count > 0;
+        const showLabel = items.length <= maxLabels || shownIdx.has(idx);
         return `
         <div class="bar-col${active ? ' bar-col-clickable' : ''}" data-index="${idx}" title="${escapeHtml(i.label)} : ${i.count}"${active ? ' role="button" tabindex="0"' : ''}>
           <div class="bar-track">
             <div class="bar-fill" style="height:${(i.count / max * 100).toFixed(1)}%">${i.count > 0 && i.count === max ? `<span class="bar-value">${i.count}</span>` : ''}</div>
           </div>
-          <div class="bar-label">${escapeHtml(i.label)}</div>
+          <div class="bar-label">${showLabel ? escapeHtml(i.label) : ''}</div>
         </div>
       `;
       }).join('')}
@@ -173,6 +199,41 @@ function renderLineChart(items){
       <circle cx="${p.x}" cy="${p.y}" r="${isLast ? 4.5 : 3.5}" class="line-chart-dot${isLast ? ' line-chart-dot-last' : ''}" data-label="${escapeHtml(p.label)}" data-value="${p.value}"/>
     `;
   }).join('');
+  // Repères de mois sous le graphique : un par point devient illisible dès
+  // qu'il y en a beaucoup (retour utilisateur, "pas assez clair", vérifié
+  // en direct avec ~24 mois d'historique, les libellés se chevauchaient,
+  // "2Nov 24Dec 24Jan 25…" impossible à lire). Au plus 6 repères gardés,
+  // TOUJOURS le premier et le dernier pour border la période couverte. La
+  // valeur exacte de CHAQUE mois reste disponible au survol/tactile (voir
+  // wireLineChart()), ces repères ne servent qu'à s'orienter dans le temps.
+  // Positionnés en % de la largeur du tracé (pas un flex space-between) :
+  // ils restent alignés sous le point qu'ils nomment quel que soit le
+  // sous-ensemble gardé, contrairement à une répartition uniforme du
+  // nombre de libellés affichés (qui ne coïncide plus avec les points dès
+  // qu'on en saute certains).
+  const maxLabels = 6;
+  const labelStep = Math.max(1, Math.ceil(lastIdx / (maxLabels - 1)) || 1);
+  const shownLabelIdx = new Set();
+  for(let i = 0; i < lastIdx; i += labelStep) shownLabelIdx.add(i);
+  // Le dernier point (forcé plus bas, toujours affiché) doit garder au
+  // moins un pas normal d'écart avec le dernier repère automatique, sinon
+  // les deux libellés se chevauchent au bord droit (constaté en direct :
+  // avec 24 mois, le repère automatique le plus proche de la fin tombait à
+  // seulement 3 mois du dernier, pas 5 comme les autres, texte collé).
+  let ordered = [...shownLabelIdx].sort((a, b) => a - b);
+  while(ordered.length && lastIdx - ordered[ordered.length - 1] < labelStep){
+    shownLabelIdx.delete(ordered.pop());
+  }
+  shownLabelIdx.add(0);
+  shownLabelIdx.add(lastIdx);
+  const labelsHtml = points
+    .map((p, idx) => {
+      if(!shownLabelIdx.has(idx)) return '';
+      const pct = (plotW === 0 ? 0 : (p.x - plot.left) / plotW * 100).toFixed(2);
+      const edge = idx === 0 ? 'start' : idx === lastIdx ? 'end' : 'mid';
+      return `<span class="line-chart-label" style="left:${pct}%" data-edge="${edge}">${escapeHtml(p.label)}</span>`;
+    })
+    .join('');
   return `
     <div class="line-chart">
       <svg viewBox="0 0 ${LINE_CHART_W} ${LINE_CHART_H}" class="line-chart-svg" role="img" aria-label="Évolution de la note moyenne, ${escapeHtml(items[0].label)} à ${escapeHtml(items[lastIdx].label)}, de ${items[0].value.toFixed(1)} à ${items[lastIdx].value.toFixed(1)}">
@@ -190,7 +251,7 @@ function renderLineChart(items){
         <rect x="${plot.left}" y="0" width="${plot.right - plot.left}" height="${LINE_CHART_H}" fill="transparent" class="line-chart-capture"/>
       </svg>
       <div class="line-chart-tooltip" hidden></div>
-      <div class="line-chart-labels">${items.map(i => `<span>${escapeHtml(i.label)}</span>`).join('')}</div>
+      <div class="line-chart-labels">${labelsHtml}</div>
     </div>
   `;
 }
@@ -585,7 +646,7 @@ function renderStatsInto(content, list = films){
     ${activityItems.length > 1 ? `
     <div class="stats-section reveal">
       <div class="stats-section-title">Films ajoutés par mois</div>
-      ${renderBarChart(activityItems)}
+      ${renderBarChart(activityItems, { maxLabels: 8 })}
     </div>` : ''}
 
     ${s.noteEvolution.length > 1 ? `

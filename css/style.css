@@ -3107,17 +3107,30 @@ input[type="range"]::-moz-range-thumb{
   box-shadow:0 4px 12px rgba(0,0,0,0.25);
   z-index:1;
 }
+/* Un repère par point plutôt qu'un sous-ensemble (renderLineChart(), voir
+   son commentaire) devenait illisible dès qu'il y a beaucoup de mois
+   d'historique. Repris en position:relative + repères posés en %,
+   alignés sous LEUR point plutôt qu'un flex space-between qui répartit
+   uniformément (et donc désaligné dès qu'un libellé sur deux est sauté). */
 .line-chart-labels{
-  display:flex;
-  justify-content:space-between;
-  gap:4px;
+  position:relative;
+  height:14px;
   margin-top:6px;
   font-family:'Space Mono', monospace;
   font-size:9.5px;
   color:var(--text-muted);
-  overflow-x:auto;
 }
-.line-chart-labels span{white-space:nowrap;}
+.line-chart-label{
+  position:absolute;
+  top:0;
+  transform:translateX(-50%);
+  white-space:nowrap;
+}
+/* Premier/dernier repère : centrés sur leur point les ferait déborder du
+   conteneur (la moitié du texte partirait avant 0% / après 100%). Collés
+   au bord qu'ils bordent à la place. */
+.line-chart-label[data-edge="start"]{transform:translateX(0);}
+.line-chart-label[data-edge="end"]{transform:translateX(-100%);}
 
 /* Genre dominant par mois (retour utilisateur). */
 .genre-month-row{
