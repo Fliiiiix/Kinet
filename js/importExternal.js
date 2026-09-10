@@ -82,13 +82,34 @@ function detectLetterboxdType(filename, headers){
   return null;
 }
 
+// Letterboxd exporte le texte de la critique avec un minimum de mise en
+// forme HTML (paragraphes, gras/italique, liens) plutôt qu'en texte brut.
+// Sans ce nettoyage, ces balises apparaîtraient telles quelles dans Kinet
+// (ex. "<p>Texte de la critique</p>"), ce qui a de bonnes chances d'être
+// une partie du retour "l'import review ne marche pas" : le texte arrive
+// bien, mais entouré de balises qui le rendent illisible/cassé à l'œil. On
+// ne reconnaît que ce sous-ensemble précis de balises Letterboxd (jamais un
+// nettoyage HTML générique, qui pourrait avaler un "<" tapé volontairement
+// dans une vraie critique, ex. "<3 ce film").
+function stripLetterboxdReviewHtml(text){
+  if(!text) return text;
+  return text
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>\s*<p[^>]*>/gi, '\n\n')
+    .replace(/<\/?p[^>]*>/gi, '')
+    .replace(/<\/?(em|i|strong|b|blockquote)[^>]*>/gi, '')
+    .replace(/<a\s+[^>]*href="([^"]*)"[^>]*>(.*?)<\/a>/gi, '$2 ($1)')
+    .replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, '\'').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+    .trim();
+}
+
 function normalizeLetterboxdRow(r){
   return {
     title: (r['Name'] || '').trim(),
     year: r['Year'] ? parseInt(r['Year'], 10) : null,
     rating: r['Rating'] ? parseFloat(r['Rating']) : null,
     watchedDate: r['Watched Date'] || r['Date'] || null,
-    review: (r['Review'] || '').trim() || null
+    review: stripLetterboxdReviewHtml((r['Review'] || '').trim()) || null
   };
 }
 
@@ -313,6 +334,21 @@ async function importLetterboxdReviews(records){
   if(updated || added){
     buildGenreFilterOptions();
     render();
+  }
+  // "0 critique(s) complétée(s), 0 film(s) importé(s)" se lit comme un échec
+  // générique même quand tout s'est bien passé (retour utilisateur : "l'import
+  // review ne marche pas"). Un vrai zéro-partout n'arrive que si CE fichier
+  // n'apporte rien de neuf : soit chaque film qu'il liste a déjà sa critique
+  // dans Kinet (unchanged), soit aucun n'a été retrouvé sur TMDB (unmatched).
+  // Un message dédié à chacun de ces deux cas plutôt que la phrase générique,
+  // pour que "rien à faire" ne se lise plus jamais comme "ça n'a pas marché".
+  if(updated === 0 && added === 0){
+    if(unmatched > 0 && unchanged === 0){
+      showToast(`Aucune critique importée : ${unmatched} film${unmatched > 1 ? 's' : ''} introuvable${unmatched > 1 ? 's' : ''} sur TMDB.`);
+    } else {
+      showToast('Rien à importer : les critiques de ce fichier sont déjà toutes dans Kinet.');
+    }
+    return;
   }
   showToast(`${updated} critique(s) complétée(s) sur des films déjà présents, ${added} film(s) importé(s), ${unmatched} introuvable(s) sur TMDB`);
 }
