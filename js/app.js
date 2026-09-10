@@ -988,10 +988,29 @@ function closeToolbarFilters(){
   document.getElementById('toolbarFilters').classList.remove('open');
   document.getElementById('filtersToggleBtn').setAttribute('aria-expanded', 'false');
 }
-document.getElementById('filtersToggleBtn').addEventListener('click', openToolbarFilters);
+document.getElementById('filtersToggleBtn').addEventListener('click', (e) => {
+  e.stopPropagation(); // sans ça, le listener document ci-dessous le refermerait dans la foulée
+  openToolbarFilters();
+});
 document.getElementById('closeToolbarFilters').addEventListener('click', closeToolbarFilters);
 document.getElementById('toolbarFilters').addEventListener('click', (e) => {
+  // Voile plein écran sous le seuil mobile (voir css/style.css) : taper
+  // dessus (jamais sur la feuille elle-même) referme, même geste que
+  // .overlay/.dropdown-menu ailleurs dans l'app.
   if(e.target.id === 'toolbarFilters') closeToolbarFilters();
+});
+// Repasse (retour utilisateur, "3 boutons de tri") : sur desktop/tablette,
+// #toolbarFilters est un panneau ancré (pas un voile plein écran, voir
+// css/style.css) — rien n'y capte plus un clic hors de la feuille pour la
+// refermer à cette largeur. Même mécanique que toggleMoreMenu() juste plus
+// bas (clic hors du menu OU Échap) plutôt qu'une nouvelle. Sans effet sous
+// le seuil mobile : cette largeur ferme déjà via le voile ci-dessus, avant
+// même que ce listener document ne s'exécute.
+document.addEventListener('click', (e) => {
+  if(!document.getElementById('toolbarFilters').contains(e.target)) closeToolbarFilters();
+});
+document.addEventListener('keydown', (e) => {
+  if(e.key === 'Escape') closeToolbarFilters();
 });
 function setSortDir(dir){
   sortDir = dir;

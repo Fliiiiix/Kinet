@@ -272,6 +272,20 @@ function getReduceMotion(){
   catch(e){ return false; }
 }
 
+// Vrai si les animations doivent être réduites, PAR CE RÉGLAGE OU PAR CELUI
+// DU SYSTÈME — bug retour utilisateur ("le bouton réduire les animations...
+// je crois qu'il ne fait rien") : le mark de l'entête, les boutons
+// "magnétiques" et l'inclinaison des lignes au survol (plus bas dans ce
+// fichier) ne regardaient QUE prefers-reduced-motion, jamais ce réglage
+// (getReduceMotion()) — et seulement UNE FOIS au chargement du script, donc
+// même en le corrigeant naïvement, activer le réglage APRÈS coup (sans
+// recharger la page) n'aurait rien changé. Appelée à chaque interaction
+// (pas juste au chargement) dans les 3 blocs concernés, pour un effet
+// immédiat dès qu'on bascule le réglage, sans recharger.
+function motionReduced(){
+  return getReduceMotion() || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
 function setReduceMotion(on){
   document.documentElement.classList.toggle('reduce-motion', on);
   try{ localStorage.setItem('kinetReduceMotion', on ? '1' : '0'); }catch(e){}
@@ -493,13 +507,17 @@ function noteColorClass(note){
 // relai pour l'oscillation en boucle — deux animations jamais actives en
 // même temps sur le même élément (la cascade CSS choisit .idle une fois
 // la classe posée), pas de conflit de transform.
-if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches){
-  document.querySelectorAll('.brand-mark-gold').forEach(el => {
-    el.addEventListener('animationend', (e) => {
-      if(e.animationName === 'brandMarkGold') el.classList.add('idle');
-    });
+// Écouteur toujours posé (motionReduced() lue à l'événement, pas à la
+// pose) : .idle elle-même est une animation CSS classique, déjà coupée
+// comme toutes les autres par html.reduce-motion (voir css/style.css) —
+// seul garde-fou nécessaire ici, ne jamais ajouter .idle après une
+// première rotation qui n'aurait jamais eu lieu (durée quasi nulle sous
+// html.reduce-motion, animationend part quand même).
+document.querySelectorAll('.brand-mark-gold').forEach(el => {
+  el.addEventListener('animationend', (e) => {
+    if(e.animationName === 'brandMarkGold') el.classList.add('idle');
   });
-}
+});
 
 // --- Boutons magnétiques (v2.7, .magnetic) ---
 // Se laissent tirer légèrement vers le curseur qui approche, reviennent
@@ -507,21 +525,29 @@ if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches){
 // (Ajouter un film, Enregistrer), pas à chaque bouton de la page : un
 // bouton "Retirer" qui se dérobe sous le curseur serait plus gênant
 // qu'autre chose. mousemove + transform en JS simple, pas de librairie.
-if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches){
-  document.querySelectorAll('.magnetic').forEach(btn => {
-    btn.addEventListener('mousemove', (e) => {
-      const r = btn.getBoundingClientRect();
-      const x = (e.clientX - r.left - r.width / 2) * 0.3;
-      const y = (e.clientY - r.top - r.height / 2) * 0.3;
-      btn.style.transition = 'transform 0.15s ease-out';
-      btn.style.transform = `translate(${x}px, ${y}px)`;
-    });
-    btn.addEventListener('mouseleave', () => {
-      btn.style.transition = 'transform 0.5s cubic-bezier(.34,1.56,.64,1)';
-      btn.style.transform = 'translate(0,0)';
-    });
+// Bug retour utilisateur ("réduire les animations... je crois qu'il ne
+// fait rien") : ce bloc ne regardait QUE prefers-reduced-motion, UNE FOIS
+// au chargement — le réglage getReduceMotion() n'y changeait jamais rien,
+// même après un rechargement. motionReduced() lue à CHAQUE mousemove (pas
+// à la pose de l'écouteur) : bascule le réglage en cours d'utilisation
+// coupe l'effet tout de suite, sans recharger la page — le point qui
+// manquait le plus, ce sont des boutons qu'on regarde/survole en direct.
+document.querySelectorAll('.magnetic').forEach(btn => {
+  btn.addEventListener('mousemove', (e) => {
+    if(motionReduced()) return;
+    const r = btn.getBoundingClientRect();
+    const x = (e.clientX - r.left - r.width / 2) * 0.3;
+    const y = (e.clientY - r.top - r.height / 2) * 0.3;
+    btn.style.transition = 'transform 0.15s ease-out';
+    btn.style.transform = `translate(${x}px, ${y}px)`;
   });
-}
+  btn.addEventListener('mouseleave', () => {
+    // Toujours ramené à sa place, même juste après avoir basculé le
+    // réglage en cours de survol — sinon un bouton resterait décalé.
+    btn.style.transition = 'transform 0.5s cubic-bezier(.34,1.56,.64,1)';
+    btn.style.transform = 'translate(0,0)';
+  });
+});
 
 // --- Affiches qui s'inclinent vers le curseur (v2.8) ---
 // Diversifie le mouvement au-delà des boutons magnétiques (retour
@@ -530,31 +556,31 @@ if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches){
 // retour : "où est la couleur ?"). Délégation sur document (un seul
 // listener plutôt qu'un par ligne — la liste est reconstruite à chaque
 // render(), pas besoin de rebrancher quoi que ce soit) + throttle rAF.
-if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches){
-  let tiltRow = null;
-  let tiltRaf = null;
-  document.addEventListener('mousemove', (e) => {
-    const row = e.target.closest('.film-row, .wl-row');
-    if(!row){
-      if(tiltRow){ tiltRow.classList.remove('tilting'); tiltRow.style.transform = ''; tiltRow = null; }
-      return;
-    }
-    if(row !== tiltRow){
-      if(tiltRow){ tiltRow.classList.remove('tilting'); tiltRow.style.transform = ''; }
-      tiltRow = row;
-      row.classList.add('tilting');
-    }
-    if(tiltRaf) return;
-    tiltRaf = requestAnimationFrame(() => {
-      tiltRaf = null;
-      if(!tiltRow) return;
-      const r = tiltRow.getBoundingClientRect();
-      const px = (e.clientX - r.left) / r.width - 0.5;
-      const py = (e.clientY - r.top) / r.height - 0.5;
-      tiltRow.style.transform = `perspective(700px) rotateX(${(py * -6).toFixed(2)}deg) rotateY(${(px * 6).toFixed(2)}deg) translateY(-2px)`;
-    });
+// Même bug/correctif que les boutons magnétiques juste au-dessus
+// (motionReduced() lue à chaque mousemove, pas juste au chargement).
+let tiltRow = null;
+let tiltRaf = null;
+document.addEventListener('mousemove', (e) => {
+  const row = e.target.closest('.film-row, .wl-row');
+  if(!row || motionReduced()){
+    if(tiltRow){ tiltRow.classList.remove('tilting'); tiltRow.style.transform = ''; tiltRow = null; }
+    return;
+  }
+  if(row !== tiltRow){
+    if(tiltRow){ tiltRow.classList.remove('tilting'); tiltRow.style.transform = ''; }
+    tiltRow = row;
+    row.classList.add('tilting');
+  }
+  if(tiltRaf) return;
+  tiltRaf = requestAnimationFrame(() => {
+    tiltRaf = null;
+    if(!tiltRow) return;
+    const r = tiltRow.getBoundingClientRect();
+    const px = (e.clientX - r.left) / r.width - 0.5;
+    const py = (e.clientY - r.top) / r.height - 0.5;
+    tiltRow.style.transform = `perspective(700px) rotateX(${(py * -6).toFixed(2)}deg) rotateY(${(px * 6).toFixed(2)}deg) translateY(-2px)`;
   });
-}
+});
 
 // --- Listes repliées par défaut (v2.1.x, retour utilisateur : "on défile
 // beaucoup trop", l'activité récente et la liste d'amis pouvaient à elles

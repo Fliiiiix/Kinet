@@ -624,19 +624,27 @@ h1{
   align-items:center;
   flex:1;
   min-width:240px;
+  /* Ancre #toolbarFilters (position:absolute plus bas), voir le commentaire
+     juste en dessous. */
+  position:relative;
 }
 .toolbar-search select{flex:none;}
-/* Filtres (v2.1.x) : sur desktop, #toolbarFilters/.toolbar-filters-sheet
-   sont transparents à la mise en page (display:contents) — #sortBy et
-   #genreFilter apparaissent comme des enfants directs de .toolbar-search,
-   identique au balisage d'origine. #filtersToggleBtn n'a de sens que
-   replié en feuille, jamais affiché ici. Le seuil mobile (dans le bloc
-   @media plus bas) inverse les deux. */
-#filtersToggleBtn{display:none; position:relative;}
-/* Point d'état (v2.1.x) : un tri/genre non-par-défaut est actif alors que
-   la feuille est repliée — même principe que .header-nav-btn.has-unread
-   (js/activityState.js), sans lequel changer un filtre puis fermer la
-   feuille ne laisserait plus aucune trace visible qu'un filtre est appliqué. */
+/* Repasse (retour utilisateur : "3 boutons côte à côte pour 3 sortes de
+   tri, c'est beaucoup trop") — Tri/Genre/Année vivaient en 3 <select>
+   toujours visibles côte à côte sur desktop (repliés derrière
+   #filtersToggleBtn seulement sous le seuil mobile, voir le bloc @media
+   plus bas). Repliés maintenant PARTOUT derrière un seul bouton : panneau
+   ancré façon #moreMenu (même recette que .dropdown-menu juste plus haut —
+   verre, "Halation", menuIn) sur desktop/tablette, feuille plein écran
+   inchangée sous 600px (le bloc @media plus bas la redéfinit toujours,
+   après celui-ci donc prioritaire à cette largeur). Le comportement JS
+   (openToolbarFilters()/closeToolbarFilters(), js/app.js) ne changeait déjà
+   rien selon la largeur — seule cette présentation CSS bougeait. */
+#filtersToggleBtn{display:inline-flex; position:relative;}
+/* Point d'état : un tri/genre/année non-par-défaut est actif alors que le
+   panneau est fermé — même principe que .header-nav-btn.has-unread
+   (js/activityState.js), sans lequel changer un filtre puis refermer le
+   panneau ne laisserait plus aucune trace visible qu'un filtre est appliqué. */
 #filtersToggleBtn.has-active-filter::after{
   content:'';
   position:absolute;
@@ -646,8 +654,44 @@ h1{
   background:var(--violet);
   border:1.5px solid var(--surface);
 }
-.toolbar-filters, .toolbar-filters-sheet{display:contents;}
-.toolbar-filters-head{display:none;}
+.toolbar-filters{
+  display:none;
+  position:absolute;
+  top:calc(100% + 8px);
+  right:0;
+  z-index:60;
+}
+.toolbar-filters.open{display:block; animation:menuIn .12s ease-out;}
+.toolbar-filters-sheet{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  width:240px;
+  background:rgba(var(--glass-rgb),0.72);
+  backdrop-filter:blur(20px) saturate(160%);
+  -webkit-backdrop-filter:blur(20px) saturate(160%);
+  border:1px solid rgba(var(--text-rgb),0.09);
+  border-radius:12px;
+  padding:14px;
+  box-shadow:0 16px 36px rgba(0,0,0,0.45);
+}
+.toolbar-filters-sheet select{width:100%;}
+.toolbar-filter-field{display:flex; flex-direction:column; gap:5px;}
+.toolbar-filter-label{
+  font-family:'Space Mono', monospace;
+  font-size:10.5px;
+  letter-spacing:0.04em;
+  text-transform:uppercase;
+  color:var(--text-muted);
+}
+.toolbar-filters-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  font-family:'Bricolage Grotesque', sans-serif;
+  font-weight:700;
+  font-size:13px;
+}
 /* Tri par critère individuel (#sortBy = "advanced") — voir index.html et
    updateSortMode() dans js/app.js. Critère + sens + seuil ensemble plutôt
    que d'entasser 14 options (7 critères × ↓/↑) dans le sélecteur général.
@@ -2890,9 +2934,54 @@ input[type="range"]::-moz-range-thumb{
 .bar-col-active .bar-fill{background:var(--violet);}
 .bar-col-active .bar-label{color:var(--violet-dim); font-weight:700;}
 
-/* Évolution de la note moyenne (retour utilisateur) — SVG à la main, voir
-   renderLineChart(), js/stats.js. */
-.line-chart-svg{width:100%; height:120px; display:block; margin-top:8px;}
+/* Évolution de la note moyenne — SVG à la main, voir renderLineChart(),
+   js/stats.js. Repasse (retour utilisateur : "pas assez clair", "pas
+   toujours bien proportionné") : aspect-ratio (pas une hauteur fixe) pour
+   que .line-chart-svg garde EXACTEMENT les proportions de son viewBox
+   (300×150) quelle que soit la largeur réelle — même recette que
+   .film-poster{aspect-ratio:2/3} ailleurs dans ce fichier. C'est ce qui
+   manquait pour que preserveAspectRatio (par défaut, sans "none") mette à
+   l'échelle x et y du même facteur : la courbe garde sa vraie forme, les
+   points restent des cercles. */
+.line-chart{position:relative;}
+.line-chart-svg{width:100%; aspect-ratio:300/150; display:block; margin-top:8px; overflow:visible;}
+.line-chart-grid{stroke:var(--line); stroke-width:1; stroke-dasharray:2 3;}
+.line-chart-axis-label{
+  font-family:'Space Mono', monospace;
+  font-size:9px;
+  fill:var(--text-muted);
+}
+.line-chart-halo{fill:var(--gold); opacity:0.18;}
+.line-chart-dot{fill:var(--gold);}
+.line-chart-dot-last{fill:var(--gold); stroke:var(--ink); stroke-width:1.5;}
+.line-chart-crosshair{stroke:var(--gold-dim); stroke-width:1; stroke-dasharray:2 2; vector-effect:non-scaling-stroke;}
+.line-chart-capture{cursor:crosshair;}
+/* Infobulle HTML (retour utilisateur : "pas assez clair" — le <title>
+   natif du navigateur était minuscule, lent à apparaître, jamais tactile)
+   — positionnée par wireLineChart() (js/stats.js) en pixels réels, donc
+   PAS d'unités viewBox ici. Toujours au-dessus du point visé (transform
+   -50% en x, jamais en y : sa position top est déjà celle voulue). */
+.line-chart-tooltip{
+  position:absolute;
+  transform:translate(-50%, -100%) translateY(-8px);
+  /* --surface-2/--text : un COUPLE de tokens qui basculent ENSEMBLE d'un
+     thème à l'autre (jamais --ink tout seul avec var(--text) — --ink reste
+     TOUJOURS sombre dans les deux thèmes, voir sa définition en tête de ce
+     fichier, un texte clair posé dessus deviendrait illisible en thème
+     clair, même bug que celui trouvé sur le tuto). */
+  background:var(--surface-2);
+  border:1px solid var(--line);
+  color:var(--text);
+  font-family:'Space Mono', monospace;
+  font-size:11px;
+  font-weight:700;
+  white-space:nowrap;
+  padding:4px 8px;
+  border-radius:6px;
+  pointer-events:none;
+  box-shadow:0 4px 12px rgba(0,0,0,0.25);
+  z-index:1;
+}
 .line-chart-labels{
   display:flex;
   justify-content:space-between;

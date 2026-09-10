@@ -108,33 +108,148 @@ function renderBarChart(items, opts = {}){
   `;
 }
 
-// Évolution de la note moyenne, mois par mois (retour utilisateur) — un
-// SVG à la main plutôt qu'une lib de graphiques (aucune dépendance dans ce
-// projet, même règle que le reste). viewBox en unités arbitraires (0-100 /
-// 0-40), preserveAspectRatio="none" pour occuper tout le conteneur (la
-// hauteur/largeur réelles sont fixées en CSS, .line-chart-svg) —
-// vector-effect="non-scaling-stroke" pour que le trait reste net quel que
-// soit l'étirement. items: [{label, value}].
+// Évolution de la note moyenne, mois par mois — un SVG à la main, même
+// règle que renderCritRadar() plus bas (aucune lib de graphiques dans ce
+// projet). Repasse (retour utilisateur : "pas assez clair", "pas toujours
+// bien proportionné") sur deux défauts réels de la 1re version :
+//
+// 1. preserveAspectRatio="none" (comme un vieux renderLineChart() ici
+//    même) étirait x et y par des facteurs DIFFÉRENTS et non fixes (la
+//    hauteur du conteneur était fixe en CSS, pas sa largeur) — la COURBE
+//    changeait donc de forme selon la largeur d'écran, et les points
+//    (des cercles) devenaient des ellipses plus ou moins aplaties. Repris
+//    en viewBox fixe + preserveAspectRatio par défaut (comme
+//    renderCritRadar()), .line-chart-svg passe à aspect-ratio CSS plutôt
+//    qu'une hauteur fixe (voir css/style.css) : la mise à l'échelle reste
+//    UNIFORME quelle que soit la largeur réelle, la forme ne bouge plus.
+// 2. L'échelle Y calée sur le min/max des SEULES valeurs affichées (jamais
+//    montrée) exagérait visuellement de petites variations (ex. 3.8 à 4.2
+//    remplissait tout le graphique) — trompeur. L'échelle est maintenant
+//    fixe sur 0-5 (la vraie plage d'une note), avec des repères 0/2,5/5
+//    affichés : la courbe garde un sens réel d'un mois à l'autre, pas
+//    juste "monte ou descend".
+//
+// Remplit aussi les autres manques signalés indirectement par "pas assez
+// clair" : aire sous la courbe (donne un vrai poids visuel à la
+// tendance), dernier point mis en avant avec un halo (cohérent avec la
+// "Halation" déjà utilisée ailleurs dans l'app), et une vraie infobulle
+// au survol/tactile (wireLineChart() plus bas) plutôt que le <title>
+// natif du navigateur (lent à apparaître, minuscule, jamais tactile).
+const LINE_CHART_W = 300, LINE_CHART_H = 150;
+const LINE_CHART_PLOT = { left: 34, right: 292, top: 14, bottom: 120 };
 function renderLineChart(items){
-  const width = 100, height = 40;
-  const values = items.map(i => i.value);
-  const min = Math.min(...values), max = Math.max(...values);
-  const span = (max - min) || 1; // évite une division par 0 si une seule valeur/valeurs identiques
-  const stepX = items.length > 1 ? width / (items.length - 1) : 0;
+  const plot = LINE_CHART_PLOT;
+  const plotW = plot.right - plot.left, plotH = plot.bottom - plot.top;
+  const stepX = items.length > 1 ? plotW / (items.length - 1) : 0;
+  // Une seule note peut dépasser 5 seulement en théorie (jamais en
+  // pratique, la grille plafonne déjà à 5) — Math.min ici est un filet,
+  // pas une vraie borne attendue.
   const points = items.map((it, idx) => {
-    const x = idx * stepX;
-    const y = height - ((it.value - min) / span) * height;
-    return { x: x.toFixed(1), y: y.toFixed(1) };
+    const x = plot.left + idx * stepX;
+    const y = plot.bottom - (Math.min(Math.max(it.value, 0), 5) / 5) * plotH;
+    return { x: +x.toFixed(1), y: +y.toFixed(1), label: it.label, value: it.value };
   });
+  const yTicks = [0, 2.5, 5];
+  const gridLines = yTicks.map(v => {
+    const y = plot.bottom - (v / 5) * plotH;
+    return `
+      <line x1="${plot.left}" y1="${y}" x2="${plot.right}" y2="${y}" class="line-chart-grid" vector-effect="non-scaling-stroke"/>
+      <text x="${plot.left - 8}" y="${y}" class="line-chart-axis-label" text-anchor="end" dominant-baseline="middle">${v}</text>
+    `;
+  }).join('');
+  const linePoints = points.map(p => `${p.x},${p.y}`).join(' ');
+  const areaPoints = `${plot.left},${plot.bottom} ${linePoints} ${plot.right},${plot.bottom}`;
+  const lastIdx = points.length - 1;
+  const dots = points.map((p, idx) => {
+    const isLast = idx === lastIdx;
+    // data-label/data-value plutôt qu'un blob JSON dans un attribut (une
+    // 1re version le faisait sur le <rect> de capture — escapeHtml()
+    // n'échappe jamais les guillemets, voir son commentaire dans js/app.js,
+    // donc un JSON.stringify() imbriqué aurait pu casser le HTML) : deux
+    // attributs plats, même convention que le title="..." de
+    // renderBarChart() juste au-dessus.
+    return `
+      ${isLast ? `<circle cx="${p.x}" cy="${p.y}" r="9" class="line-chart-halo"/>` : ''}
+      <circle cx="${p.x}" cy="${p.y}" r="${isLast ? 4.5 : 3.5}" class="line-chart-dot${isLast ? ' line-chart-dot-last' : ''}" data-label="${escapeHtml(p.label)}" data-value="${p.value}"/>
+    `;
+  }).join('');
   return `
     <div class="line-chart">
-      <svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" class="line-chart-svg">
-        <polyline points="${points.map(p => `${p.x},${p.y}`).join(' ')}" fill="none" stroke="var(--gold)" stroke-width="1.5" vector-effect="non-scaling-stroke"/>
-        ${points.map((p, idx) => `<circle cx="${p.x}" cy="${p.y}" r="1.6" fill="var(--gold)"><title>${escapeHtml(items[idx].label)} : ${items[idx].value.toFixed(2)}</title></circle>`).join('')}
+      <svg viewBox="0 0 ${LINE_CHART_W} ${LINE_CHART_H}" class="line-chart-svg" role="img" aria-label="Évolution de la note moyenne, ${escapeHtml(items[0].label)} à ${escapeHtml(items[lastIdx].label)}, de ${items[0].value.toFixed(1)} à ${items[lastIdx].value.toFixed(1)}">
+        <defs>
+          <linearGradient id="lineChartFill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" style="stop-color:var(--gold); stop-opacity:0.28"/>
+            <stop offset="100%" style="stop-color:var(--gold); stop-opacity:0"/>
+          </linearGradient>
+        </defs>
+        ${gridLines}
+        <polygon points="${areaPoints}" fill="url(#lineChartFill)" stroke="none"/>
+        <polyline points="${linePoints}" fill="none" stroke="var(--gold)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
+        ${dots}
+        <line x1="0" y1="${plot.top}" x2="0" y2="${plot.bottom}" class="line-chart-crosshair" hidden/>
+        <rect x="${plot.left}" y="0" width="${plot.right - plot.left}" height="${LINE_CHART_H}" fill="transparent" class="line-chart-capture"/>
       </svg>
+      <div class="line-chart-tooltip" hidden></div>
       <div class="line-chart-labels">${items.map(i => `<span>${escapeHtml(i.label)}</span>`).join('')}</div>
     </div>
   `;
+}
+
+// Infobulle + repère vertical au survol/tactile — appelée juste après avoir
+// posé le innerHTML de renderLineChart() (voir renderStatsInto()), même
+// convention que wireStatsDistribution() juste au-dessus. root : élément
+// contenant potentiellement PLUSIEURS .line-chart (aucun cas actuel, mais
+// coûte rien de ne pas supposer qu'il n'y en a qu'un). Les points sont relus
+// directement sur les <circle> déjà posés par renderLineChart() (cx +
+// data-label/data-value) plutôt que retransmis à part — une seule source de
+// vérité, jamais deux structures à garder synchronisées.
+function wireLineChart(root){
+  root.querySelectorAll('.line-chart').forEach(chart => {
+    const svg = chart.querySelector('.line-chart-svg');
+    const capture = chart.querySelector('.line-chart-capture');
+    const crosshair = chart.querySelector('.line-chart-crosshair');
+    const tooltip = chart.querySelector('.line-chart-tooltip');
+    if(!svg || !capture) return;
+    const points = Array.from(chart.querySelectorAll('.line-chart-dot')).map(dot => ({
+      x: parseFloat(dot.getAttribute('cx')),
+      label: dot.dataset.label,
+      value: parseFloat(dot.dataset.value)
+    }));
+    if(points.length === 0) return;
+
+    function nearestPoint(clientX){
+      const rect = svg.getBoundingClientRect();
+      const scale = LINE_CHART_W / rect.width;
+      const svgX = (clientX - rect.left) * scale;
+      return points.reduce((best, p) => Math.abs(p.x - svgX) < Math.abs(best.x - svgX) ? p : best, points[0]);
+    }
+
+    function showAt(clientX){
+      const p = nearestPoint(clientX);
+      const rect = svg.getBoundingClientRect();
+      const scale = rect.width / LINE_CHART_W; // uniforme (x et y), voir le commentaire sur aspect-ratio
+      crosshair.setAttribute('x1', p.x); crosshair.setAttribute('x2', p.x);
+      crosshair.hidden = false;
+      tooltip.textContent = `${p.label} · ${p.value.toFixed(1)} / 5`;
+      tooltip.hidden = false;
+      // Positionné en pixels réels (pas en unités viewBox) : .line-chart-tooltip
+      // vit en HTML, pas dans le SVG, .line-chart a position:relative (voir
+      // css/style.css) pour que ces left/top soient relatifs à lui. Hauteur
+      // TOUJOURS au même niveau (haut du tracé) plutôt qu'à celle du point
+      // visé : évite une infobulle qui saute verticalement d'un mois à
+      // l'autre, jamais coupée en haut même sur le point culminant.
+      tooltip.style.left = (p.x * scale) + 'px';
+      tooltip.style.top = (LINE_CHART_PLOT.top * scale) + 'px';
+    }
+    function hide(){
+      crosshair.hidden = true;
+      tooltip.hidden = true;
+    }
+
+    capture.addEventListener('pointermove', (e) => showAt(e.clientX));
+    capture.addEventListener('pointerdown', (e) => showAt(e.clientX));
+    capture.addEventListener('pointerleave', hide);
+  });
 }
 
 // Genre dominant par mois (retour utilisateur) — liste plutôt qu'un
@@ -490,6 +605,7 @@ function renderStatsInto(content, list = films){
   `;
 
   wireStatsDistribution(content, list, s.distribution);
+  wireLineChart(content);
 
   const genreByMonthEl = content.querySelector('#genreByMonthList');
   if(genreByMonthEl){
