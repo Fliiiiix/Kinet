@@ -2782,6 +2782,29 @@ input[type="range"]::-moz-range-thumb{
   margin-top:4px;
 }
 .stats-section{margin-bottom:28px;}
+/* Amis/Groupes (retour utilisateur, backlog : "même respiration que la
+   modale film"). Ces lignes (avatar + nom + 1-2 boutons) sont bien plus
+   sparses qu'une ligne catalogue (affiche + note + actions) : en pile sur
+   1 colonne, jusqu'à 1080px de large (.container), elles laissaient
+   beaucoup de vide au milieu plutôt que d'utiliser la largeur. Grille
+   plutôt qu'une pile, .wl-row garde exactement le même style (juste plus
+   de marge-bas à retirer, le gap de la grille la remplace). */
+#friendRequestsIn, #friendRequestsOut, #friendsList,
+#friendSuggestionsList, #friendRecommendationsList, #groupsList{
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(280px, 1fr));
+  gap:10px;
+}
+#friendRequestsIn > .wl-row, #friendRequestsOut > .wl-row, #friendsList > .wl-row,
+#friendSuggestionsList > .wl-row, #friendRecommendationsList > .wl-row, #groupsList > .wl-row{
+  margin-bottom:0;
+}
+@media (max-width:600px){
+  #friendRequestsIn, #friendRequestsOut, #friendsList,
+  #friendSuggestionsList, #friendRecommendationsList, #groupsList{
+    grid-template-columns:1fr;
+  }
+}
 /* Bouton "Voir tous les films notés" (v2.5) — révèle le catalogue complet
    d'un ami, replié par défaut sous ses stats. Voir openFriendProfile(),
    js/friends.js. */
