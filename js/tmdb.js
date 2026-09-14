@@ -298,3 +298,15 @@ document.getElementById('titleInput').addEventListener('blur', () => {
   setTimeout(() => { document.getElementById('tmdbResults').innerHTML = ''; }, 150);
 });
 document.getElementById('tmdbClearBtn').addEventListener('click', clearTmdbSelection);
+// Retour utilisateur : cliquer un film déjà noté ouvre direct cette modale
+// (noter/modifier), sans accès à sa présentation (résumé, genre, note
+// communautaire), pourtant déjà à un clic depuis la recherche ou le Top
+// (goToFilmDetail(), js/router.js). Fonctionne aussi bien pour un film
+// déjà dans le catalogue que pour une fiche TMDB tout juste choisie sur un
+// nouveau film pas encore enregistré : les deux ont déjà un tmdb_id.
+document.getElementById('tmdbViewFicheBtn').addEventListener('click', () => {
+  if(!tmdbSelected) return;
+  const tmdbId = tmdbSelected.tmdb_id;
+  closeModal();
+  goToFilmDetail(tmdbId);
+});

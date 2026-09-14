@@ -120,6 +120,18 @@ function renderWatchlist(){
     });
     row.querySelector('[data-action="rate"]').addEventListener('click', () => startRatingFromWatchlist(item));
     row.querySelector('[data-action="remove"]').addEventListener('click', () => handleRemoveFromWatchlist(item.id));
+    // Fiche film (retour utilisateur : "dans à voir je ne peux pas cliquer
+    // sur le film pour arriver sur sa fiche de présentation comme dans le
+    // top"). Même goToFilmDetail() que le Top films (js/top.js). Ignore
+    // les clics dans .wl-actions/.wl-quick-form (boutons, champ de note
+    // rapide) : ce sont déjà leurs propres actions, jamais une navigation.
+    if(item.tmdbId){
+      row.classList.add('wl-row-clickable');
+      makeRowClickable(row, (e) => {
+        if(e.target.closest('.wl-actions, .wl-quick-form')) return;
+        goToFilmDetail(item.tmdbId);
+      });
+    }
     list.appendChild(row);
   });
 }

@@ -48,6 +48,11 @@ function buildWatchlistContext(){
     showToast(){},
     escapeHtml(s){ return s; },
     FILM_PLACEHOLDER_SVG: '',
+    // Fiche film au clic sur une ligne watchlist ayant une fiche TMDB (voir
+    // renderWatchlist(), js/watchlist.js), pas exercé par ce test
+    // (remove-with-undo), juste présent pour que le rendu ne plante pas.
+    makeRowClickable(){},
+    goToFilmDetail(){},
     showUndoToast,
     // currentUser/localStorage : nécessaires à offlineQueueKey()/
     // saveOfflineQueueToStorage() (js/offlineQueue.js, file d'attente hors

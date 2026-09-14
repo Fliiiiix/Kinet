@@ -2097,6 +2097,11 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
    de carte en plus de celle déjà posée par .film-modal-poster-col. */
 #tmdbSelected{margin-top:10px;}
 #tmdbSelectedTitle{font-family:'Bricolage Grotesque', sans-serif; font-weight:600; font-size:16px;}
+/* "Voir la fiche du film" / "Retirer la fiche TMDB" : deux .crit-help-toggle
+   côte à côte (inline-block par défaut sur un <button>). Un peu d'air
+   entre les deux pour qu'elles se lisent comme deux actions distinctes,
+   pas un seul libellé qui déborde. */
+#tmdbViewFicheBtn{margin-right:16px;}
 
 /* La note manuelle est une échappatoire exceptionnelle (voir le commentaire
    HTML au-dessus de #manualToggle) — séparée par un filet sous la grille
@@ -3642,11 +3647,18 @@ input[type="range"]::-moz-range-thumb{
   perspective:500px; /* v2.8 : vraie profondeur pour la bascule de .counter, voir counterFlip plus haut */
 }
 /* Série suivie (v2.3) : toute la ligne ouvre la fiche détail au clic (comme
-   .film-row) — voir renderTrackedShows(), js/series.js. Scopé à #seriesList
-   seul : #wlList/#topList gardent leurs propres boutons d'action, pas de
-   clic sur la ligne entière chez eux. */
+   .film-row), voir renderTrackedShows(), js/series.js. #topList (js/top.js)
+   a le même traitement via .top-row plus haut dans ce fichier. */
 #seriesList .wl-row{cursor:pointer; transition:border-color .15s, transform .15s, box-shadow .15s;}
 #seriesList .wl-row:hover{border-color:var(--violet-dim); transform:translateY(-1px); box-shadow:0 10px 24px rgba(0,0,0,0.35);}
+/* Watchlist (retour utilisateur : "je ne peux pas cliquer sur le film pour
+   arriver sur sa fiche de présentation comme dans le top"). Seulement les
+   lignes qui ONT une fiche TMDB (voir renderWatchlist(), js/watchlist.js) :
+   un titre ajouté à la main sans correspondance TMDB n'a nulle part où
+   mener. Même traitement au survol que #seriesList/.top-row juste au-dessus,
+   pour rester cohérent partout où une ligne ouvre une fiche film au clic. */
+.wl-row-clickable{cursor:pointer; transition:border-color .15s, transform .15s, box-shadow .15s;}
+.wl-row-clickable:hover{border-color:var(--violet-dim); transform:translateY(-1px); box-shadow:0 10px 24px rgba(0,0,0,0.35);}
 /* Suggestions (v2.1.x, js/suggestions.js) : halo au survol seulement — pas
    en permanence, la liste reste calme au repos — pour distinguer "on te
    propose ça" d'une ligne de watchlist normale juste en dessous. */
