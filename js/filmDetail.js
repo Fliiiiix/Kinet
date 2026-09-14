@@ -341,6 +341,23 @@ async function handleFilmDetailAddWatchlist(){
   showToast('Ajouté à la watchlist');
 }
 
+// Où regarder (retour utilisateur), voir renderWatchProvidersHtml()
+// (js/tmdb.js). Séparée de renderFilmDetailNotes() (qui ne dépend que de
+// `films`, aucun réseau) pour rester dans le même Promise.all() que le
+// reste des appels TMDB/Supabase ci-dessous, en parallèle plutôt qu'en
+// série. Jamais bloquant : une erreur ici (réseau, film sans donnée FR)
+// n'empêche jamais le reste de la fiche de s'afficher.
+async function renderFilmDetailWatchProviders(){
+  const wrap = document.getElementById('filmDetailWatchProviders');
+  try{
+    const providers = await fetchWatchProviders(currentFilmTmdbId, 'movie');
+    wrap.innerHTML = renderWatchProvidersHtml(providers);
+  }catch(e){
+    console.error(e);
+    wrap.innerHTML = `<div class="tmdb-empty">Disponibilité indisponible pour l'instant.</div>`;
+  }
+}
+
 // Appelée par le routeur (#/film/:tmdbId).
 async function openFilmDetail(tmdbId){
   currentFilmTmdbId = tmdbId;
@@ -348,6 +365,7 @@ async function openFilmDetail(tmdbId){
   document.getElementById('filmDetailOverview').textContent = '';
   document.getElementById('filmDetailMeta').innerHTML = '';
   document.getElementById('filmDetailNotes').innerHTML = '';
+  document.getElementById('filmDetailWatchProviders').innerHTML = `<div class="tmdb-empty">Chargement…</div>`;
   document.getElementById('filmDetailLikesSummary').textContent = '';
   document.getElementById('filmDetailCommentsList').innerHTML = `<div class="tmdb-empty">Chargement…</div>`;
   document.getElementById('filmDetailCommentInput').value = '';
@@ -367,6 +385,7 @@ async function openFilmDetail(tmdbId){
 
   await Promise.all([
     renderFilmDetailNotes(),
+    renderFilmDetailWatchProviders(),
     loadFilmDetailLikes(),
     loadFilmDetailComments()
   ]);

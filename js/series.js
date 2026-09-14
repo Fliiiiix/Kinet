@@ -835,6 +835,20 @@ async function handleSaveSeriesNote(){
   showToast('Note enregistrée');
 }
 
+// Où regarder (retour utilisateur), voir renderWatchProvidersHtml()
+// (js/tmdb.js). Jamais bloquant : une erreur ici (réseau, série sans
+// donnée FR) n'empêche jamais le reste de la fiche de s'afficher.
+async function renderShowDetailWatchProviders(tmdbId){
+  const wrap = document.getElementById('seriesDetailWatchProviders');
+  try{
+    const providers = await fetchWatchProviders(tmdbId, 'tv');
+    wrap.innerHTML = renderWatchProvidersHtml(providers);
+  }catch(e){
+    console.error(e);
+    wrap.innerHTML = `<div class="tmdb-empty">Disponibilité indisponible pour l'instant.</div>`;
+  }
+}
+
 // Page détail d'une série — appelée par le routeur (#/series/:id). Robuste
 // à un lien direct (F5) : recharge la liste des séries si besoin, comme
 // openGroupDetail() (js/groups.js).
@@ -854,10 +868,12 @@ async function openShowDetail(showId){
 
   renderShowDetailHeader(show);
   document.getElementById('seriesSeasonsList').innerHTML = `<div class="tmdb-empty">Chargement…</div>`;
+  document.getElementById('seriesDetailWatchProviders').innerHTML = `<div class="tmdb-empty">Chargement…</div>`;
 
   await Promise.all([
     refreshShowMeta(show),
-    loadWatchedEpisodes(showId)
+    loadWatchedEpisodes(showId),
+    renderShowDetailWatchProviders(show.tmdbId)
   ]);
   renderShowDetailHeader(show); // statut éventuellement mis à jour par refreshShowMeta()
   renderSeasonsList();

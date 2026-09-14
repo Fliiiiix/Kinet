@@ -4585,6 +4585,43 @@ body[data-view-mode="list"] #topList .top-rank{width:26px; font-size:16px;}
   .series-hero{grid-template-columns:1fr;}
   .series-hero-poster{width:140px; margin:0 auto;}
 }
+
+/* Où regarder (fiche film communautaire ET fiche série, retour
+   utilisateur), voir renderWatchProvidersHtml()/watchProviderChipsHtml()
+   (js/tmdb.js). Logos en petites puces carrées, pas de couleur ajoutée : ce
+   sont déjà les couleurs de marque de chaque service, une teinte Kinet par
+   dessus n'aurait aucun sens ici (contrairement au reste de l'app). */
+.watch-providers{display:flex; flex-direction:column; gap:10px;}
+.watch-provider-row{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+.watch-provider-row-label{
+  font-family:'Space Mono', monospace;
+  font-size:11px;
+  color:var(--text-muted);
+  flex:none;
+  width:92px;
+}
+.watch-provider-chips{display:flex; flex-wrap:wrap; gap:6px;}
+.watch-provider-chip{
+  width:32px; height:32px;
+  border-radius:8px;
+  overflow:hidden;
+  border:1px solid var(--line);
+  flex:none;
+  background:var(--surface-2);
+}
+.watch-provider-chip img{width:100%; height:100%; object-fit:cover; display:block;}
+.watch-provider-justwatch{
+  font-family:'Space Mono', monospace;
+  font-size:10.5px;
+  color:var(--text-muted);
+  text-decoration:underline;
+  text-underline-offset:2px;
+  align-self:flex-start;
+}
+@media (max-width:480px){
+  .watch-provider-row{flex-direction:column; align-items:flex-start; gap:6px;}
+  .watch-provider-row-label{width:auto;}
+}
 .series-hero-meta{
   display:flex;
   flex-wrap:wrap;

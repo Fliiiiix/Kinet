@@ -125,6 +125,75 @@ async function fetchTvSeason(tmdbId, seasonNumber){
   return res.json();
 }
 
+// --- Où regarder (films ET séries, retour utilisateur) ---
+// Données JustWatch via TMDB, une seule région (FR) : l'app n'a pas de
+// sélecteur de pays, ni de raison d'en avoir un pour un usage perso en
+// France. https://developer.themoviedb.org/reference/movie-watch-providers
+// (même endpoint côté /tv). Jamais stocké, toujours rappelé en direct
+// (même principe que fetchMovieDetails()/fetchTvDetails() ci-dessus) : un
+// catalogue change de plateforme sans prévenir.
+async function fetchWatchProviders(tmdbId, mediaType){
+  const url = `https://api.themoviedb.org/3/${mediaType}/${tmdbId}/watch/providers`;
+  const res = await fetch(url, {
+    headers: { 'Authorization': `Bearer ${TMDB_API_KEY}`, 'Accept': 'application/json' }
+  });
+  if(!res.ok) throw new Error(`Erreur TMDB (${res.status})`);
+  const data = await res.json();
+  return (data.results && data.results.FR) || null;
+}
+
+// Un même service apparaît parfois dans plusieurs catégories à la fois
+// (ex. Apple TV en location ET en achat), dédupliqué par provider_id,
+// jamais montré deux fois dans la même ligne.
+function watchProviderChipsHtml(items){
+  const seen = new Set();
+  return items
+    .filter(p => {
+      if(seen.has(p.provider_id)) return false;
+      seen.add(p.provider_id);
+      return true;
+    })
+    .map(p => `
+      <span class="watch-provider-chip" title="${escapeHtml(p.provider_name)}">
+        <img src="${WATCH_PROVIDER_IMG_BASE}${p.logo_path}" alt="${escapeHtml(p.provider_name)}" loading="lazy">
+      </span>
+    `)
+    .join('');
+}
+
+// providers : le résultat FR déjà extrait par fetchWatchProviders() (ou
+// null, film/série sans donnée pour la France ce jour-là). "Inclus avec"
+// (flatrate, un abonnement déjà payé) mis en avant avant "Location/Achat" :
+// c'est la question que tout le monde se pose en premier. providers.link
+// (une page TMDB, pas un lien direct vers un service précis : l'API n'en
+// fournit pas) sert d'échappatoire si aucune des plateformes listées ne
+// convient. Attribution JustWatch toujours affichée à côté : imposée par
+// TMDB pour l'usage de cet endpoint précis (contrairement au reste de
+// l'app, où les données viennent directement de TMDB).
+function renderWatchProvidersHtml(providers){
+  if(!providers || (!providers.flatrate && !providers.rent && !providers.buy)){
+    return `<div class="tmdb-empty">Pas d'info de disponibilité pour la France pour l'instant.</div>`;
+  }
+  const flatrateHtml = providers.flatrate ? `
+    <div class="watch-provider-row">
+      <span class="watch-provider-row-label">Inclus avec</span>
+      <div class="watch-provider-chips">${watchProviderChipsHtml(providers.flatrate)}</div>
+    </div>` : '';
+  const buyRent = [...(providers.rent || []), ...(providers.buy || [])];
+  const buyRentHtml = buyRent.length ? `
+    <div class="watch-provider-row">
+      <span class="watch-provider-row-label">Location/Achat</span>
+      <div class="watch-provider-chips">${watchProviderChipsHtml(buyRent)}</div>
+    </div>` : '';
+  return `
+    <div class="watch-providers">
+      ${flatrateHtml}
+      ${buyRentHtml}
+      <a href="${providers.link}" target="_blank" rel="noopener" class="watch-provider-justwatch">Voir tout, données JustWatch ↗</a>
+    </div>
+  `;
+}
+
 function renderTmdbResults(results){
   const wrap = document.getElementById('tmdbResults');
   if(!results.length){

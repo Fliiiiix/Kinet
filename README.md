@@ -766,6 +766,21 @@ de dupliquer un mini-aperçu à chaque endroit. Nécessite
 `supabase/migrations/030_add_film_detail.sql` (table `film_likes` +
 `film_comments`, corrigée par `031_fix_film_likes_comments_default.sql`).
 
+## Où regarder (disponibilité VOD/SVOD)
+
+Sur la fiche film communautaire (`#/film/:tmdbId`) et la fiche d'une série
+suivie (`#/series/:id`) : quelles plateformes proposent ce titre en France
+(Netflix, Canal+, Amazon Prime Video, Apple TV…), séparé entre "Inclus
+avec" (un abonnement) et "Location/Achat". Données JustWatch via l'API
+TMDB (`GET /movie/{id}/watch/providers` ou `/tv/{id}/watch/providers`,
+voir `fetchWatchProviders()`/`renderWatchProvidersHtml()` dans
+`js/tmdb.js`), toujours rappelées en direct comme le reste des métadonnées
+TMDB de l'app, jamais stockées. Une seule région (FR) : pas de sélecteur
+de pays, l'app est faite pour un usage en France. Un lien "Voir tout,
+données JustWatch" (attribution imposée par TMDB pour cet endpoint précis)
+renvoie vers la page TMDB correspondante si aucune des plateformes
+listées ne convient.
+
 ## Profil public
 
 Dans la modale profil, la rangée **"Profil public"** (interrupteur, section
