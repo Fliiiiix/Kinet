@@ -1885,16 +1885,38 @@ create policy "Either party can decline/cancel a pending trade"
 -- Fonction pure séparée (pas inlinée dans upsert_tcg_card()) : réutilisée
 -- telle quelle par open_booster() pour choisir une rareté AVANT de piocher
 -- une carte, voir plus bas.
-create or replace function public.compute_card_rarity(p_popularity numeric)
+--
+-- Seuils séparés par type (migrations/042, retour utilisateur : "les
+-- acteurs ont tous l'air commun") — vérifié contre la vraie API TMDB :
+-- l'échelle de popularité n'a RIEN à voir entre une personne et un film
+-- (Tom Cruise 14, Nolan 8.8, Freeman 9.4, Scorsese 6.5, Streep 5.5 contre
+-- Le Parrain 58, Les Évadés 59, Inception 52, Parasite 37) — les mêmes
+-- seuils appliqués aux deux laissaient la quasi-totalité des personnes,
+-- même légendaires, sous le seuil "rare". Limite assumée, pas prétendue
+-- résolue : popularity reste un signal de BUZZ RÉCENT, pas de notoriété
+-- durable (un réalisateur culte sans sortie récente peut rester "Commun"
+-- malgré son statut réel) — aucune source TMDB équivalente pour une
+-- notoriété "de carrière" sans un chantier à part, hors de portée ici.
+create or replace function public.compute_card_rarity(p_popularity numeric, p_card_type text)
 returns text
 language sql
 immutable
 as $func$
   select case
-    when p_popularity >= 60 then 'legendaire'
-    when p_popularity >= 25 then 'epique'
-    when p_popularity >= 8 then 'rare'
-    else 'commun'
+    when p_card_type = 'film' then
+      case
+        when p_popularity >= 50 then 'legendaire'
+        when p_popularity >= 20 then 'epique'
+        when p_popularity >= 8 then 'rare'
+        else 'commun'
+      end
+    else -- 'actor' / 'director'
+      case
+        when p_popularity >= 14 then 'legendaire'
+        when p_popularity >= 8 then 'epique'
+        when p_popularity >= 4 then 'rare'
+        else 'commun'
+      end
   end;
 $func$;
 
@@ -1922,7 +1944,7 @@ declare
   v_card public.tcg_cards;
 begin
   insert into public.tcg_cards (card_type, tmdb_id, name, image_url, rarity, popularity)
-  values (p_card_type, p_tmdb_id, p_name, p_image_url, public.compute_card_rarity(p_popularity), p_popularity)
+  values (p_card_type, p_tmdb_id, p_name, p_image_url, public.compute_card_rarity(p_popularity, p_card_type), p_popularity)
   on conflict (card_type, tmdb_id) do update set name = excluded.name -- no-op utile : force le retour de la ligne existante via RETURNING ci-dessous
   returning * into v_card;
   return v_card;

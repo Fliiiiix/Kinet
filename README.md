@@ -943,6 +943,23 @@ Tête d'affiche (Épique) → Légende du 7e art (Légendaire). Couleur de
 chaque palier reprise de la palette Halation déjà en place (jamais une
 teinte ajoutée pour l'occasion) : neutre → teal → violet → or.
 
+**Seuils séparés par type de carte** (v2.61, migrations/042, retour
+utilisateur : "les acteurs ont tous l'air commun alors qu'il y a des
+acteurs de légende") — vérifié contre la vraie API TMDB plutôt que
+supposé : l'échelle de popularité n'a RIEN à voir entre une personne et
+un film (ex. Tom Cruise 14, Christopher Nolan 8,8, Morgan Freeman 9,4,
+Martin Scorsese 6,5 contre Le Parrain 58, Les Évadés 59, Inception 52,
+Parasite 37) — les mêmes seuils appliqués aux deux laissaient quasiment
+toutes les personnes, même légendaires, sous le seuil "Rare". Seuils
+film : Rare ≥8, Épique ≥20, Légendaire ≥50. Seuils personne (acteur/
+réalisateur) : Rare ≥4, Épique ≥8, Légendaire ≥14. Toute carte déjà
+générée avant ce correctif est automatiquement recalculée (popularity
+déjà en base, pas besoin de rappeler TMDB). **Limite assumée, pas
+prétendue résolue** : `popularity` reste un signal de buzz RÉCENT (TMDB),
+pas de notoriété durable — un réalisateur culte sans sortie récente peut
+rester "Commun" malgré son statut réel ; aucune source TMDB équivalente
+pour une notoriété "de carrière" sans un chantier à part.
+
 **Débloquer des boosters** — 2 films VUS (table `viewings`, un
 revisionnage compte) = 1 booster de 5 cartes, toujours recalculé
 (`get_available_boosters()`) depuis le nombre de visionnages moins les
