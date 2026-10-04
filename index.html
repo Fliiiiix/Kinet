@@ -1367,6 +1367,17 @@
           <span class="mm-row-body"><span class="mm-row-title">Journal</span><span class="mm-row-sub">Historique de tes visionnages.</span></span>
           <span class="mm-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg></span>
         </button>
+        <!-- Assistant (chatbot, retour utilisateur, "un début") — voir
+             js/chatbot.js. Même emplacement "Mon activité" plutôt qu'une
+             bulle flottante globale : les coins de l'écran sont déjà pris
+             (.fab/.scroll-top-btn se repositionnent déjà l'un par rapport
+             à l'autre sous le seuil mobile, voir css/style.css), pas la
+             peine d'en disputer un 3e. -->
+        <button class="mm-row" id="chatbotBtn" type="button">
+          <span class="mm-icon ic-teal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4.5h16a1 1 0 011 1V16a1 1 0 01-1 1H9l-4.5 4V17H4a1 1 0 01-1-1V5.5a1 1 0 011-1z"></path><circle cx="8.3" cy="10.5" r="1"></circle><circle cx="12" cy="10.5" r="1"></circle><circle cx="15.7" cy="10.5" r="1"></circle></svg></span>
+          <span class="mm-row-body"><span class="mm-row-title">Assistant</span><span class="mm-row-sub">Conseils ciné, discussion, aide dans l'app.</span></span>
+          <span class="mm-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg></span>
+        </button>
         <!-- v2.1.x — Top films/Avis/Nouveautés vivaient UNIQUEMENT dans la
              rangée d'icônes de l'entête (#topBtn/#feedbackBtn/#changelogBtn),
              invisible sur mobile (#userBar disparaît entièrement, remplacé
@@ -1769,6 +1780,24 @@ Légende du 7e art (Légendaire) 3%</div>
   </div>
 </div>
 
+<!-- Assistant (chatbot, retour utilisateur, "un début") — voir
+     js/chatbot.js. Appelle une Supabase Edge Function
+     (supabase/functions/chat), qui seule détient la clé API — jamais côté
+     client, voir le commentaire en tête de ce fichier-là. -->
+<div class="overlay" id="chatbotOverlay">
+  <div class="modal chatbot-modal">
+    <div class="modal-head">
+      <h2>💬 Assistant Kinet</h2>
+      <button class="close-x" id="closeChatbot" aria-label="Fermer">✕</button>
+    </div>
+    <div class="chatbot-messages" id="chatbotMessages"></div>
+    <div class="chatbot-input-row">
+      <textarea id="chatbotInput" placeholder="Écris un message…" rows="1"></textarea>
+      <button class="btn" id="chatbotSendBtn" type="button">Envoyer</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal admin (succès + happenings + avis + stats) — voir js/admin.js -->
 <div class="overlay" id="adminOverlay">
   <div class="modal stats-modal admin-modal">
@@ -2010,6 +2039,7 @@ Légende du 7e art (Légendaire) 3%</div>
      n'est appelé ici avant un vrai clic/ajout) : les deux appellent
      generateTcgCardsForFilm(), définie ici. -->
 <script src="js/tcg.js?v=168"></script>
+<script src="js/chatbot.js?v=168"></script>
 <script src="js/journal.js?v=168"></script>
 <!-- Après app.js (showToast) — appelée par js/profile.js juste après. -->
 <script src="js/pwa.js?v=168"></script>

@@ -3715,6 +3715,84 @@ input[type="range"]::-moz-range-thumb{
   .tcg-booster-card{width:108px; height:162px;}
 }
 
+/* --- Assistant (chatbot, retour utilisateur, "un début") --- voir
+   js/chatbot.js. Bulles façon messagerie (bot à gauche, toi à droite) —
+   langage déjà familier, pas la peine d'inventer une présentation à part
+   pour une conversation. */
+.chatbot-modal{
+  max-width:480px;
+  display:flex;
+  flex-direction:column;
+  height:min(600px, 80vh);
+}
+.chatbot-messages{
+  flex:1;
+  overflow-y:auto;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  padding:4px 2px 12px;
+  margin-bottom:12px;
+}
+.chatbot-msg{
+  max-width:85%;
+  padding:10px 14px;
+  border-radius:14px;
+  font-size:13.5px;
+  line-height:1.55;
+  white-space:pre-line;
+}
+.chatbot-msg-bot{
+  align-self:flex-start;
+  background:var(--surface-2);
+  border:1px solid var(--line);
+  border-bottom-left-radius:4px;
+}
+.chatbot-msg-user{
+  align-self:flex-end;
+  background:var(--violet);
+  color:var(--ink);
+  border-bottom-right-radius:4px;
+}
+.chatbot-msg-error{
+  align-self:flex-start;
+  background:rgba(255,107,87,0.1);
+  border:1px solid var(--coral-dim);
+  color:var(--coral);
+  border-bottom-left-radius:4px;
+}
+/* Indicateur "en train d'écrire" — 3 points qui pulsent en cascade, même
+   principe que .skeleton-block ailleurs (une attente qui se voit plutôt
+   qu'un silence plat) mais en boucle légère plutôt qu'un dégradé qui
+   défile : une réponse de chatbot n'a pas de progression connue à
+   montrer, juste "ça travaille". */
+.chatbot-typing{display:inline-flex; gap:4px; padding:3px 2px;}
+.chatbot-typing span{
+  width:6px; height:6px;
+  border-radius:50%;
+  background:var(--text-muted);
+  animation:chatbotTypingPulse 1.2s ease-in-out infinite;
+}
+.chatbot-typing span:nth-child(2){animation-delay:.15s;}
+.chatbot-typing span:nth-child(3){animation-delay:.3s;}
+@keyframes chatbotTypingPulse{
+  0%, 60%, 100%{opacity:0.3; transform:scale(0.8);}
+  30%{opacity:1; transform:scale(1);}
+}
+@media (prefers-reduced-motion:reduce){
+  .chatbot-typing span{animation:none; opacity:0.6;}
+}
+.chatbot-input-row{display:flex; gap:10px; align-items:flex-end;}
+.chatbot-input-row textarea{
+  flex:1;
+  resize:none;
+  max-height:120px;
+  line-height:1.4;
+}
+@media (max-width:600px){
+  .chatbot-modal{height:85vh;}
+}
+
 /* Onglet Retours (admin, v2.1) — une ligne par retour, regroupées par
    catégorie dans des .stats-section (mêmes classes que l'onglet
    Statistiques, pas un nouveau conteneur). */

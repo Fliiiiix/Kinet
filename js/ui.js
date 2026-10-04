@@ -143,6 +143,7 @@ document.addEventListener('keydown', (e) => {
         loadTcgCollection().then(renderTcgCollection);
       }
     },
+    chatbotOverlay: () => closeChatbotModal(),
     // Tuto d'accueil (js/onboarding.js) : pas un .overlay (voile+carte
     // construits à part, voir css/style.css) mais même convention de
     // classe "open" sur son conteneur, pour rejoindre cette table sans
