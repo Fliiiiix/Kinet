@@ -16,3 +16,10 @@ const TMDB_IMG_BASE = 'https://image.tmdb.org/t/p/w342';
 // jamais affichées plus grand que ~32px, w45 suffisant, inutile de tirer
 // w342 comme pour une affiche.
 const WATCH_PROVIDER_IMG_BASE = 'https://image.tmdb.org/t/p/w45';
+// Photo de plateau en tête de fiche film/série (.detail-backdrop, format
+// large 16:9, PAS le même fichier que l'affiche 2:3) — w780 : net sur un
+// bandeau qui peut dépasser 1000px de large (.container), w342 (pensé pour
+// une affiche compacte de liste) sortirait flou étiré à cette taille-là ;
+// l'original (souvent >1920px) serait inutilement lourd pour un fond
+// discret derrière un dégradé.
+const TMDB_BACKDROP_IMG_BASE = 'https://image.tmdb.org/t/p/w780';

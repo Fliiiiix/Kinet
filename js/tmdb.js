@@ -194,6 +194,23 @@ function renderWatchProvidersHtml(providers){
   `;
 }
 
+// --- Photo de plateau en tête de fiche film/série (retour utilisateur),
+// voir .detail-backdrop (css/style.css). backdropPath : details.backdrop_path
+// brut de TMDB (déjà dans l'objet que fetchMovieDetails()/fetchTvDetails()
+// renvoie, simplement jamais lu jusqu'ici) — null pour un titre qui n'en a
+// pas, pas systématique. containerId/imgId : les deux fiches (film et
+// série) partagent .detail-backdrop mais pas leurs id, un seul helper leur
+// suffit en le paramétrant plutôt que dupliquer la même logique deux fois.
+function renderDetailBackdrop(containerId, imgId, backdropPath){
+  const container = document.getElementById(containerId);
+  if(!backdropPath){
+    container.style.display = 'none';
+    return;
+  }
+  document.getElementById(imgId).src = TMDB_BACKDROP_IMG_BASE + backdropPath;
+  container.style.display = '';
+}
+
 function renderTmdbResults(results){
   const wrap = document.getElementById('tmdbResults');
   if(!results.length){

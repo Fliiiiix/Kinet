@@ -408,6 +408,29 @@ conseillé…). Deux actions par item :
 
 Nécessite `supabase/migrations/006_add_watchlist.sql`.
 
+### Filtre par plateforme (v2.50)
+
+Retour utilisateur : avec "Où regarder" déjà posé sur la fiche film
+(section dédiée plus bas), retrouver facilement les films de la watchlist
+déjà inclus dans un abonnement payé (ex. Netflix) plutôt que de cliquer
+chaque titre un par un. À l'ouverture de `#/watchlist`,
+`loadWatchlistProviders()` (`js/watchlist.js`) interroge TMDB pour chaque
+item qui a une fiche (même endpoint que "Où regarder", **flatrate
+uniquement** — un abonnement déjà payé, pas la location/achat à l'unité,
+qui ne dit rien d'une plateforme en particulier), en parallèle, sans
+bloquer l'affichage de la liste (déjà visible pendant que ça tourne en
+arrière-plan). Un `<select>` apparaît ensuite au-dessus de la liste, à
+côté de "🎲 Surprends-moi" — ses options sont construites UNIQUEMENT à
+partir des plateformes réellement présentes dans la watchlist (même
+principe que le filtre genre du catalogue, `buildGenreFilterOptions()`,
+`js/app.js`) : jamais de Netflix/Canal+/Prime… générique si rien n'y est
+dispo, et le select reste masqué entièrement tant qu'aucune plateforme
+n'est connue. Jamais stocké en base ni mis en cache entre deux ouvertures
+de la page (même philosophie que "Où regarder" : la disponibilité change
+sans prévenir). Un item sans fiche TMDB (titre ajouté à la main) n'a
+jamais de plateforme connue, donc disparaît sous un filtre actif —
+cohérent, pas un bug.
+
 ## Séries (v2.0.5)
 
 L'icône **📺** dans l'entête mène à `#/series`, une page à part entière

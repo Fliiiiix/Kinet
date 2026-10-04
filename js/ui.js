@@ -146,6 +146,19 @@ document.addEventListener('keydown', (e) => {
       return; // une seule à la fois : les modales ne s'empilent jamais dans cette app
     }
   }
+  // Happenings (easter eggs, js/happenings.js) : chaque modale est créée à
+  // la volée (document.body.appendChild(overlay)) sans id fixe, donc absente
+  // de la table ci-dessus — jamais rejointe par l'audit clavier d'origine,
+  // Échap n'y faisait donc rien jusqu'ici. Repli générique plutôt qu'une
+  // entrée par happening (une douzaine, et ça grandit) : si la boucle
+  // au-dessus n'a rien trouvé, la seule .overlay.open qui puisse encore
+  // traîner est forcément une modale de happening (.happening-modal, classe
+  // exclusive à js/happenings.js) — pas besoin de la distinguer plus que ça.
+  // Retrait direct (pas de closeOverlay()) : les happenings ferment déjà
+  // ainsi au clic sur le voile/✕, jamais avec l'animation de sortie
+  // overlayOut/modalOut réservée aux modales "officielles" de l'app.
+  const happeningOverlay = document.querySelector('.overlay.open');
+  if(happeningOverlay) happeningOverlay.remove();
 });
 
 // --- Molette pour affiner un curseur de note ---

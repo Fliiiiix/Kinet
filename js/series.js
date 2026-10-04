@@ -364,6 +364,7 @@ function formatDateFr(dateStr){
 
 function renderShowDetailHeader(show){
   document.getElementById('seriesDetailTitle').textContent = show.title;
+  renderDetailBackdrop('seriesDetailBackdrop', 'seriesDetailBackdropImg', show.backdropPath);
   const posterImg = document.getElementById('seriesDetailPoster');
   const posterPlaceholder = document.getElementById('seriesDetailPosterPlaceholder');
   if(show.posterUrl){
@@ -400,6 +401,11 @@ async function refreshShowMeta(show){
     console.error(e);
     return show; // pas bloquant : on affiche l'instantané existant
   }
+  // Photo de plateau (.detail-backdrop) : jamais stockée en base (même
+  // logique que "Où regarder", toujours re-demandée), juste posée sur
+  // l'objet show en mémoire — indépendante du succès de la mise à jour
+  // Supabase juste en dessous, contrairement à status/numberOfSeasons.
+  show.backdropPath = details.backdrop_path || null;
   const updates = {
     status: details.status || null,
     number_of_seasons: details.number_of_seasons || null,

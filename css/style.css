@@ -416,7 +416,12 @@ header{
   gap:10px;
   flex:none;
 }
-#userDisplayName{white-space:nowrap;}
+/* max-width + ellipsis (même traitement que .film-title) : #userDisplayName
+   n'a jamais eu de garde-fou de largeur — un pseudo un peu long (aucune
+   limite de longueur côté saisie/base, voir js/profile.js) pousserait
+   .user-identity à s'étirer bien au-delà de sa place dans .header-top,
+   jamais repéré faute d'avoir jamais été testé avec un pseudo pareil. */
+#userDisplayName{white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:160px;}
 /* Photo de profil : bien visible (elle sert aussi de bouton d'accès au
    profil, voir js/profile.js) — plus de bouton "Profil" ni "Déconnexion"
    séparés dans le header (déconnexion déplacée dans la modale profil, voir
@@ -4374,12 +4379,36 @@ input[type="range"]::-moz-range-thumb{
   80%{transform:translateX(3px);}
 }
 
+/* Parasite : le caillou flotte doucement (la crue) tant que le plan n'est
+   pas fait, puis s'enfonce une seule fois au clic — même idée que le ciel
+   de Truman Show juste au-dessus (un état qui bascule, jamais un aller-
+   retour), jamais résolu pour de bon comme la toupie d'Inception : le texte
+   change, le caillou ne redevient jamais net. */
+.parasite-rock{
+  font-size:56px;
+  text-align:center;
+  margin:16px 0;
+  animation:parasiteDrift 2.4s ease-in-out infinite;
+}
+.parasite-rock.static{animation:none;}
+.parasite-rock.sunk{animation:parasiteSink 1.2s ease-in forwards;}
+@keyframes parasiteDrift{
+  0%, 100%{transform:translateY(0) rotate(-4deg);}
+  50%{transform:translateY(-10px) rotate(4deg);}
+}
+@keyframes parasiteSink{
+  from{transform:translateY(0); opacity:1;}
+  to{transform:translateY(28px); opacity:0.15;}
+}
+
 @media (prefers-reduced-motion:reduce){
   .oldboy-corridor-track{animation:none; transform:translateX(-140px);}
   .whiplash-metronome-arm{animation:none; transform:rotate(18deg);}
   .paprika-parade-track{animation:none; transform:translateX(-260px);}
   .inception-top{animation:none;}
   .truman-sky{transition:none;}
+  .parasite-rock{animation:none;}
+  .parasite-rock.sunk{animation:none; transform:translateY(28px); opacity:0.15;}
 }
 
 /* ============================================================
@@ -4576,6 +4605,58 @@ body[data-view-mode="list"] #topList .top-rank{width:26px; font-size:16px;}
    les films") pour rejoindre le même langage que .film-modal-layout et
    .film-review-layout, avec une affiche nettement plus grande que
    l'ancien 130×195px fixe plutôt qu'une simple vignette à côté du texte. */
+/* Photo de plateau (retour utilisateur : "on n'a jamais l'image du film,
+   juste l'affiche") — voir renderDetailBackdrop() (js/tmdb.js), appelée
+   depuis js/filmDetail.js et js/series.js. TMDB fournit un backdrop_path
+   (format large, 16:9) séparé du poster_path (2:3) déjà utilisé partout
+   ailleurs — jamais rappelé jusqu'ici, alors que c'est la seule vraie photo
+   du film que renvoie l'API, le reste n'étant que des affiches. Toujours en
+   PLUS de l'affiche, jamais à sa place : la vignette 2:3 reste la donnée de
+   référence (grille, watchlist, recherche...), ce bandeau est un décor
+   d'ambiance propre à la fiche détail. Masqué entièrement si TMDB n'a pas
+   de backdrop_path pour ce titre (pas systématique, surtout sur un film
+   ancien/confidentiel) — jamais un cadre vide à sa place. */
+.detail-backdrop{
+  position:relative;
+  height:220px;
+  border-radius:16px;
+  overflow:hidden;
+  margin-bottom:28px;
+  border:1px solid var(--line);
+  background:var(--surface-2);
+}
+.detail-backdrop img{
+  width:100%; height:100%;
+  object-fit:cover;
+  display:block;
+  opacity:0;
+  animation:detailBackdropIn .5s ease-out both;
+}
+@keyframes detailBackdropIn{from{opacity:0;} to{opacity:1;}}
+/* Voile + teinte Halation par-dessus la photo, jamais l'inverse (jamais de
+   couleur ajoutée à même l'image) — même raisonnement que --plum/--plum-2
+   dans :root (voir le commentaire associé) : une vraie photo assombrie
+   reste un choix de gradation, volontairement identique quel que soit le
+   thème, pas une surface qui doit s'éclaircir avec le reste de la page.
+   rgba(15,14,22,...) est la valeur littérale de --ink, jamais retéintée
+   entre thèmes non plus. Lisibilité du titre/genre juste en dessous d'abord
+   (voile bas), lueur violet/or en diagonale ensuite, pour une vraie photo
+   qui reste "Kinet" plutôt qu'une capture brute plaquée telle quelle. */
+.detail-backdrop::after{
+  content:'';
+  position:absolute; inset:0;
+  background:
+    linear-gradient(0deg, rgba(15,14,22,0.65) 0%, rgba(15,14,22,0.1) 55%, transparent 78%),
+    linear-gradient(100deg, rgba(140,124,255,0.22) 0%, transparent 45%),
+    linear-gradient(260deg, rgba(231,178,76,0.16) 0%, transparent 40%);
+}
+@media (prefers-reduced-motion:reduce){
+  .detail-backdrop img{animation:none; opacity:1;}
+}
+@media (max-width:600px){
+  .detail-backdrop{height:140px; border-radius:12px; margin-bottom:20px;}
+}
+
 .series-hero{
   display:grid;
   grid-template-columns:180px 1fr;

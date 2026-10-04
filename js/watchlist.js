@@ -16,6 +16,14 @@ let convertingFromWatchlistId = null;
 // watchlistId -> [{ friendId, note }], voir get_watchlist_friend_ratings()
 // (migrations/039), jointure fiable sur tmdb_id (jamais le titre).
 let watchlistFriendRatings = {};
+// Filtre "dispo sur ma plateforme" (retour utilisateur) — tmdbId -> liste
+// de plateformes en ABONNEMENT (flatrate uniquement, voir
+// loadWatchlistProviders() plus bas) ; absent tant que non vérifié, []
+// explicitement vide si vérifié mais aucune plateforme FR. Jamais stocké en
+// base ni mis en cache entre deux ouvertures de la page, même philosophie
+// que "Où regarder" sur la fiche film (js/tmdb.js, js/filmDetail.js) : la
+// disponibilité change sans prévenir.
+let watchlistProviders = {};
 
 async function loadWatchlist(){
   const { data, error } = await supabaseClient
@@ -78,8 +86,21 @@ function renderWatchlist(){
     list.innerHTML = `<div class="empty-state">Rien pour l'instant. Ajoute un film ci-dessus.</div>`;
     return;
   }
+  // Filtre plateforme (retour utilisateur) — select masqué tant qu'il n'a
+  // pas d'options réelles (voir buildWatchlistProviderFilterOptions()), donc
+  // toujours "" (aucun filtre) à ce moment-là ; getElementById plutôt qu'une
+  // valeur passée en paramètre, même choix que genreFilter/yearFilter dans
+  // render() (js/app.js) pour rester la seule source de vérité.
+  const providerFilter = document.getElementById('wlProviderFilter').value;
+  const filtered = providerFilter
+    ? watchlist.filter(item => (watchlistProviders[item.tmdbId] || []).some(p => String(p.provider_id) === providerFilter))
+    : watchlist;
+  if(filtered.length === 0){
+    list.innerHTML = `<div class="empty-state">Rien de ta watchlist n'est dispo là-dessus pour l'instant.</div>`;
+    return;
+  }
   list.innerHTML = '';
-  watchlist.forEach(item => {
+  filtered.forEach(item => {
     const row = document.createElement('div');
     row.className = 'wl-row';
     const friendLabel = friendRatingsLabel(item.id);
@@ -158,6 +179,57 @@ async function loadWatchlistFriendRatings(){
   }
 }
 
+// Filtre "dispo sur ma plateforme" (retour utilisateur : "trouver
+// facilement les films de ma watchlist dispo sur Netflix") — une requête
+// TMDB par film qui a une fiche (même endpoint que "Où regarder", voir
+// fetchWatchProviders(), js/tmdb.js), en parallèle plutôt qu'en série : une
+// watchlist de taille normale (quelques dizaines de titres) reste rapide,
+// et un seul film qui échoue (réseau, titre sans donnée FR) n'empêche pas
+// les autres de s'afficher. Résultat posé sur watchlistProviders avant même
+// que tout le lot soit fini n'aurait pas de sens ici (contrairement à
+// openWatchlist() plus bas qui, lui, affiche déjà la liste sans attendre) —
+// le filtre lui-même n'a aucun intérêt tant qu'il ne connaît qu'une partie
+// des films, Promise.all attend donc le lot entier avant de rendre la main.
+async function loadWatchlistProviders(){
+  watchlistProviders = {};
+  const withTmdbId = watchlist.filter(item => item.tmdbId);
+  await Promise.all(withTmdbId.map(async (item) => {
+    try{
+      const providers = await fetchWatchProviders(item.tmdbId, 'movie');
+      watchlistProviders[item.tmdbId] = (providers && providers.flatrate) || [];
+    }catch(e){
+      console.error(e);
+      watchlistProviders[item.tmdbId] = [];
+    }
+  }));
+}
+
+// Options de #wlProviderFilter — même principe que buildGenreFilterOptions()
+// (js/app.js) : seules les plateformes RÉELLEMENT présentes dans la
+// watchlist (jamais une liste Netflix/Canal+/Prime... générique, une
+// plateforme qui ne concerne aucun film n'a rien à faire dans ce select).
+// Un même provider_id peut revenir sur plusieurs films, dédupliqué ici.
+function buildWatchlistProviderFilterOptions(){
+  const sel = document.getElementById('wlProviderFilter');
+  const current = sel.value;
+  const present = new Map(); // provider_id -> provider_name
+  Object.values(watchlistProviders).forEach(list => {
+    list.forEach(p => present.set(p.provider_id, p.provider_name));
+  });
+  if(present.size === 0){
+    sel.style.display = 'none';
+    sel.innerHTML = `<option value="">Toutes les plateformes</option>`;
+    return;
+  }
+  const options = Array.from(present.entries())
+    .sort((a, b) => a[1].localeCompare(b[1], 'fr'))
+    .map(([id, name]) => `<option value="${id}">${escapeHtml(name)}</option>`)
+    .join('');
+  sel.innerHTML = `<option value="">Toutes les plateformes</option>${options}`;
+  sel.style.display = '';
+  if(current && present.has(Number(current))) sel.value = current;
+}
+
 // Page watchlist — appelée par le routeur (#/watchlist).
 async function openWatchlist(){
   document.getElementById('wlList').innerHTML = skeletonRows();
@@ -169,6 +241,10 @@ async function openWatchlist(){
   // que refreshActivityBadge()/maybeShowDigest(), js/auth.js).
   loadSuggestions();
   loadWatchlistFriendRatings().then(renderWatchlist);
+  loadWatchlistProviders().then(() => {
+    buildWatchlistProviderFilterOptions();
+    renderWatchlist();
+  });
 }
 
 async function handleAddToWatchlist(){
@@ -466,3 +542,4 @@ document.getElementById('wlTitleInput').addEventListener('blur', () => {
   setTimeout(() => { document.getElementById('wlTmdbResults').innerHTML = ''; }, 150);
 });
 document.getElementById('wlTmdbClearBtn').addEventListener('click', clearWlTmdbSelection);
+document.getElementById('wlProviderFilter').addEventListener('change', renderWatchlist);

@@ -84,6 +84,12 @@ const HAPPENINGS = [
     trigger: 'click',
     icon: '🌀',
     run: runInceptionHappening
+  },
+  {
+    tmdbId: 496243, // Parasite (2019)
+    trigger: 'click',
+    icon: '🪨',
+    run: runParasiteHappening
   }
 ];
 
@@ -732,6 +738,38 @@ function runInceptionHappening(){
   document.body.appendChild(overlay);
   overlay.addEventListener('click', (e) => {
     if(e.target === overlay || e.target.closest('[data-close]')) overlay.remove();
+  });
+}
+
+// --- Parasite : le caillou (수석) que Min offre à Ki-woo "pour la chance
+// matérielle" — il finit emporté dans la crue, jamais vraiment perdu.
+// Comme la toupie d'Inception juste au-dessus, jamais résolu pour de bon :
+// le clic ne fait que remplacer un vœu par un autre vœu, pas par la fin
+// réelle du film.
+function runParasiteHappening(){
+  const reduced = prefersReducedMotion();
+  const overlay = document.createElement('div');
+  overlay.className = 'overlay open';
+  overlay.innerHTML = `
+    <div class="modal happening-modal">
+      <div class="modal-head">
+        <h2>🪨 Il continue de me suivre.</h2>
+        <button class="close-x" data-close aria-label="Fermer">✕</button>
+      </div>
+      <div class="parasite-rock${reduced ? ' static' : ''}" id="parasiteRock">🪨</div>
+      <p class="happening-caption" id="parasiteCaption">Min le lui avait offert pour porter chance. Ki-woo ne l'a plus jamais lâché — même dans l'eau qui monte.</p>
+      <button class="btn" id="parasitePlanBtn" type="button">Faire le plan</button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', (e) => {
+    if(e.target === overlay || e.target.closest('[data-close]')) overlay.remove();
+  });
+  document.getElementById('parasitePlanBtn').addEventListener('click', () => {
+    document.getElementById('parasitePlanBtn').remove();
+    document.getElementById('parasiteRock').classList.add('sunk');
+    document.getElementById('parasiteCaption').textContent =
+      'Je vais gagner beaucoup d\'argent, et un jour, sans un mot, j\'achète cette maison. Papa n\'aura qu\'à descendre l\'escalier.';
   });
 }
 

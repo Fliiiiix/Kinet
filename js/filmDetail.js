@@ -31,6 +31,7 @@ function normalizeMovieDetails(details){
     title: details.title,
     original_title: details.original_title && details.original_title !== details.title ? details.original_title : null,
     poster_url: details.poster_path ? TMDB_IMG_BASE + details.poster_path : null,
+    backdrop_path: details.backdrop_path || null,
     overview: details.overview || null,
     release_year: details.release_date ? parseInt(details.release_date.slice(0, 4), 10) : null,
     release_date: details.release_date || null,
@@ -41,6 +42,7 @@ function normalizeMovieDetails(details){
 function renderFilmDetailHeader(){
   const d = currentFilmData;
   document.getElementById('filmDetailTitle').textContent = d.title;
+  renderDetailBackdrop('filmDetailBackdrop', 'filmDetailBackdropImg', d.backdrop_path);
   const posterImg = document.getElementById('filmDetailPoster');
   const posterPlaceholder = document.getElementById('filmDetailPosterPlaceholder');
   if(d.poster_url){
@@ -176,7 +178,7 @@ function commentReactionsHtml(commentId){
       ${COMMENT_REACTION_EMOJIS.map(emoji => {
         const forThis = reactions.filter(r => r.emoji === emoji);
         const mine = forThis.some(r => r.userId === currentUser.id);
-        return `<button type="button" class="reaction-btn ${mine ? 'active' : ''}" data-emoji="${emoji}" title="Réagir avec ${emoji}" aria-pressed="${mine}">${emoji}${forThis.length > 0 ? `<span class="reaction-count">${forThis.length}</span>` : ''}</button>`;
+        return `<button type="button" class="reaction-btn ${mine ? 'active' : ''}" data-emoji="${emoji}" title="Réagir avec ${emoji}" aria-label="Réagir avec ${emoji}" aria-pressed="${mine}">${emoji}${forThis.length > 0 ? `<span class="reaction-count">${forThis.length}</span>` : ''}</button>`;
       }).join('')}
     </div>
   `;
@@ -362,6 +364,7 @@ async function renderFilmDetailWatchProviders(){
 async function openFilmDetail(tmdbId){
   currentFilmTmdbId = tmdbId;
   document.getElementById('filmDetailTitle').textContent = 'Chargement…';
+  document.getElementById('filmDetailBackdrop').style.display = 'none';
   document.getElementById('filmDetailOverview').textContent = '';
   document.getElementById('filmDetailMeta').innerHTML = '';
   document.getElementById('filmDetailNotes').innerHTML = '';

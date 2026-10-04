@@ -13,6 +13,7 @@ security definer
 set search_path = public
 stable
 as $func$
+
   with rated as (
     select f.tmdb_id, f.user_id,
       coalesce(f.manual_note, (

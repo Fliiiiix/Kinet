@@ -106,7 +106,7 @@ function renderAdminAchievementsTab(){
         </div>
         <div class="wl-actions">
           <label class="manual-toggle-label"><input type="checkbox" class="admin-ach-enabled" data-group="${g.key}" ${enabled ? 'checked' : ''}><span>Activé</span></label>
-          ${isOverridden ? `<button class="btn secondary admin-reset-tiers" data-group="${g.key}" type="button" title="Revenir aux seuils par défaut">↺</button>` : ''}
+          ${isOverridden ? `<button class="btn secondary admin-reset-tiers" data-group="${g.key}" type="button" title="Revenir aux seuils par défaut" aria-label="Revenir aux seuils par défaut">↺</button>` : ''}
         </div>
       </div>
     `;
@@ -225,7 +225,7 @@ function renderAdminHappeningsTab(){
         <div class="wl-actions">
           <label class="manual-toggle-label"><input type="checkbox" class="admin-custom-enabled" data-id="${c.id}" ${enabled ? 'checked' : ''}><span>Activé</span></label>
           <button class="btn secondary admin-replay-custom" data-id="${c.id}" type="button">▶ Revivre</button>
-          <button class="btn secondary admin-delete-custom" data-id="${c.id}" type="button" title="Supprimer">🗑</button>
+          <button class="btn secondary admin-delete-custom" data-id="${c.id}" type="button" title="Supprimer" aria-label="Supprimer">🗑</button>
         </div>
       </div>
     `;
@@ -414,7 +414,7 @@ function renderAdminChangelogTab(){
       <div class="wl-actions">
         <button class="btn secondary admin-changelog-toggle" data-id="${e.id}" type="button">${e.published ? 'Dépublier' : 'Publier'}</button>
         <button class="btn secondary admin-changelog-edit" data-id="${e.id}" type="button">Modifier</button>
-        <button class="btn secondary admin-changelog-delete" data-id="${e.id}" type="button" title="Supprimer">🗑</button>
+        <button class="btn secondary admin-changelog-delete" data-id="${e.id}" type="button" title="Supprimer" aria-label="Supprimer">🗑</button>
       </div>
     </div>
   `).join('');
