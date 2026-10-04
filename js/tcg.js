@@ -311,6 +311,9 @@ function closeTcgModal(){
   closeOverlay('tcgOverlay', () => openProfileModal());
 }
 
+document.getElementById('tcgOddsToggle').addEventListener('click', () => {
+  document.getElementById('tcgOddsHelp').classList.toggle('open');
+});
 document.getElementById('tcgScanBtn').addEventListener('click', handleScanCatalog);
 document.getElementById('tcgBtn').addEventListener('click', openTcgModal);
 document.getElementById('closeTcg').addEventListener('click', closeTcgModal);

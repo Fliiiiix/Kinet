@@ -955,8 +955,15 @@ navigateur) : chaque carte d'un booster vient à 70% du pool **personnel**
 de la watchlist de ce compte) et à 30% du pool **global** (toute carte
 déjà générée par n'importe quel compte) — retour utilisateur explicite :
 empêcher qu'ajouter UN film précis garantisse UNE carte précise. La
-rareté de chaque carte est tirée D'ABORD et indépendamment de la source.
-Au moins 1 carte Rare+ garantie par booster.
+rareté de chaque carte est tirée D'ABORD et indépendamment de la source —
+Commun 60% / Rare 27% / Épique 10% / Légendaire 3%, au moins 1 carte
+Rare+ garantie par booster. Chacune des 5 cartes d'un booster est un
+tirage à part entière : obtenir la carte d'un film ne garantit JAMAIS
+celle d'un membre de son casting, rien ne les lie entre elles (retour
+utilisateur, clarification explicite demandée). Probabilités affichées en
+clair dans l'app ("Voir les probabilités de tirage", repli `.crit-help`
+déjà utilisé pour l'aide des critères de notation) — jamais seulement
+dans ce fichier ou les commentaires SQL.
 
 **Doublons** — convertibles en poussière (`disenchant_card()`, valeur
 croissante avec la rareté), dépensable pour fabriquer une carte précise de
