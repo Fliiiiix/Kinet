@@ -16,6 +16,7 @@ function openSettingsModal(){
   closeProfileModal();
   document.getElementById('lightThemeToggle').checked = getTheme() === 'light';
   document.getElementById('reduceMotionToggle').checked = getReduceMotion();
+  document.getElementById('soundToggle').checked = getSoundEnabled();
   // Installation en app (js/pwa.js) : reconstruite à chaque ouverture — le
   // prompt natif peut être devenu disponible depuis la dernière fois.
   updateInstallUI();

@@ -51,6 +51,7 @@ critique-films/
 ├── js/happenings.js                                                   → easter eggs par film (tmdb_id), façon Letterboxd
 ├── js/admin.js                                                         → interface admin (succès, happenings, nouveautés, avis, stats)
 ├── js/invites.js                                                        → lien d'invitation de groupe (#/invite/:token)
+├── js/sound.js                                                           → son (tic roulette, Web Audio synthétisé, zéro fichier audio) — voir la section dédiée plus bas
 ├── tests/                                                                 → suite de tests de régression (voir tests/README.md)
 └── supabase/
     ├── schema.sql                  → schéma complet (nouveau projet)
@@ -427,8 +428,28 @@ le CSS) : survit au seuil mobile, qui réduit la largeur des cases. "Encore
 un" relance un tirage complet (pas un simple remplacement du résultat) —
 boutons désactivés et repère purement décoratif pour un lecteur d'écran
 (`aria-hidden`) le temps du tirage, résultat annoncé par `#surpriseContent`
-(`aria-live`) une fois la bande arrêtée. `prefers-reduced-motion` : la
-bande se pose directement sur le tirage, sans défiler.
+(`aria-live`) une fois la bande arrêtée. `motionReduced()` (réglage Kinet
+OU système) : la bande se pose directement sur le tirage, sans défiler.
+Résultat en dessous : juste le titre (+ ta note libre) — une 2e affiche y
+a existé un temps (`.surprise-poster`), retirée (retour utilisateur :
+"cropée, moche" — `.film-poster` est pensé pour une ligne compacte 52×78,
+jamais redéfini en hauteur à 160px de large, un cover très écrasé sur un
+format 2:3). La bande au-dessus montre déjà la vraie affiche du tirage, en
+entier.
+
+Son (v2.52, `js/sound.js`) : un tic métallique à chaque case qui franchit
+le repère pendant le défilement (façon ouverture de caisse CS2), puis un
+petit arpège montant à l'arrivée — entièrement synthétisé en Web Audio
+(oscillateurs + enveloppes de gain), aucun fichier audio à charger,
+cohérent avec le reste de l'app (zéro dépendance). Le tempo du tic suit
+tout seul la décélération réelle de la bande : lu sur la position
+interpolée de la transition CSS en cours
+(`getComputedStyle(track).transform`, pas un minuteur séparé), jamais
+dupliqué par rapport à la courbe `cubic-bezier` qui pilote le visuel.
+Réglage Paramètres → Son (`#soundToggle`), activé par défaut, par
+appareil (comme le thème/réduire les animations, jamais synchronisé à
+Supabase) — premier son de l'app, pensé pour grandir au fil des prochains
+(d'où un module séparé plutôt que quelques lignes dans js/watchlist.js).
 
 ### Filtre par plateforme (v2.50)
 

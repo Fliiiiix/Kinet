@@ -3717,12 +3717,6 @@ input[type="range"]::-moz-range-thumb{
   .surprise-roulette-item{width:70px; height:103px;}
 }
 
-.surprise-poster{
-  width:160px;
-  margin:0 auto 16px;
-  display:block;
-  border-radius:8px;
-}
 .surprise-info{text-align:center;}
 .surprise-info .wl-title{font-size:18px;}
 .surprise-info .wl-note{margin-top:8px; max-width:44ch; margin-left:auto; margin-right:auto;}

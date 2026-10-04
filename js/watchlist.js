@@ -448,11 +448,14 @@ function buildRouletteStripHtml(pool, winner){
   return html;
 }
 
+// Pas de 2e affiche ici (retour utilisateur : "cropée, moche") — .surprise-
+// poster forçait .film-poster (pensé pour une ligne compacte, 52×78) à
+// 160px de large SANS redéfinir sa hauteur, donc un cover sur un format
+// 2:3 largement écrasé. La bande au-dessus (.surprise-roulette) montre
+// déjà une vraie affiche, celle du tirage, en entier et sans ce problème —
+// pas la peine d'en remontrer une seconde, moins bonne, juste en dessous.
 function renderSurpriseContent(item){
   document.getElementById('surpriseContent').innerHTML = `
-    ${item.posterUrl
-      ? `<img class="film-poster surprise-poster" src="${item.posterUrl}" alt="">`
-      : ''}
     <div class="surprise-info">
       <div class="wl-title">${escapeHtml(item.title)}${item.releaseYear ? ` <span class="wl-year">(${item.releaseYear})</span>` : ''}</div>
       ${item.note ? `<div class="wl-note">${escapeHtml(item.note)}</div>` : ''}
@@ -490,6 +493,11 @@ function spinSurpriseRoulette(pool){
 
   const winnerEl = track.children[ROULETTE_WINNER_INDEX];
   const itemWidth = winnerEl.getBoundingClientRect().width;
+  // Espace entre deux cases consécutives (largeur + gap) — sert de pas pour
+  // le tic sonore pendant le défilement (voir la boucle de suivi plus bas) :
+  // mesuré sur le vrai rendu, comme le reste de ce calcul, pas recopié du
+  // CSS (le seuil mobile change la largeur des cases).
+  const itemSpacing = track.children[1].offsetLeft - track.children[0].offsetLeft;
   const viewportWidth = frame.getBoundingClientRect().width;
   // Léger aléa (jamais pile centré sous le repère) : un vrai tirage
   // n'atterrit jamais exactement au même pixel — +/- un quart de la largeur
@@ -497,7 +505,13 @@ function spinSurpriseRoulette(pool){
   const jitter = (Math.random() - 0.5) * itemWidth * 0.5;
   const targetOffset = winnerEl.offsetLeft + itemWidth / 2 - viewportWidth / 2 + jitter;
 
-  const reduced = prefersReducedMotion();
+  // motionReduced() (js/ui.js) plutôt que prefersReducedMotion()
+  // (js/happenings.js, réglage système seul) : la roulette est un élément
+  // d'interface normal, pas un easter egg — même helper que le reste des
+  // interactions "sérieuses" de js/ui.js (inclinaison des lignes, clin
+  // d'œil du logo), qui respecte EN PLUS le réglage propre à Kinet
+  // (Paramètres → Réduire les animations).
+  const reduced = motionReduced();
   let done = false;
   const finish = () => {
     if(done) return;
@@ -508,6 +522,7 @@ function spinSurpriseRoulette(pool){
     rerollBtn.disabled = false;
     rateBtn.disabled = false;
     surpriseSpinning = false;
+    playRouletteWin();
   };
 
   requestAnimationFrame(() => {
@@ -518,6 +533,31 @@ function spinSurpriseRoulette(pool){
     // transition:none), le setTimeout est alors le SEUL signal de fin.
     track.addEventListener('transitionend', finish, { once: true });
     setTimeout(finish, (reduced ? 0 : 5000) + 200);
+
+    // Tic sonore façon ouverture de caisse (retour utilisateur) — un tic à
+    // chaque case qui franchit le repère, voir playRouletteTick()
+    // (js/sound.js). Lu sur la VRAIE position interpolée de la transition
+    // en cours (getComputedStyle().transform, mis à jour par le navigateur
+    // à chaque frame pendant l'animation) plutôt qu'un minuteur à part :
+    // le tempo suit alors tout seul la décélération réelle de la bande
+    // (rafale au départ, tics isolés à l'arrivée), sans dupliquer la
+    // courbe cubic-bezier ici. Sautée entièrement sous reduced (pas de
+    // défilement à accompagner, juste le son d'arrivée).
+    if(!reduced){
+      let lastTickIndex = null;
+      const tick = () => {
+        if(done) return;
+        const match = getComputedStyle(track).transform.match(/matrix\(([^)]+)\)/);
+        const tx = match ? parseFloat(match[1].split(',')[4]) : 0;
+        const idx = Math.round(-tx / itemSpacing);
+        if(idx !== lastTickIndex){
+          lastTickIndex = idx;
+          playRouletteTick();
+        }
+        requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    }
   });
 }
 

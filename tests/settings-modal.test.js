@@ -11,6 +11,7 @@ const { test, run } = createSuite();
 function buildContext(){
   const lightThemeToggle = stubElement({ checked: false });
   const reduceMotionToggle = stubElement({ checked: false });
+  const soundToggle = stubElement({ checked: false });
   const openBtn = stubEventTarget();
   const closeBtn = stubEventTarget();
   const overlay = stubEventTarget();
@@ -21,7 +22,7 @@ function buildContext(){
   const updateInstallUICalls = [];
 
   const doc = stubDocument({
-    lightThemeToggle, reduceMotionToggle,
+    lightThemeToggle, reduceMotionToggle, soundToggle,
     openSettingsBtn: openBtn, closeSettings: closeBtn, settingsOverlay: overlay,
   });
 
@@ -31,20 +32,22 @@ function buildContext(){
     openProfileModal(){},
     getTheme(){ return 'light'; },
     getReduceMotion(){ return true; },
+    getSoundEnabled(){ return true; }, // js/sound.js, pas chargé ici — même principe que getTheme()/getReduceMotion() juste au-dessus
     updateInstallUI(){ updateInstallUICalls.push(true); },
     openOverlay(id){ openOverlayCalls.push(id); },
     closeOverlay(id, cb){ closeOverlayCalls.push(id); if(cb) cb(); },
   });
   loadFiles(ctx, ['js/settings.js']);
-  return { ctx, lightThemeToggle, reduceMotionToggle, openBtn, closeBtn, overlay, closeProfileModalCalls, openOverlayCalls, closeOverlayCalls, updateInstallUICalls };
+  return { ctx, lightThemeToggle, reduceMotionToggle, soundToggle, openBtn, closeBtn, overlay, closeProfileModalCalls, openOverlayCalls, closeOverlayCalls, updateInstallUICalls };
 }
 
 test('openSettingsModal() : referme "Ton profil", synchronise les interrupteurs, reconstruit l\'installation, ouvre Paramètres', () => {
-  const { ctx, lightThemeToggle, reduceMotionToggle, closeProfileModalCalls, openOverlayCalls, updateInstallUICalls } = buildContext();
+  const { ctx, lightThemeToggle, reduceMotionToggle, soundToggle, closeProfileModalCalls, openOverlayCalls, updateInstallUICalls } = buildContext();
   ctx.openSettingsModal();
   assert.strictEqual(closeProfileModalCalls.length, 1);
   assert.strictEqual(lightThemeToggle.checked, true, 'reflète getTheme() = "light"');
   assert.strictEqual(reduceMotionToggle.checked, true, 'reflète getReduceMotion() = true');
+  assert.strictEqual(soundToggle.checked, true, 'reflète getSoundEnabled() = true');
   assert.strictEqual(updateInstallUICalls.length, 1, 'le prompt natif peut être devenu disponible depuis la dernière ouverture');
   assert.deepStrictEqual(openOverlayCalls, ['settingsOverlay']);
 });

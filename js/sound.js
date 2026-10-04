@@ -1,0 +1,79 @@
+// --- Son (retour utilisateur : "rajoute du sound design, à commencer par
+// la roulette") --- Entièrement synthétisé en Web Audio (oscillateurs +
+// enveloppes de gain), aucun fichier audio à charger ni héberger : cohérent
+// avec le reste de l'app (100% vanilla, zéro dépendance, voir README →
+// Structure). Préférence PAR APPAREIL (localStorage, jamais synchronisée à
+// Supabase) — même principe que getReduceMotion()/setReduceMotion()
+// (js/ui.js), réglage dans Paramètres → Son (#soundToggle, index.html).
+
+// Un seul AudioContext partagé, créé au premier VRAI appel (jamais au
+// chargement de la page) : la plupart des navigateurs suspendent ou
+// refusent un AudioContext créé hors d'un geste utilisateur (politique
+// anti-autoplay) — playTone() n'est de toute façon jamais appelée que
+// depuis un clic (voir js/watchlist.js, playRouletteTick()/
+// playRouletteWin()), donc toujours dans la fenêtre valide. .resume() à
+// chaque appel plutôt qu'une fois : couvre aussi le cas où l'onglet a
+// suspendu le contexte entre-temps (changement d'onglet, veille…).
+let audioCtx = null;
+function getAudioCtx(){
+  if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if(audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+function getSoundEnabled(){
+  try{ return localStorage.getItem('kinetSoundEnabled') !== '0'; } // activé par défaut
+  catch(e){ return true; }
+}
+
+function setSoundEnabled(on){
+  try{ localStorage.setItem('kinetSoundEnabled', on ? '1' : '0'); }catch(e){}
+  const toggle = document.getElementById('soundToggle');
+  if(toggle) toggle.checked = on;
+}
+
+document.getElementById('soundToggle').addEventListener('change', (e) => {
+  setSoundEnabled(e.target.checked);
+});
+
+// Une seule note, enveloppe exponentielle (attaque quasi instantanée,
+// chute rapide) — jamais bloquant : un son qui échoue (navigateur sans Web
+// Audio, contexte refusé...) ne doit jamais casser l'action réelle qui
+// l'accompagne, d'où le try/catch qui avale l'erreur plutôt que la laisser
+// remonter aux appelants.
+function playTone(freq, startGain, durationMs, type){
+  if(!getSoundEnabled()) return;
+  try{
+    const ctx = getAudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type || 'sine';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(startGain, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + durationMs / 1000);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + durationMs / 1000);
+  }catch(e){ console.error(e); }
+}
+
+// --- Roulette "Surprends-moi" (js/watchlist.js, retour utilisateur :
+// "un dring dring dring façon ouverture de caisse CS2") ---
+// playRouletteTick() : un tick bref à chaque case qui franchit le repère
+// pendant le défilement — appelée à chaque franchissement RÉEL (voir
+// spinSurpriseRoulette()), jamais sur un minuteur séparé : le tempo (rafale
+// au début, tick isolés à la fin) suit alors tout seul la décélération
+// visuelle, sans avoir à le recalculer ici.
+function playRouletteTick(){
+  playTone(1400, 0.12, 70, 'square');
+}
+
+// playRouletteWin() : un petit arpège montant (3 notes), distinct du tick —
+// le "gagné" qu'on entend une fois la bande arrêtée pour de bon.
+function playRouletteWin(){
+  if(!getSoundEnabled()) return;
+  [880, 1108, 1318].forEach((freq, i) => {
+    setTimeout(() => playTone(freq, 0.14, 220, 'triangle'), i * 90);
+  });
+}
