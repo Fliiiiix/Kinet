@@ -133,6 +133,16 @@ document.addEventListener('keydown', (e) => {
     globalSearchOverlay: () => closeOverlay('globalSearchOverlay'),
     recapOverlay: () => closeRecap(),
     settingsOverlay: () => closeSettingsModal(),
+    tcgOverlay: () => closeTcgModal(),
+    // Même garde que le clic sur le fond (js/tcg.js) : Échap ne doit pas
+    // couper la révélation en cours, seulement refermer une fois les 5
+    // cartes retournées (bouton "Génial !" visible).
+    tcgBoosterOverlay: () => {
+      if(document.getElementById('tcgBoosterDoneBtn').style.display !== 'none'){
+        closeOverlay('tcgBoosterOverlay');
+        loadTcgCollection().then(renderTcgCollection);
+      }
+    },
     // Tuto d'accueil (js/onboarding.js) : pas un .overlay (voile+carte
     // construits à part, voir css/style.css) mais même convention de
     // classe "open" sur son conteneur, pour rejoindre cette table sans

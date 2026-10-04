@@ -59,7 +59,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,500&family=Space+Mono:wght@400;700&display=swap">
-<link rel="stylesheet" href="css/style.css?v=162">
+<link rel="stylesheet" href="css/style.css?v=163">
 </head>
 <body>
 
@@ -1353,6 +1353,15 @@
           <span class="mm-row-body"><span class="mm-row-title">Succès</span><span class="mm-row-sub">Paliers débloqués et secrets trouvés.</span></span>
           <span class="mm-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg></span>
         </button>
+        <!-- Cartes à collectionner (TCG, retour utilisateur) — voir
+             js/tcg.js. Juste après Succès : même famille (progression,
+             collection), même emplacement "Mon activité" que
+             Statistiques/Journal/Top films. -->
+        <button class="mm-row" id="tcgBtn" type="button">
+          <span class="mm-icon ic-bronze"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="13" height="18" rx="2" transform="rotate(-8 10 13.5)"></rect><rect x="7.5" y="2.5" width="13" height="18" rx="2"></rect></svg></span>
+          <span class="mm-row-body"><span class="mm-row-title">Cartes</span><span class="mm-row-sub">Films, acteurs, réalisateurs à collectionner.</span></span>
+          <span class="mm-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg></span>
+        </button>
         <button class="mm-row" id="journalBtn" type="button">
           <span class="mm-icon ic-violet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5.5" width="17" height="15" rx="2"></rect><path d="M3.5 10h17"></path><path d="M8 3.5v4"></path><path d="M16 3.5v4"></path></svg></span>
           <span class="mm-row-body"><span class="mm-row-title">Journal</span><span class="mm-row-sub">Historique de tes visionnages.</span></span>
@@ -1629,6 +1638,47 @@
   </div>
 </div>
 
+<!-- Modal Cartes (TCG, retour utilisateur) — voir js/tcg.js. -->
+<div class="overlay" id="tcgOverlay">
+  <div class="modal stats-modal tcg-modal">
+    <div class="modal-head">
+      <h2>🃏 Cartes</h2>
+      <button class="close-x" id="closeTcg" aria-label="Fermer">✕</button>
+    </div>
+    <div class="tcg-booster-bar">
+      <div class="tcg-booster-count" id="tcgBoosterCount">…</div>
+      <button class="btn" id="tcgOpenBoosterBtn" type="button" disabled>Ouvrir un booster</button>
+    </div>
+    <div class="toolbar" style="margin-bottom:16px;">
+      <select id="tcgTypeFilter" aria-label="Filtrer par type">
+        <option value="">Tous types</option>
+        <option value="film">Films</option>
+        <option value="actor">Acteurs</option>
+        <option value="director">Réalisateurs</option>
+      </select>
+      <select id="tcgRarityFilter" aria-label="Filtrer par rareté">
+        <option value="">Toutes raretés</option>
+        <option value="legendaire">Légende du 7e art</option>
+        <option value="epique">Tête d'affiche</option>
+        <option value="rare">Second rôle</option>
+        <option value="commun">Figurant</option>
+      </select>
+    </div>
+    <div id="tcgCollectionGrid" class="tcg-grid"></div>
+  </div>
+</div>
+
+<!-- Ouverture de booster (retour utilisateur : "beaucoup d'animation") —
+     overlay à part plutôt qu'empilée sur #tcgOverlay déjà ouverte derrière
+     (même principe que .onboarding-layer, une seule vraie couche active à
+     la fois) : voir openBoosterReveal() dans js/tcg.js. -->
+<div class="overlay" id="tcgBoosterOverlay">
+  <div class="modal tcg-booster-modal">
+    <div class="tcg-booster-pack" id="tcgBoosterPack"></div>
+    <button class="btn" id="tcgBoosterDoneBtn" type="button" style="display:none;">Génial !</button>
+  </div>
+</div>
+
 <!-- Modal admin (succès + happenings + avis + stats) — voir js/admin.js -->
 <div class="overlay" id="adminOverlay">
   <div class="modal stats-modal admin-modal">
@@ -1837,116 +1887,120 @@
 <!-- ?v=N sur chaque js/*.js ci-dessous (voir le commentaire dans <head>) —
      à incrémenter à chaque déploiement, même numéro pour tous les fichiers. -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/supabaseConfig.js?v=162"></script>
+<script src="js/supabaseConfig.js?v=163"></script>
 <!-- Juste après supabaseConfig.js (a besoin de supabaseClient) et avant
      tout le reste : capte les erreurs de chargement des scripts suivants,
      pas seulement celles de l'app une fois démarrée — voir js/logging.js. -->
-<script src="js/logging.js?v=162"></script>
-<script src="js/tmdbConfig.js?v=162"></script>
-<script src="js/data.js?v=162"></script>
-<script src="js/happenings.js?v=162"></script>
+<script src="js/logging.js?v=163"></script>
+<script src="js/tmdbConfig.js?v=163"></script>
+<script src="js/data.js?v=163"></script>
+<script src="js/happenings.js?v=163"></script>
 <!-- Avant app.js et les 6 autres modules qui ouvrent/ferment une modale
      (openOverlay/closeOverlay) — l'ordre exact importe peu au runtime
      (rien n'y est appelé au chargement), gardé en premier des scripts
      "app" pour la lisibilité, comme un utilitaire partagé. -->
-<script src="js/ui.js?v=162"></script>
+<script src="js/ui.js?v=163"></script>
 <!-- Avant watchlist.js, qui appelle playRouletteTick()/playRouletteWin()
      (roulette "Surprends-moi") — l'ordre exact importe peu au runtime
      (rien n'y est appelé au chargement), gardé ici pour la lisibilité,
      comme ui.js juste au-dessus. -->
-<script src="js/sound.js?v=162"></script>
+<script src="js/sound.js?v=163"></script>
 <!-- Avant app.js/journal.js/watchlist.js, qui appellent saveOfflineCache()/
      loadOfflineCache()/blockIfOffline() (v1.6, mode hors ligne lecture
      seule) — l'ordre exact importe peu au runtime (rien n'y est appelé au
      chargement, seulement des listeners posés pour plus tard), gardé ici
      pour la lisibilité, comme ui.js juste au-dessus. -->
-<script src="js/offlineQueue.js?v=162"></script>
-<script src="js/offline.js?v=162"></script>
-<script src="js/app.js?v=162"></script>
-<script src="js/tmdb.js?v=162"></script>
-<script src="js/stats.js?v=162"></script>
-<script src="js/achievements.js?v=162"></script>
-<script src="js/journal.js?v=162"></script>
+<script src="js/offlineQueue.js?v=163"></script>
+<script src="js/offline.js?v=163"></script>
+<script src="js/app.js?v=163"></script>
+<script src="js/tmdb.js?v=163"></script>
+<script src="js/stats.js?v=163"></script>
+<script src="js/achievements.js?v=163"></script>
+<!-- Avant app.js/watchlist.js à l'exécution (pas au chargement — rien
+     n'est appelé ici avant un vrai clic/ajout) : les deux appellent
+     generateTcgCardsForFilm(), définie ici. -->
+<script src="js/tcg.js?v=163"></script>
+<script src="js/journal.js?v=163"></script>
 <!-- Après app.js (showToast) — appelée par js/profile.js juste après. -->
-<script src="js/pwa.js?v=162"></script>
-<script src="js/profile.js?v=162"></script>
+<script src="js/pwa.js?v=163"></script>
+<script src="js/profile.js?v=163"></script>
 <!-- Paramètres — après profile.js (referme/rouvre "Ton profil") et pwa.js
      (updateInstallUI()), voir js/settings.js. -->
-<script src="js/settings.js?v=162"></script>
+<script src="js/settings.js?v=163"></script>
 <!-- Après profile.js (closeProfileModal/openProfileModal) et data.js
      (FEEDBACK_CATEGORIES) — même raisonnement que pwa.js juste au-dessus. -->
-<script src="js/feedback.js?v=162"></script>
+<script src="js/feedback.js?v=163"></script>
 <!-- Bilan cinéphile partageable (v2.43) — après journal.js (viewings) et
      profile.js (currentProfile), voir js/recap.js. -->
-<script src="js/recap.js?v=162"></script>
+<script src="js/recap.js?v=163"></script>
 <!-- N'a besoin que de ui.js (openOverlay/closeOverlay) et app.js
      (showToast), chargés bien avant — placé ici pour rester groupé avec
      les autres modales accessibles depuis le chrome plutôt que pour une
      vraie dépendance. -->
-<script src="js/share.js?v=162"></script>
+<script src="js/share.js?v=163"></script>
 <!-- Après happenings.js/achievements.js (définitions) et profile.js
      (closeProfileModal) : admin.js s'appuie sur les trois au clic, jamais au
      chargement — l'ordre exact importe peu, gardé groupé ici pour la
      lisibilité. -->
-<script src="js/admin.js?v=162"></script>
-<script src="js/router.js?v=162"></script>
-<script src="js/publicProfile.js?v=162"></script>
-<script src="js/top.js?v=162"></script>
-<script src="js/friends.js?v=162"></script>
+<script src="js/admin.js?v=163"></script>
+<script src="js/router.js?v=163"></script>
+<script src="js/publicProfile.js?v=163"></script>
+<script src="js/top.js?v=163"></script>
+<script src="js/friends.js?v=163"></script>
 <!-- Après friends.js (cacheProfile/friendDisplayName/friendAvatarHtml) et
      journal.js (formatViewingDate), avant groups.js qui l'appelle depuis
      openGroupDetail() — l'ordre exact importe peu au runtime (tout est en
      fonctions globales appelées après chargement complet), gardé groupé
      ici pour la lisibilité. -->
-<script src="js/activity.js?v=162"></script>
-<script src="js/watchlist.js?v=162"></script>
+<script src="js/activity.js?v=163"></script>
+<script src="js/watchlist.js?v=163"></script>
 <!-- Après watchlist.js (loadWatchlist/watchlist, réutilisés pour exclure
      ce qui y est déjà) et app.js (getDisplayNote, chargé plus haut) — voir
      js/suggestions.js. Avant auth.js, qui appelle loadSuggestions() depuis
      showApp(). -->
-<script src="js/suggestions.js?v=162"></script>
+<script src="js/suggestions.js?v=163"></script>
 <!-- Import externe (Letterboxd pour l'instant) — après watchlist.js/app.js/
      tmdb.js/journal.js dont il réutilise films/watchlist/searchTmdb()/
      addViewing(). Voir js/importExternal.js. -->
-<script src="js/importExternal.js?v=162"></script>
+<script src="js/importExternal.js?v=163"></script>
 <!-- Fiche film (v2.1) — voir js/filmDetail.js. Regroupée ici avec
      friends.js/watchlist.js dont elle réutilise les helpers (même
      remarque que suggestions.js juste au-dessus : l'ordre exact n'importe
      pas au runtime, tout est en fonctions appelées après chargement
      complet — router.js, plus haut, appelle déjà openFriends()/
      openWatchlist() en aval de leur propre script de la même façon). -->
-<script src="js/filmDetail.js?v=162"></script>
+<script src="js/filmDetail.js?v=163"></script>
 <!-- Après watchlist.js : js/upcoming.js réutilise le tableau watchlist déjà
      chargé (voir plus bas). -->
-<script src="js/series.js?v=162"></script>
+<script src="js/series.js?v=163"></script>
 <!-- Après watchlist.js ET series.js — a besoin des deux tableaux chargés
      (loadWatchlist()/loadTrackedShows()), voir js/upcoming.js. -->
-<script src="js/upcoming.js?v=162"></script>
-<script src="js/groups.js?v=162"></script>
-<script src="js/proposals.js?v=162"></script>
+<script src="js/upcoming.js?v=163"></script>
+<script src="js/groups.js?v=163"></script>
+<script src="js/proposals.js?v=163"></script>
 <!-- Après groups.js (renderInviteBox appelée depuis renderGroupDetail) et
      proposals.js (chosenProposal) — voir js/invites.js. -->
-<script src="js/invites.js?v=162"></script>
+<script src="js/invites.js?v=163"></script>
 <!-- Après activity.js (rowToActivityEvent/renderActivityRowHtml) et
      friends.js (friendProfiles/cacheProfile) qu'elle réutilise pour le
      digest, avant auth.js qui appelle refreshActivityBadge()/
      maybeShowDigest() depuis showApp(). -->
-<script src="js/activityState.js?v=162"></script>
+<script src="js/activityState.js?v=163"></script>
 <!-- Après activityState.js (loadActivityState/activityState réutilisés
      pour son propre badge "vu") et avant auth.js qui appelle
      initChangelog() depuis showApp(). -->
-<script src="js/changelog.js?v=162"></script>
+<script src="js/changelog.js?v=163"></script>
 <!-- Recherche globale unifiée (v2.42) — après series.js/friends.js/
      groups.js dont elle réutilise les tableaux déjà chargés et les
      fonctions d'ouverture (openFriendProfile/goToSeriesDetail/goToGroup),
      et après app.js/data.js pour getSearchTerms()/normalizeSearch()/
      FILM_PLACEHOLDER_SVG. Voir js/globalSearch.js. -->
-<script src="js/globalSearch.js?v=162"></script>
+<script src="js/globalSearch.js?v=163"></script>
 <!-- Tuto d'accueil interactif — avant auth.js dont showApp() appelle
      maybeStartOnboarding() ; après ui.js/router.js/profile.js/logging.js
      dont il réutilise respectivement openOverlay-style/goHome/
      closeProfileModal/logEvent. -->
-<script src="js/onboarding.js?v=162"></script>
-<script src="js/auth.js?v=162"></script>
+<script src="js/onboarding.js?v=163"></script>
+<script src="js/auth.js?v=163"></script>
 </body>
 </html>

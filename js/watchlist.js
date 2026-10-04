@@ -288,6 +288,12 @@ async function handleAddToWatchlist(){
   });
   renderWatchlist();
 
+  // Cartes (js/tcg.js) : un film en watchlist entre déjà dans le pool
+  // personnel d'un tirage (voir open_booster(), migrations/041), même sans
+  // être encore noté — jamais attendue, même raison que dans handleSave()
+  // (js/app.js).
+  if(tmdbFields.tmdb_id) generateTcgCardsForFilm(tmdbFields.tmdb_id);
+
   document.getElementById('wlTitleInput').value = '';
   document.getElementById('wlNoteInput').value = '';
   clearWlTmdbSelection();

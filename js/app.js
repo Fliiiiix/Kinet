@@ -719,6 +719,10 @@ async function handleSave(){
     film.releaseYear = tmdbFields.release_year;
     film.originalTitle = tmdbFields.original_title;
     film.genreIds = tmdbFields.genre_ids;
+    // Cartes (js/tcg.js) : une fiche TMDB tout juste rattachée à un film
+    // modifié en vaut une ajoutée à la création — même appel, jamais
+    // attendu, voir le commentaire dans la branche création plus bas.
+    if(tmdbFields.tmdb_id) generateTcgCardsForFilm(tmdbFields.tmdb_id);
   }else{
     const { data, error } = await supabaseClient
       .from('films')
@@ -735,6 +739,12 @@ async function handleSave(){
 
     // Premier visionnage automatique, daté de l'ajout — voir js/journal.js.
     await addViewing(data.id, data.added);
+
+    // Cartes à collectionner (retour utilisateur, js/tcg.js) : jamais
+    // attendue (pas de await) — générer les cartes de ce film est un à-
+    // côté, ne doit jamais retarder la fermeture du formulaire ni
+    // dépendre de son succès réseau.
+    if(tmdbFields.tmdb_id) generateTcgCardsForFilm(tmdbFields.tmdb_id);
 
     // Film créé depuis "✔ Noter" dans la watchlist (js/watchlist.js) :
     // on retire l'item d'origine maintenant que le film est bien enregistré.

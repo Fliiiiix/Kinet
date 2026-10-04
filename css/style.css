@@ -3484,6 +3484,147 @@ input[type="range"]::-moz-range-thumb{
   color:var(--text-muted);
 }
 
+/* --- Cartes à collectionner (TCG, retour utilisateur) --- voir js/tcg.js
+   et supabase/migrations/041_add_tcg_cards.sql. Rareté mappée sur des
+   teintes DÉJÀ en usage dans la palette Halation, jamais une couleur
+   ajoutée pour l'occasion (même discipline que .film-sub-genre/.counter
+   plus haut) : Commun reste neutre (aucun accent, un simple liseré) ;
+   Rare en teal (déjà le ton "informationnel discret" de .manual-badge) ;
+   Épique en violet (la couleur interactive/de marque de tout le site —
+   une carte qui mérite qu'on s'y arrête) ; Légendaire en or (déjà réservé
+   aux moments rares — succès, mise en avant). */
+.tcg-modal{max-width:760px;}
+.tcg-booster-bar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:12px;
+  padding:14px 16px;
+  margin-bottom:20px;
+  border-radius:12px;
+  border:1px solid var(--line);
+  background:linear-gradient(160deg, var(--surface) 0%, var(--surface-2) 220%);
+}
+.tcg-booster-count{
+  font-family:'Space Mono', monospace;
+  font-size:13px;
+  color:var(--text-muted);
+}
+.tcg-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(104px, 1fr));
+  gap:12px;
+}
+.tcg-card{
+  position:relative;
+  aspect-ratio:2/3;
+  border-radius:10px;
+  overflow:hidden;
+  border:2px solid var(--line);
+  background:var(--ink-surface);
+}
+.tcg-card img{width:100%; height:100%; object-fit:cover; display:block;}
+.tcg-card .film-poster-placeholder{width:100%; height:100%; display:flex; align-items:center; justify-content:center; opacity:0.5;}
+.tcg-card .film-poster-placeholder svg{width:38%; height:38%;}
+.tcg-card-name{
+  position:absolute;
+  left:0; right:0; bottom:0;
+  padding:16px 8px 7px;
+  font-size:11px;
+  font-weight:600;
+  line-height:1.25;
+  color:#fff;
+  background:linear-gradient(0deg, rgba(15,14,22,0.92) 20%, transparent);
+}
+.tcg-card-qty{
+  position:absolute;
+  top:6px; right:6px;
+  padding:2px 7px;
+  border-radius:999px;
+  font-family:'Space Mono', monospace;
+  font-size:10.5px;
+  font-weight:700;
+  color:#fff;
+  background:rgba(15,14,22,0.78);
+}
+.tcg-card.rarity-rare{border-color:var(--teal); box-shadow:0 0 14px rgba(111,163,159,0.3);}
+.tcg-card.rarity-epique{border-color:var(--violet); box-shadow:0 0 16px rgba(140,124,255,0.35);}
+.tcg-card.rarity-legendaire{border-color:var(--gold); box-shadow:0 0 20px rgba(231,178,76,0.45);}
+
+/* --- Ouverture de booster --- 5 cartes dos tourné, retournées en cascade
+   (voir openBoosterReveal(), js/tcg.js) — carte réelle en 3D (perspective
+   sur le conteneur, rotateY sur chaque carte), même technique que .counter
+   (le "cadran" qui bascule à la sauvegarde) mais ici pilotée par une
+   classe posée en JS au bon moment plutôt qu'une seule animation fixe :
+   le délai de chaque carte est dynamique (cascade), pas connu d'avance
+   dans la feuille de style. */
+.tcg-booster-modal{
+  max-width:900px;
+  background:transparent;
+  border:none;
+  box-shadow:none;
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
+  text-align:center;
+  animation:none; /* la modale elle-même n'a pas besoin du fondu modalIn générique : les cartes font déjà leur propre entrée */
+}
+.tcg-booster-pack{
+  display:flex;
+  justify-content:center;
+  flex-wrap:wrap;
+  gap:18px;
+  perspective:1200px;
+  margin-bottom:24px;
+}
+.tcg-booster-card{
+  width:140px; height:210px;
+  position:relative;
+  transform-style:preserve-3d;
+  transition:transform .7s cubic-bezier(.34,1.56,.64,1);
+}
+.tcg-booster-card.revealed{transform:rotateY(180deg);}
+.tcg-booster-card-face{
+  position:absolute; inset:0;
+  backface-visibility:hidden;
+  -webkit-backface-visibility:hidden;
+  border-radius:12px;
+  border:2px solid var(--line);
+  overflow:hidden;
+  display:flex; align-items:center; justify-content:center;
+}
+.tcg-booster-card-back{
+  background:linear-gradient(160deg, var(--violet) 0%, var(--plum) 100%);
+}
+.tcg-booster-card-back .brand-mark{width:48px; height:48px; animation:none;}
+.tcg-booster-card-back .brand-mark-violet,
+.tcg-booster-card-back .brand-mark-gold{animation:none; transform:scale(1);}
+.tcg-booster-card-front{
+  transform:rotateY(180deg);
+  background:var(--surface-2);
+  display:block;
+}
+.tcg-booster-card-front img{width:100%; height:100%; object-fit:cover; display:block;}
+.tcg-booster-card-front .tcg-card-name{font-size:12.5px; padding:20px 10px 9px;}
+.tcg-booster-card-front.rarity-rare{border-color:var(--teal); box-shadow:0 0 20px rgba(111,163,159,0.4);}
+.tcg-booster-card-front.rarity-epique{border-color:var(--violet); box-shadow:0 0 24px rgba(140,124,255,0.5);}
+.tcg-booster-card-front.rarity-legendaire{
+  border-color:var(--gold);
+  box-shadow:0 0 30px rgba(231,178,76,0.6);
+  animation:tcgLegendaryGlow 1.6s ease-in-out infinite;
+}
+@keyframes tcgLegendaryGlow{
+  0%, 100%{box-shadow:0 0 30px rgba(231,178,76,0.6);}
+  50%{box-shadow:0 0 44px rgba(231,178,76,0.85);}
+}
+@media (prefers-reduced-motion:reduce){
+  .tcg-booster-card{transition:none;}
+  .tcg-booster-card-front.rarity-legendaire{animation:none;}
+}
+@media (max-width:600px){
+  .tcg-booster-card{width:108px; height:162px;}
+}
+
 /* Onglet Retours (admin, v2.1) — une ligne par retour, regroupées par
    catégorie dans des .stats-section (mêmes classes que l'onglet
    Statistiques, pas un nouveau conteneur). */

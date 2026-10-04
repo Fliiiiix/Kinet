@@ -52,6 +52,7 @@ critique-films/
 ├── js/admin.js                                                         → interface admin (succès, happenings, nouveautés, avis, stats)
 ├── js/invites.js                                                        → lien d'invitation de groupe (#/invite/:token)
 ├── js/sound.js                                                           → son (tic roulette, Web Audio synthétisé, zéro fichier audio) — voir la section dédiée plus bas
+├── js/tcg.js                                                               → cartes à collectionner (TCG) — voir la section dédiée plus bas
 ├── tests/                                                                 → suite de tests de régression (voir tests/README.md)
 └── supabase/
     ├── schema.sql                  → schéma complet (nouveau projet)
@@ -903,6 +904,71 @@ page en étant déconnecté ne menait nulle part (`goHome()` change l'URL mais
 remplacé par `goHomeOrAuth()`, qui redirige vers l'écran de connexion s'il
 n'y a personne, comme le fait déjà le bouton "← Retour" de cette page.
 Nécessite `supabase/migrations/016_add_public_profile.sql`.
+
+## Cartes à collectionner (TCG, v2.60)
+
+Retour utilisateur : des cartes à collectionner et à échanger façon jeu de
+cartes (TCG) — films, acteurs, réalisateurs, rareté liée à leur notoriété
+réelle. Accessible depuis "Ton profil" → Mon activité → Cartes (même
+emplacement que Statistiques/Succès/Journal). Voir `js/tcg.js` et
+`supabase/migrations/041_add_tcg_cards.sql` (schéma complet + toute la
+logique de tirage, commentée en détail là-bas) pour le design complet.
+
+**Génération des cartes** — jamais tout TMDB d'un coup : la toute première
+fois que N'IMPORTE QUEL compte ajoute un film (noté ou en watchlist) avec
+une fiche TMDB, sa carte est générée (`upsert_tcg_card()`, idempotent),
+ainsi que les cartes de son réalisateur et de ses 6 premiers rôles
+crédités (ordre de billing TMDB — pas tout le générique). Catalogue de
+cartes **global et partagé** entre tous les comptes, jamais une copie par
+utilisateur.
+
+**Rareté** — popularité TMDB en paliers logarithmiques (l'immense
+majorité des films/personnes ont un score faible, une poignée de stars/
+blockbusters un score énorme) : Figurant (Commun) → Second rôle (Rare) →
+Tête d'affiche (Épique) → Légende du 7e art (Légendaire). Couleur de
+chaque palier reprise de la palette Halation déjà en place (jamais une
+teinte ajoutée pour l'occasion) : neutre → teal → violet → or.
+
+**Débloquer des boosters** — 2 films VUS (table `viewings`, un
+revisionnage compte) = 1 booster de 5 cartes, toujours recalculé
+(`get_available_boosters()`) depuis le nombre de visionnages moins les
+boosters déjà ouverts, jamais un compteur séparé à resynchroniser.
+
+**Tirage** (`open_booster()`, entièrement côté serveur — jamais recalculé
+en JS, qui serait trivialement manipulable depuis la console du
+navigateur) : chaque carte d'un booster vient à 70% du pool **personnel**
+(tout film/acteur/réalisateur déjà lié à l'ensemble du catalogue noté OU
+de la watchlist de ce compte) et à 30% du pool **global** (toute carte
+déjà générée par n'importe quel compte) — retour utilisateur explicite :
+empêcher qu'ajouter UN film précis garantisse UNE carte précise. La
+rareté de chaque carte est tirée D'ABORD et indépendamment de la source.
+Au moins 1 carte Rare+ garantie par booster.
+
+**Doublons** — convertibles en poussière (`disenchant_card()`, valeur
+croissante avec la rareté), dépensable pour fabriquer une carte précise de
+son choix (`craft_card()`, coût ≈4× la valeur de désenchantement — un vrai
+choix, pas un recyclage gratuit). UI de fabrication pas encore construite
+(voir plus bas).
+
+**Échange** — table `tcg_trades` + `accept_trade()` (déplace les cartes
+des deux côtés en une seule transaction, tout ou rien, après avoir
+revérifié que les deux parties possèdent bien ce qu'elles ont mis sur la
+table à l'instant T, pas au moment de la proposition) déjà en place côté
+base — limité à un ami ou un co-membre de groupe (retour utilisateur :
+"un système d'échange qui passe par l'amitié et les groupes"). UI pas
+encore construite (voir plus bas).
+
+**Déjà construit** : schéma complet, génération de cartes au fil de
+l'eau, calcul des boosters disponibles, tirage pondéré avec pool
+personnel/global, ouverture animée (bande de 5 cartes retournées en
+cascade, halo marqué sur les cartes Épique/Légendaire), page Collection
+(filtrable par type/rareté, triée des plus rares aux plus communes).
+
+**Pas encore construit** (prochaine session) : UI d'échange (la table/
+fonction existent, pas l'écran), UI de fabrication en poussière (idem),
+lien Succès → boosters supplémentaires.
+
+Nécessite `supabase/migrations/041_add_tcg_cards.sql`.
 
 ## Happenings (easter eggs par film)
 
