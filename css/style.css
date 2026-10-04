@@ -3617,7 +3617,106 @@ input[type="range"]::-moz-range-thumb{
 }
 .wl-add-form .field:last-of-type{margin-bottom:14px;}
 
-/* "Surprends-moi" (retour utilisateur) — voir js/watchlist.js. */
+/* "Surprends-moi" : roulette façon ouverture de caisse (retour utilisateur,
+   motion design) — une bande d'affiches défile puis ralentit pile sur le
+   tirage, repère doré au centre, plutôt qu'un résultat qui apparaît d'un
+   coup. Même famille que .oldboy-corridor/.paprika-parade (bande qui
+   défile dans un cadre fermé), mais la distance d'arrivée n'est PAS connue
+   à l'avance ici (dépend du tirage et de la largeur réelle de l'écran) :
+   transform + distance calculés en JS à chaque tirage
+   (spinSurpriseRoulette(), js/watchlist.js), cette feuille ne pose que la
+   transition et l'habillage. */
+.surprise-roulette{
+  position:relative;
+  height:150px;
+  margin-bottom:18px;
+  border-radius:12px;
+  border:1px solid var(--line);
+  background:var(--surface-2);
+  overflow:hidden;
+  /* Fondu aux deux bords plutôt qu'une coupe nette des affiches qui
+     entrent/sortent du cadre. */
+  -webkit-mask-image:linear-gradient(90deg, transparent, black 10%, black 90%, transparent);
+  mask-image:linear-gradient(90deg, transparent, black 10%, black 90%, transparent);
+}
+.surprise-roulette-track{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  height:100%;
+  padding:0 10px;
+  will-change:transform;
+  transform:translateX(0);
+  /* Décélération franche et longue (façon ouverture de caisse) : départ
+     rapide, arrêt net — jamais linéaire (ne "ralentirait" pas) ni un simple
+     ease-out générique (pas assez marqué pour le suspense visé). Rejoué à
+     chaque tirage depuis translateX(0) (voir spinSurpriseRoulette()) :
+     transition posée ici une fois pour toutes, jamais redéfinie en JS. */
+  transition:transform 5s cubic-bezier(.1,.65,.2,1);
+}
+@media (prefers-reduced-motion:reduce){
+  .surprise-roulette-track{transition:none;}
+}
+.surprise-roulette-item{
+  flex:none;
+  width:88px; height:130px;
+  border-radius:8px;
+  overflow:hidden;
+  border:2px solid var(--line);
+  background:var(--ink-surface);
+  transition:border-color .2s, box-shadow .2s, transform .2s;
+}
+.surprise-roulette-item img{width:100%; height:100%; object-fit:cover; display:block;}
+.surprise-roulette-item .film-poster-placeholder{width:100%; height:100%; display:flex; align-items:center; justify-content:center; opacity:0.5;}
+.surprise-roulette-item .film-poster-placeholder svg{width:42%; height:42%;}
+/* Case gagnante (posée une fois la bande arrêtée, voir
+   spinSurpriseRoulette()) — même langage "Halation" que
+   .primary-tab[aria-selected] (halo permanent, pas juste au survol) : LA
+   case qui compte doit se voir au premier regard, pas seulement par sa
+   position sous le repère. */
+.surprise-roulette-item.winner{
+  border-color:var(--gold);
+  box-shadow:0 0 0 1px rgba(231,178,76,0.4), 0 0 26px 4px rgba(231,178,76,0.45);
+  transform:scale(1.04);
+  animation:surpriseWinnerPulse .6s ease-out;
+}
+@keyframes surpriseWinnerPulse{
+  0%{transform:scale(1);}
+  45%{transform:scale(1.12);}
+  100%{transform:scale(1.04);}
+}
+@media (prefers-reduced-motion:reduce){
+  .surprise-roulette-item.winner{animation:none;}
+}
+/* Repère central : la case qui s'arrête pile dessous est le tirage — même
+   idée qu'un repère d'ouverture de caisse, teinte or plutôt qu'une couleur
+   neutre pour rester dans la palette Halation plutôt qu'en emprunter une
+   nouvelle. */
+.surprise-roulette-marker{
+  position:absolute;
+  top:0; bottom:0; left:50%;
+  width:2px;
+  background:var(--gold);
+  transform:translateX(-50%);
+  box-shadow:0 0 12px 2px rgba(231,178,76,0.6);
+  pointer-events:none;
+}
+.surprise-roulette-marker::before, .surprise-roulette-marker::after{
+  content:'';
+  position:absolute;
+  left:50%;
+  width:0; height:0;
+  border-left:5px solid transparent;
+  border-right:5px solid transparent;
+  transform:translateX(-50%);
+}
+.surprise-roulette-marker::before{top:-1px; border-top:6px solid var(--gold);}
+.surprise-roulette-marker::after{bottom:-1px; border-bottom:6px solid var(--gold);}
+@media (max-width:600px){
+  .surprise-roulette{height:118px;}
+  .surprise-roulette-item{width:70px; height:103px;}
+}
+
 .surprise-poster{
   width:160px;
   margin:0 auto 16px;

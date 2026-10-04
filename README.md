@@ -408,6 +408,28 @@ conseillé…). Deux actions par item :
 
 Nécessite `supabase/migrations/006_add_watchlist.sql`.
 
+### "🎲 Surprends-moi" (v2.51, roulette)
+
+Tire un film au hasard dans la watchlist (respecte le filtre plateforme
+actif juste en dessous — "tirer sur Netflix" doit rester cohérent avec la
+liste affichée) pour aider à décider quoi regarder ce soir plutôt que de
+parcourir toute la liste. Retour utilisateur, motion design : mis en scène
+comme une roulette d'ouverture de caisse plutôt qu'un résultat qui
+apparaît d'un coup — une bande d'affiches défile, décélère franchement
+(`cubic-bezier`, 5s) et s'arrête pile sous un repère doré central, voir
+`.surprise-roulette` (`css/style.css`) et `spinSurpriseRoulette()`
+(`js/watchlist.js`). Le tirage réel est décidé AVANT même de construire la
+bande (`currentSurpriseItem`) — la bande n'est qu'une mise en scène de ce
+choix déjà fait, chaque film garde exactement les mêmes chances d'être
+tiré quel que soit l'endroit où il atterrit visuellement à l'écran.
+Distance d'arrivée mesurée sur le vrai rendu (jamais une valeur figée dans
+le CSS) : survit au seuil mobile, qui réduit la largeur des cases. "Encore
+un" relance un tirage complet (pas un simple remplacement du résultat) —
+boutons désactivés et repère purement décoratif pour un lecteur d'écran
+(`aria-hidden`) le temps du tirage, résultat annoncé par `#surpriseContent`
+(`aria-live`) une fois la bande arrêtée. `prefers-reduced-motion` : la
+bande se pose directement sur le tirage, sans défiler.
+
 ### Filtre par plateforme (v2.50)
 
 Retour utilisateur : avec "Où regarder" déjà posé sur la fiche film

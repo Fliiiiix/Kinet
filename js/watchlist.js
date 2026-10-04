@@ -80,21 +80,29 @@ function friendRatingsLabel(watchlistId){
   return `👋 ${ratings.length} amis l'ont noté (moy. ${avg.toFixed(1)})`;
 }
 
+// Filtre plateforme (retour utilisateur) — select masqué tant qu'il n'a pas
+// d'options réelles (voir buildWatchlistProviderFilterOptions()), donc
+// toujours "" (aucun filtre) à ce moment-là ; getElementById plutôt qu'une
+// valeur passée en paramètre, même choix que genreFilter/yearFilter dans
+// render() (js/app.js) pour rester la seule source de vérité. Extrait de
+// renderWatchlist() pour être réutilisé par la roulette "Surprends-moi"
+// (openSurprise() plus bas) : un tirage doit respecter le même filtre que
+// la liste affichée, pas piocher dans toute la watchlist si on vient de la
+// réduire à "dispo sur Netflix".
+function getFilteredWatchlist(){
+  const providerFilter = document.getElementById('wlProviderFilter').value;
+  return providerFilter
+    ? watchlist.filter(item => (watchlistProviders[item.tmdbId] || []).some(p => String(p.provider_id) === providerFilter))
+    : watchlist;
+}
+
 function renderWatchlist(){
   const list = document.getElementById('wlList');
   if(watchlist.length === 0){
     list.innerHTML = `<div class="empty-state">Rien pour l'instant. Ajoute un film ci-dessus.</div>`;
     return;
   }
-  // Filtre plateforme (retour utilisateur) — select masqué tant qu'il n'a
-  // pas d'options réelles (voir buildWatchlistProviderFilterOptions()), donc
-  // toujours "" (aucun filtre) à ce moment-là ; getElementById plutôt qu'une
-  // valeur passée en paramètre, même choix que genreFilter/yearFilter dans
-  // render() (js/app.js) pour rester la seule source de vérité.
-  const providerFilter = document.getElementById('wlProviderFilter').value;
-  const filtered = providerFilter
-    ? watchlist.filter(item => (watchlistProviders[item.tmdbId] || []).some(p => String(p.provider_id) === providerFilter))
-    : watchlist;
+  const filtered = getFilteredWatchlist();
   if(filtered.length === 0){
     list.innerHTML = `<div class="empty-state">Rien de ta watchlist n'est dispo là-dessus pour l'instant.</div>`;
     return;
@@ -398,11 +406,47 @@ function startRatingFromWatchlist(item){
 }
 
 // --- "Surprends-moi" (retour utilisateur) --- Tire un film au hasard dans
-// la watchlist pour aider à décider quoi regarder ce soir plutôt que de
-// parcourir toute la liste — correspond à l'usage central de l'app (noter
-// vite, juste après avoir vu quelque chose), version "avant" plutôt
-// qu'"après" du visionnage.
+// la watchlist (respecte le filtre plateforme actif — voir
+// getFilteredWatchlist(), "piocher dans Netflix" doit rester cohérent avec
+// la liste affichée) pour aider à décider quoi regarder ce soir, version
+// "avant" plutôt qu'"après" le visionnage. Roulette façon ouverture de
+// caisse (retour utilisateur, motion design) — voir .surprise-roulette
+// (css/style.css). Le VRAI tirage (currentSurpriseItem) est décidé AVANT
+// de construire la bande, jamais l'inverse : la bande n'est qu'une mise en
+// scène de ce choix déjà fait, chaque film du lot garde exactement les
+// mêmes chances d'être tiré, peu importe où il atterrit visuellement.
 let currentSurpriseItem = null;
+let surpriseSpinning = false;
+
+// Longueur de la bande et position de la case gagnante dedans — assez de
+// recul AVANT (le temps que la décélération se sente vraiment) et assez
+// d'images APRÈS (la bande ne s'arrête pas pile au bord du cadre, encore
+// un peu de défilement visible une fois le repère atteint).
+const ROULETTE_LENGTH = 32;
+const ROULETTE_WINNER_INDEX = 24;
+
+function rouletteItemHtml(item){
+  return `
+    <div class="surprise-roulette-item">
+      ${item.posterUrl
+        ? `<img src="${item.posterUrl}" alt="" loading="lazy">`
+        : `<div class="film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
+    </div>
+  `;
+}
+
+// pool : la liste dans laquelle tirer (déjà filtrée par l'appelant). Les
+// cases autour du tirage sont piochées au hasard dans ce même pool — avec
+// une petite liste, le même poster revient plusieurs fois dans la bande,
+// sans conséquence (ce n'est QUE le décor du tirage, voir le commentaire
+// plus haut).
+function buildRouletteStripHtml(pool, winner){
+  let html = '';
+  for(let i = 0; i < ROULETTE_LENGTH; i++){
+    html += rouletteItemHtml(i === ROULETTE_WINNER_INDEX ? winner : pool[Math.floor(Math.random() * pool.length)]);
+  }
+  return html;
+}
 
 function renderSurpriseContent(item){
   document.getElementById('surpriseContent').innerHTML = `
@@ -416,14 +460,79 @@ function renderSurpriseContent(item){
   `;
 }
 
+// Lance un tirage dans pool : construit la bande, l'anime jusqu'au repère
+// central, révèle le résultat à l'arrivée. Appelée à l'ouverture ET à
+// chaque "Encore un" — un reroll est un tirage comme un autre, pas un cas
+// à part.
+function spinSurpriseRoulette(pool){
+  if(surpriseSpinning) return; // anti double-lancement (boutons désactivés pendant le tirage, filet en plus)
+  surpriseSpinning = true;
+  currentSurpriseItem = pool[Math.floor(Math.random() * pool.length)];
+
+  const content = document.getElementById('surpriseContent');
+  const rerollBtn = document.getElementById('surpriseRerollBtn');
+  const rateBtn = document.getElementById('surpriseRateBtn');
+  content.style.display = 'none';
+  rerollBtn.disabled = true;
+  rateBtn.disabled = true;
+
+  const frame = document.getElementById('surpriseRoulette');
+  const track = document.getElementById('surpriseRouletteTrack');
+  track.innerHTML = buildRouletteStripHtml(pool, currentSurpriseItem);
+
+  // Reset instantané à la position de départ (transition coupée le temps de
+  // ce reset) avant de la rejouer — sans ça, un 2e tirage ("Encore un")
+  // repartirait de la position d'arrivée du précédent : un balayage parfois
+  // très court plutôt que le grand geste voulu à chaque fois.
+  track.style.transition = 'none';
+  track.style.transform = 'translateX(0)';
+  void track.offsetWidth; // force le reflow avant de relire les positions ci-dessous et de relancer la transition
+
+  const winnerEl = track.children[ROULETTE_WINNER_INDEX];
+  const itemWidth = winnerEl.getBoundingClientRect().width;
+  const viewportWidth = frame.getBoundingClientRect().width;
+  // Léger aléa (jamais pile centré sous le repère) : un vrai tirage
+  // n'atterrit jamais exactement au même pixel — +/- un quart de la largeur
+  // d'une case reste toujours clairement DANS la case gagnante.
+  const jitter = (Math.random() - 0.5) * itemWidth * 0.5;
+  const targetOffset = winnerEl.offsetLeft + itemWidth / 2 - viewportWidth / 2 + jitter;
+
+  const reduced = prefersReducedMotion();
+  let done = false;
+  const finish = () => {
+    if(done) return;
+    done = true;
+    winnerEl.classList.add('winner');
+    renderSurpriseContent(currentSurpriseItem);
+    content.style.display = '';
+    rerollBtn.disabled = false;
+    rateBtn.disabled = false;
+    surpriseSpinning = false;
+  };
+
+  requestAnimationFrame(() => {
+    track.style.transition = reduced ? 'none' : '';
+    track.style.transform = `translateX(${-targetOffset}px)`;
+    // Filet (même principe que closeOverlay(), js/ui.js) : transitionend ne
+    // se déclenche jamais pour une transition coupée (reduced:'none',
+    // transition:none), le setTimeout est alors le SEUL signal de fin.
+    track.addEventListener('transitionend', finish, { once: true });
+    setTimeout(finish, (reduced ? 0 : 5000) + 200);
+  });
+}
+
 function openSurprise(){
+  const pool = getFilteredWatchlist();
   if(watchlist.length === 0){
     showToast('Ta watchlist est vide — ajoute un film d\'abord');
     return;
   }
-  currentSurpriseItem = watchlist[Math.floor(Math.random() * watchlist.length)];
-  renderSurpriseContent(currentSurpriseItem);
+  if(pool.length === 0){
+    showToast('Rien sur cette plateforme pour l\'instant — change le filtre');
+    return;
+  }
   openOverlay('surpriseOverlay');
+  spinSurpriseRoulette(pool);
 }
 
 document.getElementById('wlSurpriseBtn').addEventListener('click', openSurprise);
@@ -432,15 +541,7 @@ document.getElementById('surpriseOverlay').addEventListener('click', (e) => {
   if(e.target.id === 'surpriseOverlay') closeOverlay('surpriseOverlay');
 });
 document.getElementById('surpriseRerollBtn').addEventListener('click', () => {
-  // Évite de retomber sur EXACTEMENT le même film que le tirage précédent
-  // tant qu'il y en a d'autres — sinon "Encore un" semblerait ne rien faire
-  // la moitié du temps sur une petite watchlist.
-  let next = currentSurpriseItem;
-  if(watchlist.length > 1){
-    do{ next = watchlist[Math.floor(Math.random() * watchlist.length)]; }while(next.id === currentSurpriseItem.id);
-  }
-  currentSurpriseItem = next;
-  renderSurpriseContent(currentSurpriseItem);
+  spinSurpriseRoulette(getFilteredWatchlist());
 });
 document.getElementById('surpriseRateBtn').addEventListener('click', () => {
   closeOverlay('surpriseOverlay', () => startRatingFromWatchlist(currentSurpriseItem));
