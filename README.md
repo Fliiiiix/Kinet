@@ -989,29 +989,38 @@ clair dans l'app ("Voir les probabilités de tirage", repli `.crit-help`
 déjà utilisé pour l'aide des critères de notation) — jamais seulement
 dans ce fichier ou les commentaires SQL.
 
-**Doublons** — convertibles en poussière (`disenchant_card()`, valeur
-croissante avec la rareté), dépensable pour fabriquer une carte précise de
-son choix (`craft_card()`, coût ≈4× la valeur de désenchantement — un vrai
-choix, pas un recyclage gratuit). UI de fabrication pas encore construite
-(voir plus bas).
+**Doublons → poussière → fabrication** (v2.63, onglet "Fabriquer") — un
+doublon (`quantity > 1`, jamais le dernier exemplaire) se désenchante un à
+la fois (`disenchant_card()`) contre de la poussière, valeur croissante
+avec la rareté (5/20/100/400) ; la poussière se dépense pour fabriquer une
+carte précise de son choix (`craft_card()`, coût ≈4× la valeur de
+désenchantement du même palier — un vrai choix, pas un recyclage gratuit),
+recherche par nom dans tout le catalogue partagé (pas juste sa propre
+collection, fabriquer sert justement à obtenir ce qu'on n'a pas).
 
-**Échange** — table `tcg_trades` + `accept_trade()` (déplace les cartes
-des deux côtés en une seule transaction, tout ou rien, après avoir
-revérifié que les deux parties possèdent bien ce qu'elles ont mis sur la
-table à l'instant T, pas au moment de la proposition) déjà en place côté
-base — limité à un ami ou un co-membre de groupe (retour utilisateur :
-"un système d'échange qui passe par l'amitié et les groupes"). UI pas
-encore construite (voir plus bas).
+**Échange** (v2.63, onglet "Échanger") — `tcg_trades` + `accept_trade()`
+(déplace les cartes des deux côtés en une seule transaction, tout ou rien,
+après avoir revérifié que les deux parties possèdent bien ce qu'elles ont
+mis sur la table à l'instant T, pas au moment de la proposition). Choisir
+un ami, cliquer des cartes dans sa propre collection ("tu proposes") et
+dans celle du partenaire ("tu demandes", visible via la policy RLS amis),
+proposer — l'autre partie accepte/refuse depuis "Tes échanges en cours".
+Limité à un ami pour ce premier sélecteur (retour utilisateur : "un
+système d'échange qui passe par l'amitié et les groupes" — `accept_trade()`
+autorise déjà aussi un co-membre de groupe côté base, juste pas encore de
+sélecteur dédié pour ce 2e cas, qui demanderait de charger tous les
+membres de tous les groupes rien que pour ce picker).
 
 **Déjà construit** : schéma complet, génération de cartes au fil de
 l'eau, calcul des boosters disponibles, tirage pondéré avec pool
 personnel/global, ouverture animée (bande de 5 cartes retournées en
 cascade, halo marqué sur les cartes Épique/Légendaire), page Collection
-(filtrable par type/rareté, triée des plus rares aux plus communes).
+(filtrable par type/rareté, triée des plus rares aux plus communes),
+fabrication/désenchantement, échange entre amis.
 
-**Pas encore construit** (prochaine session) : UI d'échange (la table/
-fonction existent, pas l'écran), UI de fabrication en poussière (idem),
-lien Succès → boosters supplémentaires.
+**Pas encore construit** : sélecteur d'échange élargi aux membres de
+groupe (fonction déjà prête côté base), lien Succès → boosters
+supplémentaires.
 
 Nécessite `supabase/migrations/041_add_tcg_cards.sql`.
 

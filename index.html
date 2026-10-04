@@ -59,7 +59,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,500&family=Space+Mono:wght@400;700&display=swap">
-<link rel="stylesheet" href="css/style.css?v=165">
+<link rel="stylesheet" href="css/style.css?v=168">
 </head>
 <body>
 
@@ -1638,57 +1638,123 @@
   </div>
 </div>
 
-<!-- Modal Cartes (TCG, retour utilisateur) — voir js/tcg.js. -->
+<!-- Modal Cartes (TCG, retour utilisateur) — voir js/tcg.js. 3 onglets
+     (même composant que les onglets Admin/Avatar, .avatar-source-tabs) :
+     Collection (déjà là), Fabriquer et Échanger ajoutés après coup —
+     schéma/fonctions déjà prêts côté base depuis migrations/041, il ne
+     manquait que l'écran. -->
 <div class="overlay" id="tcgOverlay">
   <div class="modal stats-modal tcg-modal">
     <div class="modal-head">
       <h2>🃏 Cartes</h2>
       <button class="close-x" id="closeTcg" aria-label="Fermer">✕</button>
     </div>
-    <div class="tcg-booster-bar">
-      <div class="tcg-booster-count" id="tcgBoosterCount">…</div>
-      <button class="btn" id="tcgOpenBoosterBtn" type="button" disabled>Ouvrir un booster</button>
+    <div class="avatar-source-tabs" role="tablist" id="tcgTabs">
+      <button type="button" class="avatar-source-tab active" data-tcg-tab="collection" role="tab" aria-selected="true">Collection</button>
+      <button type="button" class="avatar-source-tab" data-tcg-tab="craft" role="tab" aria-selected="false">Fabriquer</button>
+      <button type="button" class="avatar-source-tab" data-tcg-tab="trade" role="tab" aria-selected="false">Échanger</button>
     </div>
-    <!-- Probabilités de tirage (retour utilisateur : "doit être clair") —
-         les chiffres EXACTS d'open_booster() (migrations/041), jamais
-         réécrits ici séparément : si ces seuils changent un jour côté
-         base, ce texte doit changer avec eux. Même pattern que l'aide
-         repliable des critères de notation (.crit-help-toggle/.crit-help,
-         déjà en place) plutôt qu'un nouveau composant pour l'occasion. -->
-    <button class="crit-help-toggle" id="tcgOddsToggle" type="button">Voir les probabilités de tirage</button>
-    <div class="crit-help" id="tcgOddsHelp">
-      <div class="crit-anchors">Chaque carte d'un booster, tirée indépendamment des 4 autres :
+
+    <div id="tcgPanelCollection">
+      <div class="tcg-booster-bar">
+        <div class="tcg-booster-count" id="tcgBoosterCount">…</div>
+        <button class="btn" id="tcgOpenBoosterBtn" type="button" disabled>Ouvrir un booster</button>
+      </div>
+      <!-- Probabilités de tirage (retour utilisateur : "doit être clair") —
+           les chiffres EXACTS d'open_booster() (migrations/041), jamais
+           réécrits ici séparément : si ces seuils changent un jour côté
+           base, ce texte doit changer avec eux. Même pattern que l'aide
+           repliable des critères de notation (.crit-help-toggle/.crit-help,
+           déjà en place) plutôt qu'un nouveau composant pour l'occasion. -->
+      <button class="crit-help-toggle" id="tcgOddsToggle" type="button">Voir les probabilités de tirage</button>
+      <div class="crit-help" id="tcgOddsHelp">
+        <div class="crit-anchors">Chaque carte d'un booster, tirée indépendamment des 4 autres :
 Figurant (Commun)           60%
 Second rôle (Rare)          27%
 Tête d'affiche (Épique)     10%
 Légende du 7e art (Légendaire) 3%</div>
-      <div class="crit-questions">Au moins 1 carte Rare ou mieux garantie par booster. 70% des tirages piochent dans les films/acteurs/réalisateurs déjà liés à ton catalogue, 30% dans tout ce qu'a déjà révélé la communauté — la rareté est toujours décidée en premier, indépendamment d'où vient la carte. Obtenir la carte d'un film ne garantit jamais celle de son casting : chaque carte est un tirage à part entière, rien ne les lie entre elles.</div>
+        <div class="crit-questions">Au moins 1 carte Rare ou mieux garantie par booster. 70% des tirages piochent dans les films/acteurs/réalisateurs déjà liés à ton catalogue, 30% dans tout ce qu'a déjà révélé la communauté — la rareté est toujours décidée en premier, indépendamment d'où vient la carte. Obtenir la carte d'un film ne garantit jamais celle de son casting : chaque carte est un tirage à part entière, rien ne les lie entre elles.</div>
+      </div>
+      <!-- Rattrapage du catalogue déjà noté/en watchlist AVANT l'arrivée des
+           cartes (retour utilisateur : "j'ai déjà vu plein de films, je ne
+           devrais pas avoir des cartes ?") — se lance tout seul une fois par
+           appareil à l'ouverture (voir openTcgModal(), js/tcg.js), ce bouton
+           reprend la main si c'était interrompu ou pour un nouveau passage. -->
+      <div class="tcg-scan-row">
+        <button class="btn secondary" id="tcgScanBtn" type="button">🔍 Scanner mon catalogue</button>
+        <span class="tcg-scan-status" id="tcgScanStatus"></span>
+      </div>
+      <div class="toolbar" style="margin-bottom:16px;">
+        <select id="tcgTypeFilter" aria-label="Filtrer par type">
+          <option value="">Tous types</option>
+          <option value="film">Films</option>
+          <option value="actor">Acteurs</option>
+          <option value="director">Réalisateurs</option>
+        </select>
+        <select id="tcgRarityFilter" aria-label="Filtrer par rareté">
+          <option value="">Toutes raretés</option>
+          <option value="legendaire">Légende du 7e art</option>
+          <option value="epique">Tête d'affiche</option>
+          <option value="rare">Second rôle</option>
+          <option value="commun">Figurant</option>
+        </select>
+      </div>
+      <div id="tcgCollectionGrid" class="tcg-grid"></div>
     </div>
-    <!-- Rattrapage du catalogue déjà noté/en watchlist AVANT l'arrivée des
-         cartes (retour utilisateur : "j'ai déjà vu plein de films, je ne
-         devrais pas avoir des cartes ?") — se lance tout seul une fois par
-         appareil à l'ouverture (voir openTcgModal(), js/tcg.js), ce bouton
-         reprend la main si c'était interrompu ou pour un nouveau passage. -->
-    <div class="tcg-scan-row">
-      <button class="btn secondary" id="tcgScanBtn" type="button">🔍 Scanner mon catalogue</button>
-      <span class="tcg-scan-status" id="tcgScanStatus"></span>
+
+    <!-- Fabriquer : doublons -> poussière -> carte précise (craft_card()/
+         disenchant_card(), migrations/041). -->
+    <div id="tcgPanelCraft" style="display:none;">
+      <div class="tcg-booster-bar">
+        <div class="tcg-booster-count" id="tcgDustCount">…</div>
+      </div>
+      <div class="stats-section">
+        <div class="stats-section-title">Tes doublons</div>
+        <div id="tcgDuplicatesList"></div>
+      </div>
+      <div class="stats-section">
+        <div class="stats-section-title">Fabriquer une carte précise</div>
+        <div class="field">
+          <input type="text" id="tcgCraftSearch" placeholder="Chercher un film, un acteur, un réalisateur…" autocomplete="off">
+        </div>
+        <div id="tcgCraftResults"></div>
+      </div>
     </div>
-    <div class="toolbar" style="margin-bottom:16px;">
-      <select id="tcgTypeFilter" aria-label="Filtrer par type">
-        <option value="">Tous types</option>
-        <option value="film">Films</option>
-        <option value="actor">Acteurs</option>
-        <option value="director">Réalisateurs</option>
-      </select>
-      <select id="tcgRarityFilter" aria-label="Filtrer par rareté">
-        <option value="">Toutes raretés</option>
-        <option value="legendaire">Légende du 7e art</option>
-        <option value="epique">Tête d'affiche</option>
-        <option value="rare">Second rôle</option>
-        <option value="commun">Figurant</option>
-      </select>
+
+    <!-- Échanger : amis uniquement pour ce premier jet (accept_trade()
+         autorise aussi un co-membre de groupe côté base, voir
+         migrations/041 — pas encore de sélecteur dédié ici, qui
+         demanderait de charger tous les membres de tous mes groupes
+         juste pour ce picker). -->
+    <div id="tcgPanelTrade" style="display:none;">
+      <div class="stats-section" id="tcgTradesSection" style="display:none;">
+        <div class="stats-section-title">Tes échanges en cours</div>
+        <div id="tcgTradesList"></div>
+      </div>
+      <div class="stats-section">
+        <div class="stats-section-title">Proposer un échange</div>
+        <div class="field">
+          <label for="tcgTradePartnerSelect">Avec qui ?</label>
+          <select id="tcgTradePartnerSelect">
+            <option value="">Choisis un ami</option>
+          </select>
+        </div>
+        <div id="tcgTradeBuilder" style="display:none;">
+          <div class="tcg-trade-columns">
+            <div>
+              <div class="tcg-trade-col-title">Tu proposes</div>
+              <div id="tcgTradeMyCards" class="tcg-grid tcg-grid-compact"></div>
+            </div>
+            <div>
+              <div class="tcg-trade-col-title">Tu demandes</div>
+              <div id="tcgTradeTheirCards" class="tcg-grid tcg-grid-compact"></div>
+            </div>
+          </div>
+          <div class="tcg-trade-summary" id="tcgTradeSummary"></div>
+          <button class="btn" id="tcgTradeSubmitBtn" type="button" disabled>Proposer l'échange</button>
+        </div>
+      </div>
     </div>
-    <div id="tcgCollectionGrid" class="tcg-grid"></div>
   </div>
 </div>
 
@@ -1911,120 +1977,120 @@ Légende du 7e art (Légendaire) 3%</div>
 <!-- ?v=N sur chaque js/*.js ci-dessous (voir le commentaire dans <head>) —
      à incrémenter à chaque déploiement, même numéro pour tous les fichiers. -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/supabaseConfig.js?v=165"></script>
+<script src="js/supabaseConfig.js?v=168"></script>
 <!-- Juste après supabaseConfig.js (a besoin de supabaseClient) et avant
      tout le reste : capte les erreurs de chargement des scripts suivants,
      pas seulement celles de l'app une fois démarrée — voir js/logging.js. -->
-<script src="js/logging.js?v=165"></script>
-<script src="js/tmdbConfig.js?v=165"></script>
-<script src="js/data.js?v=165"></script>
-<script src="js/happenings.js?v=165"></script>
+<script src="js/logging.js?v=168"></script>
+<script src="js/tmdbConfig.js?v=168"></script>
+<script src="js/data.js?v=168"></script>
+<script src="js/happenings.js?v=168"></script>
 <!-- Avant app.js et les 6 autres modules qui ouvrent/ferment une modale
      (openOverlay/closeOverlay) — l'ordre exact importe peu au runtime
      (rien n'y est appelé au chargement), gardé en premier des scripts
      "app" pour la lisibilité, comme un utilitaire partagé. -->
-<script src="js/ui.js?v=165"></script>
+<script src="js/ui.js?v=168"></script>
 <!-- Avant watchlist.js, qui appelle playRouletteTick()/playRouletteWin()
      (roulette "Surprends-moi") — l'ordre exact importe peu au runtime
      (rien n'y est appelé au chargement), gardé ici pour la lisibilité,
      comme ui.js juste au-dessus. -->
-<script src="js/sound.js?v=165"></script>
+<script src="js/sound.js?v=168"></script>
 <!-- Avant app.js/journal.js/watchlist.js, qui appellent saveOfflineCache()/
      loadOfflineCache()/blockIfOffline() (v1.6, mode hors ligne lecture
      seule) — l'ordre exact importe peu au runtime (rien n'y est appelé au
      chargement, seulement des listeners posés pour plus tard), gardé ici
      pour la lisibilité, comme ui.js juste au-dessus. -->
-<script src="js/offlineQueue.js?v=165"></script>
-<script src="js/offline.js?v=165"></script>
-<script src="js/app.js?v=165"></script>
-<script src="js/tmdb.js?v=165"></script>
-<script src="js/stats.js?v=165"></script>
-<script src="js/achievements.js?v=165"></script>
+<script src="js/offlineQueue.js?v=168"></script>
+<script src="js/offline.js?v=168"></script>
+<script src="js/app.js?v=168"></script>
+<script src="js/tmdb.js?v=168"></script>
+<script src="js/stats.js?v=168"></script>
+<script src="js/achievements.js?v=168"></script>
 <!-- Avant app.js/watchlist.js à l'exécution (pas au chargement — rien
      n'est appelé ici avant un vrai clic/ajout) : les deux appellent
      generateTcgCardsForFilm(), définie ici. -->
-<script src="js/tcg.js?v=165"></script>
-<script src="js/journal.js?v=165"></script>
+<script src="js/tcg.js?v=168"></script>
+<script src="js/journal.js?v=168"></script>
 <!-- Après app.js (showToast) — appelée par js/profile.js juste après. -->
-<script src="js/pwa.js?v=165"></script>
-<script src="js/profile.js?v=165"></script>
+<script src="js/pwa.js?v=168"></script>
+<script src="js/profile.js?v=168"></script>
 <!-- Paramètres — après profile.js (referme/rouvre "Ton profil") et pwa.js
      (updateInstallUI()), voir js/settings.js. -->
-<script src="js/settings.js?v=165"></script>
+<script src="js/settings.js?v=168"></script>
 <!-- Après profile.js (closeProfileModal/openProfileModal) et data.js
      (FEEDBACK_CATEGORIES) — même raisonnement que pwa.js juste au-dessus. -->
-<script src="js/feedback.js?v=165"></script>
+<script src="js/feedback.js?v=168"></script>
 <!-- Bilan cinéphile partageable (v2.43) — après journal.js (viewings) et
      profile.js (currentProfile), voir js/recap.js. -->
-<script src="js/recap.js?v=165"></script>
+<script src="js/recap.js?v=168"></script>
 <!-- N'a besoin que de ui.js (openOverlay/closeOverlay) et app.js
      (showToast), chargés bien avant — placé ici pour rester groupé avec
      les autres modales accessibles depuis le chrome plutôt que pour une
      vraie dépendance. -->
-<script src="js/share.js?v=165"></script>
+<script src="js/share.js?v=168"></script>
 <!-- Après happenings.js/achievements.js (définitions) et profile.js
      (closeProfileModal) : admin.js s'appuie sur les trois au clic, jamais au
      chargement — l'ordre exact importe peu, gardé groupé ici pour la
      lisibilité. -->
-<script src="js/admin.js?v=165"></script>
-<script src="js/router.js?v=165"></script>
-<script src="js/publicProfile.js?v=165"></script>
-<script src="js/top.js?v=165"></script>
-<script src="js/friends.js?v=165"></script>
+<script src="js/admin.js?v=168"></script>
+<script src="js/router.js?v=168"></script>
+<script src="js/publicProfile.js?v=168"></script>
+<script src="js/top.js?v=168"></script>
+<script src="js/friends.js?v=168"></script>
 <!-- Après friends.js (cacheProfile/friendDisplayName/friendAvatarHtml) et
      journal.js (formatViewingDate), avant groups.js qui l'appelle depuis
      openGroupDetail() — l'ordre exact importe peu au runtime (tout est en
      fonctions globales appelées après chargement complet), gardé groupé
      ici pour la lisibilité. -->
-<script src="js/activity.js?v=165"></script>
-<script src="js/watchlist.js?v=165"></script>
+<script src="js/activity.js?v=168"></script>
+<script src="js/watchlist.js?v=168"></script>
 <!-- Après watchlist.js (loadWatchlist/watchlist, réutilisés pour exclure
      ce qui y est déjà) et app.js (getDisplayNote, chargé plus haut) — voir
      js/suggestions.js. Avant auth.js, qui appelle loadSuggestions() depuis
      showApp(). -->
-<script src="js/suggestions.js?v=165"></script>
+<script src="js/suggestions.js?v=168"></script>
 <!-- Import externe (Letterboxd pour l'instant) — après watchlist.js/app.js/
      tmdb.js/journal.js dont il réutilise films/watchlist/searchTmdb()/
      addViewing(). Voir js/importExternal.js. -->
-<script src="js/importExternal.js?v=165"></script>
+<script src="js/importExternal.js?v=168"></script>
 <!-- Fiche film (v2.1) — voir js/filmDetail.js. Regroupée ici avec
      friends.js/watchlist.js dont elle réutilise les helpers (même
      remarque que suggestions.js juste au-dessus : l'ordre exact n'importe
      pas au runtime, tout est en fonctions appelées après chargement
      complet — router.js, plus haut, appelle déjà openFriends()/
      openWatchlist() en aval de leur propre script de la même façon). -->
-<script src="js/filmDetail.js?v=165"></script>
+<script src="js/filmDetail.js?v=168"></script>
 <!-- Après watchlist.js : js/upcoming.js réutilise le tableau watchlist déjà
      chargé (voir plus bas). -->
-<script src="js/series.js?v=165"></script>
+<script src="js/series.js?v=168"></script>
 <!-- Après watchlist.js ET series.js — a besoin des deux tableaux chargés
      (loadWatchlist()/loadTrackedShows()), voir js/upcoming.js. -->
-<script src="js/upcoming.js?v=165"></script>
-<script src="js/groups.js?v=165"></script>
-<script src="js/proposals.js?v=165"></script>
+<script src="js/upcoming.js?v=168"></script>
+<script src="js/groups.js?v=168"></script>
+<script src="js/proposals.js?v=168"></script>
 <!-- Après groups.js (renderInviteBox appelée depuis renderGroupDetail) et
      proposals.js (chosenProposal) — voir js/invites.js. -->
-<script src="js/invites.js?v=165"></script>
+<script src="js/invites.js?v=168"></script>
 <!-- Après activity.js (rowToActivityEvent/renderActivityRowHtml) et
      friends.js (friendProfiles/cacheProfile) qu'elle réutilise pour le
      digest, avant auth.js qui appelle refreshActivityBadge()/
      maybeShowDigest() depuis showApp(). -->
-<script src="js/activityState.js?v=165"></script>
+<script src="js/activityState.js?v=168"></script>
 <!-- Après activityState.js (loadActivityState/activityState réutilisés
      pour son propre badge "vu") et avant auth.js qui appelle
      initChangelog() depuis showApp(). -->
-<script src="js/changelog.js?v=165"></script>
+<script src="js/changelog.js?v=168"></script>
 <!-- Recherche globale unifiée (v2.42) — après series.js/friends.js/
      groups.js dont elle réutilise les tableaux déjà chargés et les
      fonctions d'ouverture (openFriendProfile/goToSeriesDetail/goToGroup),
      et après app.js/data.js pour getSearchTerms()/normalizeSearch()/
      FILM_PLACEHOLDER_SVG. Voir js/globalSearch.js. -->
-<script src="js/globalSearch.js?v=165"></script>
+<script src="js/globalSearch.js?v=168"></script>
 <!-- Tuto d'accueil interactif — avant auth.js dont showApp() appelle
      maybeStartOnboarding() ; après ui.js/router.js/profile.js/logging.js
      dont il réutilise respectivement openOverlay-style/goHome/
      closeProfileModal/logEvent. -->
-<script src="js/onboarding.js?v=165"></script>
-<script src="js/auth.js?v=165"></script>
+<script src="js/onboarding.js?v=168"></script>
+<script src="js/auth.js?v=168"></script>
 </body>
 </html>

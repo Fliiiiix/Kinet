@@ -10,13 +10,35 @@
 // depuis handleSave()/handleAddToWatchlist()), appeler open_booster(), et
 // afficher collection + ouverture.
 //
-// Reste à construire (prochaine session, voir le message qui accompagne
-// ce commit) : UI d'échange amis/groupes, fabrication contre poussière,
-// lien succès -> boosters. La fondation (schéma, génération, tirage,
-// ouverture, collection) est, elle, complète et testée.
+// Fabrication (doublons -> poussière -> carte précise) et échange entre
+// amis ajoutés après coup — schéma/fonctions déjà prêts côté base depuis
+// le premier jour (upsert_tcg_card()/open_booster() mis à part, aucune
+// des fonctions ci-dessous ne décide jamais rien : disenchant_card()/
+// craft_card()/accept_trade() valident et déplacent tout côté serveur,
+// ce fichier ne fait qu'afficher et appeler).
+//
+// Reste à construire : lien succès -> boosters, sélecteur de partenaire
+// d'échange élargi aux membres de groupe (accept_trade() les autorise déjà
+// côté base, voir migrations/041 — juste pas de picker dédié ici, qui
+// demanderait de charger tous les membres de tous les groupes rien que
+// pour ce sélecteur).
 
 let tcgCollection = []; // [{ cardId, cardType, name, imageUrl, rarity, quantity }]
 let tcgAvailableBoosters = 0;
+let tcgDustAmount = 0;
+let tcgCardNameCache = {}; // cardId -> { name, rarity } — cartes croisées dans des échanges, pas forcément dans tcgCollection
+let tcgPendingTrades = [];
+let tcgTradePartnerId = null;
+let tcgTradePartnerCollection = [];
+let tcgTradeOffered = new Set(); // card ids pris dans MA collection
+let tcgTradeRequested = new Set(); // card ids pris dans la collection du partenaire
+
+// Miroir côté client de dust_value()/craft_cost() (migrations/041) —
+// UNIQUEMENT pour l'affichage (coût annoncé avant de cliquer) : la vraie
+// valeur dépensée/reçue est toujours celle calculée côté serveur par
+// disenchant_card()/craft_card(), jamais celle-ci.
+const TCG_DUST_VALUE = { commun: 5, rare: 20, epique: 100, legendaire: 400 };
+const TCG_CRAFT_COST = { commun: 20, rare: 80, epique: 400, legendaire: 1600 };
 
 // --- Génération des cartes (en tâche de fond, jamais bloquant) ---
 
@@ -298,8 +320,385 @@ async function handleScanCatalog(){
   loadTcgCollection().then(renderTcgCollection);
 }
 
+// --- Onglets Collection / Fabriquer / Échanger --- même composant que les
+// onglets Admin/Avatar (.avatar-source-tabs), voir setAdminTab()
+// (js/admin.js) pour le même principe appliqué ailleurs.
+function setTcgTab(tab){
+  document.querySelectorAll('#tcgTabs .avatar-source-tab').forEach(btn => {
+    const active = btn.dataset.tcgTab === tab;
+    btn.classList.toggle('active', active);
+    btn.setAttribute('aria-selected', active ? 'true' : 'false');
+  });
+  document.getElementById('tcgPanelCollection').style.display = tab === 'collection' ? '' : 'none';
+  document.getElementById('tcgPanelCraft').style.display = tab === 'craft' ? '' : 'none';
+  document.getElementById('tcgPanelTrade').style.display = tab === 'trade' ? '' : 'none';
+  if(tab === 'craft') loadCraftTab();
+  else if(tab === 'trade') loadTradeTab();
+}
+
+// --- Fabriquer : doublons -> poussière -> carte précise ---
+
+async function refreshDustBalance(){
+  const { data, error } = await supabaseClient.from('tcg_dust').select('amount').eq('user_id', currentUser.id).maybeSingle();
+  tcgDustAmount = (!error && data) ? data.amount : 0;
+  const el = document.getElementById('tcgDustCount');
+  if(el) el.textContent = `✨ ${tcgDustAmount} poussière`;
+}
+
+async function loadCraftTab(){
+  document.getElementById('tcgDuplicatesList').innerHTML = skeletonRows();
+  await Promise.all([refreshDustBalance(), loadTcgCollection()]);
+  renderDuplicatesList();
+}
+
+// Doublons = quantity > 1 (voir disenchant_card(), migrations/041 : le
+// dernier exemplaire reste toujours intouchable, jamais désenchantable) —
+// un seul exemplaire EN TROP à la fois par clic, pas de sélecteur de
+// quantité : reclique autant de fois que de doublons à écouler, mental
+// model plus simple qu'un champ numérique pour un geste déjà rapide.
+function renderDuplicatesList(){
+  const wrap = document.getElementById('tcgDuplicatesList');
+  const dups = tcgCollection.filter(c => c.quantity > 1);
+  if(dups.length === 0){
+    wrap.innerHTML = `<div class="tmdb-empty">Pas de doublon pour l'instant.</div>`;
+    return;
+  }
+  wrap.innerHTML = dups.map(c => `
+    <div class="wl-row">
+      ${c.imageUrl
+        ? `<img class="film-poster" src="${c.imageUrl}" alt="" loading="lazy">`
+        : `<div class="film-poster film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
+      <div class="wl-main">
+        <div class="wl-title">${escapeHtml(c.name)}</div>
+        <div class="wl-note"><span class="tcg-rarity-tag rarity-${c.rarity}">${rarityLabel(c.rarity)}</span> · ×${c.quantity} (${c.quantity - 1} en trop) · +${TCG_DUST_VALUE[c.rarity]} poussière</div>
+      </div>
+      <div class="wl-actions">
+        <button class="btn secondary" type="button" data-disenchant="${c.cardId}">✨ Désenchanter 1</button>
+      </div>
+    </div>
+  `).join('');
+  wrap.querySelectorAll('[data-disenchant]').forEach(btn => {
+    btn.addEventListener('click', () => handleDisenchant(Number(btn.dataset.disenchant), btn));
+  });
+}
+
+async function handleDisenchant(cardId, btn){
+  btn.disabled = true;
+  const { data, error } = await supabaseClient.rpc('disenchant_card', { p_card_id: cardId, p_quantity: 1 });
+  if(error){
+    showToast(error.message === 'not_enough_duplicates' ? 'Plus de doublon à désenchanter' : 'Erreur, réessaie');
+    console.error(error);
+    btn.disabled = false;
+    return;
+  }
+  tcgDustAmount = data;
+  document.getElementById('tcgDustCount').textContent = `✨ ${tcgDustAmount} poussière`;
+  await loadTcgCollection();
+  renderDuplicatesList();
+  showToast('Désenchantée — poussière ajoutée');
+}
+
+let tcgCraftSearchTimer = null;
+document.getElementById('tcgCraftSearch').addEventListener('input', () => {
+  clearTimeout(tcgCraftSearchTimer);
+  const q = document.getElementById('tcgCraftSearch').value.trim();
+  if(q.length < 2){ document.getElementById('tcgCraftResults').innerHTML = ''; return; }
+  tcgCraftSearchTimer = setTimeout(() => runCraftSearch(q), 300);
+});
+
+// Cherche dans TOUT le catalogue partagé (tcg_cards), pas juste ta
+// collection — fabriquer sert justement à obtenir une carte qu'on n'a pas
+// (ou pas assez), chercher uniquement dans ce qu'on possède déjà n'aurait
+// aucun sens.
+async function runCraftSearch(query){
+  const wrap = document.getElementById('tcgCraftResults');
+  wrap.innerHTML = `<div class="tmdb-empty">Recherche…</div>`;
+  const { data, error } = await supabaseClient
+    .from('tcg_cards')
+    .select('id, card_type, name, image_url, rarity')
+    .ilike('name', `%${query}%`)
+    .limit(20);
+  if(error){
+    wrap.innerHTML = `<div class="tmdb-empty">Erreur de recherche.</div>`;
+    console.error(error);
+    return;
+  }
+  if(!data || data.length === 0){
+    wrap.innerHTML = `<div class="tmdb-empty">Aucune carte connue avec ce nom — elle n'a peut-être encore été générée par personne (voir "Scanner mon catalogue").</div>`;
+    return;
+  }
+  wrap.innerHTML = data.map(c => {
+    const cost = TCG_CRAFT_COST[c.rarity];
+    const affordable = tcgDustAmount >= cost;
+    return `
+      <div class="wl-row">
+        ${c.image_url
+          ? `<img class="film-poster" src="${c.image_url}" alt="" loading="lazy">`
+          : `<div class="film-poster film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
+        <div class="wl-main">
+          <div class="wl-title">${escapeHtml(c.name)}</div>
+          <div class="wl-note"><span class="tcg-rarity-tag rarity-${c.rarity}">${rarityLabel(c.rarity)}</span> · coût : ${cost} poussière</div>
+        </div>
+        <div class="wl-actions">
+          <button class="btn secondary" type="button" data-craft="${c.id}" ${affordable ? '' : 'disabled title="Pas assez de poussière"'}>Fabriquer</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+  wrap.querySelectorAll('[data-craft]').forEach(btn => {
+    btn.addEventListener('click', () => handleCraft(Number(btn.dataset.craft), btn));
+  });
+}
+
+async function handleCraft(cardId, btn){
+  btn.disabled = true;
+  const { data, error } = await supabaseClient.rpc('craft_card', { p_card_id: cardId });
+  if(error){
+    showToast(error.message === 'not_enough_dust' ? 'Pas assez de poussière' : 'Erreur, réessaie');
+    console.error(error);
+    btn.disabled = false;
+    return;
+  }
+  tcgDustAmount = data;
+  document.getElementById('tcgDustCount').textContent = `✨ ${tcgDustAmount} poussière`;
+  showToast('Carte fabriquée !');
+  // Les coûts affichés dans les résultats déjà à l'écran dépendent du
+  // solde (affordable, voir runCraftSearch()) — relance la même recherche
+  // pour qu'un autre résultat devenu inabordable se grise immédiatement.
+  const q = document.getElementById('tcgCraftSearch').value.trim();
+  if(q.length >= 2) runCraftSearch(q);
+}
+
+// --- Échanger (amis) ---
+
+async function loadTradeTab(){
+  populateTradePartnerSelect();
+  document.getElementById('tcgTradesList').innerHTML = skeletonRows();
+  await loadPendingTrades();
+  renderPendingTrades();
+}
+
+function populateTradePartnerSelect(){
+  const sel = document.getElementById('tcgTradePartnerSelect');
+  const current = sel.value;
+  const accepted = friendships.filter(f => f.status === 'accepted');
+  const options = accepted
+    .map(f => ({ id: otherUserId(f), name: friendDisplayName(otherUserId(f)) }))
+    .sort((a, b) => a.name.localeCompare(b.name, 'fr'))
+    .map(f => `<option value="${f.id}">${escapeHtml(f.name)}</option>`)
+    .join('');
+  sel.innerHTML = `<option value="">Choisis un ami</option>${options}`;
+  if(current && accepted.some(f => otherUserId(f) === current)) sel.value = current;
+}
+
+async function loadPendingTrades(){
+  const { data, error } = await supabaseClient
+    .from('tcg_trades')
+    .select('*')
+    .or(`from_user.eq.${currentUser.id},to_user.eq.${currentUser.id}`)
+    .eq('status', 'pending')
+    .order('created_at', { ascending: false });
+  if(error){ console.error(error); tcgPendingTrades = []; return; }
+  tcgPendingTrades = data || [];
+
+  const missingProfiles = [...new Set(tcgPendingTrades.map(t => t.from_user === currentUser.id ? t.to_user : t.from_user))]
+    .filter(id => !friendProfiles[id]);
+  if(missingProfiles.length > 0){
+    const { data: profs, error: profErr } = await supabaseClient
+      .from('profiles').select('user_id, display_name, avatar_url').in('user_id', missingProfiles);
+    if(profErr) console.error(profErr);
+    else (profs || []).forEach(p => cacheProfile(p.user_id, p.display_name, p.avatar_url));
+  }
+
+  // Noms/raretés des cartes citées dans ces échanges — un seul aller-
+  // retour groupé plutôt qu'un par ligne offered/requested.
+  const cardIds = new Set();
+  tcgPendingTrades.forEach(t => {
+    (t.offered || []).forEach(i => cardIds.add(i.card_id));
+    (t.requested || []).forEach(i => cardIds.add(i.card_id));
+  });
+  if(cardIds.size > 0){
+    const { data: cards, error: cardErr } = await supabaseClient
+      .from('tcg_cards').select('id, name, rarity').in('id', Array.from(cardIds));
+    if(cardErr) console.error(cardErr);
+    else (cards || []).forEach(c => { tcgCardNameCache[c.id] = c; });
+  }
+}
+
+function tcgCardNamesFromItems(items){
+  return (items || []).map(i => (tcgCardNameCache[i.card_id] || {}).name || '?').join(', ');
+}
+
+function renderPendingTrades(){
+  const section = document.getElementById('tcgTradesSection');
+  const wrap = document.getElementById('tcgTradesList');
+  if(tcgPendingTrades.length === 0){ section.style.display = 'none'; return; }
+  section.style.display = '';
+  wrap.innerHTML = tcgPendingTrades.map(t => {
+    const incoming = t.to_user === currentUser.id;
+    const partnerId = incoming ? t.from_user : t.to_user;
+    // "offered"/"requested" sont toujours du point de vue de from_user —
+    // pour qui REÇOIT la proposition (incoming), ce qu'il DONNERAIT s'il
+    // accepte est donc "requested", pas "offered".
+    const give = tcgCardNamesFromItems(incoming ? t.requested : t.offered);
+    const receive = tcgCardNamesFromItems(incoming ? t.offered : t.requested);
+    return `
+      <div class="wl-row">
+        <span class="friend-avatar-placeholder friend-avatar">🔄</span>
+        <div class="wl-main">
+          <div class="wl-title">${incoming ? 'Proposé par' : 'Proposé à'} ${escapeHtml(friendDisplayName(partnerId))}</div>
+          <div class="wl-note">Tu donnes : ${escapeHtml(give) || '—'}<br>Tu reçois : ${escapeHtml(receive) || '—'}</div>
+        </div>
+        <div class="wl-actions">
+          ${incoming
+            ? `<button class="btn" type="button" data-accept-trade="${t.id}">Accepter</button><button class="btn danger" type="button" data-resolve-trade="${t.id}" data-resolve-status="declined">Refuser</button>`
+            : `<button class="btn danger" type="button" data-resolve-trade="${t.id}" data-resolve-status="cancelled">Annuler</button>`}
+        </div>
+      </div>
+    `;
+  }).join('');
+  wrap.querySelectorAll('[data-accept-trade]').forEach(btn => {
+    btn.addEventListener('click', () => handleAcceptTrade(Number(btn.dataset.acceptTrade), btn));
+  });
+  wrap.querySelectorAll('[data-resolve-trade]').forEach(btn => {
+    btn.addEventListener('click', () => handleResolveTrade(Number(btn.dataset.resolveTrade), btn.dataset.resolveStatus, btn));
+  });
+}
+
+async function handleAcceptTrade(tradeId, btn){
+  btn.disabled = true;
+  const { error } = await supabaseClient.rpc('accept_trade', { p_trade_id: tradeId });
+  if(error){
+    showToast('Cet échange n\'est plus disponible (cartes déjà reparties ailleurs ?)');
+    console.error(error);
+    btn.disabled = false;
+    return;
+  }
+  showToast('Échange conclu !');
+  await loadPendingTrades();
+  renderPendingTrades();
+  await loadTcgCollection();
+  renderTcgCollection();
+}
+
+async function handleResolveTrade(tradeId, status, btn){
+  btn.disabled = true;
+  const { error } = await supabaseClient
+    .from('tcg_trades')
+    .update({ status, responded_at: new Date().toISOString() })
+    .eq('id', tradeId);
+  if(error){ showToast('Erreur, réessaie'); console.error(error); btn.disabled = false; return; }
+  await loadPendingTrades();
+  renderPendingTrades();
+}
+
+document.getElementById('tcgTradePartnerSelect').addEventListener('change', async (e) => {
+  tcgTradePartnerId = e.target.value || null;
+  tcgTradeOffered = new Set();
+  tcgTradeRequested = new Set();
+  const builder = document.getElementById('tcgTradeBuilder');
+  if(!tcgTradePartnerId){ builder.style.display = 'none'; return; }
+  builder.style.display = '';
+  document.getElementById('tcgTradeMyCards').innerHTML = skeletonRows();
+  document.getElementById('tcgTradeTheirCards').innerHTML = skeletonRows();
+  await Promise.all([loadTcgCollection(), loadPartnerCollection(tcgTradePartnerId)]);
+  renderTradeBuilder();
+});
+
+async function loadPartnerCollection(partnerId){
+  const { data, error } = await supabaseClient
+    .from('tcg_user_cards')
+    .select('quantity, card:tcg_cards(id, card_type, name, image_url, rarity)')
+    .eq('user_id', partnerId)
+    .order('quantity', { ascending: false });
+  if(error){ console.error(error); tcgTradePartnerCollection = []; return; }
+  tcgTradePartnerCollection = (data || [])
+    .filter(row => row.card && row.quantity > 0)
+    .map(row => ({
+      cardId: row.card.id, cardType: row.card.card_type, name: row.card.name,
+      imageUrl: row.card.image_url, rarity: row.card.rarity, quantity: row.quantity
+    }));
+}
+
+function tcgTradeCardHtml(c, selected){
+  return `
+    <div class="tcg-card rarity-${c.rarity}${selected ? ' selected' : ''}" data-trade-card="${c.cardId}" title="${escapeHtml(c.name)}">
+      ${c.imageUrl
+        ? `<img src="${c.imageUrl}" alt="" loading="lazy">`
+        : `<div class="film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
+      <div class="tcg-card-name">${escapeHtml(c.name)}</div>
+      ${c.quantity > 1 ? `<div class="tcg-card-qty">×${c.quantity}</div>` : ''}
+    </div>
+  `;
+}
+
+// Sélection par clic (toggle), jamais de quantité par carte pour cette 1ère
+// version — offrir/demander 1 exemplaire d'une carte à la fois reste
+// largement suffisant pour un échange entre amis, évite un sélecteur
+// numérique par carte en plus du reste.
+function renderTradeBuilder(){
+  const mine = document.getElementById('tcgTradeMyCards');
+  const theirs = document.getElementById('tcgTradeTheirCards');
+  mine.innerHTML = tcgCollection.length
+    ? tcgCollection.map(c => tcgTradeCardHtml(c, tcgTradeOffered.has(c.cardId))).join('')
+    : `<div class="tmdb-empty">Rien à proposer pour l'instant.</div>`;
+  theirs.innerHTML = tcgTradePartnerCollection.length
+    ? tcgTradePartnerCollection.map(c => tcgTradeCardHtml(c, tcgTradeRequested.has(c.cardId))).join('')
+    : `<div class="tmdb-empty">Rien dans sa collection pour l'instant.</div>`;
+  mine.querySelectorAll('[data-trade-card]').forEach(el => {
+    el.addEventListener('click', () => {
+      const id = Number(el.dataset.tradeCard);
+      if(tcgTradeOffered.has(id)) tcgTradeOffered.delete(id); else tcgTradeOffered.add(id);
+      renderTradeBuilder();
+    });
+  });
+  theirs.querySelectorAll('[data-trade-card]').forEach(el => {
+    el.addEventListener('click', () => {
+      const id = Number(el.dataset.tradeCard);
+      if(tcgTradeRequested.has(id)) tcgTradeRequested.delete(id); else tcgTradeRequested.add(id);
+      renderTradeBuilder();
+    });
+  });
+  const summary = document.getElementById('tcgTradeSummary');
+  const submitBtn = document.getElementById('tcgTradeSubmitBtn');
+  const ok = tcgTradeOffered.size > 0 && tcgTradeRequested.size > 0;
+  summary.textContent = ok
+    ? `Tu proposes ${tcgTradeOffered.size} carte${tcgTradeOffered.size > 1 ? 's' : ''} contre ${tcgTradeRequested.size} carte${tcgTradeRequested.size > 1 ? 's' : ''}.`
+    : 'Choisis au moins une carte de chaque côté.';
+  submitBtn.disabled = !ok;
+}
+
+document.getElementById('tcgTradeSubmitBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('tcgTradeSubmitBtn');
+  btn.disabled = true;
+  const offered = Array.from(tcgTradeOffered).map(id => ({ card_id: id, quantity: 1 }));
+  const requested = Array.from(tcgTradeRequested).map(id => ({ card_id: id, quantity: 1 }));
+  const { error } = await supabaseClient.from('tcg_trades').insert({
+    from_user: currentUser.id, to_user: tcgTradePartnerId, offered, requested
+  });
+  if(error){
+    showToast('Erreur lors de la proposition, réessaie');
+    console.error(error);
+    btn.disabled = false;
+    return;
+  }
+  showToast('Échange proposé !');
+  tcgTradeOffered = new Set();
+  tcgTradeRequested = new Set();
+  document.getElementById('tcgTradePartnerSelect').value = '';
+  document.getElementById('tcgTradeBuilder').style.display = 'none';
+  await loadPendingTrades();
+  renderPendingTrades();
+  btn.disabled = false;
+});
+
+document.querySelectorAll('#tcgTabs .avatar-source-tab').forEach(btn => {
+  btn.addEventListener('click', () => setTcgTab(btn.dataset.tcgTab));
+});
+
 async function openTcgModal(){
   closeProfileModal();
+  setTcgTab('collection');
   openOverlay('tcgOverlay');
   document.getElementById('tcgCollectionGrid').innerHTML = skeletonRows();
   await Promise.all([refreshAvailableBoosters(), loadTcgCollection()]);

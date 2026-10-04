@@ -11,6 +11,7 @@ const { test, run } = createSuite();
 function buildContext(overrides = {}){
   const elements = overrides.elements || {};
   delete overrides.elements;
+  const friendProfilesStub = {};
   const ctx = createContext(Object.assign({
     document: stubDocument(elements),
     escapeHtml(s){ return s; },
@@ -21,6 +22,10 @@ function buildContext(overrides = {}){
     currentUser: { id: 'me' },
     fetchMovieDetails(){ throw new Error('non utilisé par ce test'); },
     supabaseClient: { rpc(){ throw new Error('non utilisé par ce test'); } },
+    otherUserId(f){ return f.requesterId === 'me' ? f.addresseeId : f.requesterId; },
+    friendDisplayName(userId){ return (friendProfilesStub[userId] && friendProfilesStub[userId].displayName) || 'Utilisateur'; },
+    cacheProfile(userId, displayName){ friendProfilesStub[userId] = { displayName }; },
+    friendProfiles: friendProfilesStub,
   }, overrides));
   loadFiles(ctx, ['js/tcg.js']);
   return ctx;
@@ -146,6 +151,82 @@ test('backfillTcgCards() : un 2e appel pendant que le 1er tourne encore ne fait 
   assert.strictEqual(calls.length, 1, 'le 2e appel ne doit pas relancer generateTcgCardsForFilm');
   resolveFirst();
   await first;
+});
+
+test('tcgCardNamesFromItems() : résout les noms depuis le cache, "?" si une carte est inconnue', () => {
+  const ctx = buildContext();
+  setState(ctx, { tcgCardNameCache: { 1: { name: 'Parasite', rarity: 'commun' }, 2: { name: 'Dune', rarity: 'epique' } } });
+  assert.strictEqual(ctx.tcgCardNamesFromItems([{ card_id: 1, quantity: 1 }, { card_id: 2, quantity: 1 }]), 'Parasite, Dune');
+  assert.strictEqual(ctx.tcgCardNamesFromItems([{ card_id: 99, quantity: 1 }]), '?');
+  assert.strictEqual(ctx.tcgCardNamesFromItems(undefined), '');
+});
+
+test('populateTradePartnerSelect() : un ami par amitié ACCEPTÉE, triés par nom, ni en attente ni refusée', () => {
+  const sel = stubElement();
+  const ctx = buildContext({ elements: { tcgTradePartnerSelect: sel } });
+  setState(ctx, {
+    friendships: [
+      { requesterId: 'me', addresseeId: 'bob', status: 'accepted' },
+      { requesterId: 'alice', addresseeId: 'me', status: 'accepted' },
+      { requesterId: 'me', addresseeId: 'carol', status: 'pending' }, // pas encore accepté -> absent
+    ],
+  });
+  ctx.cacheProfile('bob', 'Bob');
+  ctx.cacheProfile('alice', 'Alice');
+  ctx.populateTradePartnerSelect();
+  const order = [...sel.innerHTML.matchAll(/value="(\w+)"/g)].map(m => m[1]);
+  assert.deepStrictEqual(order, ['alice', 'bob'], 'alphabétique, carol (amitié en attente) absente');
+});
+
+test('renderPendingTrades() : échange ENTRANT -> "tu donnes" = ce qui est demandé, "tu reçois" = ce qui est offert', () => {
+  const section = stubElement();
+  const list = stubElement();
+  const ctx = buildContext({ elements: { tcgTradesSection: section, tcgTradesList: list } });
+  ctx.cacheProfile('alice', 'Alice');
+  setState(ctx, {
+    tcgCardNameCache: { 1: { name: 'Parasite', rarity: 'commun' }, 2: { name: 'Dune', rarity: 'epique' } },
+    tcgPendingTrades: [{
+      id: 10, from_user: 'alice', to_user: 'me', status: 'pending',
+      offered: [{ card_id: 1, quantity: 1 }],   // ce qu'Alice donne -> ce que JE reçois
+      requested: [{ card_id: 2, quantity: 1 }], // ce qu'Alice demande -> ce que JE donne
+    }],
+  });
+  ctx.renderPendingTrades();
+  assert.strictEqual(section.style.display, '');
+  assert.ok(list.innerHTML.includes('Proposé par Alice'));
+  assert.ok(list.innerHTML.includes('Tu donnes : Dune'), 'ce qu\'Alice DEMANDE est ce que JE donnerais en acceptant');
+  assert.ok(list.innerHTML.includes('Tu reçois : Parasite'), 'ce qu\'Alice OFFRE est ce que JE recevrais en acceptant');
+  assert.ok(list.innerHTML.includes('data-accept-trade="10"'));
+});
+
+test('renderPendingTrades() : échange SORTANT (proposé par moi) -> "tu donnes" = offered, "tu reçois" = requested, pas de bouton Accepter', () => {
+  const section = stubElement();
+  const list = stubElement();
+  const ctx = buildContext({ elements: { tcgTradesSection: section, tcgTradesList: list } });
+  ctx.cacheProfile('alice', 'Alice');
+  setState(ctx, {
+    tcgCardNameCache: { 1: { name: 'Parasite', rarity: 'commun' }, 2: { name: 'Dune', rarity: 'epique' } },
+    tcgPendingTrades: [{
+      id: 11, from_user: 'me', to_user: 'alice', status: 'pending',
+      offered: [{ card_id: 1, quantity: 1 }],
+      requested: [{ card_id: 2, quantity: 1 }],
+    }],
+  });
+  ctx.renderPendingTrades();
+  assert.ok(list.innerHTML.includes('Proposé à Alice'));
+  assert.ok(list.innerHTML.includes('Tu donnes : Parasite'));
+  assert.ok(list.innerHTML.includes('Tu reçois : Dune'));
+  assert.ok(!list.innerHTML.includes('data-accept-trade'), 'on ne peut pas accepter sa propre proposition');
+  assert.ok(list.innerHTML.includes('data-resolve-status="cancelled"'));
+});
+
+test('renderPendingTrades() : aucun échange en attente -> section masquée', () => {
+  const section = stubElement();
+  const list = stubElement();
+  const ctx = buildContext({ elements: { tcgTradesSection: section, tcgTradesList: list } });
+  setState(ctx, { tcgPendingTrades: [] });
+  ctx.renderPendingTrades();
+  assert.strictEqual(section.style.display, 'none');
 });
 
 module.exports = run('tcg.test.js');
