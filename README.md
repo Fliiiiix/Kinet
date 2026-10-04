@@ -922,6 +922,20 @@ crédités (ordre de billing TMDB — pas tout le générique). Catalogue de
 cartes **global et partagé** entre tous les comptes, jamais une copie par
 utilisateur.
 
+**Rattrapage du catalogue existant** (retour utilisateur : "j'ai déjà vu
+plein de films, je ne devrais pas avoir des cartes ?") — la génération
+ci-dessus ne se déclenche que sur un enregistrement/ajout NEUF, un compte
+avec un catalogue déjà fourni au moment où cette fonctionnalité arrive n'a
+donc, de base, aucune carte en face des boosters déjà disponibles
+(`get_available_boosters()` compte TOUS les visionnages passés, lui).
+`backfillTcgCards()`/`handleScanCatalog()` (`js/tcg.js`) rejouent
+`generateTcgCardsForFilm()` pour chaque tmdb_id déjà présent (catalogue
+noté + watchlist, dédupliqué) — lancé automatiquement une fois par
+appareil à la première ouverture de "Cartes" (`localStorage`, clé
+`kinetTcgBackfillDone`), et à la demande via "🔍 Scanner mon catalogue"
+(reprend la main si le passage auto a été interrompu, ou pour un nouveau
+passage après un import).
+
 **Rareté** — popularité TMDB en paliers logarithmiques (l'immense
 majorité des films/personnes ont un score faible, une poignée de stars/
 blockbusters un score énorme) : Figurant (Commun) → Second rôle (Rare) →

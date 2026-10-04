@@ -3506,6 +3506,23 @@ input[type="range"]::-moz-range-thumb{
   border:1px solid var(--line);
   background:linear-gradient(160deg, var(--surface) 0%, var(--surface-2) 220%);
 }
+/* Rattrapage du catalogue (retour utilisateur) — voir backfillTcgCards()/
+   handleScanCatalog(), js/tcg.js. Rangée discrète (texte seul une fois
+   lancée, pas une barre de progression pleine largeur) : ce scan tourne
+   déjà tout seul en tâche de fond à la 1ère ouverture, ce bouton n'est
+   qu'un filet pour le relancer/le reprendre, pas l'action principale de
+   cet écran. */
+.tcg-scan-row{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-bottom:16px;
+}
+.tcg-scan-status{
+  font-family:'Space Mono', monospace;
+  font-size:11.5px;
+  color:var(--text-muted);
+}
 .tcg-booster-count{
   font-family:'Space Mono', monospace;
   font-size:13px;

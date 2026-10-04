@@ -82,6 +82,40 @@ async function generateTcgCardsForFilm(tmdbId){
   }
 }
 
+// --- Rattrapage du catalogue existant ---
+// generateTcgCardsForFilm() n'est appelée QUE sur un enregistrement/ajout
+// NEUF (handleSave()/handleAddToWatchlist()) — un compte qui a déjà
+// plusieurs dizaines de films notés AVANT l'arrivée de cette
+// fonctionnalité n'a donc, à ce stade, encore AUCUNE carte générée pour
+// eux (observé en vrai : des boosters disponibles dès le premier jour,
+// grâce à get_available_boosters() qui compte tous les visionnages passés
+// — mais un pool de tirage vide en face). Rattrapage un par un plutôt
+// qu'une fonction serveur dédiée qui recevrait toute la liste d'un coup :
+// generateTcgCardsForFilm() fait déjà exactement ce qu'il faut par film,
+// pas la peine d'une 2e implémentation à maintenir en parallèle. Séquentiel
+// (pas Promise.all) : des dizaines de films en parallèle solliciteraient
+// TMDB et Supabase d'un coup inutilement fort pour un rattrapage qui n'a
+// aucune urgence à la seconde près.
+let tcgBackfillRunning = false;
+
+async function backfillTcgCards(onProgress){
+  if(tcgBackfillRunning) return;
+  tcgBackfillRunning = true;
+  try{
+    const ids = new Set();
+    films.forEach(f => { if(f.tmdbId) ids.add(f.tmdbId); });
+    watchlist.forEach(w => { if(w.tmdbId) ids.add(w.tmdbId); });
+    const list = Array.from(ids);
+    for(let i = 0; i < list.length; i++){
+      await generateTcgCardsForFilm(list[i]);
+      if(onProgress) onProgress(i + 1, list.length);
+    }
+    try{ localStorage.setItem('kinetTcgBackfillDone', '1'); }catch(e){}
+  }finally{
+    tcgBackfillRunning = false;
+  }
+}
+
 // --- Boosters ---
 
 async function refreshAvailableBoosters(){
@@ -232,18 +266,52 @@ function renderTcgCollection(){
   `).join('');
 }
 
+function getTcgBackfillDone(){
+  try{ return localStorage.getItem('kinetTcgBackfillDone') === '1'; }
+  catch(e){ return false; }
+}
+
+function updateTcgScanStatus(done, total){
+  const el = document.getElementById('tcgScanStatus');
+  if(!el) return;
+  if(!tcgBackfillRunning){ el.textContent = ''; return; }
+  el.textContent = total ? `Scan de ton catalogue… ${done}/${total}` : 'Scan de ton catalogue…';
+}
+
+// Rattrapage auto UNE SEULE FOIS par appareil (voir backfillTcgCards()) —
+// en tâche de fond, jamais attendue : le reste de la modale (collection,
+// boosters déjà générés) s'affiche sans dépendre de la fin du scan, qui
+// peut prendre plusieurs minutes sur un gros catalogue. Bouton "Scanner
+// mon catalogue" toujours visible en plus (voir index.html) : reprend la
+// main si le rattrapage auto a été interrompu (onglet fermé en plein
+// milieu) ou pour forcer un nouveau passage après un gros import.
+async function handleScanCatalog(){
+  if(tcgBackfillRunning) return;
+  await backfillTcgCards((done, total) => {
+    updateTcgScanStatus(done, total);
+    // Révèle les cartes au fil du scan plutôt qu'à la toute fin — un
+    // catalogue de 200 films mettrait sinon plusieurs minutes à montrer
+    // le moindre résultat alors que les premières cartes existent déjà.
+    if(done % 5 === 0 || done === total) loadTcgCollection().then(renderTcgCollection);
+  });
+  updateTcgScanStatus(false, 0);
+  loadTcgCollection().then(renderTcgCollection);
+}
+
 async function openTcgModal(){
   closeProfileModal();
   openOverlay('tcgOverlay');
   document.getElementById('tcgCollectionGrid').innerHTML = skeletonRows();
   await Promise.all([refreshAvailableBoosters(), loadTcgCollection()]);
   renderTcgCollection();
+  if(!getTcgBackfillDone()) handleScanCatalog();
 }
 
 function closeTcgModal(){
   closeOverlay('tcgOverlay', () => openProfileModal());
 }
 
+document.getElementById('tcgScanBtn').addEventListener('click', handleScanCatalog);
 document.getElementById('tcgBtn').addEventListener('click', openTcgModal);
 document.getElementById('closeTcg').addEventListener('click', closeTcgModal);
 document.getElementById('tcgOverlay').addEventListener('click', (e) => {

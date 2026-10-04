@@ -113,4 +113,39 @@ test('loadTcgCollection() : erreur réseau -> collection vidée, pas d\'exceptio
   assert.deepStrictEqual(JSON.parse(JSON.stringify(getState(ctx, 'tcgCollection'))), []);
 });
 
+test('backfillTcgCards() : un appel par tmdb_id UNIQUE du catalogue noté + watchlist', async () => {
+  const calls = [];
+  const ctx = buildContext();
+  ctx.generateTcgCardsForFilm = (tmdbId) => { calls.push(tmdbId); return Promise.resolve(); };
+  setState(ctx, {
+    films: [{ tmdbId: 1 }, { tmdbId: 2 }, { tmdbId: null }], // sans fiche TMDB -> jamais appelé
+    watchlist: [{ tmdbId: 2 }, { tmdbId: 3 }], // 2 déjà vu côté films -> pas un 2e appel
+  });
+  await ctx.backfillTcgCards();
+  assert.deepStrictEqual(calls.sort(), [1, 2, 3]);
+});
+
+test('backfillTcgCards() : marque le rattrapage fait (localStorage) une fois le lot terminé', async () => {
+  const ctx = buildContext();
+  ctx.generateTcgCardsForFilm = () => Promise.resolve();
+  setState(ctx, { films: [{ tmdbId: 1 }], watchlist: [] });
+  assert.strictEqual(ctx.getTcgBackfillDone(), false);
+  await ctx.backfillTcgCards();
+  assert.strictEqual(ctx.getTcgBackfillDone(), true);
+});
+
+test('backfillTcgCards() : un 2e appel pendant que le 1er tourne encore ne fait rien (anti doublon)', async () => {
+  const calls = [];
+  let resolveFirst;
+  const ctx = buildContext();
+  ctx.generateTcgCardsForFilm = () => new Promise((resolve) => { resolveFirst = resolve; calls.push('called'); });
+  setState(ctx, { films: [{ tmdbId: 1 }], watchlist: [] });
+  const first = ctx.backfillTcgCards();
+  const second = ctx.backfillTcgCards(); // tcgBackfillRunning déjà vrai -> no-op immédiat
+  await second;
+  assert.strictEqual(calls.length, 1, 'le 2e appel ne doit pas relancer generateTcgCardsForFilm');
+  resolveFirst();
+  await first;
+});
+
 module.exports = run('tcg.test.js');
