@@ -1897,6 +1897,12 @@ create policy "Either party can decline/cancel a pending trade"
 -- durable (un réalisateur culte sans sortie récente peut rester "Commun"
 -- malgré son statut réel) — aucune source TMDB équivalente pour une
 -- notoriété "de carrière" sans un chantier à part, hors de portée ici.
+--
+-- Seuils personne élargis une 2e fois (migrations/043, retour
+-- utilisateur : "Emma Watson en Rare c'est pas normal", vérifiée à 7,37)
+-- — le signal popularity des personnes est très compressé, à peu près
+-- n'importe quelle tête connue (Dwayne Johnson 7,4, Will Smith 7,0, J.K.
+-- Simmons 8,5...) se tient entre 4 et 15.
 create or replace function public.compute_card_rarity(p_popularity numeric, p_card_type text)
 returns text
 language sql
@@ -1912,8 +1918,8 @@ as $func$
       end
     else -- 'actor' / 'director'
       case
-        when p_popularity >= 14 then 'legendaire'
-        when p_popularity >= 8 then 'epique'
+        when p_popularity >= 12 then 'legendaire'
+        when p_popularity >= 7 then 'epique'
         when p_popularity >= 4 then 'rare'
         else 'commun'
       end

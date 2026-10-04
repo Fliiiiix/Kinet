@@ -952,12 +952,19 @@ Martin Scorsese 6,5 contre Le Parrain 58, Les Évadés 59, Inception 52,
 Parasite 37) — les mêmes seuils appliqués aux deux laissaient quasiment
 toutes les personnes, même légendaires, sous le seuil "Rare". Seuils
 film : Rare ≥8, Épique ≥20, Légendaire ≥50. Seuils personne (acteur/
-réalisateur) : Rare ≥4, Épique ≥8, Légendaire ≥14. Toute carte déjà
-générée avant ce correctif est automatiquement recalculée (popularity
-déjà en base, pas besoin de rappeler TMDB). **Limite assumée, pas
-prétendue résolue** : `popularity` reste un signal de buzz RÉCENT (TMDB),
-pas de notoriété durable — un réalisateur culte sans sortie récente peut
-rester "Commun" malgré son statut réel ; aucune source TMDB équivalente
+réalisateur) : Rare ≥4, Épique ≥7, Légendaire ≥12 — élargis une 2e fois
+(v2.62, migrations/043, retour utilisateur : "Emma Watson en Rare c'est
+pas normal", vérifiée à 7,37) après avoir constaté que le signal
+popularity des personnes est très compressé : à peu près n'importe quelle
+tête connue (Dwayne Johnson 7,4, Will Smith 7,0, J.K. Simmons 8,5,
+Jennifer Lawrence 7,1) se tient entre 4 et 15, Légendaire réservé aux plus
+bankables (Robert Downey Jr. 12, Scarlett Johansson 13, Tom Cruise 14,3,
+Brad Pitt 15). Toute carte déjà générée avant ces correctifs est
+automatiquement recalculée (popularity déjà en base, pas besoin de
+rappeler TMDB). **Limite assumée, pas prétendue résolue** : `popularity`
+reste un signal de buzz RÉCENT (TMDB), pas de notoriété durable — un
+réalisateur culte sans sortie récente peut rester "Commun" malgré son
+statut réel ; aucune source TMDB équivalente
 pour une notoriété "de carrière" sans un chantier à part.
 
 **Débloquer des boosters** — 2 films VUS (table `viewings`, un
