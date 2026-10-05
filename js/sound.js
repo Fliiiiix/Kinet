@@ -21,6 +21,22 @@ function getAudioCtx(){
   return audioCtx;
 }
 
+// Volume global (0 à 1), réglé dans Paramètres → Son. Par appareil, comme le
+// réglage on/off. Défaut : 100 %.
+function getSoundVolume(){
+  try{
+    const brut = localStorage.getItem('kinetSoundVolume');
+    if(brut === null) return 1;
+    const v = Number(brut);
+    if(Number.isNaN(v)) return 1;
+    return Math.max(0, Math.min(100, v)) / 100;
+  }catch(e){ return 1; }
+}
+
+function setSoundVolume(pct){
+  try{ localStorage.setItem('kinetSoundVolume', String(pct)); }catch(e){}
+}
+
 function getSoundEnabled(){
   try{ return localStorage.getItem('kinetSoundEnabled') !== '0'; } // activé par défaut
   catch(e){ return true; }
@@ -30,6 +46,12 @@ function setSoundEnabled(on){
   try{ localStorage.setItem('kinetSoundEnabled', on ? '1' : '0'); }catch(e){}
   const toggle = document.getElementById('soundToggle');
   if(toggle) toggle.checked = on;
+}
+
+const soundVolumeInput = document.getElementById('soundVolume');
+if(soundVolumeInput){
+  soundVolumeInput.value = Math.round(getSoundVolume() * 100);
+  soundVolumeInput.addEventListener('input', (e) => setSoundVolume(Number(e.target.value)));
 }
 
 document.getElementById('soundToggle').addEventListener('change', (e) => {
@@ -52,7 +74,7 @@ function playTone(freq, startGain, durationMs, type){
     const gain = ctx.createGain();
     osc.type = type || 'sine';
     osc.frequency.value = freq;
-    gain.gain.setValueAtTime(startGain, ctx.currentTime);
+    gain.gain.setValueAtTime(startGain * getSoundVolume(), ctx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + durationMs / 1000);
     osc.connect(gain);
     gain.connect(ctx.destination);

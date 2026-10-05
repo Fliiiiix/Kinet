@@ -3577,6 +3577,8 @@ input[type="range"]::-moz-range-thumb{
 .tcg-card.rarity-epique{border-color:var(--violet); box-shadow:0 0 16px rgba(140,124,255,0.35);}
 /* Confettis au 5/5 (celebrateConfetti, js/ui.js) : pastilles tombantes,
    retirées par le JS après l'animation. */
+/* Curseur de volume (Paramètres → Son) : couleur de la palette, largeur fixe. */
+#soundVolume{width:120px; accent-color:var(--violet); cursor:pointer;}
 .confetti-layer{position:fixed; inset:0; pointer-events:none; overflow:hidden; z-index:9999;}
 .confetti-piece{
   position:absolute; top:-12px; width:8px; height:12px; border-radius:2px;
