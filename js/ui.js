@@ -228,6 +228,31 @@ function celebrateConfetti(){
   setTimeout(() => layer.remove(), 2200);
 }
 
+// Compteurs animés (tuiles de statistiques) : chaque valeur numérique monte
+// de 0 à sa valeur en quelques centaines de ms. Les textes non numériques
+// (« — », libellés) sont laissés tels quels. Mouvement réduit : valeur finale
+// directement.
+function animateCounters(root, dureeMs = 700){
+  if(!root) return;
+  const els = root.querySelectorAll('.stat-value');
+  const reduced = motionReduced();
+  els.forEach(el => {
+    const texte = el.textContent.trim();
+    const cible = Number(texte.replace(',', '.'));
+    if(!/^-?\d+([.,]\d+)?$/.test(texte) || Number.isNaN(cible) || reduced) return;
+    const decimales = (texte.split(/[.,]/)[1] || '').length;
+    const debut = performance.now();
+    const pas = (now) => {
+      const t = Math.min(1, (now - debut) / dureeMs);
+      const eased = 1 - Math.pow(1 - t, 3); // ease-out cubique : ralentit à la fin
+      el.textContent = (cible * eased).toFixed(decimales);
+      if(t < 1) requestAnimationFrame(pas);
+      else el.textContent = texte;
+    };
+    requestAnimationFrame(pas);
+  });
+}
+
 function pulseElement(el){
   if(!el) return;
   el.classList.remove('pulse');

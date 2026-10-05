@@ -689,6 +689,7 @@ function renderStatsInto(content, list = films){
 
   wireStatsDistribution(content, list, s.distribution);
   wireLineChart(content);
+  animateCounters(content.querySelector('.stat-tiles'));
 
   const genreByMonthEl = content.querySelector('#genreByMonthList');
   if(genreByMonthEl){
