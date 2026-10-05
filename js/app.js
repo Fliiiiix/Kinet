@@ -30,6 +30,7 @@ function rowToFilm(row){
     fav: row.fav,
     added: row.added,
     manualNote: row.manual_note != null ? parseFloat(row.manual_note) : null,
+    isPrivate: row.is_private === true,
     review: row.review || null,
     tmdbId: row.tmdb_id || null,
     posterUrl: row.poster_url || null,
@@ -613,6 +614,17 @@ function updateLiveScore(){
 // overview/release_year/title/genre_ids). Ignoré si id est fourni (édition
 // d'un film déjà enregistré, qui a forcément sa propre fiche TMDB à
 // reprendre — voir plus bas).
+// Visibilité (migration 054) : le champ n'est envoyé que s'il sert. Un film
+// non privé ne l'envoie jamais, donc l'enregistrement reste valable tant que la
+// migration n'est pas appliquée. Repasser un film privé en public l'envoie
+// explicitement (false).
+function champPrive(){
+  const coche = document.getElementById('filmPrivate').checked;
+  const etaitPrive = editingId ? !!(films.find(f => f.id === editingId) || {}).isPrivate : false;
+  if(coche || etaitPrive) return { is_private: coche };
+  return {};
+}
+
 function openModal(id, prefillTmdb){
   if(blockIfOffline()) return; // js/offline.js — lecture seule hors ligne
   editingId = id || null;
@@ -627,6 +639,7 @@ function openModal(id, prefillTmdb){
   document.getElementById('deleteBtn').style.display = film ? 'inline-block' : 'none';
 
   document.getElementById('manualToggle').checked = manualNote !== null;
+  document.getElementById('filmPrivate').checked = !!(film && film.isPrivate);
   const sliderVal = manualNote !== null ? manualNote : 2.5;
   document.getElementById('manualScoreSlider').value = sliderVal;
   document.getElementById('manualScoreVal').textContent = sliderVal.toFixed(2);
@@ -701,7 +714,7 @@ async function handleSave(){
 
   if(editingId){
     const { error } = await supabaseClient.from('films')
-      .update({ title, crit, manual_note: manualNote, review, ...tmdbFields })
+      .update({ title, crit, manual_note: manualNote, review, ...tmdbFields, ...champPrive() })
       .eq('id', editingId)
       .eq('user_id', currentUser.id);
     if(error){
@@ -727,7 +740,7 @@ async function handleSave(){
   }else{
     const { data, error } = await supabaseClient
       .from('films')
-      .insert({ title, crit, fav: false, added: Date.now(), manual_note: manualNote, review, ...tmdbFields })
+      .insert({ title, crit, fav: false, added: Date.now(), manual_note: manualNote, review, ...tmdbFields, ...champPrive() })
       .select()
       .single();
     if(error){

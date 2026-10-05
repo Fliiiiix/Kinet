@@ -69,3 +69,21 @@ Chaque point : réponds « oui », « non » ou donne une autre règle.
       en mode clair (Paramètres → Thème) et dis-moi ce qui ne va pas.
 - [ ] Aide contextuelle : je recommande des bulles « ? » seulement sur les écrans
       complexes (cartes, notation). Oui ?
+
+## 5. Migrations validées (brouillons prêts, à appliquer dans cet ordre)
+Chaque migration est testée sur base simulée. Les appliquer dans Supabase, dans
+l'ordre, puis recharger le site.
+- [ ] `051_draft_historique_notes.sql` : historique des notes (table + trigger).
+- [ ] `052_draft_annee_cartes.sql` : année de sortie sur les cartes film. Une
+      fois appliquée, je pourrai ajouter le regroupement par décennie dans la
+      collection (je ne l'ai pas fait avant, pour ne pas casser l'affichage).
+- [ ] `053_draft_suppression_compte.sql` : IRRÉVERSIBLE. Le bouton « Supprimer mon
+      compte » demande la saisie de SUPPRIMER et affiche un message clair tant que
+      la migration n'est pas appliquée.
+- [ ] `054_draft_films_prives.sql` : films privés. Dès qu'elle est appliquée, la case
+      « Privé » du formulaire fonctionne pour les amis.
+  **Attention** : le profil public (`get_public_profile`) ne filtre pas encore les
+  films privés. Je dois réécrire cette fonction après relecture de la version
+  actuelle (migration 032). Tant que ce n'est pas fait, un film privé peut
+  apparaître sur le profil public. Ne compte pas sur la case pour cacher un film
+  à tout le monde.
