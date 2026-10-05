@@ -20,7 +20,7 @@
 //      Le Corniaud...) même s'il a peu de popularité TMDB récente.
 //   4. Tiers par PERCENTILE, séparément pour chaque type de carte
 //      (films entre eux, acteurs entre eux, réalisateurs entre eux) :
-//      60 % Commun, 27 % Rare, 10 % Épique, 3 % Légendaire.
+//      83 % Commun, 11 % Rare, 4 % Épique, 2 % Légendaire (taux Wankul, voir migration 047).
 //      Les probabilités annoncées restent donc vraies quand la base grandit.
 //
 // Usage (depuis la racine du projet) :
@@ -48,10 +48,10 @@ const MIN_VOTES = 5000;
 const MIN_RUNTIME = 60;
 const TOP_N = 5;
 const TIERS = [
-  { rarity: 'legendaire', from: 0.97 }, // top 3 %
-  { rarity: 'epique', from: 0.87 },     // 87 à 97 %
-  { rarity: 'rare', from: 0.60 },       // 60 à 87 %
-  { rarity: 'commun', from: 0 },        // 0 à 60 %
+  { rarity: 'legendaire', from: 0.98 }, // top 2 %
+  { rarity: 'epique', from: 0.94 },     // 94 à 98 %
+  { rarity: 'rare', from: 0.83 },       // 83 à 94 %
+  { rarity: 'commun', from: 0 },        // 0 à 83 %
 ];
 
 // Options "--nom valeur", ou "--nom" seul pour un indicateur (ex. --fetch-imdb).

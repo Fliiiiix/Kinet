@@ -29,15 +29,15 @@ test('personMetrics : un acteur avec peu de films garde un pic correct', () => {
   assert.strictEqual(m.pic, 7);
 });
 
-test('assignTiers : répartition 60 / 27 / 10 / 3 sur un grand lot', () => {
+test('assignTiers : répartition 83 / 11 / 4 / 2 sur un grand lot', () => {
   const items = Array.from({ length: 1001 }, (_, i) => ({ id: i, score: i }));
   const tiers = assignTiers(items);
   const count = (r) => tiers.filter(t => t.rarity === r).length;
-  // Les proportions doivent tomber très près de 60/27/10/3 (au plus une carte d'écart).
-  assert.ok(Math.abs(count('commun') - 600) <= 2, 'commun ' + count('commun'));
-  assert.ok(Math.abs(count('rare') - 270) <= 2, 'rare ' + count('rare'));
-  assert.ok(Math.abs(count('epique') - 100) <= 2, 'epique ' + count('epique'));
-  assert.ok(Math.abs(count('legendaire') - 30) <= 2, 'legendaire ' + count('legendaire'));
+  // Les proportions doivent tomber très près de 83/11/4/2 (au plus une carte d'écart).
+  assert.ok(Math.abs(count('commun') - 830) <= 2, 'commun ' + count('commun'));
+  assert.ok(Math.abs(count('rare') - 110) <= 2, 'rare ' + count('rare'));
+  assert.ok(Math.abs(count('epique') - 40) <= 2, 'epique ' + count('epique'));
+  assert.ok(Math.abs(count('legendaire') - 20) <= 2, 'legendaire ' + count('legendaire'));
 });
 
 test('assignTiers : le meilleur score est légendaire, le plus faible commun', () => {

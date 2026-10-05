@@ -986,7 +986,8 @@ de la watchlist de ce compte) et à 30% du pool **global** (toute carte
 déjà générée par n'importe quel compte) — retour utilisateur explicite :
 empêcher qu'ajouter UN film précis garantisse UNE carte précise. La
 rareté de chaque carte est tirée D'ABORD et indépendamment de la source —
-Commun 60% / Rare 27% / Épique 10% / Légendaire 3%, au moins 1 carte
+Commun 83% / Rare 11% / Épique 4% / Légendaire 2% (taux inspirés de Wankul,
+migration 047 ; avant : 60/27/10/3), au moins 1 carte
 Rare+ garantie par booster. Composition garantie (migration 046,
 `draw_booster_card()`) : 1 film, 1 acteur et 1 réalisateur dans chaque
 booster, les 2 cartes restantes libres. Chaque carte est un tirage à part
