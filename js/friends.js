@@ -160,6 +160,7 @@ function renderFriendsPage(){
     document.getElementById('friendsList'), accepted,
     f => friendRowHtml(otherUserId(f), `
       <button class="btn secondary" data-action="view" data-id="${f.id}" type="button">Voir</button>
+      <button class="btn secondary" data-action="trade" data-friend="${otherUserId(f)}" type="button">Échanger des cartes</button>
       <button class="btn danger" data-action="remove" data-id="${f.id}" type="button">Retirer</button>
     `),
     {
@@ -167,6 +168,12 @@ function renderFriendsPage(){
       emptyHtml: `<div class="tmdb-empty">Pas encore d'amis. Cherche un pseudo ou un email ci-dessus.</div>`,
       wire: (el) => {
         el.querySelectorAll('button[data-action]').forEach(btn => {
+          if(btn.dataset.action === 'trade'){
+            // Échange : ouvre directement la fenêtre cartes sur l'onglet échange,
+            // avec cet ami déjà sélectionné (voir openTcgTradeWith()).
+            btn.addEventListener('click', () => openTcgTradeWith(btn.dataset.friend));
+            return;
+          }
           btn.addEventListener('click', () => handleFriendAction(btn.dataset.action, parseInt(btn.dataset.id, 10)));
         });
         wireFriendRowClicks(el, openFriendProfile);

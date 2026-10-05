@@ -301,7 +301,27 @@ async function loadTcgCollection(){
     .sort((a, b) => RARITY_ORDER.indexOf(b.rarity) - RARITY_ORDER.indexOf(a.rarity));
 }
 
+// Complétion : cartes possédées / cartes du catalogue. Le total du catalogue
+// ne change qu'à la génération de nouvelles cartes : lu une fois, mis en cache.
+let tcgCatalogTotal = null;
+async function refreshCatalogTotal(){
+  if(tcgCatalogTotal !== null) return;
+  const { count, error } = await supabaseClient.from('tcg_cards').select('id', { count: 'exact', head: true });
+  if(!error) tcgCatalogTotal = count || 0;
+}
+
+function renderCompletion(){
+  const el = document.getElementById('tcgCompletion');
+  if(!el) return;
+  if(tcgCatalogTotal === null){ el.textContent = ''; return; }
+  const possedees = tcgCollection.length;
+  const pct = tcgCatalogTotal ? Math.round((possedees / tcgCatalogTotal) * 100) : 0;
+  el.textContent = `Collection : ${possedees} carte${possedees > 1 ? 's' : ''} sur ${tcgCatalogTotal} (${pct} %).`;
+}
+
 function renderTcgCollection(){
+  renderCompletion();
+  refreshCatalogTotal().then(renderCompletion);
   const grid = document.getElementById('tcgCollectionGrid');
   const typeFilter = document.getElementById('tcgTypeFilter').value;
   const rarityFilter = document.getElementById('tcgRarityFilter').value;
@@ -737,6 +757,18 @@ document.getElementById('tcgTradeSubmitBtn').addEventListener('click', async () 
 document.querySelectorAll('#tcgTabs .avatar-source-tab').forEach(btn => {
   btn.addEventListener('click', () => setTcgTab(btn.dataset.tcgTab));
 });
+
+// Ouvre la fenêtre cartes directement sur l'onglet échange, avec un ami déjà
+// choisi (depuis la liste d'amis). Le changement de sélection charge sa
+// collection comme si on l'avait choisi à la main.
+async function openTcgTradeWith(friendId){
+  await openTcgModal();
+  setTcgTab('trade');
+  populateTradePartnerSelect();
+  const sel = document.getElementById('tcgTradePartnerSelect');
+  sel.value = friendId;
+  sel.dispatchEvent(new Event('change'));
+}
 
 async function openTcgModal(){
   closeProfileModal();
