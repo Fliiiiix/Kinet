@@ -70,6 +70,8 @@ async function showApp(){
   // avant la connexion — on le consomme ici, une fois l'app pleinement
   // chargée, pour rejoindre le groupe et y rediriger.
   await consumePendingInviteIfAny();
+  // Lien de carte (?carte=ID) : ouvre la carte demandée une fois l'app chargée.
+  if(typeof openCardFromLinkIfAny === 'function') await openCardFromLinkIfAny();
   // Badge 👥 + digest de retour + rappel d'inactivité (js/activityState.js)
   // + Nouveautés (js/changelog.js) : jamais attendus, pour ne pas allonger
   // le chemin critique déjà chargé de 4-5 allers-retours — ils se posent

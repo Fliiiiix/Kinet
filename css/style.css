@@ -3722,6 +3722,15 @@ input[type="range"]::-moz-range-thumb{
 /* Badge d'échanges reçus en attente (ligne Cartes du profil). */
 .tcg-trade-badge{display:inline-flex; align-items:center; justify-content:center; min-width:20px; height:20px; padding:0 6px; margin-left:8px; border-radius:999px; background:var(--coral); color:#120f1a; font-size:0.72rem; font-weight:700; vertical-align:middle;}
 .tcg-trade-badge[hidden]{display:none;}
+/* Détail d'une carte (tcgCardOverlay) : carte centrée, rareté en bordure. */
+.tcg-card-modal{max-width:340px; text-align:center;}
+.tcg-card-detail{display:flex; flex-direction:column; align-items:center; gap:10px; border:2px solid var(--line); border-radius:14px; padding:16px; background:var(--ink-surface);}
+.tcg-card-detail.rarity-rare{border-color:var(--teal);}
+.tcg-card-detail.rarity-epique{border-color:var(--violet);}
+.tcg-card-detail.rarity-legendaire{border-color:var(--gold); box-shadow:0 0 22px rgba(231,178,76,0.35);}
+.tcg-card-detail-img{width:200px; height:300px; object-fit:cover; border-radius:10px;}
+.tcg-card-detail-name{font-weight:700; font-size:1.05rem;}
+.tcg-card-detail-actions{display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:14px;}
 .tcg-intro{display:flex; gap:14px; align-items:center; justify-content:space-between; flex-wrap:wrap; background:var(--ink-surface); border:1px solid var(--line); border-left:3px solid var(--violet); border-radius:10px; padding:12px 14px; margin-bottom:14px; font-size:0.92rem; color:var(--text-muted);}
 .tcg-intro strong{color:var(--text);}
 .tcg-intro-text{flex:1 1 260px;}

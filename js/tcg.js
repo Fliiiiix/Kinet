@@ -365,7 +365,7 @@ function renderTcgCollection(){
     return;
   }
   grid.innerHTML = filtered.map(c => `
-    <div class="tcg-card rarity-${c.rarity}" title="${escapeHtml(c.name)} : ${rarityLabel(c.rarity)}">
+    <div class="tcg-card rarity-${c.rarity}" data-card-id="${c.cardId}" title="${escapeHtml(c.name)} : ${rarityLabel(c.rarity)}">
       ${c.imageUrl
         ? `<img src="${c.imageUrl}" alt="" loading="lazy">`
         : `<div class="film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
@@ -855,3 +855,62 @@ document.getElementById('tcgOverlay').addEventListener('click', (e) => {
 });
 document.getElementById('tcgTypeFilter').addEventListener('change', renderTcgCollection);
 document.getElementById('tcgRarityFilter').addEventListener('change', renderTcgCollection);
+
+// --- Détail d'une carte et lien partageable (roadmap « Lien de carte ») ---
+// Un clic sur une carte de la collection ouvre son détail. « Copier le lien »
+// donne une adresse qui ouvre la même carte (?carte=ID). Seule la carte est
+// partagée : aucune donnée du compte (ni quantité, ni collection) n'y figure.
+function showCardDetail(card){
+  const body = document.getElementById('tcgCardDetailBody');
+  body.innerHTML = `
+    <div class="tcg-card-detail rarity-${card.rarity}">
+      ${card.imageUrl || card.image_url
+        ? `<img src="${card.imageUrl || card.image_url}" alt="" class="tcg-card-detail-img">`
+        : `<div class="tcg-card-detail-img film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
+      <div class="tcg-card-detail-name">${escapeHtml(card.name)}</div>
+      <div class="wl-note">${TCG_TYPE_LABEL[card.cardType || card.card_type] || ''} · ${rarityLabel(card.rarity)}</div>
+    </div>`;
+  document.getElementById('tcgCardCopyLink').dataset.cardId = card.cardId || card.id;
+  openOverlay('tcgCardOverlay');
+}
+
+function lienDeCarte(cardId){
+  return `${location.origin}${location.pathname}?carte=${encodeURIComponent(cardId)}`;
+}
+
+async function copyCardLink(){
+  const id = document.getElementById('tcgCardCopyLink').dataset.cardId;
+  if(!id) return;
+  const lien = lienDeCarte(id);
+  try{
+    await navigator.clipboard.writeText(lien);
+    showToast('Lien copié');
+  }catch(e){
+    showToast(lien);
+  }
+}
+
+// Lien ouvert directement : après connexion, on affiche la carte demandée.
+// Le paramètre est retiré de l'adresse pour ne pas rouvrir la carte au rechargement.
+async function openCardFromLinkIfAny(){
+  const id = new URLSearchParams(location.search).get('carte');
+  if(!id) return;
+  history.replaceState(null, '', location.pathname + location.hash);
+  const { data, error } = await supabaseClient
+    .from('tcg_cards')
+    .select('id, card_type, name, image_url, rarity')
+    .eq('id', id)
+    .maybeSingle();
+  if(error || !data){ showToast('Cette carte est introuvable'); return; }
+  showCardDetail({ cardId: data.id, cardType: data.card_type, name: data.name, imageUrl: data.image_url, rarity: data.rarity });
+}
+
+document.getElementById('tcgCollectionGrid').addEventListener('click', (e) => {
+  const carte = e.target.closest('.tcg-card[data-card-id]');
+  if(!carte) return;
+  const id = Number(carte.dataset.cardId);
+  const item = tcgCollection.find(c => c.cardId === id);
+  if(item) showCardDetail(item);
+});
+document.getElementById('tcgCardCopyLink').addEventListener('click', copyCardLink);
+document.getElementById('tcgCardDetailClose').addEventListener('click', () => closeOverlay('tcgCardOverlay'));
