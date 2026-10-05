@@ -89,6 +89,12 @@ function answerChatbotQuestion(texte, donnees){
     return 'Tes mieux notés :\n' + top.map((f, i) => `${i + 1}. ${f.titre} (${f.note.toFixed(2)})`).join('\n');
   }
 
+  if(contientUn(q, ['booster', 'paquet', 'pack']) && !contientUn(q, ['comment', 'explique'])){
+    const n = donnees.boosters || 0;
+    if(n <= 0) return "Aucun booster à ouvrir pour l'instant : regarde 2 films (vus) pour en débloquer un.";
+    return `Tu as ${n} booster${n > 1 ? 's' : ''} à ouvrir. Ouvre-les depuis Ton profil > Mon activité > Cartes.`;
+  }
+
   if(contientUn(q, ['merci'])) return 'Avec plaisir !';
   if(contientUn(q, ['qui es-tu', 'qui es tu', 'tu es qui', 'ton nom'])){
     return 'Je suis l\'assistant de Kinet : je tourne dans ton navigateur, sans API ni compte externe, et je ne réponds qu\'à partir de tes films.';
@@ -159,6 +165,7 @@ function chatbotDonnees(){
     watchlist: typeof watchlist !== 'undefined' ? watchlist : [],
     getNote: getDisplayNote,
     genreMap: GENRE_MAP,
+    boosters: typeof tcgAvailableBoosters !== 'undefined' ? tcgAvailableBoosters : 0,
   };
 }
 

@@ -144,4 +144,12 @@ test('merci et qui es-tu -> réponses courtes, sans confusion avec une autre int
   assert.ok(ctx.answerChatbotQuestion('Qui es-tu ?', donnees(FILMS, WATCHLIST)).includes('assistant de Kinet'));
 });
 
+test('boosters -> compte ceux à ouvrir, ou dit comment en débloquer un', () => {
+  const ctx = buildContext();
+  const avec = ctx.answerChatbotQuestion('Combien de boosters ai-je ?', { ...donnees(FILMS, WATCHLIST), boosters: 2 });
+  assert.ok(avec.includes('2 boosters'), avec);
+  const sans = ctx.answerChatbotQuestion('Combien de boosters ai-je ?', { ...donnees(FILMS, WATCHLIST), boosters: 0 });
+  assert.ok(sans.includes('Aucun booster'), sans);
+});
+
 module.exports = run('chatbot.test.js');
