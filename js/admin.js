@@ -838,6 +838,18 @@ async function renderAdminCardsTab(){
     sel.addEventListener('change', async () => {
       const cardId = Number(sel.dataset.cardRarity);
       const value = sel.value || null;
+      // Aperçu avant publication : on montre l'effet (carte, ancienne et
+      // nouvelle rareté) et on n'enregistre qu'après confirmation. Annuler
+      // remet le sélecteur à sa valeur d'avant, rien n'est écrit.
+      const carte = triees.find(c => c.id === cardId);
+      const avant = carte ? (carte.rarity_override || 'automatique') : '';
+      const apres = value || 'automatique';
+      if(carte && !confirm(`« ${carte.name} » : ${avant} → ${apres}.
+
+Les boosters qui tirent cette carte utiliseront la nouvelle rareté dès maintenant. Confirmer ?`)){
+        sel.value = carte.rarity_override || '';
+        return;
+      }
       sel.disabled = true;
       const { error: rpcErr } = await supabaseClient.rpc('admin_set_card_rarity', { p_card_id: cardId, p_rarity: value });
       sel.disabled = false;

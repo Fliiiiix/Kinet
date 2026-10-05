@@ -92,3 +92,22 @@ l'ordre, puis recharger le site.
 - Test de bout en bout (Chromium, serveur local automatique) : `npm run test:e2e`.
   Première fois : `npx playwright install chromium` (déjà fait sur ce poste).
 - Recalcul des raretés : voir `docs/recalcul-raretes.md`.
+
+## 7. Bilan de la boucle (état final)
+Faits et poussés : comparaison avec un ami, lien de carte, aide (revoir
+l'introduction), filtre par décennie, historique de note sur la fiche film,
+récap de l'année, suppression de compte (confirmation tapée), sauvegarde
+proposée avant import, films privés (formulaire), tests de bout en bout,
+confirmation avant changement de rareté (aperçu), contrôle du catalogue,
+badge d'échanges, son de demande d'ami.
+
+Restent pour toi :
+- Appliquer les migrations 051 à 055 (ordre dans la section 5). Tant qu'elles ne
+  le sont pas, les fonctions concernées restent silencieuses (rien ne casse).
+- Rattrapage des années des cartes films déjà générées : la génération ne remplit
+  l'année que pour les nouvelles cartes. Je peux écrire un script de rattrapage si
+  tu veux (appels TMDB, ~1 requête par carte film).
+- Changelog plus lisible : non fait. Demande que chaque entrée ait une catégorie
+  (ex. « cartes », « assistant », « design »). Je ne publierai rien sans ton accord.
+- Thème clair : vérifié sur la page de connexion (capture dans test-results/),
+  à regarder sur les écrans connectés.
