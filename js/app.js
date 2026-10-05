@@ -832,6 +832,12 @@ function importFilms(file){
       return;
     }
 
+    // Sauvegarde proposée (jamais automatique) : avant un import qui peut
+    // remplacer le catalogue, on propose de télécharger l'état actuel d'abord.
+    if(films.length > 0 && confirm(`Télécharger d'abord une sauvegarde de ton catalogue actuel (${films.length} film(s)) ?`)){
+      exportFilms();
+    }
+
     const replace = confirm(
       `${importedFilms.length} film(s) trouvé(s) dans le fichier.\n\n` +
       `OK → remplace le catalogue actuel\n` +

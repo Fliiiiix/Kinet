@@ -151,6 +151,31 @@ document.getElementById('authEmail').addEventListener('keydown', (e) => {
 document.getElementById('googleSignInBtn').addEventListener('click', signInWithGoogle);
 document.getElementById('logoutBtn').addEventListener('click', handleLogout);
 
+// Suppression de compte (décision validée, migration 053). Irréversible : on
+// exige la saisie exacte de SUPPRIMER. Sans la migration appliquée, la fonction
+// n'existe pas et on le dit, au lieu de faire comme si ça avait marché.
+async function handleDeleteAccount(){
+  if(blockIfOffline()) return;
+  const saisie = prompt('Pour supprimer ton compte et toutes tes données, tape SUPPRIMER (en majuscules).');
+  if(saisie !== 'SUPPRIMER'){
+    if(saisie !== null) showToast("Suppression annulée : le mot exact n'a pas été tapé.");
+    return;
+  }
+  const { error } = await supabaseClient.rpc('delete_my_account');
+  if(error){
+    showToast(/function .* does not exist|Could not find/i.test(error.message)
+      ? "Suppression indisponible : la migration 053 n'est pas encore appliquée."
+      : 'Erreur, réessaie');
+    console.error(error);
+    return;
+  }
+  closeProfileModal();
+  closeOverlay('settingsOverlay');
+  await supabaseClient.auth.signOut();
+  showToast('Compte supprimé.');
+}
+document.getElementById('deleteAccountBtn').addEventListener('click', handleDeleteAccount);
+
 // --- Démo jouable de la grille (v2.0.16) ---
 // Signature element de l'écran de connexion (voir index.html pour le
 // diagnostic complet) : 7 curseurs générés depuis CRITERIA (js/data.js —
