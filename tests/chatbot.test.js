@@ -164,4 +164,31 @@ test('suggestions -> 6 boutons tant que la conversation est vide, plus aucun apr
   assert.ok(!wrap.innerHTML.includes('chatbot-chip'), 'plus de suggestions une fois la conversation commencée');
 });
 
+test('séries -> compte, en cours, terminées, selon le suivi', () => {
+  const ctx = buildContext();
+  const series = [{ title: 'Severance', inProduction: true }, { title: 'Dark', inProduction: false }];
+  const d = { ...donnees(FILMS, WATCHLIST), series, amis: [] };
+  assert.ok(ctx.answerChatbotQuestion('Combien de séries je suis ?', d).includes('2 séries'));
+  assert.ok(ctx.answerChatbotQuestion('mes séries en cours', d).includes('Severance'));
+  assert.ok(ctx.answerChatbotQuestion('mes séries terminées', d).includes('Dark'));
+});
+
+test('amis -> compte et liste, sans liste vide', () => {
+  const ctx = buildContext();
+  const d = { ...donnees(FILMS, WATCHLIST), series: [], amis: ['Léa', 'Marc'] };
+  assert.ok(ctx.answerChatbotQuestion('Combien d\'amis ai-je ?', d).includes('2 amis'));
+  assert.ok(ctx.answerChatbotQuestion('qui sont mes amis', d).includes('Léa'));
+  const vide = { ...donnees(FILMS, WATCHLIST), series: [], amis: [] };
+  assert.ok(ctx.answerChatbotQuestion('mes amis', vide).includes('pas encore d\'amis'));
+});
+
+test('faute de frappe légère -> reconnaît le genre ou le sujet (distance 1, mots de 4 lettres et plus)', () => {
+  const ctx = buildContext();
+  const r = ctx.answerChatbotQuestion('mes films thriler', donnees(FILMS, WATCHLIST));
+  assert.ok(r.includes('thriller') || r.includes('3 films'), r);
+  // Un mot court ne doit pas être rattrapé au hasard.
+  const court = ctx.answerChatbotQuestion('ok', donnees(FILMS, WATCHLIST));
+  assert.ok(!court.includes('genre'), court);
+});
+
 module.exports = run('chatbot.test.js');

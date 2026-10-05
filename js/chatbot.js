@@ -51,7 +51,7 @@ function answerChatbotQuestion(texte, donnees){
   const { films, watchlist, getNote, genreMap } = donnees;
   const notes = films.map(f => getNote(f)).filter(n => n != null);
 
-  if(q === '' ) return 'Dis-moi quelque chose, je t\'écoute.';
+  if(q === '' ) return "Dis-moi quelque chose, je t\'écoute.";
 
   if(contientUn(q, ['bonjour', 'salut', 'hello', 'coucou', 'hey'])){
     return 'Salut ! Que veux-tu savoir ?';
@@ -74,7 +74,7 @@ function answerChatbotQuestion(texte, donnees){
   }
 
   if(contientUn(q, ['moyenne'])){
-    if(notes.length === 0) return 'Tu n\'as encore aucun film noté.';
+    if(notes.length === 0) return "Tu n\'as encore aucun film noté.";
     const moy = notes.reduce((a, b) => a + b, 0) / notes.length;
     return `Ta note moyenne est de ${moy.toFixed(2)} / 5, sur ${notes.length} film${notes.length > 1 ? 's' : ''}.`;
   }
@@ -95,6 +95,40 @@ function answerChatbotQuestion(texte, donnees){
     return `Tu as ${n} booster${n > 1 ? 's' : ''} à ouvrir. Ouvre-les depuis Ton profil > Mon activité > Cartes.`;
   }
 
+  const series = donnees.series || [];
+  if(contientUn(q, ['serie'])){
+    if(contientUn(q, ['combien', 'nombre'])){
+      if(series.length === 0) return "Tu ne suis aucune série pour l'instant.";
+      return `Tu suis ${series.length} série${series.length > 1 ? 's' : ''}.`;
+    }
+    if(contientUn(q, ['en cours', 'diffusion', 'continue'])){
+      const enCours = series.filter(s => s.inProduction);
+      if(enCours.length === 0) return "Aucune de tes séries n'est en cours de diffusion.";
+      return 'Encore en diffusion : ' + enCours.map(s => `« ${s.title} »`).join(', ') + '.';
+    }
+    if(contientUn(q, ['termine', 'finie', 'fini'])){
+      const finies = series.filter(s => !s.inProduction);
+      if(finies.length === 0) return "Aucune de tes séries n'est terminée pour l'instant.";
+      return 'Terminées : ' + finies.map(s => `« ${s.title} »`).join(', ') + '.';
+    }
+    if(contientUn(q, ['mes', 'liste', 'quelles', 'quels'])){
+      if(series.length === 0) return "Tu ne suis aucune série pour l'instant.";
+      return 'Tes séries : ' + series.slice(0, 8).map(s => `« ${s.title} »`).join(', ') + (series.length > 8 ? '…' : '') + '.';
+    }
+  }
+
+  const amis = donnees.amis || [];
+  if(contientUn(q, ['ami'])){
+    if(contientUn(q, ['combien', 'nombre'])){
+      if(amis.length === 0) return "Tu n'as pas encore d'amis ajoutés.";
+      return `Tu as ${amis.length} ami${amis.length > 1 ? 's' : ''}.`;
+    }
+    if(contientUn(q, ['qui', 'liste', 'mes'])){
+      if(amis.length === 0) return "Tu n'as pas encore d'amis ajoutés.";
+      return 'Tes amis : ' + amis.slice(0, 10).join(', ') + (amis.length > 10 ? '…' : '') + '.';
+    }
+  }
+
   if(contientUn(q, ['merci'])) return 'Avec plaisir !';
   if(contientUn(q, ['qui es-tu', 'qui es tu', 'tu es qui', 'ton nom'])){
     return 'Je suis l\'assistant de Kinet : je tourne dans ton navigateur, sans API ni compte externe, et je ne réponds qu\'à partir de tes films.';
@@ -112,7 +146,7 @@ function answerChatbotQuestion(texte, donnees){
 
   if(contientUn(q, ['coup de coeur', 'coups de coeur', 'coup de cœur', 'coups de cœur', 'coeur', 'excellent'])){
     const forts = films.filter(f => (getNote(f) ?? 0) >= 4.5);
-    if(forts.length === 0) return 'Aucun coup de cœur pour l\'instant (une note d\'au moins 4,5).';
+    if(forts.length === 0) return "Aucun coup de cœur pour l\'instant (une note d\'au moins 4,5).";
     return `Tu as ${forts.length} coup${forts.length > 1 ? 's' : ''} de cœur (note d'au moins 4,5) : ` + forts.slice(0, 5).map(f => `« ${f.title} »`).join(', ') + (forts.length > 5 ? '…' : '') + '.';
   }
 
@@ -133,18 +167,18 @@ function answerChatbotQuestion(texte, donnees){
       if(nom) compte[nom] = (compte[nom] || 0) + 1;
     }));
     const tri = Object.entries(compte).sort((a, b) => b[1] - a[1]).slice(0, 3);
-    if(tri.length === 0) return 'Je n\'ai pas encore assez d\'infos sur les genres de tes films.';
+    if(tri.length === 0) return "Je n\'ai pas encore assez d\'infos sur les genres de tes films.";
     return 'Tes genres les plus présents : ' + tri.map(([nom, n]) => `${nom} (${n})`).join(', ') + '.';
   }
 
   if(contientUn(q, ['hasard', 'surprends', 'surprise', 'quoi regarder', 'que regarder', 'ce soir'])){
-    if(watchlist.length === 0) return 'Ta watchlist est vide : ajoute quelques films et je t\'en tirerai un au hasard.';
+    if(watchlist.length === 0) return "Ta watchlist est vide : ajoute quelques films et je t\'en tirerai un au hasard.";
     const choisi = watchlist[Math.floor(Math.random() * watchlist.length)];
     return `Et si tu regardais « ${choisi.title} » ce soir ?`;
   }
 
   if(contientUn(q, ['watchlist', 'a voir']) && contientUn(q, ['combien', 'nombre', 'liste', 'contient'])){
-    if(watchlist.length === 0) return 'Ta watchlist est vide pour l\'instant.';
+    if(watchlist.length === 0) return "Ta watchlist est vide pour l\'instant.";
     return `Tu as ${watchlist.length} film${watchlist.length > 1 ? 's' : ''} dans ta watchlist.`;
   }
 
@@ -154,6 +188,14 @@ function answerChatbotQuestion(texte, donnees){
 
   if(contientUn(q, ['aide', 'help', 'que peux', 'que sais', 'comment'])){
     return 'Je peux te donner ta note moyenne, tes meilleurs films, tes genres, te sortir un film au hasard dans ta watchlist, ou t\'expliquer la watchlist, les séries, les amis, les cartes, les statistiques, la notation ou l\'export.';
+  }
+
+  for(const sujet of CHATBOT_HELP_TOPICS){
+    if(sujet.mots.some(m => motProche(q, m))) return sujet.texte;
+  }
+  const genreFlou = Object.values(genreMap).find(nom => motProche(q, nom));
+  if(genreFlou){
+    return `Tu veux parler du genre ${genreFlou.toLowerCase()} ? Demande « mes films ${genreFlou.toLowerCase()} ».`;
   }
 
   return 'Je ne suis pas sûr de comprendre. Essaie « ma note moyenne », « mes meilleurs films », « un film au hasard », ou une question sur une partie de Kinet (watchlist, séries, amis, cartes, statistiques, notation).';
@@ -166,7 +208,43 @@ function chatbotDonnees(){
     getNote: getDisplayNote,
     genreMap: GENRE_MAP,
     boosters: typeof tcgAvailableBoosters !== 'undefined' ? tcgAvailableBoosters : 0,
+    series: typeof trackedShows !== 'undefined' ? trackedShows : [],
+    amis: typeof friendships !== 'undefined' && typeof otherUserId === 'function'
+      ? friendships.filter(f => f.status === 'accepted').map(f => friendDisplayName(otherUserId(f)))
+      : [],
   };
+}
+
+// Suggestions adaptées à l'écran d'où l'assistant est ouvert : sur la page des
+// séries, on propose les questions sur les séries ; ailleurs, les générales.
+function suggestionsPourEcran(){
+  const route = (typeof location !== 'undefined' && location.hash) || '';
+  if(route.indexOf('#/series') === 0){
+    return ['Combien de séries je suis ?', 'Mes séries en cours', 'Mes séries terminées', 'Un film au hasard'];
+  }
+  return CHATBOT_SUGGESTIONS;
+}
+
+// Tolérance aux petites fautes de frappe : distance d'édition (Levenshtein).
+// Un mot de 4 lettres ou plus est accepté à une faute près (« genr » ->
+// « genre », « horeur » -> « horreur »). Les mots courts restent stricts.
+function distanceEdition(a, b){
+  const m = a.length, n = b.length;
+  let prev = Array.from({ length: n + 1 }, (_, j) => j);
+  for(let i = 1; i <= m; i++){
+    const cur = [i];
+    for(let j = 1; j <= n; j++){
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    }
+    prev = cur;
+  }
+  return prev[n];
+}
+
+function motProche(q, cible){
+  const mots = q.split(/[^a-z0-9]+/).filter(Boolean);
+  const cibleNorm = normaliserTexte(cible);
+  return mots.some(m => m.length >= 4 && cibleNorm.length >= 4 && distanceEdition(m, cibleNorm) <= 1);
 }
 
 // « efface » vide la conversation au lieu de répondre : commande de
@@ -183,7 +261,8 @@ function renderChatbotMessages(){
   // Suggestions tant qu'aucune question n'a été posée : rien à deviner pour
   // un premier usage, et aucune requête côté serveur.
   if(chatbotMessages.length === 0){
-    bulles.push(`<div class="chatbot-suggestions">${CHATBOT_SUGGESTIONS.map(s => `<button class="chatbot-chip" type="button" data-question="${escapeHtml(s)}">${escapeHtml(s)}</button>`).join('')}</div>`);
+    const suggestions = suggestionsPourEcran();
+    bulles.push(`<div class="chatbot-suggestions">${suggestions.map(s => `<button class="chatbot-chip" type="button" data-question="${escapeHtml(s)}">${escapeHtml(s)}</button>`).join('')}</div>`);
   }
   chatbotMessages.forEach(m => bulles.push(`<div class="chatbot-msg chatbot-msg-${m.role === 'user' ? 'user' : 'bot'}">${escapeHtml(m.content)}</div>`));
   wrap.innerHTML = bulles.join('');
