@@ -145,6 +145,19 @@ async function refreshAvailableBoosters(){
   if(error){ console.error(error); return; }
   tcgAvailableBoosters = data || 0;
   renderBoosterBar();
+  refreshPityHint();
+}
+
+// Pity (migration 048) : combien d'ouvertures avant la Légendaire garantie.
+// Seuil côté base = 10 : le 10e booster sans Légendaire en garantit une.
+const TCG_PITY_SEUIL = 10;
+async function refreshPityHint(){
+  const hint = document.getElementById('tcgPityHint');
+  if(!hint) return;
+  const { data, error } = await supabaseClient.from('tcg_pity').select('boosters_sans_legendaire').maybeSingle();
+  if(error || !data){ hint.textContent = ''; return; }
+  const restants = Math.max(1, TCG_PITY_SEUIL - data.boosters_sans_legendaire);
+  hint.textContent = `Prochaine Légendaire garantie dans ${restants} booster${restants > 1 ? 's' : ''}.`;
 }
 
 function renderBoosterBar(){
