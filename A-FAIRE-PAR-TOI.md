@@ -82,8 +82,7 @@ l'ordre, puis recharger le site.
       la migration n'est pas appliquée.
 - [ ] `054_draft_films_prives.sql` : films privés. Dès qu'elle est appliquée, la case
       « Privé » du formulaire fonctionne pour les amis.
-  **Attention** : le profil public (`get_public_profile`) ne filtre pas encore les
-  films privés. Je dois réécrire cette fonction après relecture de la version
-  actuelle (migration 032). Tant que ce n'est pas fait, un film privé peut
-  apparaître sur le profil public. Ne compte pas sur la case pour cacher un film
-  à tout le monde.
+- [ ] `055_draft_profil_public_prive.sql` : à appliquer JUSTE APRÈS la 054. Sans
+      elle, un film privé peut encore apparaître sur le profil public (accessible
+      sans connexion). Testé : les films privés sont exclus de la liste et des films
+      mis en avant.
