@@ -32,6 +32,8 @@
 //      node supabase/scripts/tcg-rarity.js \
 //        --dir <dossier avec les .tsv.gz IMDb> \
 //        --cards <cards.csv> --out <updates.sql> [--report <report.csv>]
+//      Option --poids pic,reach,volume : importance de chaque critère, normalisée à 1
+//        (ex. --poids 0.5,0.2,0.3). Défaut : 0,4 / 0,3 / 0,3.
 //
 // cards.csv : export de la table, à faire dans l'éditeur SQL Supabase :
 //   select id, card_type, tmdb_id, imdb_id, rarity_override from public.tcg_cards;
