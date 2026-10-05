@@ -3055,6 +3055,20 @@ input[type="range"]::-moz-range-thumb{
   position:relative;
 }
 .bar-col:hover .bar-fill{opacity:0.8;}
+/* Graphique des notes : les barres montent depuis le bas, en léger décalage
+   d'une barre à l'autre. Mouvement réduit : affichage direct. */
+.bar-fill{transform-origin:50% 100%; animation:barGrow .55s cubic-bezier(.2,.8,.3,1) both;}
+.bar-col:nth-child(2) .bar-fill{animation-delay:.03s;}
+.bar-col:nth-child(3) .bar-fill{animation-delay:.06s;}
+.bar-col:nth-child(4) .bar-fill{animation-delay:.09s;}
+.bar-col:nth-child(5) .bar-fill{animation-delay:.12s;}
+.bar-col:nth-child(6) .bar-fill{animation-delay:.15s;}
+.bar-col:nth-child(7) .bar-fill{animation-delay:.18s;}
+.bar-col:nth-child(8) .bar-fill{animation-delay:.21s;}
+.bar-col:nth-child(9) .bar-fill{animation-delay:.24s;}
+.bar-col:nth-child(n+10) .bar-fill{animation-delay:.27s;}
+@keyframes barGrow{from{transform:scaleY(0);} to{transform:scaleY(1);}}
+@media (prefers-reduced-motion: reduce){ .bar-fill{animation:none;} }
 .bar-value{
   position:absolute;
   top:-18px;
