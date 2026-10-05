@@ -122,8 +122,15 @@ function wireRequestActions(el){
   wireFriendRowClicks(el);
 }
 
+// Son de notification : une demande d'ami entrante de plus depuis le dernier
+// affichage joue un tintement (même réglage Son que le reste de l'app).
+// Premier affichage silencieux : on ne sonne pas pour ce qui était déjà là.
+let demandesVues = null;
+
 function renderFriendsPage(){
   const incoming = friendships.filter(f => f.status === 'pending' && f.addresseeId === currentUser.id);
+  if(demandesVues !== null && incoming.length > demandesVues) playPopChime();
+  demandesVues = incoming.length;
   const outgoing = friendships.filter(f => f.status === 'pending' && f.requesterId === currentUser.id);
   const accepted = friendships.filter(f => f.status === 'accepted');
 

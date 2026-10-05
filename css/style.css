@@ -1589,6 +1589,18 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   text-align:center;
 }
 
+/* États vides : une petite marque en couronne (dégradé violet/or de la marque)
+   au-dessus du texte, pour qu'une liste vide ait une présence sans être criarde. */
+.empty-state::before{
+  content:""; display:block; width:44px; height:44px; margin:0 auto 14px; border-radius:50%;
+  background:
+    radial-gradient(circle at 35% 35%, transparent 0 9px, var(--surface-2) 10px),
+    conic-gradient(from 200deg, var(--violet), var(--gold), var(--violet));
+  opacity:.55;
+  animation:emptyBreath 3.2s ease-in-out infinite;
+}
+@keyframes emptyBreath{0%,100%{transform:scale(1); opacity:.5;} 50%{transform:scale(1.06); opacity:.75;}}
+@media (prefers-reduced-motion: reduce){ .empty-state::before{animation:none;} }
 .empty-state{
   text-align:center;
   padding:60px 20px;
