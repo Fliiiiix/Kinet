@@ -210,6 +210,31 @@ async function loadWatchlistProviders(){
       watchlistProviders[item.tmdbId] = [];
     }
   }));
+  renderWatchlistReminder();
+}
+
+// Rappel de visionnage : combien de films de la watchlist sont disponibles en
+// streaming (inclus dans un abonnement), et sur quelle plateforme il y en a le
+// plus. Masqué s'il n'y en a aucun, pour ne pas ajouter du bruit.
+function renderWatchlistReminder(){
+  const el = document.getElementById('wlReminder');
+  if(!el) return;
+  const parPlateforme = new Map(); // provider_id -> { nom, n }
+  let filmsDispo = 0;
+  watchlist.forEach(item => {
+    const offres = watchlistProviders[item.tmdbId] || [];
+    if(offres.length) filmsDispo++;
+    offres.forEach(p => {
+      const cle = String(p.provider_id);
+      const entree = parPlateforme.get(cle) || { nom: p.provider_name, n: 0 };
+      entree.n++;
+      parPlateforme.set(cle, entree);
+    });
+  });
+  if(filmsDispo === 0){ el.style.display = 'none'; el.textContent = ''; return; }
+  const meilleure = [...parPlateforme.values()].sort((a, b) => b.n - a.n)[0];
+  el.textContent = `${filmsDispo} film${filmsDispo > 1 ? 's' : ''} de ta watchlist disponible${filmsDispo > 1 ? 's' : ''} en streaming. Le plus sur ${meilleure.nom} (${meilleure.n}).`;
+  el.style.display = '';
 }
 
 // Options de #wlProviderFilter — même principe que buildGenreFilterOptions()
