@@ -765,11 +765,14 @@ let adminCardsFilter = { type: '', search: '' };
 async function renderAdminCardsTab(){
   const wrap = document.getElementById('adminContent');
   wrap.innerHTML = `<div class="tmdb-empty">Chargement…</div>`;
+  // Pas de tri côté base : l'ordre voulu est celui de la rareté (légendaire
+  // d'abord), que l'ordre alphabétique de la colonne ne donne pas. On charge
+  // donc tout le filtre et on trie ici. Limite haute : sans elle, les cartes
+  // les plus rares pourraient être coupées sans qu'on le voie.
   let query = supabaseClient
     .from('tcg_cards')
     .select('id, card_type, name, image_url, rarity, rarity_auto, rarity_override, popularity')
-    .order('popularity', { ascending: false })
-    .limit(300);
+    .limit(5000);
   if(adminCardsFilter.type) query = query.eq('card_type', adminCardsFilter.type);
   if(adminCardsFilter.search) query = query.ilike('name', `%${adminCardsFilter.search}%`);
   const { data, error } = await query;
@@ -777,7 +780,12 @@ async function renderAdminCardsTab(){
     wrap.innerHTML = `<div class="tmdb-empty">Erreur : ${escapeHtml(error.message)}</div>`;
     return;
   }
-  const rows = (data || []).map(c => `
+  const RARETE_ORDRE = { legendaire: 0, epique: 1, rare: 2, commun: 3 };
+  const triees = (data || []).slice().sort((a, b) =>
+    (RARETE_ORDRE[a.rarity] ?? 9) - (RARETE_ORDRE[b.rarity] ?? 9)
+    || Number(b.popularity) - Number(a.popularity)
+  );
+  const rows = triees.map(c => `
     <div class="wl-row admin-card-row">
       ${c.image_url
         ? `<img class="film-poster" src="${c.image_url}" alt="" loading="lazy">`

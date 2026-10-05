@@ -982,8 +982,10 @@ déjà générée par n'importe quel compte) — retour utilisateur explicite :
 empêcher qu'ajouter UN film précis garantisse UNE carte précise. La
 rareté de chaque carte est tirée D'ABORD et indépendamment de la source —
 Commun 60% / Rare 27% / Épique 10% / Légendaire 3%, au moins 1 carte
-Rare+ garantie par booster. Chacune des 5 cartes d'un booster est un
-tirage à part entière : obtenir la carte d'un film ne garantit JAMAIS
+Rare+ garantie par booster. Composition garantie (migration 046,
+`draw_booster_card()`) : 1 film, 1 acteur et 1 réalisateur dans chaque
+booster, les 2 cartes restantes libres. Chaque carte est un tirage à part
+entière : obtenir la carte d'un film ne garantit JAMAIS
 celle d'un membre de son casting, rien ne les lie entre elles (retour
 utilisateur, clarification explicite demandée). Probabilités affichées en
 clair dans l'app ("Voir les probabilités de tirage", repli `.crit-help`
