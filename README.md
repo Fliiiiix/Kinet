@@ -57,8 +57,7 @@ critique-films/
 ├── tests/                                                                 → suite de tests de régression (voir tests/README.md)
 └── supabase/
     ├── schema.sql                  → schéma complet (nouveau projet)
-    ├── migrations/                 → changements incrémentaux (projet déjà provisionné)
-    └── functions/chat/index.ts     → Edge Function du chatbot (seul morceau non statique de Kinet) — voir la section dédiée plus bas
+    └── migrations/                 → changements incrémentaux (projet déjà provisionné)
 ```
 
 ## Lancer le projet
@@ -1026,52 +1025,29 @@ supplémentaires.
 
 Nécessite `supabase/migrations/041_add_tcg_cards.sql`.
 
-## Assistant (chatbot, v2.64, "un début")
+## Assistant (chatbot local, v2.65)
 
-Retour utilisateur : conseils de films, discussion ciné générale, aide à
-se repérer dans l'app — accessible depuis "Ton profil" → Mon activité →
-Assistant (même emplacement que Cartes/Succès/Statistiques, pas une bulle
-flottante : les coins de l'écran sont déjà pris par `.fab`/`.scroll-top-btn`,
-qui se repositionnent déjà l'un par rapport à l'autre sous le seuil
-mobile — pas la peine d'en disputer un 3e).
+Accessible depuis Ton profil > Mon activité > Assistant. Il tourne
+entièrement dans le navigateur (`js/chatbot.js`) : aucune API externe,
+aucune clé, aucun coût, aucune donnée envoyée hors de l'appareil.
 
-**Architecture** — `js/chatbot.js` (bulles de conversation, historique en
-mémoire seulement, jamais persisté) appelle une **Supabase Edge Function**
-(`supabase/functions/chat/index.ts`, Deno), qui seule détient la clé API
-Anthropic et interroge Claude. Contrairement à la clé TMDB
-(`js/tmdbConfig.js`) ou à la clé anon Supabase — toutes deux conçues pour
-tourner côté client, la sécurité venant des règles RLS/du quota, pas du
-secret de la clé elle-même — une clé API Anthropic est un vrai secret :
-visible dans le JS, n'importe qui pourrait l'utiliser et consommer le
-budget du compte. D'où cette fonction intermédiaire, le seul morceau de
-Kinet qui ne soit pas 100% statique/client.
+Il ne comprend pas une conversation libre, il reconnaît des questions
+prévues par mots-clés et répond à partir de ce que Kinet a déjà chargé :
 
-**Mise en place (à faire une fois, toi)** :
-1. Installe la [CLI Supabase](https://supabase.com/docs/guides/cli) si ce
-   n'est pas déjà fait.
-2. Récupère une clé API sur [console.anthropic.com](https://console.anthropic.com/).
-3. `supabase secrets set ANTHROPIC_API_KEY=sk-ant-... --project-ref <ton-ref>`
-4. `supabase functions deploy chat --project-ref <ton-ref>`
+- ta note moyenne, ton nombre de films notés ;
+- tes meilleurs films (classement par note) ;
+- tes genres les plus présents ;
+- un film tiré au hasard dans ta watchlist ;
+- des explications sur les parties de l'app (watchlist, séries, amis,
+  groupes, cartes, statistiques, notation, export).
 
-Sans ces 4 étapes, la modale s'ouvre normalement mais chaque message
-revient avec un message d'erreur clair ("fonction pas encore déployée")
-plutôt qu'un échec muet — voir `handleChatbotSend()`, js/chatbot.js.
+Une question qu'il ne reconnaît pas reçoit une réponse de repli qui
+propose les questions possibles, plutôt qu'une réponse inventée.
 
-**Authentification** : aucune vérification de session écrite à la main
-dans la fonction — Supabase vérifie déjà le JWT de la requête avant même
-de l'invoquer (comportement par défaut), donc seul un compte Kinet
-connecté peut l'appeler.
+Historique de conversation en mémoire seulement (pas persisté).
 
-**Modèle** : `claude-sonnet-5` par défaut (une seule constante à changer
-dans `index.ts` pour un autre modèle de la gamme).
-
-**Volontairement hors de portée pour ce premier jet** : pas d'accès aux
-vraies données du catalogue (recommandations basées sur ce que
-l'utilisateur raconte dans la conversation, pas sur son historique réel —
-lui donner le catalogue entier à chaque message aurait un coût et une
-empreinte de confidentialité qui mérite sa propre passe de conception) ;
-pas de historique persisté entre deux ouvertures ; pas de streaming de la
-réponse (un seul aller-retour, pas de texte qui s'affiche au fil de l'eau).
+Pour ajouter une réponse sur l'app : une entrée de plus dans
+`CHATBOT_HELP_TOPICS` (js/chatbot.js), avec ses mots-clés.
 
 ## Happenings (easter eggs par film)
 

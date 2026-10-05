@@ -1,124 +1,107 @@
-// --- Tests de l'assistant (js/chatbot.js) ---
-// La vraie conversation avec Claude vit entièrement dans la Supabase Edge
-// Function (supabase/functions/chat/index.ts, Deno, hors de portée de ce
-// harnais JS pur) — ce fichier couvre uniquement l'orchestration côté
-// client : état de la conversation, affichage des bulles, et surtout le
-// repli en cas d'erreur (fonction pas déployée/configurée, le cas le plus
-// probable tant que ce n'est pas encore mis en place).
+// --- Tests de l'assistant local (js/chatbot.js) ---
+// Logique pure : answerChatbotQuestion() répond à partir de données
+// fournies, sans réseau ni API. On teste les réponses, pas le DOM.
 const { createSuite, assert } = require('./helpers/tiny-test');
-const { createContext, loadFiles, setState, getState, stubDocument, stubElement } = require('./helpers/vm-harness');
+const { createContext, loadFiles, stubDocument, stubElement } = require('./helpers/vm-harness');
 const { test, run } = createSuite();
 
-function buildContext(overrides = {}){
-  const elements = overrides.elements || {};
-  delete overrides.elements;
-  const ctx = createContext(Object.assign({
-    document: stubDocument(elements),
+function buildContext(){
+  const ctx = createContext({
+    document: stubDocument({ chatbotMessages: stubElement(), chatbotInput: stubElement(), chatbotSendBtn: stubElement() }),
     escapeHtml(s){ return s; },
     openOverlay(){}, closeOverlay(){}, closeProfileModal(){}, openProfileModal(){},
-    supabaseClient: { functions: { invoke(){ throw new Error('non utilisé par ce test'); } } },
-  }, overrides));
+    getDisplayNote(f){ return f.note; },
+    GENRE_MAP: { 18: 'Drame', 53: 'Thriller', 35: 'Comédie' },
+  });
   loadFiles(ctx, ['js/chatbot.js']);
   return ctx;
 }
 
-test('renderChatbotMessages() : toujours le message d\'accueil en premier, puis l\'historique dans l\'ordre', () => {
-  const wrap = stubElement();
-  const ctx = buildContext({ elements: { chatbotMessages: wrap } });
-  setState(ctx, { chatbotMessages: [{ role: 'user', content: 'Salut' }, { role: 'assistant', content: 'Hello !' }] });
-  ctx.renderChatbotMessages();
-  const order = [...wrap.innerHTML.matchAll(/chatbot-msg-(\w+)"[^>]*>([^<]*)</g)].map(m => [m[1], m[2]]);
-  assert.deepStrictEqual(order, [
-    ['bot', getState(ctx, 'CHATBOT_GREETING')],
-    ['user', 'Salut'],
-    ['bot', 'Hello !'],
-  ]);
+function donnees(films, watchlist){
+  return {
+    films,
+    watchlist,
+    getNote(f){ return f.note; },
+    genreMap: { 18: 'Drame', 53: 'Thriller', 35: 'Comédie' },
+  };
+}
+
+const FILMS = [
+  { title: 'Parasite', note: 4.8, genreIds: [53, 18] },
+  { title: 'Dune', note: 4.2, genreIds: [53] },
+  { title: 'Inception', note: 4.5, genreIds: [53] },
+  { title: 'Film non noté', note: null, genreIds: [35] },
+];
+const WATCHLIST = [{ title: 'Oppenheimer' }, { title: 'Past Lives' }];
+
+test('réponse vide -> invitation à écrire (pas de réponse fabriquée)', () => {
+  const ctx = buildContext();
+  assert.strictEqual(ctx.answerChatbotQuestion('   ', donnees(FILMS, WATCHLIST)), 'Dis-moi quelque chose, je t\'écoute.');
 });
 
-test('renderChatbotMessages() : indicateur "en train d\'écrire" affiché seulement pendant un envoi', () => {
-  const wrap = stubElement();
-  const ctx = buildContext({ elements: { chatbotMessages: wrap } });
-  setState(ctx, { chatbotMessages: [], chatbotSending: false });
-  ctx.renderChatbotMessages();
-  assert.ok(!wrap.innerHTML.includes('chatbot-typing'));
-
-  setState(ctx, { chatbotSending: true });
-  ctx.renderChatbotMessages();
-  assert.ok(wrap.innerHTML.includes('chatbot-typing'));
+test('moyenne -> calcule sur les films NOTÉS seulement, 2 décimales', () => {
+  const ctx = buildContext();
+  const r = ctx.answerChatbotQuestion('Quelle est ma note moyenne ?', donnees(FILMS, WATCHLIST));
+  // (4.8 + 4.2 + 4.5) / 3 = 4.5
+  assert.ok(r.includes('4.50'), r);
+  assert.ok(r.includes('3 films'), r);
 });
 
-test('handleChatbotSend() : message vide (espaces) -> n\'envoie rien, n\'ajoute rien à l\'historique', async () => {
-  const input = stubElement({ value: '   ' });
-  const sendBtn = stubElement();
-  const wrap = stubElement();
-  let invoked = false;
-  const ctx = buildContext({
-    elements: { chatbotInput: input, chatbotSendBtn: sendBtn, chatbotMessages: wrap },
-    supabaseClient: { functions: { invoke(){ invoked = true; return Promise.resolve({ data: { reply: 'x' }, error: null }); } } },
-  });
-  await ctx.handleChatbotSend();
-  assert.strictEqual(invoked, false);
-  assert.deepStrictEqual(JSON.parse(JSON.stringify(getState(ctx, 'chatbotMessages'))), []);
+test('moyenne -> aucun film noté : le dit, sans diviser par zéro', () => {
+  const ctx = buildContext();
+  const r = ctx.answerChatbotQuestion('ma moyenne', donnees([{ title: 'X', note: null, genreIds: [] }], []));
+  assert.ok(r.includes('aucun film noté'), r);
 });
 
-test('handleChatbotSend() : succès -> message utilisateur puis réponse ajoutés dans l\'ordre, champ vidé', async () => {
-  const input = stubElement({ value: 'Un film triste ?' });
-  const sendBtn = stubElement();
-  const wrap = stubElement();
-  let sentBody = null;
-  const ctx = buildContext({
-    elements: { chatbotInput: input, chatbotSendBtn: sendBtn, chatbotMessages: wrap },
-    supabaseClient: {
-      functions: {
-        invoke(name, opts){
-          assert.strictEqual(name, 'chat');
-          // Clone immédiat — un vrai fetch() sérialise le corps de la
-          // requête à CET instant, avant qu'une mutation ultérieure de
-          // chatbotMessages (la réponse poussée juste après l'await) ne
-          // puisse l'affecter ; ce mock doit refléter la même chose,
-          // sinon il capture une référence vivante plutôt qu'un instantané.
-          sentBody = JSON.parse(JSON.stringify(opts.body));
-          return Promise.resolve({ data: { reply: 'Essaie Manchester by the Sea.' }, error: null });
-        },
-      },
-    },
-  });
-  await ctx.handleChatbotSend();
-  const msgs = JSON.parse(JSON.stringify(getState(ctx, 'chatbotMessages')));
-  assert.deepStrictEqual(msgs, [
-    { role: 'user', content: 'Un film triste ?' },
-    { role: 'assistant', content: 'Essaie Manchester by the Sea.' },
-  ]);
-  assert.strictEqual(input.value, '');
-  assert.deepStrictEqual(JSON.parse(JSON.stringify(sentBody.messages)), [{ role: 'user', content: 'Un film triste ?' }], 'envoie bien l\'historique à la fonction');
+test('meilleurs films -> triés par note décroissante, films non notés exclus', () => {
+  const ctx = buildContext();
+  const r = ctx.answerChatbotQuestion('Quels sont mes meilleurs films ?', donnees(FILMS, WATCHLIST));
+  const lignes = r.split('\n');
+  assert.ok(lignes[1].includes('Parasite'), r);
+  assert.ok(lignes[2].includes('Inception'), r);
+  assert.ok(!r.includes('Film non noté'), r);
 });
 
-test('handleChatbotSend() : fonction pas déployée (erreur réseau) -> message de repli clair, jamais un échec muet', async () => {
-  const input = stubElement({ value: 'Salut' });
-  const sendBtn = stubElement();
-  const wrap = stubElement();
-  const ctx = buildContext({
-    elements: { chatbotInput: input, chatbotSendBtn: sendBtn, chatbotMessages: wrap },
-    supabaseClient: { functions: { invoke(){ return Promise.resolve({ data: null, error: { message: 'Function not found' } }); } } },
-  });
-  await ctx.handleChatbotSend();
-  const msgs = getState(ctx, 'chatbotMessages');
-  assert.strictEqual(msgs.length, 2);
-  assert.strictEqual(msgs[1].role, 'assistant');
-  assert.ok(msgs[1].content.includes('pas déployée') || msgs[1].content.includes('ne répond pas'));
+test('nombre de films -> compte le catalogue et précise les notés', () => {
+  const ctx = buildContext();
+  const r = ctx.answerChatbotQuestion('combien de films ai-je notés ?', donnees(FILMS, WATCHLIST));
+  assert.ok(r.includes('4 films'), r);
+  assert.ok(r.includes('3 avec une note'), r);
 });
 
-test('handleChatbotSend() : erreur renvoyée PAR la fonction (ex. clé API absente) -> message affiché tel quel', async () => {
-  const input = stubElement({ value: 'Salut' });
-  const sendBtn = stubElement();
-  const wrap = stubElement();
-  const ctx = buildContext({
-    elements: { chatbotInput: input, chatbotSendBtn: sendBtn, chatbotMessages: wrap },
-    supabaseClient: { functions: { invoke(){ return Promise.resolve({ data: { error: 'ANTHROPIC_API_KEY non configurée côté serveur.' }, error: null }); } } },
-  });
-  await ctx.handleChatbotSend();
-  const msgs = getState(ctx, 'chatbotMessages');
-  assert.ok(msgs[1].content.includes('ANTHROPIC_API_KEY'));
+test('genres -> les plus présents, sans accents dans la question', () => {
+  const ctx = buildContext();
+  const r = ctx.answerChatbotQuestion('quels genres je regarde le plus', donnees(FILMS, WATCHLIST));
+  assert.ok(r.startsWith('Tes genres les plus présents : Thriller (3)'), r);
+});
+
+test('"un film au hasard" -> prend un titre de la watchlist', () => {
+  const ctx = buildContext();
+  const r = ctx.answerChatbotQuestion('un film au hasard ?', donnees(FILMS, WATCHLIST));
+  assert.ok(WATCHLIST.some(w => r.includes(w.title)), r);
+});
+
+test('"au hasard" avec watchlist vide -> dit qu\'elle est vide, ne propose rien', () => {
+  const ctx = buildContext();
+  const r = ctx.answerChatbotQuestion('surprends-moi', donnees(FILMS, []));
+  assert.ok(r.includes('vide'), r);
+});
+
+test('question sur l\'app (cartes) -> réponse d\'aide prévue, sans accents requis', () => {
+  const ctx = buildContext();
+  const r = ctx.answerChatbotQuestion('comment avoir des boosters', donnees(FILMS, WATCHLIST));
+  assert.ok(r.includes('Mon activité > Cartes'), r);
+});
+
+test('question hors sujet -> réponse de repli honnête, jamais une invention', () => {
+  const ctx = buildContext();
+  const r = ctx.answerChatbotQuestion('quelle est la capitale du Pérou', donnees(FILMS, WATCHLIST));
+  assert.ok(r.includes('Je ne suis pas sûr'), r);
+});
+
+test('salutation -> réponse courte, sans fausse info', () => {
+  const ctx = buildContext();
+  assert.strictEqual(ctx.answerChatbotQuestion('Salut !', donnees(FILMS, WATCHLIST)), 'Salut ! Que veux-tu savoir ?');
 });
 
 module.exports = run('chatbot.test.js');
