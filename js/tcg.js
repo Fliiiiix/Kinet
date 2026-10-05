@@ -580,6 +580,21 @@ function populateTradePartnerSelect(){
   if(current && accepted.some(f => otherUserId(f) === current)) sel.value = current;
 }
 
+// Badge « échanges reçus en attente » sur la ligne Cartes du profil. Seuls les
+// échanges qui attendent MA réponse comptent (je suis le destinataire).
+async function refreshTradeBadge(){
+  const badge = document.getElementById('tcgTradeBadge');
+  if(!badge || !currentUser) return;
+  const { count, error } = await supabaseClient
+    .from('tcg_trades')
+    .select('id', { count: 'exact', head: true })
+    .eq('to_user', currentUser.id)
+    .eq('status', 'pending');
+  if(error || !count){ badge.hidden = true; badge.textContent = ''; return; }
+  badge.hidden = false;
+  badge.textContent = String(count);
+}
+
 async function loadPendingTrades(){
   const { data, error } = await supabaseClient
     .from('tcg_trades')

@@ -3693,6 +3693,9 @@ input[type="range"]::-moz-range-thumb{
 }
 /* Rappel de visionnage (watchlist) : une ligne discrète, couleur teal de la palette. */
 .wl-reminder{background:var(--ink-surface); border:1px solid var(--line); border-left:3px solid var(--teal); border-radius:10px; padding:10px 14px; margin-bottom:12px; font-size:0.9rem; color:var(--text-muted);}
+/* Badge d'échanges reçus en attente (ligne Cartes du profil). */
+.tcg-trade-badge{display:inline-flex; align-items:center; justify-content:center; min-width:20px; height:20px; padding:0 6px; margin-left:8px; border-radius:999px; background:var(--coral); color:#120f1a; font-size:0.72rem; font-weight:700; vertical-align:middle;}
+.tcg-trade-badge[hidden]{display:none;}
 .tcg-intro{display:flex; gap:14px; align-items:center; justify-content:space-between; flex-wrap:wrap; background:var(--ink-surface); border:1px solid var(--line); border-left:3px solid var(--violet); border-radius:10px; padding:12px 14px; margin-bottom:14px; font-size:0.92rem; color:var(--text-muted);}
 .tcg-intro strong{color:var(--text);}
 .tcg-intro-text{flex:1 1 260px;}

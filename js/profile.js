@@ -113,6 +113,7 @@ function renderUserBar(){
 }
 
 function openProfileModal(){
+  refreshTradeBadge();
   document.getElementById('displayNameInput').value = (currentProfile && currentProfile.display_name) || '';
   const avatarUrl = (currentProfile && currentProfile.avatar_url) || '';
   document.getElementById('avatarUrlInput').value = avatarUrl;
