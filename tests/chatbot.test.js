@@ -104,4 +104,44 @@ test('salutation -> réponse courte, sans fausse info', () => {
   assert.strictEqual(ctx.answerChatbotQuestion('Salut !', donnees(FILMS, WATCHLIST)), 'Salut ! Que veux-tu savoir ?');
 });
 
+test('genre précis -> compte les films de ce genre et leur moyenne (pas le classement générique)', () => {
+  const ctx = buildContext();
+  const r = ctx.answerChatbotQuestion('Combien de films thriller ai-je ?', donnees(FILMS, WATCHLIST));
+  assert.ok(r.includes('3 films thriller'), r);
+  // (4.8 + 4.2 + 4.5) étant dans les 3 films, Thriller = 53 : moyenne 4.50
+  assert.ok(r.includes('4.50'), r);
+});
+
+test('genre précis sans aucun film -> le dit explicitement', () => {
+  const ctx = buildContext();
+  const r = ctx.answerChatbotQuestion('mes films comédie', donnees([{ title: 'Dune', note: 4, genreIds: [53] }], []));
+  assert.ok(r.includes('Aucun film comédie'), r);
+});
+
+test('répartition -> compte les notes par tranche (4–5 pour 4,2 / 4,5 / 4,8)', () => {
+  const ctx = buildContext();
+  const r = ctx.answerChatbotQuestion('Ma répartition des notes', donnees(FILMS, WATCHLIST));
+  assert.ok(r.includes('4–5 : 3'), r);
+});
+
+test('coups de cœur -> films notés 4,5 et plus, avec ou sans accent sur le œ', () => {
+  const ctx = buildContext();
+  const avec = ctx.answerChatbotQuestion('Mes coups de cœur', donnees(FILMS, WATCHLIST));
+  const sans = ctx.answerChatbotQuestion('mes coups de coeur', donnees(FILMS, WATCHLIST));
+  assert.ok(avec.includes('2 coups de cœur'), avec);
+  assert.ok(sans.includes('Parasite') && sans.includes('Inception'), sans);
+});
+
+test('moins bien notés -> tri croissant, Dune (4,2) en tête', () => {
+  const ctx = buildContext();
+  const r = ctx.answerChatbotQuestion('Quels sont mes moins bien notés ?', donnees(FILMS, WATCHLIST));
+  assert.ok(r.split('\n')[1].includes('Dune'), r);
+});
+
+test('merci et qui es-tu -> réponses courtes, sans confusion avec une autre intention', () => {
+  const ctx = buildContext();
+  assert.strictEqual(ctx.answerChatbotQuestion('merci !', donnees(FILMS, WATCHLIST)), 'Avec plaisir !');
+  assert.ok(ctx.answerChatbotQuestion('Qui es-tu ?', donnees(FILMS, WATCHLIST)).includes('assistant de Kinet'));
+});
+
 module.exports = run('chatbot.test.js');

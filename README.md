@@ -1048,6 +1048,15 @@ propose les questions possibles, plutôt qu'une réponse inventée.
 
 Historique de conversation en mémoire seulement (pas persisté).
 
+Questions reconnues (en plus de la moyenne, des meilleurs films, du
+hasard et de la watchlist) : un genre précis (« mes films thriller »,
+avec la moyenne sur ce genre), ta répartition des notes par tranche, tes
+coups de cœur (4,5 et plus), tes moins bien notés. Tant qu'aucune
+question n'a été posée, des suggestions cliquables s'affichent. « Efface
+la conversation » vide l'historique. La réponse s'affiche après un bref
+délai (indicateur de frappe) avec un petit son ; ce son suit le réglage
+Son des Paramètres.
+
 Pour ajouter une réponse sur l'app : une entrée de plus dans
 `CHATBOT_HELP_TOPICS` (js/chatbot.js), avec ses mots-clés.
 

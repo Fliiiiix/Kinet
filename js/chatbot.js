@@ -24,6 +24,17 @@ const CHATBOT_HELP_TOPICS = [
   { mots: ['export', 'import', 'letterboxd'], texte: 'Tu peux exporter ton catalogue en JSON ou CSV, et importer un export Letterboxd depuis le menu ⋯ de la page d\'accueil.' },
 ];
 
+// Suggestions cliquables affichées tant que la conversation n'a pas commencé.
+// Chaque libellé est envoyé tel quel comme une question de l'utilisateur.
+const CHATBOT_SUGGESTIONS = [
+  'Ma note moyenne',
+  'Mes meilleurs films',
+  'Un film au hasard',
+  'Mes films d\'horreur',
+  'Ma répartition des notes',
+  'Mes coups de cœur',
+];
+
 function normaliserTexte(texte){
   return texte.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 }
@@ -46,6 +57,18 @@ function answerChatbotQuestion(texte, donnees){
     return 'Salut ! Que veux-tu savoir ?';
   }
 
+  // Genre précis cité dans la question (« mes films d'horreur ») : avant le
+  // cas générique « mes genres », qui répondrait sans le genre demandé.
+  const genreCite = Object.values(genreMap).find(nom => q.includes(normaliserTexte(nom)));
+  if(genreCite && contientUn(q, ['film', 'mes', 'combien', 'noté', 'note'])){
+    const idGenre = String(Object.keys(genreMap).find(id => genreMap[id] === genreCite));
+    const filmsDuGenre = films.filter(f => (f.genreIds || []).map(String).includes(idGenre));
+    if(filmsDuGenre.length === 0) return `Aucun film ${genreCite.toLowerCase()} dans ton catalogue pour l'instant.`;
+    const notesDuGenre = filmsDuGenre.map(f => getNote(f)).filter(n => n != null);
+    const moyTexte = notesDuGenre.length ? ` Ta note moyenne sur ce genre : ${(notesDuGenre.reduce((a, b) => a + b, 0) / notesDuGenre.length).toFixed(2)} / 5.` : '';
+    return `Tu as ${filmsDuGenre.length} film${filmsDuGenre.length > 1 ? 's' : ''} ${genreCite.toLowerCase()}.${moyTexte}`;
+  }
+
   if(contientUn(q, ['combien', 'nombre']) && contientUn(q, ['film', 'note'])){
     return `Tu as noté ${films.length} film${films.length > 1 ? 's' : ''}${notes.length !== films.length ? ` (${notes.length} avec une note)` : ''}.`;
   }
@@ -64,6 +87,37 @@ function answerChatbotQuestion(texte, donnees){
       .slice(0, 5);
     if(top.length === 0) return 'Pas encore de film noté, donc pas de classement à te montrer.';
     return 'Tes mieux notés :\n' + top.map((f, i) => `${i + 1}. ${f.titre} (${f.note.toFixed(2)})`).join('\n');
+  }
+
+  if(contientUn(q, ['merci'])) return 'Avec plaisir !';
+  if(contientUn(q, ['qui es-tu', 'qui es tu', 'tu es qui', 'ton nom'])){
+    return 'Je suis l\'assistant de Kinet : je tourne dans ton navigateur, sans API ni compte externe, et je ne réponds qu\'à partir de tes films.';
+  }
+
+  if(contientUn(q, ['repartition', 'distribution', 'histogramme']) || (contientUn(q, ['notes']) && contientUn(q, ['combien de chaque', 'par note']))){
+    if(notes.length === 0) return 'Pas encore de film noté, donc pas de répartition à te montrer.';
+    const seaux = [0, 0, 0, 0, 0];
+    notes.forEach(n => { seaux[Math.min(4, Math.max(0, Math.floor(n)))] += 1; });
+    return 'Tes notes, par tranche :\n' + seaux
+      .map((n, i) => `${i}–${i + 1} : ${n}`)
+      .reverse()
+      .join('\n');
+  }
+
+  if(contientUn(q, ['coup de coeur', 'coups de coeur', 'coup de cœur', 'coups de cœur', 'coeur', 'excellent'])){
+    const forts = films.filter(f => (getNote(f) ?? 0) >= 4.5);
+    if(forts.length === 0) return 'Aucun coup de cœur pour l\'instant (une note d\'au moins 4,5).';
+    return `Tu as ${forts.length} coup${forts.length > 1 ? 's' : ''} de cœur (note d'au moins 4,5) : ` + forts.slice(0, 5).map(f => `« ${f.title} »`).join(', ') + (forts.length > 5 ? '…' : '') + '.';
+  }
+
+  if(contientUn(q, ['pire', 'moins bien', 'plus mauvais', 'plus basse', 'moins bon', 'mal note'])){
+    const bas = films
+      .map(f => ({ titre: f.title, note: getNote(f) }))
+      .filter(f => f.note != null)
+      .sort((a, b) => a.note - b.note)
+      .slice(0, 5);
+    if(bas.length === 0) return 'Pas encore de film noté, donc rien à classer.';
+    return 'Tes moins bien notés :\n' + bas.map((f, i) => `${i + 1}. ${f.titre} (${f.note.toFixed(2)})`).join('\n');
   }
 
   if(contientUn(q, ['genre'])){
@@ -108,24 +162,62 @@ function chatbotDonnees(){
   };
 }
 
+// « efface » vide la conversation au lieu de répondre : commande de
+// l'interface, pas une question.
+function estCommandeEffacer(texte){
+  return contientUn(normaliserTexte(texte).trim(), ['efface la conversation', 'efface tout', 'recommence', 'reinitialise']);
+}
+
 function renderChatbotMessages(){
   const wrap = document.getElementById('chatbotMessages');
   const bulles = [
     `<div class="chatbot-msg chatbot-msg-bot">${escapeHtml(CHATBOT_GREETING)}</div>`,
-    ...chatbotMessages.map(m => `<div class="chatbot-msg chatbot-msg-${m.role === 'user' ? 'user' : 'bot'}">${escapeHtml(m.content)}</div>`)
   ];
+  // Suggestions tant qu'aucune question n'a été posée : rien à deviner pour
+  // un premier usage, et aucune requête côté serveur.
+  if(chatbotMessages.length === 0){
+    bulles.push(`<div class="chatbot-suggestions">${CHATBOT_SUGGESTIONS.map(s => `<button class="chatbot-chip" type="button" data-question="${escapeHtml(s)}">${escapeHtml(s)}</button>`).join('')}</div>`);
+  }
+  chatbotMessages.forEach(m => bulles.push(`<div class="chatbot-msg chatbot-msg-${m.role === 'user' ? 'user' : 'bot'}">${escapeHtml(m.content)}</div>`));
   wrap.innerHTML = bulles.join('');
+  wrap.querySelectorAll('.chatbot-chip').forEach(btn => {
+    btn.addEventListener('click', () => envoyerQuestion(btn.dataset.question));
+  });
   wrap.scrollTop = wrap.scrollHeight;
+}
+
+// Réponse « en train d'écrire » : bref délai avant d'afficher la réponse, pour
+// que l'échange ait un rythme naturel. La réponse est calculée tout de suite
+// (fonction pure) : seul son affichage est retardé.
+const CHATBOT_DELAI_REPONSE_MS = 420;
+
+function envoyerQuestion(texte){
+  texte = (texte || '').trim();
+  if(!texte) return;
+  const input = document.getElementById('chatbotInput');
+  if(estCommandeEffacer(texte)){
+    chatbotMessages = [];
+    input.value = '';
+    renderChatbotMessages();
+    return;
+  }
+  chatbotMessages.push({ role: 'user', content: texte });
+  input.value = '';
+  const reponse = answerChatbotQuestion(texte, chatbotDonnees());
+  renderChatbotMessages();
+  const wrap = document.getElementById('chatbotMessages');
+  wrap.insertAdjacentHTML('beforeend', '<div class="chatbot-msg chatbot-msg-bot chatbot-typing" aria-label="En train de répondre"><span></span><span></span><span></span></div>');
+  wrap.scrollTop = wrap.scrollHeight;
+  setTimeout(() => {
+    chatbotMessages.push({ role: 'assistant', content: reponse });
+    renderChatbotMessages();
+    playChatbotBlip();
+  }, CHATBOT_DELAI_REPONSE_MS);
 }
 
 function handleChatbotSend(){
   const input = document.getElementById('chatbotInput');
-  const texte = input.value.trim();
-  if(!texte) return;
-  chatbotMessages.push({ role: 'user', content: texte });
-  input.value = '';
-  chatbotMessages.push({ role: 'assistant', content: answerChatbotQuestion(texte, chatbotDonnees()) });
-  renderChatbotMessages();
+  envoyerQuestion(input.value);
 }
 
 function openChatbotModal(){

@@ -77,3 +77,36 @@ function playRouletteWin(){
     setTimeout(() => playTone(freq, 0.14, 220, 'triangle'), i * 90);
   });
 }
+
+// --- Son des boosters et de l'assistant (retour utilisateur : "de la
+// fluidité et du son si besoin, comme pour l'opening de booster") ---
+// playCardFlip() : un "whoosh" court quand une carte se retourne.
+function playCardFlip(){
+  playTone(520, 0.05, 110, 'sine');
+}
+
+// Accord par rareté : plus il y a de notes, plus la carte est rare. Le
+// Légendaire ajoute une octave aiguë, à peine audible mais perceptible.
+const ACCORDS_RARETE = {
+  commun: [392],
+  rare: [440, 554],
+  epique: [523, 659, 784],
+  legendaire: [523, 659, 784, 1047],
+};
+
+function playRarityReveal(rarete){
+  if(!getSoundEnabled()) return;
+  const notes = ACCORDS_RARETE[rarete] || ACCORDS_RARETE.commun;
+  const legendaire = rarete === 'legendaire';
+  notes.forEach((freq, i) => {
+    setTimeout(() => playTone(freq, legendaire ? 0.14 : 0.1, 420, 'triangle'), i * 70);
+  });
+  if(legendaire){
+    setTimeout(() => playTone(2093, 0.05, 600, 'sine'), notes.length * 70);
+  }
+}
+
+// playChatbotBlip() : un bip très doux quand l'assistant répond.
+function playChatbotBlip(){
+  playTone(880, 0.05, 90, 'sine');
+}

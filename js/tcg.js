@@ -219,7 +219,11 @@ function openBoosterReveal(cards){
     const delay = reduced ? 0 : 500 + i * 650;
     setTimeout(() => {
       const el = document.getElementById(`tcgBoosterCard${i}`);
-      if(el) el.classList.add('revealed');
+      if(el){
+        el.classList.add('revealed');
+        playCardFlip();
+        playRarityReveal(c.rarity);
+      }
       if(i === cards.length - 1){
         setTimeout(() => { doneBtn.style.display = ''; }, reduced ? 0 : 700);
       }
