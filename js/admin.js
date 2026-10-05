@@ -760,7 +760,7 @@ document.getElementById('adminOverlay').addEventListener('click', (e) => {
 // Commun) : l'admin peut forcer une rareté par carte. Une surcharge prime sur
 // le calcul, "Automatique" la retire. Écriture via admin_set_card_rarity()
 // (migrations/044), vérifiée côté base, pas seulement ici.
-let adminCardsFilter = { type: '', search: '' };
+let adminCardsFilter = { type: '', search: '', rarity: '' };
 
 async function renderAdminCardsTab(){
   const wrap = document.getElementById('adminContent');
@@ -781,7 +781,8 @@ async function renderAdminCardsTab(){
     return;
   }
   const RARETE_ORDRE = { legendaire: 0, epique: 1, rare: 2, commun: 3 };
-  const triees = (data || []).slice().sort((a, b) =>
+  const filtrees = (data || []).filter(c => !adminCardsFilter.rarity || c.rarity === adminCardsFilter.rarity);
+  const triees = filtrees.slice().sort((a, b) =>
     (RARETE_ORDRE[a.rarity] ?? 9) - (RARETE_ORDRE[b.rarity] ?? 9)
     || Number(b.popularity) - Number(a.popularity)
   );
@@ -810,6 +811,10 @@ async function renderAdminCardsTab(){
         <option value="actor" ${adminCardsFilter.type==='actor'?'selected':''}>Acteurs</option>
         <option value="director" ${adminCardsFilter.type==='director'?'selected':''}>Réalisateurs</option>
       </select>
+      <select id="adminCardsRarity" aria-label="Filtrer par rareté">
+        <option value="">Toutes raretés</option>
+        ${['legendaire','epique','rare','commun'].map(r => `<option value="${r}" ${adminCardsFilter.rarity===r?'selected':''}>${r}</option>`).join('')}
+      </select>
       <input type="text" id="adminCardsSearch" placeholder="Chercher une carte…" value="${escapeHtml(adminCardsFilter.search)}">
     </div>
     <div class="wl-note" style="margin-bottom:10px;">
@@ -820,6 +825,9 @@ async function renderAdminCardsTab(){
   `;
   document.getElementById('adminCardsType').addEventListener('change', (e) => {
     adminCardsFilter.type = e.target.value; renderAdminCardsTab();
+  });
+  document.getElementById('adminCardsRarity').addEventListener('change', (e) => {
+    adminCardsFilter.rarity = e.target.value; renderAdminCardsTab();
   });
   let searchTimer = null;
   document.getElementById('adminCardsSearch').addEventListener('input', (e) => {
