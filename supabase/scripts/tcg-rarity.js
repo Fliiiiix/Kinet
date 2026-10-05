@@ -54,9 +54,16 @@ const TIERS = [
   { rarity: 'commun', from: 0 },        // 0 à 60 %
 ];
 
+// Options "--nom valeur", ou "--nom" seul pour un indicateur (ex. --fetch-imdb).
 function parseArgs(argv){
   const args = {};
-  for(let i = 0; i < argv.length; i += 2) args[argv[i].replace(/^--/, '')] = argv[i + 1];
+  for(let i = 0; i < argv.length; i++){
+    const key = argv[i].replace(/^--/, '');
+    const next = argv[i + 1];
+    if(next === undefined || next.startsWith('--')){ args[key] = true; continue; }
+    args[key] = next;
+    i++;
+  }
   return args;
 }
 
@@ -196,10 +203,13 @@ async function main(){
     const token = process.env.TMDB_TOKEN;
     if(!token){ console.error('Définis TMDB_TOKEN (jeton de lecture TMDB) avant de lancer.'); process.exit(1); }
     const cards = readCardsCsv(args.cards);
-    const found = await fetchImdbIds(cards, token);
-    const sql = ['begin;', ...found.map(f => `update public.tcg_cards set imdb_id = '${sqlEscape(f.imdb)}' where id = ${f.id};`), 'commit;'].join('\n') + '\n';
-    fs.writeFileSync(args['imdb-out'] || 'imdb-ids.sql', sql);
-    console.log(`${found.length} identifiants IMDb trouvés. Applique le SQL, ré-exporte cards.csv, puis relance sans --fetch-imdb.`);
+    const found = new Map(await fetchImdbIds(cards, token).then(l => l.map(f => [f.id, f.imdb])));
+    const head = ['id', 'card_type', 'tmdb_id', 'imdb_id', 'rarity_override'];
+    const rows = cards.map(c => [c.id, c.card_type, c.tmdb_id, c.imdb_id || found.get(c.id) || '', c.rarity_override || '']);
+    const out = args['cards-out'] || args.cards.replace(/\.csv$/, '') + '-imdb.csv';
+    fs.writeFileSync(out, [head, ...rows].map(r => r.join(',')).join('\n') + '\n');
+    const manquants = cards.filter(c => !(c.imdb_id || found.get(c.id))).length;
+    console.log(`${found.size} identifiants IMDb trouvés, ${manquants} sans identifiant -> ${out}`);
     return;
   }
   if(!args.dir || !args.cards || !args.out){
