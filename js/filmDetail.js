@@ -61,8 +61,31 @@ function renderFilmDetailHeader(){
   document.getElementById('filmDetailOverview').textContent = d.overview || 'Aucun résumé disponible.';
 }
 
+// Historique des notes (migration 051) : les derniers changements de MA note
+// pour ce film. Si la table n'existe pas encore, la section reste vide.
+async function renderNoteHistory(myFilm){
+  const el = document.getElementById('filmDetailHistory');
+  if(!el) return;
+  el.textContent = '';
+  if(!myFilm || !myFilm.id) return;
+  const { data, error } = await supabaseClient
+    .from('film_note_history')
+    .select('changed_at, manuelle_apres')
+    .eq('film_id', myFilm.id)
+    .order('changed_at', { ascending: false })
+    .limit(10);
+  if(error || !data || data.length === 0) return;
+  const lignes = data.map(r => {
+    const date = new Date(r.changed_at).toLocaleDateString('fr-FR');
+    const quoi = r.manuelle_apres != null ? `note manuelle ${Number(r.manuelle_apres).toFixed(2)}` : 'grille de critères';
+    return `${date} : ${quoi}`;
+  });
+  el.textContent = `Historique de ta note : ${lignes.join(' · ')}`;
+}
+
 async function renderFilmDetailNotes(){
   const wrap = document.getElementById('filmDetailNotes');
+  renderNoteHistory(films.find(f => f.tmdbId === currentFilmTmdbId));
   wrap.innerHTML = `<div class="tmdb-empty">Chargement…</div>`;
   const { data, error } = await supabaseClient.rpc('get_film_stats', { p_tmdb_id: currentFilmTmdbId });
   const stats = Array.isArray(data) ? data[0] : data;
