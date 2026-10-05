@@ -4093,6 +4093,13 @@ input[type="range"]::-moz-range-thumb{
 /* Série suivie (v2.3) : toute la ligne ouvre la fiche détail au clic (comme
    .film-row), voir renderTrackedShows(), js/series.js. #topList (js/top.js)
    a le même traitement via .top-row plus haut dans ce fichier. */
+/* Watchlist : survol doux (même langage que les séries et les suggestions),
+   désactivé avec prefers-reduced-motion. */
+#wlList .wl-row{transition:border-color .15s, transform .15s, box-shadow .15s;}
+#wlList .wl-row:hover{border-color:var(--violet-dim); transform:translateY(-1px); box-shadow:0 10px 24px rgba(0,0,0,0.35);}
+@media (prefers-reduced-motion: reduce){
+  #wlList .wl-row, #wlList .wl-row:hover{transition:none; transform:none;}
+}
 #seriesList .wl-row{cursor:pointer; transition:border-color .15s, transform .15s, box-shadow .15s;}
 #seriesList .wl-row:hover{border-color:var(--violet-dim); transform:translateY(-1px); box-shadow:0 10px 24px rgba(0,0,0,0.35);}
 /* Watchlist (retour utilisateur : "je ne peux pas cliquer sur le film pour

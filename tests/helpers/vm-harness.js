@@ -95,6 +95,12 @@ function loadFiles(context, relPaths){
 function createContext(overrides = {}){
   const base = {
     console,
+    // Sons (js/sound.js) : pas chargés dans la plupart des contextes de test,
+    // mais appelés par watchlist.js / app.js / tcg.js. No-op ici, pour que
+    // les tests de logique ne dépendent pas de l'audio.
+    playTone(){}, playRouletteTick(){}, playRouletteWin(){}, playCardFlip(){},
+    playRarityReveal(){}, playChatbotBlip(){}, playSuccessChime(){}, playDustChime(){},
+    playPopChime(){}, playDeleteTone(){},
     document: stubDocument(),
     localStorage: fakeLocalStorage(),
     window: { addEventListener(){}, removeEventListener(){}, matchMedia: () => ({ matches: false, addEventListener(){} }) },

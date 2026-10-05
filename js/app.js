@@ -462,6 +462,7 @@ async function handleBulkDelete(){
   selectedFilmIds.clear();
   buildGenreFilterOptions(); // les genres supprimés peuvent ne plus être représentés au catalogue
   render();
+  playDeleteTone();
   showToast('Films supprimés');
 }
 
@@ -772,6 +773,7 @@ async function handleSave(){
     updateFilmDetailActionButtons();
     renderFilmDetailNotes();
   }
+  playSuccessChime();
   showToast('Film enregistré');
 }
 
@@ -792,6 +794,7 @@ async function handleDelete(){
   closeModal();
   buildGenreFilterOptions(); // le genre supprimé peut ne plus être représenté au catalogue
   render();
+  playDeleteTone();
   showToast('Film supprimé');
 }
 

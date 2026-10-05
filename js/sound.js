@@ -126,3 +126,16 @@ function playDustChime(){
   playTone(330, 0.07, 240, 'sine');
   setTimeout(() => playTone(440, 0.05, 180, 'sine'), 70);
 }
+
+// playPopChime() : un "pop" aigu et très court, pour un ajout (watchlist).
+function playPopChime(){
+  playTone(1046, 0.08, 120, 'sine');
+}
+
+// playDeleteTone() : une descente discrète, pour une suppression. Pas un
+// son d'erreur : l'action a bien eu lieu, on le signale juste.
+function playDeleteTone(){
+  if(!getSoundEnabled()) return;
+  playTone(440, 0.06, 140, 'sine');
+  setTimeout(() => playTone(294, 0.05, 160, 'sine'), 90);
+}

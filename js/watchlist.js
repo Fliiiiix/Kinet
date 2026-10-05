@@ -297,6 +297,7 @@ async function handleAddToWatchlist(){
   document.getElementById('wlTitleInput').value = '';
   document.getElementById('wlNoteInput').value = '';
   clearWlTmdbSelection();
+  playPopChime();
   showToast('Ajouté à la watchlist');
 }
 
@@ -388,6 +389,7 @@ async function handleQuickRate(item, rawValue, confirmBtn, inputEl){
   renderWatchlist();
   buildGenreFilterOptions();
   render();
+  playSuccessChime();
   showToast('Noté !');
 }
 
