@@ -2,7 +2,7 @@
 // Logique pure : answerChatbotQuestion() répond à partir de données
 // fournies, sans réseau ni API. On teste les réponses, pas le DOM.
 const { createSuite, assert } = require('./helpers/tiny-test');
-const { createContext, loadFiles, stubDocument, stubElement } = require('./helpers/vm-harness');
+const { createContext, loadFiles, stubDocument, stubElement, setState } = require('./helpers/vm-harness');
 const { test, run } = createSuite();
 
 function buildContext(){
@@ -150,6 +150,18 @@ test('boosters -> compte ceux à ouvrir, ou dit comment en débloquer un', () =>
   assert.ok(avec.includes('2 boosters'), avec);
   const sans = ctx.answerChatbotQuestion('Combien de boosters ai-je ?', { ...donnees(FILMS, WATCHLIST), boosters: 0 });
   assert.ok(sans.includes('Aucun booster'), sans);
+});
+
+test('suggestions -> 6 boutons tant que la conversation est vide, plus aucun après une question', () => {
+  const wrap = stubElement();
+  const ctx = buildContext();
+  ctx.document.getElementById = (id) => (id === 'chatbotMessages' ? wrap : stubElement());
+  ctx.renderChatbotMessages();
+  const avant = (wrap.innerHTML.match(/chatbot-chip/g) || []).length;
+  assert.strictEqual(avant, 6, 'chips avant : ' + avant);
+  setState(ctx, { chatbotMessages: [{ role: 'user', content: 'bonjour' }] });
+  ctx.renderChatbotMessages();
+  assert.ok(!wrap.innerHTML.includes('chatbot-chip'), 'plus de suggestions une fois la conversation commencée');
 });
 
 module.exports = run('chatbot.test.js');
