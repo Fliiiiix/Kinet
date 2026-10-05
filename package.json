@@ -1,0 +1,14 @@
+{
+  "name": "kinet",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Kinet : notation de films à critères fixes (app statique, sans build).",
+  "scripts": {
+    "test": "node tests/run-all.js",
+    "test:e2e": "playwright test"
+  },
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "@playwright/test": "^1.63.0"
+  }
+}

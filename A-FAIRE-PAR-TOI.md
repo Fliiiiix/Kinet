@@ -86,3 +86,9 @@ l'ordre, puis recharger le site.
       elle, un film privé peut encore apparaître sur le profil public (accessible
       sans connexion). Testé : les films privés sont exclus de la liste et des films
       mis en avant.
+
+## 6. Commandes utiles (après un changement)
+- Tests unitaires : `npm test` (ou `node tests/run-all.js`).
+- Test de bout en bout (Chromium, serveur local automatique) : `npm run test:e2e`.
+  Première fois : `npx playwright install chromium` (déjà fait sur ce poste).
+- Recalcul des raretés : voir `docs/recalcul-raretes.md`.
