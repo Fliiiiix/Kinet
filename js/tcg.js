@@ -283,18 +283,24 @@ document.getElementById('tcgBoosterOverlay').addEventListener('click', (e) => {
 
 const RARITY_ORDER = ['commun', 'rare', 'epique', 'legendaire'];
 
+// Année de sortie (migration 052) : la colonne peut ne pas exister encore. On
+// tente avec, et on retombe sans elle plutôt que de casser la collection.
 async function loadTcgCollection(){
-  const { data, error } = await supabaseClient
-    .from('tcg_user_cards')
-    .select('quantity, card:tcg_cards(id, card_type, name, image_url, rarity, popularity)')
-    .eq('user_id', currentUser.id)
-    .order('quantity', { ascending: false });
+  const avecAnnee = 'quantity, card:tcg_cards(id, card_type, name, image_url, rarity, popularity, release_year)';
+  const sansAnnee = 'quantity, card:tcg_cards(id, card_type, name, image_url, rarity, popularity)';
+  let { data, error } = await supabaseClient
+    .from('tcg_user_cards').select(avecAnnee).eq('user_id', currentUser.id).order('quantity', { ascending: false });
+  if(error && /release_year/.test(error.message || '')){
+    ({ data, error } = await supabaseClient
+      .from('tcg_user_cards').select(sansAnnee).eq('user_id', currentUser.id).order('quantity', { ascending: false }));
+  }
   if(error){ console.error(error); tcgCollection = []; return; }
   tcgCollection = (data || [])
     .filter(row => row.card && row.quantity > 0)
     .map(row => ({
       cardId: row.card.id, cardType: row.card.card_type, name: row.card.name,
-      imageUrl: row.card.image_url, rarity: row.card.rarity, quantity: row.quantity
+      imageUrl: row.card.image_url, rarity: row.card.rarity, quantity: row.quantity,
+      releaseYear: row.card.release_year || null
     }))
     // Les plus rares d'abord — c'est la partie de la collection dont on
     // est le plus fier, elle doit sauter aux yeux en premier, pas être
@@ -347,14 +353,36 @@ function renderCompletion(){
   el.textContent = `Collection : ${possedees} carte${possedees > 1 ? 's' : ''} sur ${tcgCatalogTotal} (${pct} %).`;
 }
 
+// Décennie d'une carte : « 1990 », « Sans décennie » pour une personne ou
+// une carte sans année connue.
+function decenneCarte(c){
+  return c.releaseYear ? `${Math.floor(c.releaseYear / 10) * 10}` : 'sans';
+}
+
+function renderDecadeFilter(){
+  const sel = document.getElementById('tcgDecadeFilter');
+  const decennies = [...new Set(tcgCollection.filter(c => c.releaseYear).map(decenneCarte))].sort();
+  if(decennies.length === 0){ sel.hidden = true; return; }
+  const courant = sel.value;
+  sel.innerHTML = '<option value="">Toutes décennies</option>' +
+    decennies.map(d => `<option value="${d}">${d}s</option>`).join('') +
+    (tcgCollection.some(c => !c.releaseYear) ? '<option value="sans">Sans décennie</option>' : '');
+  sel.value = [...sel.options].some(o => o.value === courant) ? courant : '';
+  sel.hidden = false;
+}
+
 function renderTcgCollection(){
   renderCompletion();
   refreshCatalogTotal().then(renderCompletion);
+  renderDecadeFilter();
   const grid = document.getElementById('tcgCollectionGrid');
   const typeFilter = document.getElementById('tcgTypeFilter').value;
   const rarityFilter = document.getElementById('tcgRarityFilter').value;
+  const decadeFilter = document.getElementById('tcgDecadeFilter').value;
   const filtered = tcgCollection.filter(c =>
-    (!typeFilter || c.cardType === typeFilter) && (!rarityFilter || c.rarity === rarityFilter)
+    (!typeFilter || c.cardType === typeFilter) &&
+    (!rarityFilter || c.rarity === rarityFilter) &&
+    (!decadeFilter || decenneCarte(c) === decadeFilter)
   );
   if(tcgCollection.length === 0){
     grid.innerHTML = `<div class="empty-state">Pas encore de carte. Ouvre ton premier booster pour commencer.</div>`;
@@ -860,6 +888,7 @@ document.getElementById('tcgOverlay').addEventListener('click', (e) => {
 });
 document.getElementById('tcgTypeFilter').addEventListener('change', renderTcgCollection);
 document.getElementById('tcgRarityFilter').addEventListener('change', renderTcgCollection);
+document.getElementById('tcgDecadeFilter').addEventListener('change', renderTcgCollection);
 
 // --- Détail d'une carte et lien partageable (roadmap « Lien de carte ») ---
 // Un clic sur une carte de la collection ouvre son détail. « Copier le lien »
