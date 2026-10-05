@@ -85,6 +85,12 @@ async function generateTcgCardsForFilm(tmdbId){
     const details = await fetchMovieDetails(tmdbId);
     const filmImg = details.poster_path ? TMDB_IMG_BASE + details.poster_path : null;
     const filmCard = await upsertTcgCard('film', tmdbId, details.title, filmImg, details.popularity);
+    // Année de sortie de la carte film (migration 052). Silencieux : tant que la
+    // migration n'est pas appliquée, l'appel échoue sans rien casser.
+    const annee = details.release_date ? parseInt(details.release_date.slice(0, 4), 10) : null;
+    if(annee && filmCard && filmCard.id){
+      supabaseClient.rpc('set_card_release_year', { p_card_id: filmCard.id, p_year: annee }).then(() => {}, () => {});
+    }
 
     const credits = await fetchMovieCredits(tmdbId);
     const director = (credits.crew || []).find(c => c.job === 'Director');
