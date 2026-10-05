@@ -194,6 +194,7 @@ async function handleOpenBooster(){
   // l'a fait), loadTcgCollection() plus bas la relira au prochain affichage
   // de la collection ; cette animation ne fait que RÉVÉLER ce qui a déjà
   // été attribué, elle ne décide jamais rien elle-même.
+  playBoosterAmbient();
   openBoosterReveal(data || []);
 }
 
@@ -797,8 +798,25 @@ async function openTcgTradeWith(friendId){
   sel.dispatchEvent(new Event('change'));
 }
 
+// Introduction aux cartes : un bloc court, affiché une seule fois par appareil
+// (localStorage), refermable. Dit ce qu'est une carte, comment on en gagne,
+// et que les probabilités sont affichées sous la barre des boosters.
+const TCG_INTRO_CLE = 'kinetTcgIntroVue';
+function renderTcgIntro(){
+  const intro = document.getElementById('tcgIntro');
+  if(!intro) return;
+  let vue = false;
+  try{ vue = localStorage.getItem(TCG_INTRO_CLE) === '1'; }catch(e){}
+  intro.style.display = vue ? 'none' : '';
+}
+document.getElementById('tcgIntroClose').addEventListener('click', () => {
+  try{ localStorage.setItem(TCG_INTRO_CLE, '1'); }catch(e){}
+  renderTcgIntro();
+});
+
 async function openTcgModal(){
   closeProfileModal();
+  renderTcgIntro();
   setTcgTab('collection');
   openOverlay('tcgOverlay');
   document.getElementById('tcgCollectionGrid').innerHTML = skeletonRows();

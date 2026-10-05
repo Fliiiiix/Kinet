@@ -175,3 +175,25 @@ function playRatingTone(note){
   const index = Math.round((n / 5) * (GAMME_NOTES.length - 1));
   playTone(GAMME_NOTES[index], 0.1, 300, 'triangle');
 }
+
+// Ambiance pendant l'ouverture d'un booster : une nappe très basse, douce, qui
+// dure le temps du dévoilement. Volume faible par construction : elle sert
+// d'arrière-plan, jamais d'alerte. Coupée avec le réglage Son.
+function playBoosterAmbient(dureeMs = 3200){
+  if(!getSoundEnabled()) return;
+  try{
+    const ctx = getAudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(110, ctx.currentTime);
+    osc.frequency.linearRampToValueAtTime(165, ctx.currentTime + dureeMs / 1000);
+    gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.02 * getSoundVolume() + 0.0001, ctx.currentTime + 0.6);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + dureeMs / 1000);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + dureeMs / 1000);
+  }catch(e){ console.error(e); }
+}
