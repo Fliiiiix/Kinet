@@ -5,7 +5,7 @@ const path = require('path');
 const { createSuite, assert } = require('./helpers/tiny-test');
 const { test, run } = createSuite();
 
-const { personMetrics, assignTiers, buildSql, MIN_VOTES, MIN_RUNTIME } = require(path.join(__dirname, '..', 'supabase', 'scripts', 'tcg-rarity.js'));
+const { personMetrics, assignTiers, buildSql, lirePoids, POIDS_DEFAUT, MIN_VOTES, MIN_RUNTIME } = require(path.join(__dirname, '..', 'supabase', 'scripts', 'tcg-rarity.js'));
 
 test('les seuils correspondent à la règle : 5000 votes et 60 minutes minimum', () => {
   assert.strictEqual(MIN_VOTES, 5000);
@@ -63,6 +63,14 @@ test('buildSql : respecte la surcharge admin (coalesce) et encadre par begin/com
   assert.ok(sql.includes("rarity_auto = 'rare'"));
   assert.ok(sql.includes("coalesce(rarity_override, 'rare')"));
   assert.ok(sql.includes('where id = 12;'));
+});
+
+test('lirePoids : les poids sont normalisés à 1, et une entrée invalide est refusée', () => {
+  const p = lirePoids('2,1,1');
+  assert.ok(Math.abs(p.pic - 0.5) < 1e-9 && Math.abs(p.reach - 0.25) < 1e-9 && Math.abs(p.volume - 0.25) < 1e-9);
+  assert.ok(Math.abs((POIDS_DEFAUT.pic + POIDS_DEFAUT.reach + POIDS_DEFAUT.volume) - 1) < 1e-9);
+  assert.throws(() => lirePoids('a,b,c'));
+  assert.throws(() => lirePoids('0,0,0'));
 });
 
 module.exports = run('tcg-rarity.test.js');

@@ -47,6 +47,20 @@ const readline = require('readline');
 const MIN_VOTES = 5000;
 const MIN_RUNTIME = 60;
 const TOP_N = 5;
+// Poids du score d'une personne (somme = 1). Modifiables sans toucher au code :
+//   --poids pic,reach,volume   ex. --poids 0.5,0.2,0.3
+// Défaut : pic 0,4 / rayonnement 0,3 / volume 0,3 (voir l'en-tête du fichier).
+const POIDS_DEFAUT = { pic: 0.4, reach: 0.3, volume: 0.3 };
+let POIDS = { ...POIDS_DEFAUT };
+
+function lirePoids(texte){
+  const [pic, reach, volume] = texte.split(',').map(Number);
+  if([pic, reach, volume].some(v => Number.isNaN(v) || v < 0)) throw new Error('--poids attend trois nombres positifs : pic,reach,volume');
+  const somme = pic + reach + volume;
+  if(somme <= 0) throw new Error('--poids : la somme doit être positive');
+  // Normalisés pour que la somme fasse 1, quel que soit ce qu'on tape.
+  return { pic: pic / somme, reach: reach / somme, volume: volume / somme };
+}
 const TIERS = [
   { rarity: 'legendaire', from: 0.98 }, // top 2 %
   { rarity: 'epique', from: 0.94 },     // 94 à 98 %
@@ -199,6 +213,7 @@ function readCardsCsv(file){
 
 async function main(){
   const args = parseArgs(process.argv.slice(2));
+  if(args.poids && args.poids !== true) POIDS = lirePoids(args.poids);
   if(args['fetch-imdb']){
     const token = process.env.TMDB_TOKEN;
     if(!token){ console.error('Définis TMDB_TOKEN (jeton de lecture TMDB) avant de lancer.'); process.exit(1); }
@@ -245,7 +260,7 @@ async function main(){
   const maxReach = Math.max(1, ...rawPeople.map(x => x.reach));
   for(const x of rawPeople){
     if(x.volume < 2) continue; // pas assez de films significatifs pour juger
-    const score = 0.4 * (x.pic / maxPic) + 0.3 * (Math.log1p(x.volume) / maxVol) + 0.3 * (x.reach / maxReach);
+    const score = POIDS.pic * (x.pic / maxPic) + POIDS.volume * (Math.log1p(x.volume) / maxVol) + POIDS.reach * (x.reach / maxReach);
     scored[x.c.card_type].push({ id: x.c.id, score, imdb: x.p.nconst, pic: x.pic, reach: x.reach, volume: x.volume, override: x.c.rarity_override });
   }
 
@@ -271,4 +286,4 @@ if(require.main === module){
   main().catch(e => { console.error(e); process.exit(1); });
 }
 
-module.exports = { personMetrics, assignTiers, buildSql, MIN_VOTES, MIN_RUNTIME };
+module.exports = { personMetrics, assignTiers, buildSql, lirePoids, POIDS_DEFAUT, MIN_VOTES, MIN_RUNTIME };
