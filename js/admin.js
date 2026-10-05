@@ -83,6 +83,7 @@ function setAdminTab(tab){
   else if(tab === 'happenings') renderAdminHappeningsTab();
   else if(tab === 'changelog') renderAdminChangelogTab();
   else if(tab === 'feedback') renderAdminFeedbackTab();
+  else if(tab === 'cards') renderAdminCardsTab();
   else renderAdminStatsTab();
 }
 
@@ -753,3 +754,76 @@ document.getElementById('closeAdmin').addEventListener('click', closeAdminModal)
 document.getElementById('adminOverlay').addEventListener('click', (e) => {
   if(e.target.id === 'adminOverlay') closeAdminModal();
 });
+
+// --- Onglet Cartes : gestion manuelle de la rareté (retour utilisateur) ---
+// La rareté auto (popularité TMDB) rate des cas évidents (Louis de Funès en
+// Commun) : l'admin peut forcer une rareté par carte. Une surcharge prime sur
+// le calcul, "Automatique" la retire. Écriture via admin_set_card_rarity()
+// (migrations/044), vérifiée côté base, pas seulement ici.
+let adminCardsFilter = { type: '', search: '' };
+
+async function renderAdminCardsTab(){
+  const wrap = document.getElementById('adminContent');
+  wrap.innerHTML = `<div class="tmdb-empty">Chargement…</div>`;
+  let query = supabaseClient
+    .from('tcg_cards')
+    .select('id, card_type, name, image_url, rarity, rarity_auto, rarity_override, popularity')
+    .order('popularity', { ascending: false })
+    .limit(300);
+  if(adminCardsFilter.type) query = query.eq('card_type', adminCardsFilter.type);
+  if(adminCardsFilter.search) query = query.ilike('name', `%${adminCardsFilter.search}%`);
+  const { data, error } = await query;
+  if(error){
+    wrap.innerHTML = `<div class="tmdb-empty">Erreur : ${escapeHtml(error.message)}</div>`;
+    return;
+  }
+  const rows = (data || []).map(c => `
+    <div class="wl-row admin-card-row">
+      ${c.image_url
+        ? `<img class="film-poster" src="${c.image_url}" alt="" loading="lazy">`
+        : `<div class="film-poster film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
+      <div class="wl-main">
+        <div class="wl-title">${escapeHtml(c.name)}</div>
+        <div class="wl-note">${({film:'Film',actor:'Acteur',director:'Réalisateur'})[c.card_type]} · popularité ${Number(c.popularity).toFixed(1)} · auto : <b>${c.rarity_auto}</b>${c.rarity_override ? ` · <span class="admin-override">forcée : ${c.rarity_override}</span>` : ''}</div>
+      </div>
+      <div class="wl-actions">
+        <select data-card-rarity="${c.id}" aria-label="Rareté de ${escapeHtml(c.name)}">
+          <option value="">Automatique</option>
+          ${['commun','rare','epique','legendaire'].map(r => `<option value="${r}" ${c.rarity_override === r ? 'selected' : ''}>${r}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+  `).join('');
+  wrap.innerHTML = `
+    <div class="toolbar" style="margin-bottom:12px;">
+      <select id="adminCardsType" aria-label="Filtrer par type">
+        <option value="">Tous types</option>
+        <option value="film" ${adminCardsFilter.type==='film'?'selected':''}>Films</option>
+        <option value="actor" ${adminCardsFilter.type==='actor'?'selected':''}>Acteurs</option>
+        <option value="director" ${adminCardsFilter.type==='director'?'selected':''}>Réalisateurs</option>
+      </select>
+      <input type="text" id="adminCardsSearch" placeholder="Chercher une carte…" value="${escapeHtml(adminCardsFilter.search)}">
+    </div>
+    ${rows || '<div class="tmdb-empty">Aucune carte.</div>'}
+  `;
+  document.getElementById('adminCardsType').addEventListener('change', (e) => {
+    adminCardsFilter.type = e.target.value; renderAdminCardsTab();
+  });
+  let searchTimer = null;
+  document.getElementById('adminCardsSearch').addEventListener('input', (e) => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => { adminCardsFilter.search = e.target.value.trim(); renderAdminCardsTab(); }, 350);
+  });
+  wrap.querySelectorAll('[data-card-rarity]').forEach(sel => {
+    sel.addEventListener('change', async () => {
+      const cardId = Number(sel.dataset.cardRarity);
+      const value = sel.value || null;
+      sel.disabled = true;
+      const { error: rpcErr } = await supabaseClient.rpc('admin_set_card_rarity', { p_card_id: cardId, p_rarity: value });
+      sel.disabled = false;
+      if(rpcErr){ showToast('Erreur : ' + rpcErr.message); console.error(rpcErr); renderAdminCardsTab(); return; }
+      showToast('Rareté mise à jour');
+      renderAdminCardsTab();
+    });
+  });
+}

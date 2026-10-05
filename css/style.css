@@ -5541,3 +5541,7 @@ body[data-view-mode="grid"] #seriesList .new-episode-dot{display:block;}
   body[data-view-mode="grid"] #seriesList,
   body[data-view-mode="grid"] #topList{grid-template-columns:1fr;}
 }
+
+/* Admin : gestion des cartes (onglet Cartes) — voir js/admin.js. */
+.admin-override{color:var(--gold); font-weight:600;}
+.admin-card-row .wl-actions select{min-width:150px;}
