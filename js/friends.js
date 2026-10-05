@@ -103,6 +103,48 @@ function friendRowHtml(userId, actionsHtml, subLabel){
 // (cas non-ami) — renderPublicProfilePage() l'affiche déjà clairement.
 // Les boutons d'action (Ajouter/Accepter/Voir...) gardent leur propre clic,
 // jamais volé par la ligne — voir le garde-fou .wl-actions ci-dessous.
+// Comparaison avec un ami : les films que nous avons TOUS LES DEUX notés, avec
+// nos deux notes et l'écart. La règle d'accès (migration 009, plus 054 pour les
+// films privés) ne laisse lire que les films visibles par un ami : on ne lit
+// donc rien d'autre. Calcul fait dans le navigateur, rien n'est enregistré.
+async function compareWithFriend(friendId, rowEl){
+  if(blockIfOffline()) return;
+  const existant = document.getElementById('friendComparePanel');
+  if(existant && existant.dataset.friend === friendId){ existant.remove(); return; }
+  if(existant) existant.remove();
+
+  const { data, error } = await supabaseClient
+    .from('films')
+    .select('title, tmdb_id, manual_note, crit')
+    .eq('user_id', friendId);
+  if(error){ showToast('Comparaison indisponible, réessaie'); console.error(error); return; }
+
+  const parTmdb = new Map((data || []).filter(f => f.tmdb_id).map(f => [f.tmdb_id, f]));
+  const communs = films
+    .filter(f => f.tmdbId && parTmdb.has(f.tmdbId))
+    .map(f => {
+      const amie = parTmdb.get(f.tmdbId);
+      const note = (n) => (Number.isFinite(n) ? n : null);
+      const maNote = note(getDisplayNote(f));
+      const sienne = note(getDisplayNote({ manualNote: amie.manual_note != null ? parseFloat(amie.manual_note) : null, crit: amie.crit || {} }));
+      return { titre: f.title, maNote, sienne, ecart: maNote != null && sienne != null ? maNote - sienne : null };
+    })
+    .sort((a, b) => Math.abs(b.ecart ?? 0) - Math.abs(a.ecart ?? 0));
+
+  const panel = document.createElement('div');
+  panel.id = 'friendComparePanel';
+  panel.dataset.friend = friendId;
+  panel.className = 'stats-section reveal';
+  const ami = friendDisplayName(friendId);
+  panel.innerHTML = `
+    <div class="stats-section-title">Comparaison avec ${escapeHtml(ami)}</div>
+    ${communs.length === 0
+      ? `<div class="empty-state">Vous n'avez encore aucun film noté en commun.</div>`
+      : `<div class="wl-note">${communs.length} film${communs.length > 1 ? 's' : ''} noté${communs.length > 1 ? 's' : ''} en commun, les plus grands écarts d'abord.</div>
+         ${communs.map(c => `<div class="wl-row"><div class="wl-main"><div class="wl-title">${escapeHtml(c.titre)}</div><div class="wl-note">Toi ${c.maNote != null ? c.maNote.toFixed(2) : '—'} · ${escapeHtml(ami)} ${c.sienne != null ? c.sienne.toFixed(2) : '—'}${c.ecart != null ? ` · écart ${c.ecart > 0 ? '+' : ''}${c.ecart.toFixed(2)}` : ''}</div></div></div>`).join('')}`}`;
+  rowEl.insertAdjacentElement('afterend', panel);
+}
+
 function wireFriendRowClicks(container, onOpen = goToPublicProfile){
   container.querySelectorAll('.wl-row[data-user-id]').forEach(row => {
     makeRowClickable(row, (e) => {
@@ -167,6 +209,7 @@ function renderFriendsPage(){
     document.getElementById('friendsList'), accepted,
     f => friendRowHtml(otherUserId(f), `
       <button class="btn secondary" data-action="view" data-id="${f.id}" type="button">Voir</button>
+      <button class="btn secondary" data-action="compare" data-friend="${otherUserId(f)}" type="button">Comparer</button>
       <button class="btn secondary" data-action="trade" data-friend="${otherUserId(f)}" type="button">Échanger des cartes</button>
       <button class="btn danger" data-action="remove" data-id="${f.id}" type="button">Retirer</button>
     `),
@@ -175,6 +218,10 @@ function renderFriendsPage(){
       emptyHtml: `<div class="tmdb-empty">Pas encore d'amis. Cherche un pseudo ou un email ci-dessus.</div>`,
       wire: (el) => {
         el.querySelectorAll('button[data-action]').forEach(btn => {
+          if(btn.dataset.action === 'compare'){
+            btn.addEventListener('click', () => compareWithFriend(btn.dataset.friend, btn.closest('.wl-row')));
+            return;
+          }
           if(btn.dataset.action === 'trade'){
             // Échange : ouvre directement la fenêtre cartes sur l'onglet échange,
             // avec cet ami déjà sélectionné (voir openTcgTradeWith()).
