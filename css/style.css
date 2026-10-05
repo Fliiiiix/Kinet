@@ -3724,6 +3724,20 @@ input[type="range"]::-moz-range-thumb{
 .tcg-trade-badge[hidden]{display:none;}
 /* Détail d'une carte (tcgCardOverlay) : carte centrée, rareté en bordure. */
 .tcg-card-modal{max-width:340px; text-align:center;}
+/* Récap de l'année : écrans superposés en fondu, points de progression en bas. */
+.recap-modal{max-width:380px; text-align:center; min-height:300px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; cursor:pointer;}
+.recap-slides{position:relative; width:100%; min-height:200px;}
+.recap-slide{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; opacity:0; transform:translateY(8px); transition:opacity .45s ease, transform .45s ease; pointer-events:none;}
+.recap-slide.active{opacity:1; transform:none;}
+.recap-big{font-size:2.6rem; font-weight:700; color:var(--gold); line-height:1.1;}
+.recap-big.recap-title{font-size:1.6rem; color:var(--text);}
+.recap-unit{font-size:1rem; color:var(--text-muted);}
+.recap-line{color:var(--text-muted); font-size:0.98rem;}
+.recap-line b{color:var(--text);}
+.recap-dots{display:flex; gap:8px;}
+.recap-dot{width:8px; height:8px; border-radius:50%; background:var(--line); transition:background .3s;}
+.recap-dot.active{background:var(--violet);}
+@media (prefers-reduced-motion: reduce){ .recap-slide{transition:none; transform:none;} }
 .tcg-card-detail{display:flex; flex-direction:column; align-items:center; gap:10px; border:2px solid var(--line); border-radius:14px; padding:16px; background:var(--ink-surface);}
 .tcg-card-detail.rarity-rare{border-color:var(--teal);}
 .tcg-card-detail.rarity-epique{border-color:var(--violet);}

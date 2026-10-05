@@ -621,6 +621,53 @@ function rythmeAnnuel(s){
   return (total / mois.length).toFixed(1);
 }
 
+// Récap de l'année (roadmap « Carte vidéo résumé ») : quatre écrans animés,
+// défilement automatique, avance au clic. Calcul sur les films notés cette année
+// uniquement ; aucune donnée n'est envoyée ni enregistrée.
+let recapTimer = null;
+function openYearRecap(){
+  const annee = new Date().getFullYear();
+  const cetteAnnee = films.filter(f => new Date(f.added).getFullYear() === annee && getDisplayNote(f) != null);
+  const notes = cetteAnnee.map(f => getDisplayNote(f));
+  const moyenne = notes.length ? notes.reduce((a, b) => a + b, 0) / notes.length : null;
+  const meilleur = cetteAnnee.slice().sort((a, b) => getDisplayNote(b) - getDisplayNote(a))[0];
+  const genres = {};
+  cetteAnnee.forEach(f => (f.genreIds || []).forEach(id => { const nom = GENRE_MAP[id]; if(nom) genres[nom] = (genres[nom] || 0) + 1; }));
+  const genreFavori = Object.entries(genres).sort((a, b) => b[1] - a[1])[0];
+
+  const ecrans = [
+    `<div class="recap-big">${annee}</div><div class="recap-line">Tu as noté <b class="recap-count">${cetteAnnee.length}</b> film${cetteAnnee.length > 1 ? 's' : ''} cette année.</div>`,
+    moyenne !== null
+      ? `<div class="recap-line">Ta note moyenne</div><div class="recap-big">${moyenne.toFixed(2)}<span class="recap-unit"> / 5</span></div>`
+      : `<div class="recap-line">Pas encore de note cette année.</div>`,
+    meilleur
+      ? `<div class="recap-line">Ton film le mieux noté</div><div class="recap-big recap-title">${escapeHtml(meilleur.title)}</div><div class="recap-line">${getDisplayNote(meilleur).toFixed(2)} / 5</div>`
+      : `<div class="recap-line">Aucun film à mettre en avant pour l'instant.</div>`,
+    genreFavori
+      ? `<div class="recap-line">Ton genre le plus présent</div><div class="recap-big recap-title">${escapeHtml(genreFavori[0])}</div><div class="recap-line">${genreFavori[1]} film${genreFavori[1] > 1 ? 's' : ''}</div>`
+      : `<div class="recap-line">Merci d'avoir noté tes films cette année.</div>`,
+  ];
+  const slides = document.getElementById('recapAnneeSlides');
+  const dots = document.getElementById('recapAnneeDots');
+  slides.innerHTML = ecrans.map((html, i) => `<div class="recap-slide${i === 0 ? ' active' : ''}" data-i="${i}">${html}</div>`).join('');
+  dots.innerHTML = ecrans.map((_, i) => `<span class="recap-dot${i === 0 ? ' active' : ''}"></span>`).join('');
+  openOverlay('recapAnneeOverlay');
+
+  let courant = 0;
+  const montrer = (i) => {
+    courant = i % ecrans.length;
+    slides.querySelectorAll('.recap-slide').forEach((el, k) => el.classList.toggle('active', k === courant));
+    dots.querySelectorAll('.recap-dot').forEach((el, k) => el.classList.toggle('active', k === courant));
+    if(courant === 0) animateCounters(slides);
+  };
+  animateCounters(slides);
+  clearInterval(recapTimer);
+  recapTimer = setInterval(() => montrer(courant + 1), motionReduced() ? 6000 : 3800);
+  document.getElementById('recapAnneeModal').onclick = () => { clearInterval(recapTimer); montrer(courant + 1); };
+}
+
+document.getElementById('recapAnneeClose').addEventListener('click', () => { clearInterval(recapTimer); closeOverlay('recapAnneeOverlay'); });
+
 function renderCatalogueControle(content, list){
   const sansAffiche = list.filter(f => !f.posterUrl);
   const parTmdb = new Map();
@@ -720,6 +767,11 @@ function renderStatsInto(content, list = films){
   wireLineChart(content);
   if(list === films) renderCatalogueControle(content, list);
   animateCounters(content.querySelector('.stat-tiles'));
+  const bouton = document.createElement('div');
+  bouton.className = 'tcg-card-detail-actions';
+  bouton.innerHTML = `<button class="btn secondary" id="openRecapBtn" type="button">Mon récap de l'année</button>`;
+  content.insertBefore(bouton, content.firstChild);
+  document.getElementById('openRecapBtn').addEventListener('click', openYearRecap);
 
   const genreByMonthEl = content.querySelector('#genreByMonthList');
   if(genreByMonthEl){
