@@ -13,8 +13,9 @@
 //   3. Score d'une personne :
 //        pic    = moyenne des 5 meilleurs WR de ses films significatifs
 //                 (acteur : billing <= 5 ; réalisateur : tous ses films)
+//        reach  = moyenne du log10 des votes de ces 5 films (notoriété)
 //        volume = nombre de films significatifs de ce rôle
-//        score  = 0,6 * pic_norm + 0,4 * volume_norm
+//        score  = 0,4 * pic_norm + 0,3 * reach_norm + 0,3 * volume_norm
 //      Le pic protège un acteur de carrière (Louis de Funès : La Grande Vadrouille,
 //      Le Corniaud...) même s'il a peu de popularité TMDB récente.
 //   4. Tiers par PERCENTILE, séparément pour chaque type de carte
@@ -83,7 +84,9 @@ async function loadRatings(dir){
 
 async function loadSignificantMovies(dir, ratings){
   const movies = new Map(); // tconst -> { R, v, WR }
-  await streamTsv(path.join(dir, 'title.basics.tsv.gz'), ([tconst, titleType, , , , , , , , runtime]) => {
+  // Colonnes title.basics : tconst, titleType, primaryTitle, originalTitle,
+  // isAdult, startYear, endYear, runtimeMinutes (index 7), genres.
+  await streamTsv(path.join(dir, 'title.basics.tsv.gz'), ([tconst, titleType, , , , , , runtime]) => {
     if(titleType !== 'movie') return;
     const r = ratings.get(tconst);
     if(!r || r.v < MIN_VOTES) return;
@@ -122,11 +125,14 @@ async function loadPeople(dir, movies){
 }
 
 // Score brut d'une personne (avant normalisation).
+// reach = rayonnement : moyenne du log10 des votes des TOP_N meilleurs films.
+// Sans lui, un acteur à films très bien notés mais peu vus (ou une carrière
+// de niche) passe devant une star dont les films sont énormément votés.
 function personMetrics(person, movies){
-  const wrs = [...person.films].map(t => movies.get(t).WR).sort((a, b) => b - a);
-  const top = wrs.slice(0, TOP_N);
-  const pic = top.reduce((a, b) => a + b, 0) / top.length;
-  return { pic, volume: person.films.size };
+  const best = [...person.films].map(t => movies.get(t)).sort((a, b) => b.WR - a.WR).slice(0, TOP_N);
+  const pic = best.reduce((a, m) => a + m.WR, 0) / best.length;
+  const reach = best.reduce((a, m) => a + Math.log10(m.v), 0) / best.length;
+  return { pic, reach, volume: person.films.size };
 }
 
 // Rang percentile -> rareté, sur une liste de { id, score }.
@@ -226,20 +232,23 @@ async function main(){
   }
   const maxVol = Math.max(1, ...rawPeople.map(x => Math.log1p(x.volume)));
   const maxPic = Math.max(1, ...rawPeople.map(x => x.pic));
+  const maxReach = Math.max(1, ...rawPeople.map(x => x.reach));
   for(const x of rawPeople){
     if(x.volume < 2) continue; // pas assez de films significatifs pour juger
-    const score = 0.6 * (x.pic / maxPic) + 0.4 * (Math.log1p(x.volume) / maxVol);
-    scored[x.c.card_type].push({ id: x.c.id, score, imdb: x.p.nconst, pic: x.pic, volume: x.volume, override: x.c.rarity_override });
+    const score = 0.4 * (x.pic / maxPic) + 0.3 * (Math.log1p(x.volume) / maxVol) + 0.3 * (x.reach / maxReach);
+    scored[x.c.card_type].push({ id: x.c.id, score, imdb: x.p.nconst, pic: x.pic, reach: x.reach, volume: x.volume, override: x.c.rarity_override });
   }
 
   console.log('4/4 percentiles et SQL…');
   const updates = [];
-  const report = [['id', 'type', 'imdb', 'score', 'rarity']];
+  const report = [['id', 'type', 'imdb', 'score', 'pic', 'reach', 'volume', 'rarity']];
   for(const type of ['film', 'actor', 'director']){
+    const byId = new Map(scored[type].map(s => [s.id, s]));
     const tiered = assignTiers(scored[type]);
     tiered.forEach(t => {
+      const src = byId.get(t.id);
       updates.push({ id: t.id, rarity: t.rarity });
-      report.push([t.id, type, '', t.score.toFixed(4), t.rarity]);
+      report.push([t.id, type, src.imdb, t.score.toFixed(4), src.pic != null ? src.pic.toFixed(3) : '', src.reach != null ? src.reach.toFixed(3) : '', src.volume ?? '', t.rarity]);
     });
   }
   fs.writeFileSync(args.out, buildSql(updates));
