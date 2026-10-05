@@ -434,7 +434,7 @@ async function importLetterboxdFile(file){
   const type = detectLetterboxdType(file.name, headers);
 
   if(type === null){
-    showToast('Fichier non reconnu — dépose un CSV de l\'export Letterboxd (ratings.csv, diary.csv, reviews.csv ou watchlist.csv)');
+    showToast('Fichier non reconnu : dépose un CSV de l\'export Letterboxd (ratings.csv, diary.csv, reviews.csv ou watchlist.csv)');
     return;
   }
   // Fichiers réels du zip Letterboxd, mais sans aucune note/critique de film

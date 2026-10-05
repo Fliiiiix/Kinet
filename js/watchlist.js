@@ -572,11 +572,11 @@ function spinSurpriseRoulette(pool){
 function openSurprise(){
   const pool = getFilteredWatchlist();
   if(watchlist.length === 0){
-    showToast('Ta watchlist est vide — ajoute un film d\'abord');
+    showToast('Ta watchlist est vide. Ajoute un film d\'abord');
     return;
   }
   if(pool.length === 0){
-    showToast('Rien sur cette plateforme pour l\'instant — change le filtre');
+    showToast('Rien sur cette plateforme pour l\'instant. Change le filtre');
     return;
   }
   openOverlay('surpriseOverlay');

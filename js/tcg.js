@@ -296,7 +296,7 @@ function renderTcgCollection(){
     (!typeFilter || c.cardType === typeFilter) && (!rarityFilter || c.rarity === rarityFilter)
   );
   if(tcgCollection.length === 0){
-    grid.innerHTML = `<div class="empty-state">Pas encore de carte — ouvre ton premier booster pour commencer.</div>`;
+    grid.innerHTML = `<div class="empty-state">Pas encore de carte. Ouvre ton premier booster pour commencer.</div>`;
     return;
   }
   if(filtered.length === 0){
@@ -304,7 +304,7 @@ function renderTcgCollection(){
     return;
   }
   grid.innerHTML = filtered.map(c => `
-    <div class="tcg-card rarity-${c.rarity}" title="${escapeHtml(c.name)} — ${rarityLabel(c.rarity)}">
+    <div class="tcg-card rarity-${c.rarity}" title="${escapeHtml(c.name)} : ${rarityLabel(c.rarity)}">
       ${c.imageUrl
         ? `<img src="${c.imageUrl}" alt="" loading="lazy">`
         : `<div class="film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
@@ -422,7 +422,7 @@ async function handleDisenchant(cardId, btn){
   await loadTcgCollection();
   renderDuplicatesList();
   playDustChime();
-  showToast('Désenchantée — poussière ajoutée');
+  showToast('Désenchantée, poussière ajoutée');
 }
 
 let tcgCraftSearchTimer = null;
@@ -451,7 +451,7 @@ async function runCraftSearch(query){
     return;
   }
   if(!data || data.length === 0){
-    wrap.innerHTML = `<div class="tmdb-empty">Aucune carte connue avec ce nom — elle n'a peut-être encore été générée par personne (voir "Scanner mon catalogue").</div>`;
+    wrap.innerHTML = `<div class="tmdb-empty">Aucune carte connue avec ce nom. Elle n'a peut-être encore été générée par personne (voir "Scanner mon catalogue").</div>`;
     return;
   }
   wrap.innerHTML = data.map(c => {

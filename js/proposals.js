@@ -218,7 +218,7 @@ async function handleProposeFilm(groupId){
     const existing = proposals.find(p => p.groupId === groupId && p.tmdbId === proposalTmdbSelected.tmdb_id);
     if(existing){
       const who = existing.proposedBy === currentUser.id ? 'toi' : friendDisplayName(existing.proposedBy);
-      showToast(`Déjà proposé par ${who} — vote plutôt pour son film`);
+      showToast(`Déjà proposé par ${who}. Vote plutôt pour son film.`);
       return;
     }
   }
