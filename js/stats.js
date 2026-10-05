@@ -608,6 +608,34 @@ function renderYearComparison(){
   `;
 }
 
+// Contrôle du catalogue : films sans affiche et doublons (même tmdbId en deux
+// fiches). Affiché seulement s'il y a quelque chose à corriger, sinon rien.
+// Rythme : films notés par mois ayant eu au moins une note, sur l'année en
+// cours. Un mois sans rien ne compte pas, sinon le rythme paraîtrait plus faible
+// qu'il ne l'est pour quelqu'un qui regarde par périodes.
+function rythmeAnnuel(s){
+  const annee = String(new Date().getFullYear());
+  const mois = s.activity.filter(a => a.month.startsWith(annee));
+  if(mois.length === 0) return '—';
+  const total = mois.reduce((acc, a) => acc + a.count, 0);
+  return (total / mois.length).toFixed(1);
+}
+
+function renderCatalogueControle(content, list){
+  const sansAffiche = list.filter(f => !f.posterUrl);
+  const parTmdb = new Map();
+  list.forEach(f => { if(f.tmdbId) parTmdb.set(f.tmdbId, (parTmdb.get(f.tmdbId) || 0) + 1); });
+  const doublons = [...parTmdb.values()].filter(n => n > 1).length;
+  if(sansAffiche.length === 0 && doublons === 0) return;
+  const lignes = [];
+  if(sansAffiche.length) lignes.push(`${sansAffiche.length} film${sansAffiche.length > 1 ? 's' : ''} sans affiche, par exemple : ${sansAffiche.slice(0, 3).map(f => `« ${escapeHtml(f.title)} »`).join(', ')}.`);
+  if(doublons) lignes.push(`${doublons} film${doublons > 1 ? 's' : ''} présent${doublons > 1 ? 's' : ''} deux fois dans ton catalogue (même film TMDB).`);
+  const bloc = document.createElement('div');
+  bloc.className = 'stats-section reveal';
+  bloc.innerHTML = `<div class="stats-section-title">Contrôle du catalogue</div><div class="wl-note">${lignes.map(l => `<div>${l}</div>`).join('')}</div>`;
+  content.appendChild(bloc);
+}
+
 function renderStatsInto(content, list = films){
   const s = computeStats(list);
 
@@ -633,6 +661,7 @@ function renderStatsInto(content, list = films){
       <div class="stat-tile accent-bronze"><div class="stat-value">${s.favCount}</div><div class="stat-label">Favoris</div></div>
       <div class="stat-tile accent-violet"><div class="stat-value">${s.gridCount}</div><div class="stat-label">Grille 7 critères</div></div>
       <div class="stat-tile accent-gold"><div class="stat-value">${s.manualCount}</div><div class="stat-label">Note manuelle</div></div>
+      <div class="stat-tile accent-violet"><div class="stat-value">${rythmeAnnuel(s)}</div><div class="stat-label">Films par mois actif (${new Date().getFullYear()})</div></div>
     </div>
 
     ${list === films ? renderYearComparison() : ''}
@@ -689,6 +718,7 @@ function renderStatsInto(content, list = films){
 
   wireStatsDistribution(content, list, s.distribution);
   wireLineChart(content);
+  if(list === films) renderCatalogueControle(content, list);
   animateCounters(content.querySelector('.stat-tiles'));
 
   const genreByMonthEl = content.querySelector('#genreByMonthList');
