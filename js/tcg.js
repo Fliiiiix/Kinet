@@ -421,6 +421,7 @@ async function handleDisenchant(cardId, btn){
   document.getElementById('tcgDustCount').textContent = `✨ ${tcgDustAmount} poussière`;
   await loadTcgCollection();
   renderDuplicatesList();
+  playDustChime();
   showToast('Désenchantée — poussière ajoutée');
 }
 
@@ -487,6 +488,7 @@ async function handleCraft(cardId, btn){
   }
   tcgDustAmount = data;
   document.getElementById('tcgDustCount').textContent = `✨ ${tcgDustAmount} poussière`;
+  playSuccessChime();
   showToast('Carte fabriquée !');
   // Les coûts affichés dans les résultats déjà à l'écran dépendent du
   // solde (affordable, voir runCraftSearch()) — relance la même recherche
@@ -600,6 +602,7 @@ async function handleAcceptTrade(tradeId, btn){
     btn.disabled = false;
     return;
   }
+  playSuccessChime();
   showToast('Échange conclu !');
   await loadPendingTrades();
   renderPendingTrades();

@@ -110,3 +110,19 @@ function playRarityReveal(rarete){
 function playChatbotBlip(){
   playTone(880, 0.05, 90, 'sine');
 }
+
+// playSuccessChime() : petit arpège ascendant (deux notes) pour une action
+// réussie qui n'est pas une révélation : fabrication, échange conclu.
+function playSuccessChime(){
+  if(!getSoundEnabled()) return;
+  [659, 988].forEach((freq, i) => {
+    setTimeout(() => playTone(freq, 0.1, 260, 'triangle'), i * 110);
+  });
+}
+
+// playDustChime() : un tintement grave et bref pour un désenchantement
+// (la carte se transforme en poussière) — volontairement plus discret.
+function playDustChime(){
+  playTone(330, 0.07, 240, 'sine');
+  setTimeout(() => playTone(440, 0.05, 180, 'sine'), 70);
+}
