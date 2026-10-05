@@ -300,7 +300,7 @@ function renderAvatarFilmResults(query){
     const item = document.createElement('div');
     item.className = 'tmdb-result';
     item.innerHTML = `
-      <img src="${f.posterUrl}" alt="">
+      <img loading="lazy" decoding="async" src="${f.posterUrl}" alt="">
       <div class="tmdb-result-info">
         <div class="tmdb-result-title">${escapeHtml(f.title)}</div>
         ${f.releaseYear ? `<div class="tmdb-result-year">${f.releaseYear}</div>` : ''}
@@ -348,7 +348,7 @@ function renderTopFilmsPicker(){
         <div class="top-film-chip" data-tmdb-id="${tmdbId}">
           <span class="top-film-grip" aria-hidden="true">⠿</span>
           ${f.posterUrl
-            ? `<img src="${f.posterUrl}" alt="">`
+            ? `<img loading="lazy" decoding="async" src="${f.posterUrl}" alt="">`
             : `<div class="tmdb-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
           <div class="tmdb-result-info">
             <div class="tmdb-result-title">${escapeHtml(f.title)}</div>
@@ -460,7 +460,7 @@ function renderTopFilmsResults(query){
     const item = document.createElement('div');
     item.className = 'tmdb-result';
     item.innerHTML = `
-      ${f.posterUrl ? `<img src="${f.posterUrl}" alt="">` : `<div class="tmdb-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
+      ${f.posterUrl ? `<img loading="lazy" decoding="async" src="${f.posterUrl}" alt="">` : `<div class="tmdb-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
       <div class="tmdb-result-info">
         <div class="tmdb-result-title">${escapeHtml(f.title)}</div>
         ${f.releaseYear ? `<div class="tmdb-result-year">${f.releaseYear}</div>` : ''}

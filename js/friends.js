@@ -72,7 +72,7 @@ async function loadFriendships(){
 function friendAvatarHtml(userId, displayName){
   const url = friendAvatarUrl(userId);
   return url
-    ? `<img class="friend-avatar" src="${url}" alt="${escapeHtml(displayName)}">`
+    ? `<img loading="lazy" decoding="async" class="friend-avatar" src="${url}" alt="${escapeHtml(displayName)}">`
     : `<div class="friend-avatar friend-avatar-placeholder">👤</div>`;
 }
 
@@ -524,7 +524,7 @@ async function openFriendProfile(userId){
         ${friendTopFilms.map(f => `
           <div class="top-films-showcase-item" data-tmdb-id="${f.tmdbId}">
             ${f.posterUrl
-              ? `<img src="${f.posterUrl}" alt="">`
+              ? `<img loading="lazy" decoding="async" src="${f.posterUrl}" alt="">`
               : `<div class="film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
             <div class="top-films-showcase-title">${escapeHtml(f.title)}</div>
           </div>

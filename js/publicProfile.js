@@ -64,7 +64,7 @@ async function renderPublicProfilePage(userId){
         ${topFilms.map(f => `
           <div class="top-films-showcase-item"${currentUser && f.tmdb_id ? ` data-tmdb-id="${f.tmdb_id}"` : ''}>
             ${f.poster_url
-              ? `<img src="${f.poster_url}" alt="">`
+              ? `<img loading="lazy" decoding="async" src="${f.poster_url}" alt="">`
               : `<div class="film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
             <div class="top-films-showcase-title">${escapeHtml(f.title)}</div>
           </div>
@@ -76,7 +76,7 @@ async function renderPublicProfilePage(userId){
   content.innerHTML = `
     <div class="public-profile-header">
       ${row.avatar_url
-        ? `<img src="${row.avatar_url}" alt="">`
+        ? `<img loading="lazy" decoding="async" src="${row.avatar_url}" alt="">`
         : `<div class="avatar-fallback">👤</div>`}
       <h3>${escapeHtml(name)}</h3>
     </div>

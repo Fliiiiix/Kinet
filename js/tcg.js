@@ -310,6 +310,33 @@ async function refreshCatalogTotal(){
   if(!error) tcgCatalogTotal = count || 0;
 }
 
+// Export de la collection (CSV ou JSON), téléchargé tel quel : nom, type,
+// rareté, quantité. Ne contient que ce que le compte possède déjà.
+const TCG_TYPE_LABEL = { film: 'Film', actor: 'Acteur', director: 'Réalisateur' };
+function exportTcgCollection(format){
+  const lignes = tcgCollection.map(c => ({
+    nom: c.name, type: TCG_TYPE_LABEL[c.cardType] || c.cardType, rarete: c.rarity, quantite: c.quantity
+  }));
+  let contenu, type, extension;
+  if(format === 'json'){
+    contenu = JSON.stringify(lignes, null, 2);
+    type = 'application/json'; extension = 'json';
+  } else {
+    const echapper = (v) => `"${String(v).replace(/"/g, '""')}"`;
+    contenu = ['nom,type,rarete,quantite', ...lignes.map(l => [echapper(l.nom), echapper(l.type), echapper(l.rarete), l.quantite].join(','))].join('\n');
+    type = 'text/csv'; extension = 'csv';
+  }
+  const blob = new Blob([contenu], { type: type + ';charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `kinet-cartes-${new Date().toISOString().slice(0, 10)}.${extension}`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  showToast(tcgCollection.length ? 'Collection exportée' : 'Collection vide : export vide');
+}
+document.getElementById('tcgExportCsvBtn').addEventListener('click', () => exportTcgCollection('csv'));
+document.getElementById('tcgExportJsonBtn').addEventListener('click', () => exportTcgCollection('json'));
+
 function renderCompletion(){
   const el = document.getElementById('tcgCompletion');
   if(!el) return;
