@@ -824,6 +824,11 @@ function renderTcgIntro(){
   try{ vue = localStorage.getItem(TCG_INTRO_CLE) === '1'; }catch(e){}
   intro.style.display = vue ? 'none' : '';
 }
+document.getElementById('tcgHelpBtn').addEventListener('click', () => {
+  try{ localStorage.removeItem(TCG_INTRO_CLE); }catch(e){}
+  renderTcgIntro();
+  document.getElementById('tcgIntro').scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
 document.getElementById('tcgIntroClose').addEventListener('click', () => {
   try{ localStorage.setItem(TCG_INTRO_CLE, '1'); }catch(e){}
   renderTcgIntro();
