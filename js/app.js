@@ -773,7 +773,11 @@ async function handleSave(){
     updateFilmDetailActionButtons();
     renderFilmDetailNotes();
   }
-  playSuccessChime();
+  // Son selon la note : la hauteur suit la valeur, voir playRatingTone().
+  const filmEnregistre = films.find(f => f.id === pulseId);
+  playRatingTone(filmEnregistre ? getDisplayNote(filmEnregistre) : 0);
+  // 5/5 tout juste (arrondi d'affichage compris) : petite célébration.
+  if(filmEnregistre && getDisplayNote(filmEnregistre) >= 4.995) celebrateConfetti();
   showToast('Film enregistré');
 }
 

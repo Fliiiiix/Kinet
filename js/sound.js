@@ -142,3 +142,14 @@ function playDeleteTone(){
   playTone(440, 0.06, 140, 'sine');
   setTimeout(() => playTone(294, 0.05, 160, 'sine'), 90);
 }
+
+// playRatingTone(note) : une note enregistrée se « chante » selon sa valeur.
+// Gamme pentatonique de 330 Hz (note 0) à 1046 Hz (5/5), qui reste agréable
+// quelle que soit la note tirée : deux notes entre 4 et 5 ne sonnent jamais faux.
+const GAMME_NOTES = [330, 370, 415, 494, 587, 659, 784, 880, 1046];
+function playRatingTone(note){
+  if(!getSoundEnabled()) return;
+  const n = Math.max(0, Math.min(5, Number(note) || 0));
+  const index = Math.round((n / 5) * (GAMME_NOTES.length - 1));
+  playTone(GAMME_NOTES[index], 0.1, 300, 'triangle');
+}

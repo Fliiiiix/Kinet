@@ -206,6 +206,28 @@ document.addEventListener('wheel', (e) => {
 // Pilotées en direct par un clic (pas autonomes/en boucle) : PAS
 // d'exception prefers-reduced-motion, voir starPulse/savePulse dans
 // css/style.css.
+// Confettis au 5/5 (retour utilisateur : une petite célébration pour les coups
+// de cœur). Une couche jetable : des pastilles animées en CSS, retirées à la
+// fin. Rien n'est créé si le mouvement est réduit.
+const CONFETTI_COULEURS = ['#8c7cff', '#e7b24c', '#6fa39f', '#ff6b57'];
+function celebrateConfetti(){
+  if(motionReduced()) return;
+  const layer = document.createElement('div');
+  layer.className = 'confetti-layer';
+  layer.setAttribute('aria-hidden', 'true');
+  for(let i = 0; i < 36; i++){
+    const piece = document.createElement('span');
+    piece.className = 'confetti-piece';
+    piece.style.left = (Math.random() * 100) + '%';
+    piece.style.background = CONFETTI_COULEURS[i % CONFETTI_COULEURS.length];
+    piece.style.animationDelay = (Math.random() * 0.25) + 's';
+    piece.style.animationDuration = (1.3 + Math.random() * 0.7) + 's';
+    layer.appendChild(piece);
+  }
+  document.body.appendChild(layer);
+  setTimeout(() => layer.remove(), 2200);
+}
+
 function pulseElement(el){
   if(!el) return;
   el.classList.remove('pulse');
