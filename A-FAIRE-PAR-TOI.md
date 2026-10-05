@@ -104,9 +104,9 @@ badge d'échanges, son de demande d'ami.
 Restent pour toi :
 - Appliquer les migrations 051 à 055 (ordre dans la section 5). Tant qu'elles ne
   le sont pas, les fonctions concernées restent silencieuses (rien ne casse).
-- Rattrapage des années des cartes films déjà générées : la génération ne remplit
-  l'année que pour les nouvelles cartes. Je peux écrire un script de rattrapage si
-  tu veux (appels TMDB, ~1 requête par carte film).
+- Années des cartes films déjà générées : `annees-cartes.sql` est prêt (13 années
+  trouvées sur ton export, vérifiées sur 2 exemples). À coller dans Supabase APRÈS la
+  migration 052. Pour le refaire plus tard : `scripts/annees-cartes.js`.
 - Changelog plus lisible : non fait. Demande que chaque entrée ait une catégorie
   (ex. « cartes », « assistant », « design »). Je ne publierai rien sans ton accord.
 - Thème clair : vérifié sur la page de connexion (capture dans test-results/),
