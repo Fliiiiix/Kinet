@@ -3682,6 +3682,12 @@ input[type="range"]::-moz-range-thumb{
   transition:transform .7s cubic-bezier(.34,1.56,.64,1);
 }
 .tcg-booster-card.revealed{transform:rotateY(180deg);}
+/* Téléphone : 5 cartes côte à côte ne tiennent pas, on garde le même ratio
+   2:3 en plus petit pour que l'ouverture tienne dans l'écran. */
+@media (max-width: 520px){
+  .tcg-booster-pack{gap:10px;}
+  .tcg-booster-card{width:108px; height:162px;}
+}
 .tcg-booster-card-face{
   position:absolute; inset:0;
   backface-visibility:hidden;

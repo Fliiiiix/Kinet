@@ -812,6 +812,10 @@ async function renderAdminCardsTab(){
       </select>
       <input type="text" id="adminCardsSearch" placeholder="Chercher une carte…" value="${escapeHtml(adminCardsFilter.search)}">
     </div>
+    <div class="wl-note" style="margin-bottom:10px;">
+      ${['legendaire','epique','rare','commun'].map(r => `${r} : <b>${triees.filter(c => c.rarity === r).length}</b>`).join(' · ')}
+      · total : <b>${triees.length}</b>
+    </div>
     ${rows || '<div class="tmdb-empty">Aucune carte.</div>'}
   `;
   document.getElementById('adminCardsType').addEventListener('change', (e) => {
