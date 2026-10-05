@@ -370,7 +370,7 @@ async function openFilmDetail(tmdbId){
   document.getElementById('filmDetailNotes').innerHTML = '';
   document.getElementById('filmDetailWatchProviders').innerHTML = `<div class="tmdb-empty">Chargement…</div>`;
   document.getElementById('filmDetailLikesSummary').textContent = '';
-  document.getElementById('filmDetailCommentsList').innerHTML = `<div class="tmdb-empty">Chargement…</div>`;
+  document.getElementById('filmDetailCommentsList').innerHTML = `${skeletonRows(3)}`;
   document.getElementById('filmDetailCommentInput').value = '';
 
   let details;

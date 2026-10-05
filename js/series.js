@@ -873,7 +873,7 @@ async function openShowDetail(showId){
   watchedEpisodeExtras = {};
 
   renderShowDetailHeader(show);
-  document.getElementById('seriesSeasonsList').innerHTML = `<div class="tmdb-empty">Chargement…</div>`;
+  document.getElementById('seriesSeasonsList').innerHTML = `${skeletonRows(3)}`;
   document.getElementById('seriesDetailWatchProviders').innerHTML = `<div class="tmdb-empty">Chargement…</div>`;
 
   await Promise.all([

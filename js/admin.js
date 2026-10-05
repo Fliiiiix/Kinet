@@ -764,7 +764,7 @@ let adminCardsFilter = { type: '', search: '', rarity: '' };
 
 async function renderAdminCardsTab(){
   const wrap = document.getElementById('adminContent');
-  wrap.innerHTML = `<div class="tmdb-empty">Chargement…</div>`;
+  wrap.innerHTML = `${skeletonRows(3)}`;
   // Pas de tri côté base : l'ordre voulu est celui de la rareté (légendaire
   // d'abord), que l'ordre alphabétique de la colonne ne donne pas. On charge
   // donc tout le filtre et on trie ici. Limite haute : sans elle, les cartes

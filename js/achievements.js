@@ -336,7 +336,7 @@ async function openAchievements(){
   // d'abord évite deux modales de tailles différentes superposées.
   closeProfileModal();
   openOverlay('achievementsOverlay');
-  document.getElementById('achievementsContent').innerHTML = `<div class="tmdb-empty">Chargement…</div>`;
+  document.getElementById('achievementsContent').innerHTML = `${skeletonRows(3)}`;
   // Séries/Amis (achievements 'serievore', 'sociable', 'showrunner',
   // 'serie-terminee', 'table-ronde') ne sont normalement chargés QUE sur
   // leur propre page — sans ce préchargement, un compte qui n'a pas encore

@@ -27,7 +27,7 @@ function publicProfilePosterHtml(f){
 
 async function renderPublicProfilePage(userId){
   const content = document.getElementById('publicProfileContent');
-  content.innerHTML = `<div class="tmdb-empty">Chargement…</div>`;
+  content.innerHTML = `${skeletonRows(3)}`;
 
   const { data, error } = await supabaseClient.rpc('get_public_profile', { p_user_id: userId });
   // La fonction renvoie 0 ou 1 ligne (voir migrations/016) — rpc() sur une

@@ -409,7 +409,7 @@ async function openProposalDetail(proposalId){
   const p = proposals.find(pr => pr.id === proposalId);
   if(!p) return;
   currentProposal = p;
-  document.getElementById('proposalCommentsList').innerHTML = `<div class="tmdb-empty">Chargement…</div>`;
+  document.getElementById('proposalCommentsList').innerHTML = `${skeletonRows(3)}`;
   document.getElementById('proposalCommentInput').value = '';
   renderProposalDetailFilm();
   renderProposalDetailVotes();
