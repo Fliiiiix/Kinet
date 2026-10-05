@@ -968,6 +968,11 @@ réalisateur culte sans sortie récente peut rester "Commun" malgré son
 statut réel ; aucune source TMDB équivalente
 pour une notoriété "de carrière" sans un chantier à part.
 
+**Enchaîner les boosters** — après une ouverture, « Ouvrir un autre
+booster » apparaît seulement s'il en reste (sinon seul « Génial ! » est
+proposé). Si l'ouverture échoue depuis cet écran, « Génial ! » revient
+pour ne jamais bloquer l'overlay.
+
 **Débloquer des boosters** — 2 films VUS (table `viewings`, un
 revisionnage compte) = 1 booster de 5 cartes, toujours recalculé
 (`get_available_boosters()`) depuis le nombre de visionnages moins les

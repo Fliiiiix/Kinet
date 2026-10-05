@@ -166,6 +166,12 @@ async function handleOpenBooster(){
     showToast(error.message === 'no_booster_available' ? 'Aucun booster disponible pour l\'instant' : 'Erreur à l\'ouverture, réessaie');
     console.error(error);
     btn.disabled = false;
+    // Ouvert depuis l'overlay (« Ouvrir un autre booster ») : sans ça,
+    // l'overlay resterait bloqué, sans bouton pour le fermer.
+    if(document.getElementById('tcgBoosterOverlay').classList.contains('open')){
+      document.getElementById('tcgBoosterNextBtn').style.display = 'none';
+      document.getElementById('tcgBoosterDoneBtn').style.display = '';
+    }
     return;
   }
   tcgAvailableBoosters = Math.max(0, tcgAvailableBoosters - 1);
@@ -201,7 +207,9 @@ function tcgCardFaceHtml(card){
 function openBoosterReveal(cards){
   const pack = document.getElementById('tcgBoosterPack');
   const doneBtn = document.getElementById('tcgBoosterDoneBtn');
+  const nextBtn = document.getElementById('tcgBoosterNextBtn');
   doneBtn.style.display = 'none';
+  nextBtn.style.display = 'none';
   pack.innerHTML = cards.map((c, i) => `
     <div class="tcg-booster-card" id="tcgBoosterCard${i}" data-rarity="${c.rarity}">
       <div class="tcg-booster-card-face tcg-booster-card-back">
@@ -212,7 +220,9 @@ function openBoosterReveal(cards){
       </div>
     </div>
   `).join('');
-  openOverlay('tcgBoosterOverlay');
+  // Déjà ouvert (enchaînement « Ouvrir un autre booster ») : on ne le rouvre
+  // pas, sinon le retour du focus mémoriserait un bouton caché.
+  if(!document.getElementById('tcgBoosterOverlay').classList.contains('open')) openOverlay('tcgBoosterOverlay');
 
   const reduced = motionReduced();
   cards.forEach((c, i) => {
@@ -225,13 +235,25 @@ function openBoosterReveal(cards){
         playRarityReveal(c.rarity);
       }
       if(i === cards.length - 1){
-        setTimeout(() => { doneBtn.style.display = ''; }, reduced ? 0 : 700);
+        setTimeout(() => {
+          doneBtn.style.display = '';
+          // Un autre booster seulement s'il en reste (tcgAvailableBoosters
+          // est déjà décrémenté par handleOpenBooster()).
+          nextBtn.style.display = tcgAvailableBoosters > 0 ? '' : 'none';
+          if(tcgAvailableBoosters > 0) nextBtn.focus();
+        }, reduced ? 0 : 700);
       }
     }, delay);
   });
 }
 
 document.getElementById('tcgOpenBoosterBtn').addEventListener('click', handleOpenBooster);
+document.getElementById('tcgBoosterNextBtn').addEventListener('click', () => {
+  // Cache tout de suite le bouton : évite un double clic pendant l'appel réseau.
+  document.getElementById('tcgBoosterNextBtn').style.display = 'none';
+  document.getElementById('tcgBoosterDoneBtn').style.display = 'none';
+  handleOpenBooster();
+});
 document.getElementById('tcgBoosterDoneBtn').addEventListener('click', () => {
   closeOverlay('tcgBoosterOverlay');
   loadTcgCollection().then(renderTcgCollection);

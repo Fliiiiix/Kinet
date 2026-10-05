@@ -3659,6 +3659,7 @@ input[type="range"]::-moz-range-thumb{
   text-align:center;
   animation:none; /* la modale elle-même n'a pas besoin du fondu modalIn générique : les cartes font déjà leur propre entrée */
 }
+.tcg-booster-actions{display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:14px;}
 .tcg-booster-pack{
   display:flex;
   justify-content:center;

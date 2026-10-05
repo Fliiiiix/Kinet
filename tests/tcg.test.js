@@ -229,4 +229,30 @@ test('renderPendingTrades() : aucun échange en attente -> section masquée', ()
   assert.strictEqual(section.style.display, 'none');
 });
 
+test('openBoosterReveal() : « Ouvrir un autre booster » seulement s\'il reste des boosters', async () => {
+  const nextBtn = stubElement();
+  const doneBtn = stubElement();
+  const ctx = buildContext({ elements: { tcgBoosterPack: stubElement(), tcgBoosterDoneBtn: doneBtn, tcgBoosterNextBtn: nextBtn, tcgBoosterOverlay: stubElement() } });
+  // Mouvement réduit : pas de délais entre les cartes, donc test immédiat.
+  ctx.motionReduced = () => true;
+  // Sons non testés ici (sound.js n'est pas chargé dans ce contexte).
+  ctx.playCardFlip = () => {};
+  ctx.playRarityReveal = () => {};
+  const cartes = [1, 2, 3, 4, 5].map(i => ({ id: i, name: 'C' + i, rarity: 'commun', card_type: 'film' }));
+
+  setState(ctx, { tcgAvailableBoosters: 1 });
+  ctx.openBoosterReveal(cartes);
+  await new Promise(r => setTimeout(r, 30));
+  assert.strictEqual(doneBtn.style.display, '');
+  assert.strictEqual(nextBtn.style.display, '', 'un booster restant -> bouton visible');
+
+  setState(ctx, { tcgAvailableBoosters: 0 });
+  nextBtn.style.display = 'none';
+  doneBtn.style.display = 'none';
+  ctx.openBoosterReveal(cartes);
+  await new Promise(r => setTimeout(r, 30));
+  assert.strictEqual(nextBtn.style.display, 'none', 'plus de booster -> bouton caché');
+  assert.strictEqual(doneBtn.style.display, '');
+});
+
 module.exports = run('tcg.test.js');
