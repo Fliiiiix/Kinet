@@ -453,6 +453,15 @@ appareil (comme le thème/réduire les animations, jamais synchronisé à
 Supabase) — premier son de l'app, pensé pour grandir au fil des prochains
 (d'où un module séparé plutôt que quelques lignes dans js/watchlist.js).
 
+Sons ajoutés ensuite, toujours dans `js/sound.js` (même réglage) :
+retournement de carte et accord de rareté à l'ouverture d'un booster (un
+accord plus riche par rareté, plus une octave pour le Légendaire), bip de
+réponse de l'assistant, arpège à la fabrication ou un échange conclu,
+tintement grave au désenchantement, pop à l'ajout à la watchlist, note ou
+film enregistré, descente discrète à une suppression. Réactiver le son
+joue un tick d'essai. Tous les sons sont coupés si le son est désactivé,
+et les animations associées respectent `prefers-reduced-motion`.
+
 ### Filtre par plateforme (v2.50)
 
 Retour utilisateur : avec "Où regarder" déjà posé sur la fiche film

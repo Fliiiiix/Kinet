@@ -34,6 +34,9 @@ function setSoundEnabled(on){
 
 document.getElementById('soundToggle').addEventListener('change', (e) => {
   setSoundEnabled(e.target.checked);
+  // Réactivé : un tick d'essai, pour confirmer que le son marche (et que
+  // l'appareil n'est pas en sourdine).
+  if(e.target.checked) playRouletteTick();
 });
 
 // Une seule note, enveloppe exponentielle (attaque quasi instantanée,
