@@ -36,3 +36,36 @@ Après chaque migration : recharge le site (version bumpée à chaque lot).
 - [ ] Suppression de compte, visibilité par film, journal de connexion : ce
       sont des changements de données et de sécurité. Je les écris, mais ils
       ne sont pas appliqués tant que tu ne les as pas relus.
+
+## 4. Décisions en attente (avec ma recommandation)
+Chaque point : réponds « oui », « non » ou donne une autre règle.
+- [ ] Sets par saison : je recommande de regrouper les cartes par décennie de
+      sortie du film (ex. « Années 90 »). Demande une colonne année sur les cartes.
+- [ ] Historique des notes : je recommande une table dédiée (une ligne par
+      changement de note). Oui ou non ?
+- [ ] Comparaison avec un ami : je recommande de n'afficher que les films notés
+      par les deux, avec l'écart de note. Nécessite la visibilité des notes entre amis.
+- [ ] Sauvegarde automatique avant import : je recommande un téléchargement
+      proposé (jamais automatique) avant tout import.
+- [ ] Import Letterboxd plus fiable : je recommande de demander l'année en cas
+      de titres ambigus. Je peux le faire sans ta décision.
+- [ ] Suppression de compte : je recommande un bouton dans Paramètres avec
+      confirmation et délai. Opération irréversible : il faut ton accord avant
+      d'écrire la fonction.
+- [ ] Visibilité par film : je recommande un réglage « privé » par film, à
+      appliquer dans la politique RLS. Points à trancher dans docs/audit-rls.md.
+- [ ] Journal de connexion : Supabase garde déjà ces traces ; je recommande de
+      ne pas les recopier dans l'app et de consulter le tableau de bord Supabase.
+- [ ] Lien de carte : je recommande une page /carte/:id en lecture seule, sans
+      données personnelles. Oui ?
+- [ ] Carte vidéo résumé : je recommande une animation de 10 secondes (style
+      récap annuel), générée dans le navigateur. Oui ou non ?
+- [ ] Recalcul périodique : je recommande un workflow GitHub manuel (lancé à la
+      main), sans planification, car le fichier IMDb pèse plusieurs centaines de Mo.
+- [ ] Tests de bout en bout : il faut installer Playwright (npm). Oui ?
+- [ ] Changelog plus lisible : publication gated, je ne publierai rien sans ton
+      accord explicite.
+- [ ] Thème clair : je ne peux pas le voir sans ton compte. Vérifie les écrans
+      en mode clair (Paramètres → Thème) et dis-moi ce qui ne va pas.
+- [ ] Aide contextuelle : je recommande des bulles « ? » seulement sur les écrans
+      complexes (cartes, notation). Oui ?
