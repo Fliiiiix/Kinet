@@ -13,7 +13,7 @@
 // Jeton TMDB lu dans l'environnement, jamais écrit dans ce fichier. La règle de
 // « latin » est la même que dans js/tcg.js (nomLatin).
 const fs = require('fs');
-const { lireCsv } = require('./annees-cartes.js');
+const { lireCsvs } = require('./annees-cartes.js');
 
 const LATIN = /[A-Za-z]/;
 const LATIN_SEUL = /^[A-Za-z\u00C0-\u024F .'\-]+$/;
@@ -39,7 +39,7 @@ async function main(){
     console.error('Usage : TMDB_TOKEN=... node supabase/scripts/noms-cartes.js --cards <export.csv> [--out noms.sql]');
     process.exit(1);
   }
-  const personnes = lireCsv(cartes).filter(c => (c.card_type === 'actor' || c.card_type === 'director') && c.tmdb_id && c.name && !LATIN.test(c.name));
+  const personnes = lireCsvs(cartes).filter(c => (c.card_type === 'actor' || c.card_type === 'director') && c.tmdb_id && c.name && !LATIN.test(c.name));
   const sql = ['begin;'];
   let corrigees = 0, introuvables = [];
   for(const c of personnes){

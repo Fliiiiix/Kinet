@@ -128,3 +128,9 @@ L'éditeur SQL Supabase n'affiche que 100 lignes par défaut. Les exports
 1 à 100. Pour l'export complet, exécuter par tranches, par exemple :
 `select id, card_type, tmdb_id, name from public.tcg_cards where id > 100 order by id;`
 (puis `where id > 200`, etc.), et enregistrer chaque CSV dans le projet.
+
+Mise à jour : pas besoin de tranches. Dans l'éditeur SQL, lance
+`select id, card_type, tmdb_id, name from public.tcg_cards order by id;` puis
+clique sur « Download CSV » (le fichier contient tout le résultat, pas seulement
+les lignes affichées). Les scripts `annees-cartes.js` et `noms-cartes.js` acceptent
+aussi plusieurs fichiers : `--cards a.csv,b.csv`.

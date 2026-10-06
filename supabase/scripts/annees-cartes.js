@@ -12,6 +12,16 @@
 // Jeton TMDB lu dans l'environnement, jamais écrit dans ce fichier.
 const fs = require('fs');
 
+// Plusieurs exports possibles à la fois : --cards a.csv,b.csv,c.csv. Les lignes
+// en double (même id) ne sont gardées qu'une fois.
+function lireCsvs(liste){
+  const vus = new Map();
+  for(const fichier of liste.split(',').map(f => f.trim()).filter(Boolean)){
+    for(const c of lireCsv(fichier)) if(!vus.has(c.id)) vus.set(c.id, c);
+  }
+  return [...vus.values()];
+}
+
 function lireCsv(fichier){
   const lignes = fs.readFileSync(fichier, 'utf8').split(/\r?\n/).filter(Boolean);
   const entete = lignes[0].split(',');
@@ -42,7 +52,7 @@ async function main(){
     console.error('Usage : TMDB_TOKEN=... node supabase/scripts/annees-cartes.js --cards <export.csv> [--out annees.sql]');
     process.exit(1);
   }
-  const films = lireCsv(cartes).filter(c => c.card_type === 'film' && c.tmdb_id);
+  const films = lireCsvs(cartes).filter(c => c.card_type === 'film' && c.tmdb_id);
   const sql = ['begin;'];
   let trouvees = 0, sansAnnee = 0;
   for(const c of films){
@@ -61,4 +71,4 @@ async function main(){
 if(require.main === module){
   main().catch(e => { console.error(e); process.exit(1); });
 }
-module.exports = { lireCsv };
+module.exports = { lireCsv, lireCsvs };
