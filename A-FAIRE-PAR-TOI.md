@@ -134,3 +134,8 @@ Mise à jour : pas besoin de tranches. Dans l'éditeur SQL, lance
 clique sur « Download CSV » (le fichier contient tout le résultat, pas seulement
 les lignes affichées). Les scripts `annees-cartes.js` et `noms-cartes.js` acceptent
 aussi plusieurs fichiers : `--cards a.csv,b.csv`.
+
+Mise à jour (la limite de 100 lignes de Supabase ne s'applique pas ici) : dans
+l'app, onglet Admin > Cartes, bouton « Exporter tout le catalogue (CSV) ». Il lit
+toutes les cartes par pages de 1000 et télécharge un seul fichier
+`cartes-catalogue.csv`. Donne-le ensuite aux scripts.

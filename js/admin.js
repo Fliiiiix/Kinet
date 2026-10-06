@@ -817,6 +817,9 @@ async function renderAdminCardsTab(){
       </select>
       <input type="text" id="adminCardsSearch" placeholder="Chercher une carte…" value="${escapeHtml(adminCardsFilter.search)}">
     </div>
+    <div class="toolbar" style="margin-bottom:10px;">
+      <button class="btn secondary" id="adminCardsExport" type="button">Exporter tout le catalogue (CSV)</button>
+    </div>
     <div class="wl-note" style="margin-bottom:10px;">
       ${['legendaire','epique','rare','commun'].map(r => `${r} : <b>${triees.filter(c => c.rarity === r).length}</b>`).join(' · ')}
       · total : <b>${triees.length}</b>
@@ -826,6 +829,7 @@ async function renderAdminCardsTab(){
   document.getElementById('adminCardsType').addEventListener('change', (e) => {
     adminCardsFilter.type = e.target.value; renderAdminCardsTab();
   });
+  document.getElementById('adminCardsExport').addEventListener('click', exporterCatalogueCartes);
   document.getElementById('adminCardsRarity').addEventListener('change', (e) => {
     adminCardsFilter.rarity = e.target.value; renderAdminCardsTab();
   });
@@ -858,4 +862,30 @@ Les boosters qui tirent cette carte utiliseront la nouvelle rareté dès mainten
       renderAdminCardsTab();
     });
   });
+}
+
+// Export complet du catalogue de cartes en un seul CSV (pour les scripts de
+// rattrapage : années et noms). La base renvoie au plus 1000 lignes par requête,
+// donc on lit page par page jusqu'au bout.
+async function exporterCatalogueCartes(){
+  const lignes = [];
+  const PAGE = 1000;
+  for(let debut = 0; ; debut += PAGE){
+    const { data, error } = await supabaseClient
+      .from('tcg_cards')
+      .select('id, card_type, tmdb_id, name')
+      .order('id', { ascending: true })
+      .range(debut, debut + PAGE - 1);
+    if(error){ showToast('Export interrompu : ' + error.message); console.error(error); return; }
+    lignes.push(...(data || []));
+    if(!data || data.length < PAGE) break;
+  }
+  const echapper = (v) => (v == null ? '' : `"${String(v).replace(/"/g, '""')}"`);
+  const csv = ['id,card_type,tmdb_id,name', ...lignes.map(c => [c.id, c.card_type, c.tmdb_id, echapper(c.name)].join(','))].join('\n') + '\n';
+  const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+  const a = document.createElement('a');
+  a.href = url; a.download = 'cartes-catalogue.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  showToast(`${lignes.length} cartes exportées`);
 }
