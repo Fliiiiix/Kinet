@@ -48,6 +48,26 @@ const TCG_CRAFT_COST = { commun: 20, rare: 80, epique: 400, legendaire: 1600 };
 // rare" perd son sens sur un rôle de 3 répliques.
 const TCG_CAST_LIMIT = 6;
 
+// Nom lisible en lettres latines (roadmap : une actrice au nom en alphabet
+// d'origine était illisible). Si le nom ne contient aucune lettre latine, on
+// cherche sa version latine dans la fiche de la personne (anglais d'abord, puis
+// ses autres noms). Sinon le nom est gardé tel quel.
+const TCG_LATIN = /[A-Za-z]/;
+const TCG_NOM_LATIN_ONLY = /^[A-Za-zÀ-ɏ .'\-]+$/;
+async function nomLatin(name, personId){
+  if(!name || TCG_LATIN.test(name)) return name;
+  try{
+    const res = await fetch(`https://api.themoviedb.org/3/person/${personId}?language=en-US`, {
+      headers: { 'Authorization': `Bearer ${TMDB_API_KEY}`, 'Accept': 'application/json' }
+    });
+    if(!res.ok) return name;
+    const d = await res.json();
+    if(d.name && TCG_NOM_LATIN_ONLY.test(d.name)) return d.name;
+    const autre = (d.also_known_as || []).find(n => TCG_NOM_LATIN_ONLY.test(n));
+    return autre || name;
+  }catch(e){ return name; }
+}
+
 async function fetchMovieCredits(tmdbId){
   const url = `https://api.themoviedb.org/3/movie/${tmdbId}/credits?language=fr-FR`;
   const res = await fetch(url, {
@@ -102,7 +122,8 @@ async function generateTcgCardsForFilm(tmdbId){
 
     for(const person of people){
       const img = person.profilePath ? TMDB_IMG_BASE + person.profilePath : null;
-      const personCard = await upsertTcgCard(person.role, person.tmdbId, person.name, img, person.popularity);
+      const nom = await nomLatin(person.name, person.tmdbId);
+      const personCard = await upsertTcgCard(person.role, person.tmdbId, nom, img, person.popularity);
       await linkTcgCard(filmCard.id, personCard.id);
     }
   }catch(e){

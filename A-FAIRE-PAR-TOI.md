@@ -111,3 +111,13 @@ Restent pour toi :
   (ex. « cartes », « assistant », « design »). Je ne publierai rien sans ton accord.
 - Thème clair : vérifié sur la page de connexion (capture dans test-results/),
   à regarder sur les écrans connectés.
+
+## 8. Noms illisibles (alphabet d'origine)
+Les cartes acteur/réalisateur dont le nom est en alphabet d'origine (ex. cyrillique,
+japonais, chinois) sont désormais traduites en lettres latines à la génération.
+Pour corriger celles qui existent déjà :
+1. Dans Supabase : `select id, card_type, tmdb_id, name from public.tcg_cards order by id;`
+   puis exporter en CSV dans le projet.
+2. `TMDB_TOKEN=... node supabase/scripts/noms-cartes.js --cards <export.csv> --out noms.sql`
+3. Relire `noms.sql` (une ligne par nom corrigé) puis le coller dans Supabase.
+Les noms sans version latine sur TMDB sont listés dans la console pour correction à la main.
