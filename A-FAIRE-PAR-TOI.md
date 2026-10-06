@@ -121,3 +121,10 @@ Pour corriger celles qui existent déjà :
 2. `TMDB_TOKEN=... node supabase/scripts/noms-cartes.js --cards <export.csv> --out noms.sql`
 3. Relire `noms.sql` (une ligne par nom corrigé) puis le coller dans Supabase.
 Les noms sans version latine sur TMDB sont listés dans la console pour correction à la main.
+
+## 9. Export incomplet
+L'éditeur SQL Supabase n'affiche que 100 lignes par défaut. Les exports
+« Supabase Snippet Untitled query » du projet contiennent donc seulement les cartes
+1 à 100. Pour l'export complet, exécuter par tranches, par exemple :
+`select id, card_type, tmdb_id, name from public.tcg_cards where id > 100 order by id;`
+(puis `where id > 200`, etc.), et enregistrer chaque CSV dans le projet.
