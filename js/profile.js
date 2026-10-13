@@ -433,9 +433,23 @@ function wireTopFilmsDrag(wrap){
 
   function endDrag(){
     if(!draggedEl) return;
+    // .dragging retiré en premier : son fondu d'opacity (.15s, voir
+    // css/style.css) démarre tout de suite, en même temps que le fondu de
+    // sortie du fantôme juste en dessous — un seul crossfade, jamais un
+    // pop suivi d'une disparition sèche (audit design, emil-design-eng :
+    // "use blur/fade to mask imperfect transitions"). Pas besoin d'animer
+    // le fantôme jusqu'à sa position finale : les deux fondus simultanés
+    // suffisent à masquer la bascule, pour un coût d'implémentation bien
+    // moindre qu'un vrai repositionnement interpolé.
     draggedEl.classList.remove('dragging');
     draggedEl = null;
-    if(ghost){ ghost.remove(); ghost = null; }
+    if(ghost){
+      const g = ghost;
+      ghost = null;
+      g.style.transition = 'opacity 120ms ease-out';
+      g.style.opacity = '0';
+      setTimeout(() => g.remove(), 120);
+    }
     topFilmsSelection = Array.from(wrap.querySelectorAll('.top-film-chip')).map(chip => parseInt(chip.dataset.tmdbId, 10));
   }
   wrap.addEventListener('pointerup', endDrag);

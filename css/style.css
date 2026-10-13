@@ -2163,6 +2163,11 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   padding:10px;
   border-radius:10px;
   background:var(--surface-2);
+  /* Audit design (emil-design-eng) : sans ça, .dragging (juste en dessous)
+     posait/retirait son opacity 0.25 d'un coup sec au début/à la fin du
+     glisser — ici un simple fondu, cohérent avec le reste de l'app
+     (aucun transition:all, propriété précise). */
+  transition:opacity .15s ease;
 }
 .top-film-chip img, .top-film-chip .tmdb-poster-placeholder{width:52px; height:78px; object-fit:cover; border-radius:6px; flex:none;}
 /* flex:1 — .tmdb-result-info (partagée avec les résultats de recherche
