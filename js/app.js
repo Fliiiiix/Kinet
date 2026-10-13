@@ -285,6 +285,11 @@ function getFilteredSortedFilms(){
 }
 
 function render(){
+  // Objectif annuel (retour utilisateur) — voir renderAnnualGoalWidget(),
+  // js/recap.js. Rafraîchi à chaque render() (appelé après toute mutation
+  // pertinente : sauvegarde d'un film, visionnage ajouté...) plutôt que
+  // traqué site par site : render() est déjà le point de passage commun.
+  if(typeof renderAnnualGoalWidget === 'function') renderAnnualGoalWidget();
   const list = document.getElementById('filmList');
   const countLine = document.getElementById('countLine');
   const search = normalizeSearch(document.getElementById('search').value.trim());

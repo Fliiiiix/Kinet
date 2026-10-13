@@ -1021,6 +1021,101 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   margin-bottom:18px;
 }
 
+/* Objectif annuel chiffré + barre de progression (retour utilisateur, étude
+   comparative "Reading Challenge" de Goodreads) — voir renderAnnualGoalWidget(),
+   js/recap.js. Posé tout en haut de l'accueil (#appContainer), avant même la
+   barre d'outils : c'est le seul endroit visible à CHAQUE ouverture de l'app,
+   le même raisonnement que le badge de défi sur le profil Goodreads. Vide
+   (display:none) tant que films/profil ne sont pas encore chargés, jamais de
+   cadre vide à l'écran pendant ce court instant. */
+.annual-goal-widget{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  padding:14px 16px;
+  margin-bottom:18px;
+  border-radius:14px;
+  border:1px solid var(--line);
+  background:var(--surface-2);
+}
+.annual-goal-widget.is-complete{
+  border-color:var(--violet-dim);
+  background:var(--violet-wash, rgba(140,124,255,0.12));
+}
+.annual-goal-head{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.annual-goal-label{
+  font-weight:600;
+  font-size:14px;
+}
+.annual-goal-count{
+  font-family:'Space Mono', monospace;
+  font-size:13px;
+  color:var(--text-muted);
+  margin-left:auto;
+}
+.annual-goal-widget.is-complete .annual-goal-count{color:var(--violet);}
+.annual-goal-edit{
+  background:none;
+  border:none;
+  color:var(--text-muted);
+  cursor:pointer;
+  font-size:14px;
+  line-height:1;
+  padding:2px;
+  flex:none;
+}
+.annual-goal-edit:hover{color:var(--text);}
+.annual-goal-bar{
+  height:8px;
+  border-radius:999px;
+  background:var(--line);
+  overflow:hidden;
+}
+.annual-goal-fill{
+  height:100%;
+  border-radius:999px;
+  background:var(--violet);
+  /* Largeur posée en ligne par renderAnnualGoalWidget() (pourcentage exact) —
+     seule la transition est ici, pour que la barre glisse vers sa nouvelle
+     position après une note/un visionnage plutôt que de sauter d'un coup. */
+  transition:width 0.5s ease;
+}
+.annual-goal-widget.is-complete .annual-goal-fill{background:var(--gold, #e7b24c);}
+@media (prefers-reduced-motion:reduce){
+  .annual-goal-fill{transition:none;}
+}
+.annual-goal-done-msg{
+  font-size:13px;
+  color:var(--violet);
+  font-weight:600;
+}
+.annual-goal-form{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+.annual-goal-form input[type="number"]{
+  width:90px;
+}
+.annual-goal-form-cancel{
+  background:none;
+  border:none;
+  color:var(--text-muted);
+  cursor:pointer;
+  font-size:13px;
+  text-decoration:underline;
+}
+.annual-goal-form-cancel:hover{color:var(--text);}
+@media (max-width:600px){
+  .annual-goal-widget{padding:12px 14px;}
+  .annual-goal-head{flex-wrap:wrap;}
+}
+
 .friend-avatar{
   width:36px; height:36px;
   border-radius:50%;

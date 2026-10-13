@@ -4,6 +4,11 @@ Ces actions touchent ta base Supabase, ton compte ou une décision que tu
 dois prendre. Tout le reste est fait dans le code, poussé sur `main`.
 
 ## 1. Migrations SQL à appliquer (dans cet ordre, éditeur SQL Supabase)
+- [ ] `supabase/migrations/056_add_annual_goal.sql` : objectif annuel chiffré
+      (nombre de films que tu te fixes pour l'année) + barre de progression sur
+      l'accueil — deux colonnes ajoutées à `profiles`. Tant qu'elle n'est pas
+      appliquée, le widget propose quand même de définir un objectif mais
+      l'enregistrement échoue avec un toast clair (pas de plantage).
 - [ ] `supabase/migrations/048_tcg_pity.sql` : garantie d'une Légendaire après
       N boosters sans elle (pity system). Vérifiée sur base simulée.
 - [ ] `supabase/migrations/049_draft_classement_amis.sql` : BROUILLON. Classement

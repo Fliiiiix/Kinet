@@ -49,6 +49,112 @@ function computeRecap(year){
   };
 }
 
+// --- Objectif annuel chiffré + barre de progression (retour utilisateur,
+// étude comparative "Reading Challenge" de Goodreads) --- Par opposition au
+// bilan ci-dessus (rétrospectif, fin d'année seulement), un nombre que le
+// compte se fixe À L'AVANCE et suit en continu. Une seule paire année/
+// objectif par profil (profiles.annual_goal_year/annual_goal_count,
+// migrations/056 — BROUILLON tant que non appliquée, voir
+// A-FAIRE-PAR-TOI.md) : l'historique des années passées reste consultable
+// via le bilan existant, inutile de dupliquer cette mémoire ici. "Vu cette
+// année" réutilise computeRecap() ci-dessus (même définition que le bilan :
+// au moins un visionnage daté de cette année, pas films.added).
+function renderAnnualGoalWidget(){
+  const el = document.getElementById('annualGoalWidget');
+  if(!el) return;
+  // Tant que la migration 056 n'est pas appliquée, currentProfile n'a tout
+  // simplement pas ces deux colonnes (select('*') les omet silencieusement,
+  // sans erreur) — annual_goal_year/annual_goal_count valent alors
+  // undefined, traités ci-dessous comme "pas d'objectif", jamais une
+  // exception qui casserait le reste de l'accueil.
+  if(typeof currentProfile === 'undefined' || !currentProfile || typeof films === 'undefined'){ el.innerHTML = ''; return; }
+
+  const year = new Date().getFullYear();
+  const hasGoalThisYear = currentProfile.annual_goal_year === year && currentProfile.annual_goal_count > 0;
+  const recap = computeRecap(year);
+  const watched = recap ? recap.total : 0;
+
+  if(!hasGoalThisYear){
+    el.innerHTML = `
+      <div class="annual-goal-widget">
+        <div class="annual-goal-head"><span class="annual-goal-label">Objectif ${year}</span></div>
+        <form class="annual-goal-form" id="annualGoalForm">
+          <span>Combien de films veux-tu voir cette année ?</span>
+          <input type="number" id="annualGoalInput" min="1" max="999" placeholder="Ex. 50" required>
+          <button type="submit" class="btn secondary">Définir</button>
+        </form>
+      </div>
+    `;
+    const form = document.getElementById('annualGoalForm');
+    if(form){
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const count = parseInt(document.getElementById('annualGoalInput').value, 10);
+        if(!count || count <= 0) return;
+        saveAnnualGoal(year, count);
+      });
+    }
+    return;
+  }
+
+  const goal = currentProfile.annual_goal_count;
+  const pct = Math.min(100, Math.round((watched / goal) * 100));
+  const done = watched >= goal;
+  el.innerHTML = `
+    <div class="annual-goal-widget ${done ? 'is-complete' : ''}">
+      <div class="annual-goal-head">
+        <span class="annual-goal-label">Objectif ${year}</span>
+        <span class="annual-goal-count">${watched} / ${goal} film${goal > 1 ? 's' : ''}</span>
+        <button type="button" class="annual-goal-edit" id="annualGoalEditBtn" title="Modifier l'objectif" aria-label="Modifier l'objectif">✎</button>
+      </div>
+      <div class="annual-goal-bar"><div class="annual-goal-fill" style="width:${pct}%"></div></div>
+      ${done ? `<div class="annual-goal-done-msg">🎉 Objectif ${year} atteint !</div>` : ''}
+    </div>
+  `;
+  const editBtn = document.getElementById('annualGoalEditBtn');
+  if(editBtn) editBtn.addEventListener('click', () => renderAnnualGoalEditForm(year, goal));
+}
+
+function renderAnnualGoalEditForm(year, currentGoal){
+  const el = document.getElementById('annualGoalWidget');
+  if(!el) return;
+  el.innerHTML = `
+    <div class="annual-goal-widget">
+      <div class="annual-goal-head"><span class="annual-goal-label">Objectif ${year}</span></div>
+      <form class="annual-goal-form" id="annualGoalForm">
+        <input type="number" id="annualGoalInput" min="1" max="999" value="${currentGoal}" required>
+        <button type="submit" class="btn secondary">Enregistrer</button>
+        <button type="button" class="annual-goal-form-cancel" id="annualGoalCancelBtn">Annuler</button>
+      </form>
+    </div>
+  `;
+  document.getElementById('annualGoalForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const count = parseInt(document.getElementById('annualGoalInput').value, 10);
+    if(!count || count <= 0) return;
+    saveAnnualGoal(year, count);
+  });
+  document.getElementById('annualGoalCancelBtn').addEventListener('click', renderAnnualGoalWidget);
+}
+
+async function saveAnnualGoal(year, count){
+  const { data, error } = await supabaseClient
+    .from('profiles')
+    .update({ annual_goal_year: year, annual_goal_count: count })
+    .eq('user_id', currentUser.id)
+    .select()
+    .single();
+  if(error){
+    // Erreur la plus probable tant que la migration 056 n'est pas appliquée :
+    // colonne inexistante — message clair plutôt qu'un échec muet.
+    showToast('Impossible d\'enregistrer l\'objectif pour le moment');
+    console.error(error);
+    return;
+  }
+  currentProfile = data;
+  renderAnnualGoalWidget();
+}
+
 // Pas d'affiches TMDB dans le canvas — vérifié en direct : image.tmdb.org
 // ne renvoie aucun en-tête CORS (une requête `fetch(url, {mode:'cors'})`
 // échoue tout court, `{mode:'no-cors'}` ne renvoie qu'une réponse opaque).
