@@ -201,13 +201,103 @@ function renderWatchProvidersHtml(providers){
 // pas, pas systématique. containerId/imgId : les deux fiches (film et
 // série) partagent .detail-backdrop mais pas leurs id, un seul helper leur
 // suffit en le paramétrant plutôt que dupliquer la même logique deux fois.
+// Cadrage automatique des banderoles (retour utilisateur : "tu prends le
+// centre... pour plein de films ça n'a pas de sens, ce n'est pas le bon
+// endroit où zoomer"). PAS un modèle entraîné : aucune donnée annotée ni
+// infrastructure d'entraînement pour ça dans un projet perso — une détection
+// classique du contenu "intéressant" d'une image (plus un endroit a de
+// détail/contraste — visages, objets, texte —, plus il a de chances d'être
+// ce qu'on veut montrer, contrairement à un ciel ou un mur uni). Seule la
+// position VERTICALE compte (object-position Y) : le bandeau est toujours
+// bien plus large que haut, donc object-fit:cover recadre en hauteur,
+// jamais en largeur, quelle que soit l'image (les backdrops TMDB sont
+// systématiquement ~16:9).
+//
+// Calculé une fois par image puis mis en cache par URL : revisiter la même
+// fiche ne relance pas l'analyse.
+const backdropFocusCache = new Map(); // url -> pourcentage vertical (0-100)
+
+// Énergie par ligne à partir des niveaux de gris (largeur x hauteur) : écart
+// avec le pixel suivant (horizontal) et celui du dessous (vertical) — un
+// gradient simple, suffisant pour repérer le détail sans un vrai Sobel.
+// Fonction pure (aucun DOM), testée telle quelle — voir tests/.
+function energieParLigneDepuisGris(gris, largeur, hauteur){
+  const energie = new Float32Array(hauteur);
+  for(let y = 0; y < hauteur; y++){
+    let somme = 0;
+    for(let x = 0; x < largeur; x++){
+      const i = y * largeur + x;
+      if(x < largeur - 1) somme += Math.abs(gris[i] - gris[i + 1]);
+      if(y < hauteur - 1) somme += Math.abs(gris[i] - gris[i + largeur]);
+    }
+    energie[y] = somme;
+  }
+  return energie;
+}
+
+// Centre de gravité du détail (énergie par ligne) ramené en pourcentage
+// vertical — repli à 50 % (centre, comportement d'avant) si l'image est
+// trop plate pour en tirer quoi que ce soit. Resserré entre 15 et 85 % :
+// une anomalie d'analyse ne doit jamais donner un cadrage pire qu'avant (un
+// bord franc), juste un résultat neutre. Fonction pure, testée telle quelle.
+function pourcentageFocusDepuisEnergie(energieParLigne){
+  let sommeEnergie = 0, sommePonderee = 0;
+  for(let y = 0; y < energieParLigne.length; y++){
+    sommeEnergie += energieParLigne[y];
+    sommePonderee += energieParLigne[y] * y;
+  }
+  if(sommeEnergie <= 1) return 50;
+  const fraction = sommePonderee / sommeEnergie / energieParLigne.length;
+  return Math.round(Math.min(0.85, Math.max(0.15, fraction)) * 100);
+}
+
+function applySmartBackdropFocus(imgEl, url){
+  if(backdropFocusCache.has(url)){
+    imgEl.onload = null; // jamais laisser un calcul en attente d'une image précédente écraser ce résultat déjà connu
+    imgEl.style.objectPosition = `center ${backdropFocusCache.get(url)}%`;
+    return;
+  }
+  imgEl.style.objectPosition = 'center 50%'; // le temps du calcul : le centre d'avant, jamais pire
+  imgEl.onload = () => {
+    try{
+      // Sous-échantillonné à 120px de large : largement assez pour repérer
+      // où est le détail, et instantané à analyser.
+      const LARGEUR = 120;
+      const hauteur = Math.max(1, Math.round(LARGEUR * (imgEl.naturalHeight / imgEl.naturalWidth)));
+      const canvas = document.createElement('canvas');
+      canvas.width = LARGEUR; canvas.height = hauteur;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(imgEl, 0, 0, LARGEUR, hauteur);
+      const { data } = ctx.getImageData(0, 0, LARGEUR, hauteur);
+      const gris = new Float32Array(LARGEUR * hauteur);
+      for(let i = 0; i < gris.length; i++){
+        const o = i * 4;
+        gris[i] = 0.299 * data[o] + 0.587 * data[o + 1] + 0.114 * data[o + 2];
+      }
+      const pourcentage = pourcentageFocusDepuisEnergie(energieParLigneDepuisGris(gris, LARGEUR, hauteur));
+      backdropFocusCache.set(url, pourcentage);
+      imgEl.style.objectPosition = `center ${pourcentage}%`;
+    }catch(e){
+      // Image servie sans en-tête CORS permissif (ne devrait pas arriver
+      // sur image.tmdb.org, mais jamais bloquant si ça arrive un jour) : on
+      // garde le centre, le bandeau reste comme avant plutôt que de casser
+      // l'affichage.
+      console.error(e);
+    }
+  };
+}
+
 function renderDetailBackdrop(containerId, imgId, backdropPath){
   const container = document.getElementById(containerId);
   if(!backdropPath){
     container.style.display = 'none';
     return;
   }
-  document.getElementById(imgId).src = TMDB_BACKDROP_IMG_BASE + backdropPath;
+  const img = document.getElementById(imgId);
+  const url = TMDB_BACKDROP_IMG_BASE + backdropPath;
+  img.crossOrigin = 'anonymous'; // avant src : nécessaire pour pouvoir lire les pixels ensuite (canvas)
+  applySmartBackdropFocus(img, url);
+  img.src = url;
   container.style.display = '';
 }
 

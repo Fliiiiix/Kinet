@@ -867,6 +867,32 @@ données JustWatch" (attribution imposée par TMDB pour cet endpoint précis)
 renvoie vers la page TMDB correspondante si aucune des plateformes
 listées ne convient.
 
+## Cadrage automatique des banderoles (`.detail-backdrop`)
+
+Retour utilisateur : "tu prends le centre... pour plein de films ça n'a
+pas de sens, ce n'est pas le bon endroit où zoomer. Peut-on faire du
+machine learning sur ces affiches ?" — pas un modèle entraîné (aucune
+donnée annotée ni infrastructure d'entraînement pour ça ici), une
+détection classique du contenu "intéressant" d'une image par son contraste
+(`applySmartBackdropFocus()`, `js/tmdb.js`) : l'image est sous-échantillonnée
+sur un petit canvas, l'énergie (écarts de niveaux de gris entre pixels
+voisins) est sommée ligne par ligne, et le centre de gravité de cette
+énergie donne la position verticale à montrer (`object-position`). Plus un
+endroit a de détail — visages, objets, texte —, plus il pèse dans ce
+calcul, contrairement à un ciel ou une étendue d'eau. Seule la position
+VERTICALE est ajustée : le bandeau est toujours bien plus large que haut,
+`object-fit:cover` recadre donc en hauteur, jamais en largeur, quelle que
+soit l'image (les backdrops TMDB sont systématiquement ~16:9). Resserré
+entre 15 et 85 % pour qu'une analyse ratée ne donne jamais un cadrage pire
+qu'avant (un bord franc) — repli à 50 % (le centre d'avant) si l'image est
+trop plate pour en tirer quoi que ce soit. Calculé une fois par image puis
+mis en cache par URL (`backdropFocusCache`) : revisiter la même fiche ne
+relance pas l'analyse. Nécessite `crossOrigin="anonymous"` sur l'image pour
+pouvoir en lire les pixels (canvas) ; jamais bloquant si ça échoue un jour
+(image servie sans CORS) — le bandeau reste alors centré, comme avant.
+Un seul point d'entrée (`renderDetailBackdrop()`) pour la fiche film ET la
+fiche série : corrigé une fois, corrigé aux deux endroits.
+
 ## Profil public
 
 Dans la modale profil, la rangée **"Profil public"** (interrupteur, section
