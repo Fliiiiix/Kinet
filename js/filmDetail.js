@@ -95,14 +95,29 @@ async function renderFilmDetailNotes(){
   const wrap = document.getElementById('filmDetailNotes');
   renderNoteHistory(films.find(f => f.tmdbId === currentFilmTmdbId));
   wrap.innerHTML = `<div class="tmdb-empty">Chargement…</div>`;
-  const { data, error } = await supabaseClient.rpc('get_film_stats', { p_tmdb_id: currentFilmTmdbId });
-  const stats = Array.isArray(data) ? data[0] : data;
-  const avgNote = (!error && stats && stats.avg_note !== null) ? Number(stats.avg_note) : null;
-  const ratingCount = (!error && stats) ? stats.rating_count : 0;
-  if(error) console.error(error);
+  // En parallèle : la moyenne (déjà existante) et sa répartition par palier
+  // (retour utilisateur, étude comparative Letterboxd/Goodreads — jusqu'ici
+  // une moyenne unique, jamais comment ces notes se répartissent). Une
+  // erreur sur la répartition (ex. migration 059 pas encore appliquée)
+  // n'empêche jamais d'afficher au moins la moyenne.
+  const [statsResult, distResult] = await Promise.all([
+    supabaseClient.rpc('get_film_stats', { p_tmdb_id: currentFilmTmdbId }),
+    supabaseClient.rpc('get_film_note_distribution', { p_tmdb_id: currentFilmTmdbId }),
+  ]);
+  const stats = Array.isArray(statsResult.data) ? statsResult.data[0] : statsResult.data;
+  const avgNote = (!statsResult.error && stats && stats.avg_note !== null) ? Number(stats.avg_note) : null;
+  const ratingCount = (!statsResult.error && stats) ? stats.rating_count : 0;
+  if(statsResult.error) console.error(statsResult.error);
+  if(distResult.error) console.error(distResult.error);
 
   const myFilm = films.find(f => f.tmdbId === currentFilmTmdbId);
   const myNote = myFilm ? getDisplayNote(myFilm) : null;
+
+  // Pas la peine de 11 barres pour 0 ou 1 note : rien à "répartir" tant que
+  // deux avis au moins ne divergent pas.
+  const distItems = (!distResult.error && ratingCount >= 2)
+    ? (distResult.data || []).map(row => ({ label: Number(row.note).toFixed(1), count: row.note_count }))
+    : null;
 
   wrap.innerHTML = `
     <div class="film-detail-note-row">
@@ -115,6 +130,7 @@ async function renderFilmDetailNotes(){
       <div class="wl-note">Ta note</div>
     </div>
     <button class="btn secondary film-detail-my-review-btn" type="button" id="filmDetailMyReviewBtn">Voir le détail de ta critique</button>` : ''}
+    ${distItems ? renderBarChart(distItems) : ''}
   `;
 
   // Réutilise openFilmReviewDetail() (js/stats.js) plutôt que de dupliquer
