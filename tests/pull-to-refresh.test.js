@@ -52,7 +52,7 @@ function buildContext({ scrollY = 0, overlayOpen = false } = {}){
     render(){},
     renderRoute(){ refreshCalls.push('renderRoute'); return Promise.resolve(); },
   });
-  loadFiles(ctx, ['js/ui.js']);
+  loadFiles(ctx, ['js/spring.js', 'js/ui.js']);
   return { ctx, pullIndicator, doc, refreshCalls };
 }
 

@@ -877,6 +877,11 @@ h1{
    sans écran tactile, voir 'ontouchstart' in window côté JS). */
 .pull-refresh-indicator{
   position:fixed;
+  /* top reste l'ancrage FIXE (caché au-dessus du viewport) — tout le
+     mouvement du geste passe par transform:translateY(), posé image par
+     image par le ressort physique (animateSpring(), js/spring.js), jamais
+     par top (déclenche layout+paint à chaque frame tactile, bien plus
+     coûteux que le compositeur seul — audit design, emil-design-eng). */
   top:-50px; left:50%;
   margin-left:-20px;
   width:40px; height:40px;
@@ -889,6 +894,8 @@ h1{
   z-index:45; /* sous .overlay (50), au-dessus du reste — visible même par-dessus la barre de nav mobile pendant le tirer */
   box-shadow:0 8px 20px rgba(0,0,0,0.3);
   transition:background .15s ease, color .15s ease;
+  transform:translateY(0);
+  will-change:transform;
 }
 .pull-refresh-indicator.ready{color:var(--gold); border-color:var(--gold);}
 .pull-refresh-indicator.loading{animation:pullRefreshSpin .7s linear infinite;}

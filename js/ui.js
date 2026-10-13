@@ -930,16 +930,50 @@ async function refreshCurrentPage(){
 if('ontouchstart' in window){
   const PULL_THRESHOLD = 70;
   const PULL_MAX = 100;
+  // Position "posé" une fois le rafraîchissement déclenché — équivaut à
+  // l'ancien top:12px, exprimée ici en décalage depuis la position cachée
+  // (translateY(0), voir plus bas) plutôt qu'en valeur absolue de `top`.
+  const PULL_SETTLE_Y = 62;
   const pullIndicator = document.getElementById('pullRefreshIndicator');
   let pullStartY = null;
   let pulling = false;
   let refreshing = false;
+  // Petit historique position/temps (audit design, apple-design §5 "vélocité
+  // au relâchement") : sert à faire partir le ressort de relâchement à la
+  // VRAIE vitesse du geste plutôt que figée à 0, pour qu'un tiré rapide
+  // "lâché" se sente lancé plutôt que juste repositionné.
+  let touchHistory = [];
+  let currentDist = 0;
+  let springCtrl = null;
 
-  function resetPull(){
-    if(pullIndicator) pullIndicator.style.top = '-50px';
+  function setPullY(y){
+    currentDist = y;
+    if(pullIndicator) pullIndicator.style.transform = `translateY(${y}px)`;
+  }
+
+  // Ressort critique (damping 1, jamais de rebond) : on vient soit de
+  // relâcher sans atteindre le seuil (retour doux à 0), soit de confirmer
+  // le rafraîchissement (se pose à PULL_SETTLE_Y) — aucun des deux n'est un
+  // geste "lancé" à faire rebondir, juste un relâchement qui mérite de
+  // garder la vélocité du doigt pour ne pas repartir de zéro d'un coup.
+  function springTo(target, velocity){
+    if(springCtrl) springCtrl.cancel();
+    springCtrl = animateSpring({
+      from: currentDist, to: target, velocity, dampingRatio: 1, response: 0.32,
+      onUpdate(y){ setPullY(y); },
+      onComplete(){ springCtrl = null; },
+    });
+  }
+
+  function resetPull(animated){
     pullIndicator && pullIndicator.classList.remove('ready');
     pullStartY = null;
     pulling = false;
+    if(animated) springTo(0, 0);
+    else{
+      if(springCtrl){ springCtrl.cancel(); springCtrl = null; }
+      setPullY(0);
+    }
   }
 
   if(pullIndicator){
@@ -947,28 +981,48 @@ if('ontouchstart' in window){
       if(refreshing || window.scrollY > 0) return;
       if(document.querySelector('.overlay.open')) return; // modale ouverte : son propre scroll interne, pas ce geste
       if(e.target.closest('input, textarea, select, button, a, [role="button"]')) return; // ne vole pas le geste à un contrôle
+      // Interruptible (skill apple-design §3) : un ressort de relâchement
+      // encore en cours de pose reprend EXACTEMENT où il en est (currentDist
+      // déjà à jour à chaque frame via onUpdate), jamais un saut à 0.
+      if(springCtrl){ springCtrl.cancel(); springCtrl = null; }
       pullStartY = e.touches[0].clientY;
       pulling = true;
+      touchHistory = [{ y: e.touches[0].clientY, t: e.timeStamp }];
     }, { passive: true });
 
     document.addEventListener('touchmove', (e) => {
       if(!pulling || pullStartY == null || refreshing) return;
-      const delta = e.touches[0].clientY - pullStartY;
-      if(delta <= 0){ resetPull(); return; }
-      const dist = Math.min(delta * 0.5, PULL_MAX);
-      pullIndicator.style.top = `${dist - 50}px`;
+      const y = e.touches[0].clientY;
+      const delta = y - pullStartY;
+      if(delta <= 0){ resetPull(false); return; }
+      touchHistory.push({ y, t: e.timeStamp });
+      if(touchHistory.length > 5) touchHistory.shift();
+      let dist = delta * 0.5;
+      // Résistance progressive au-delà de PULL_MAX (skill apple-design §9) :
+      // continue de suivre le doigt, de moins en moins, jamais un mur figé.
+      if(dist > PULL_MAX) dist = PULL_MAX + rubberband(dist - PULL_MAX, PULL_MAX);
+      setPullY(dist);
       pullIndicator.classList.toggle('ready', delta > PULL_THRESHOLD);
     }, { passive: true });
 
     document.addEventListener('touchend', async () => {
-      if(!pulling || pullStartY == null){ resetPull(); return; }
+      if(!pulling || pullStartY == null){ resetPull(true); return; }
       const shouldRefresh = pullIndicator.classList.contains('ready');
       pulling = false;
       pullStartY = null;
-      if(!shouldRefresh){ resetPull(); return; }
+      // Vélocité du geste (px/s) à partir des 2 derniers points assez
+      // espacés dans le temps — un seul couple de points trop proche
+      // donnerait une vélocité bruitée (division par un dt quasi nul).
+      let velocity = 0;
+      const last = touchHistory[touchHistory.length - 1];
+      const ref = touchHistory.find(p => last.t - p.t >= 16) || touchHistory[0];
+      if(last && ref && last.t > ref.t){
+        velocity = ((last.y - ref.y) / (last.t - ref.t)) * 1000 * 0.5; // ×0.5 : même échelle que dist = delta*0.5
+      }
+      if(!shouldRefresh){ springTo(0, velocity); return; }
       refreshing = true;
-      pullIndicator.style.top = '12px';
       pullIndicator.classList.remove('ready');
+      springTo(PULL_SETTLE_Y, velocity);
       pullIndicator.classList.add('loading');
       try{
         await refreshCurrentPage();
@@ -977,7 +1031,7 @@ if('ontouchstart' in window){
       }finally{
         pullIndicator.classList.remove('loading');
         refreshing = false;
-        resetPull();
+        resetPull(true);
       }
     });
   }
