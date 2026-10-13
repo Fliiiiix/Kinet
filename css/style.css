@@ -5290,6 +5290,32 @@ body[data-view-mode="list"] #topList .top-rank{width:26px; font-size:16px;}
   .watch-provider-row{flex-direction:column; align-items:flex-start; gap:6px;}
   .watch-provider-row-label{width:auto;}
 }
+
+/* Casting (fiche film, retour utilisateur : "pour les films ce serait bien
+   de pouvoir voir le cast aussi") — bande défilable à l'horizontale, pas
+   une liste : même raisonnement que .bar-chart (overflow-x:auto) ailleurs
+   dans ce fichier, se touche naturellement au doigt sur mobile, aucune
+   media query à part pour ça. */
+.cast-strip{display:flex; gap:14px; overflow-x:auto; padding-bottom:6px;}
+.cast-card{flex:none; width:84px; text-align:center;}
+.cast-photo{
+  width:84px; height:84px;
+  border-radius:50%;
+  object-fit:cover;
+  border:1px solid var(--line);
+  background:var(--surface-2);
+  display:block;
+}
+.cast-photo-placeholder{display:flex; align-items:center; justify-content:center; color:var(--text-muted);}
+.cast-photo-placeholder svg{width:38%; height:38%;}
+.cast-name{
+  font-size:12px; font-weight:600; margin-top:6px; line-height:1.25;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+}
+.cast-character{
+  font-size:11px; color:var(--text-muted); margin-top:2px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
 .series-hero-meta{
   display:flex;
   flex-wrap:wrap;

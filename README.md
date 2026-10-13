@@ -851,6 +851,11 @@ catalogue, Top films, profil d'un ami, distribution des stats — plutôt que
 de dupliquer un mini-aperçu à chaque endroit. Nécessite
 `supabase/migrations/030_add_film_detail.sql` (table `film_likes` +
 `film_comments`, corrigée par `031_fix_film_likes_comments_default.sql`).
+**Casting** (retour utilisateur) : bande défilable à l'horizontale des 15
+premiers rôles (`renderFilmDetailCast()`), portrait rond + personnage
+interprété — réutilise `fetchMovieCredits()` (`js/tcg.js`, déjà appelée
+pour générer les cartes à collectionner) plutôt qu'un 2e appel réseau
+équivalent.
 
 ## Où regarder (disponibilité VOD/SVOD)
 

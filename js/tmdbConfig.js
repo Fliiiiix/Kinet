@@ -23,3 +23,8 @@ const WATCH_PROVIDER_IMG_BASE = 'https://image.tmdb.org/t/p/w45';
 // l'original (souvent >1920px) serait inutilement lourd pour un fond
 // discret derrière un dégradé.
 const TMDB_BACKDROP_IMG_BASE = 'https://image.tmdb.org/t/p/w780';
+// Photos du casting (fiche film, js/filmDetail.js) : des portraits jamais
+// affichés plus grands que ~80px dans la bande horizontale, w185 suffisant
+// (même raisonnement que WATCH_PROVIDER_IMG_BASE ci-dessus) — w342 serait
+// inutilement lourd pour une quinzaine de photos chargées d'un coup.
+const TMDB_PROFILE_IMG_BASE = 'https://image.tmdb.org/t/p/w185';

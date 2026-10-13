@@ -51,6 +51,10 @@ const FEEDBACK_CATEGORIES = [
   { key:'autre', label:'Autre' }
 ];
 const TV_PLACEHOLDER_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="12" rx="2"></rect><path d="M8 21h8"></path><path d="M12 17v4"></path></svg>';
+// Casting (fiche film, js/filmDetail.js) : TMDB n'a pas toujours de photo
+// pour chaque acteur/actrice — même raisonnement que les deux placeholders
+// ci-dessus, jamais une case vide à la place.
+const PERSON_PLACEHOLDER_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="7" r="4"></circle><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path></svg>';
 
 // Genres films TMDB (v2.1, filtre par genre) — id -> libellé FR, liste
 // officielle /genre/movie/list, stable depuis des années côté TMDB. Les

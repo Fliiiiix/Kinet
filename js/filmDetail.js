@@ -384,6 +384,35 @@ async function renderFilmDetailWatchProviders(){
 }
 
 // Appelée par le routeur (#/film/:tmdbId).
+// Casting (retour utilisateur : "pour les films ce serait bien de pouvoir
+// voir le cast aussi") — réutilise fetchMovieCredits() (js/tcg.js, déjà
+// appelée pour générer les cartes à collectionner) plutôt qu'un 2e appel
+// réseau équivalent. Bande horizontale défilable, pas une liste : une
+// quinzaine de personnes à montrer sans allonger la page.
+async function renderFilmDetailCast(tmdbId){
+  const wrap = document.getElementById('filmDetailCast');
+  try{
+    const credits = await fetchMovieCredits(tmdbId);
+    const cast = (credits.cast || []).slice(0, 15);
+    if(cast.length === 0){
+      wrap.innerHTML = `<div class="tmdb-empty">Casting non référencé pour ce film.</div>`;
+      return;
+    }
+    wrap.innerHTML = cast.map(p => `
+      <div class="cast-card">
+        ${p.profile_path
+          ? `<img class="cast-photo" src="${TMDB_PROFILE_IMG_BASE}${p.profile_path}" alt="" loading="lazy" decoding="async">`
+          : `<div class="cast-photo cast-photo-placeholder">${PERSON_PLACEHOLDER_SVG}</div>`}
+        <div class="cast-name">${escapeHtml(p.name)}</div>
+        ${p.character ? `<div class="cast-character">${escapeHtml(p.character)}</div>` : ''}
+      </div>
+    `).join('');
+  }catch(e){
+    wrap.innerHTML = `<div class="tmdb-empty">Casting indisponible pour l'instant.</div>`;
+    console.error(e);
+  }
+}
+
 async function openFilmDetail(tmdbId){
   currentFilmTmdbId = tmdbId;
   document.getElementById('filmDetailTitle').textContent = 'Chargement…';
@@ -392,6 +421,7 @@ async function openFilmDetail(tmdbId){
   document.getElementById('filmDetailMeta').innerHTML = '';
   document.getElementById('filmDetailNotes').innerHTML = '';
   document.getElementById('filmDetailWatchProviders').innerHTML = `<div class="tmdb-empty">Chargement…</div>`;
+  document.getElementById('filmDetailCast').innerHTML = `<div class="tmdb-empty">Chargement…</div>`;
   document.getElementById('filmDetailLikesSummary').textContent = '';
   document.getElementById('filmDetailCommentsList').innerHTML = `${skeletonRows(3)}`;
   document.getElementById('filmDetailCommentInput').value = '';
@@ -412,6 +442,7 @@ async function openFilmDetail(tmdbId){
   await Promise.all([
     renderFilmDetailNotes(),
     renderFilmDetailWatchProviders(),
+    renderFilmDetailCast(tmdbId),
     loadFilmDetailLikes(),
     loadFilmDetailComments()
   ]);
