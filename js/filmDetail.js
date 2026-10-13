@@ -465,6 +465,40 @@ async function renderFilmDetailCast(tmdbId){
   }
 }
 
+// Films similaires (retour utilisateur, étude comparative
+// Letterboxd/Goodreads — "Readers also enjoyed") — fetchSimilarMovies()
+// (js/tmdb.js). Section entière masquée s'il n'y a rien à montrer (TMDB ne
+// recommande pas systématiquement, surtout un film ancien/confidentiel),
+// jamais un bandeau vide. Chaque carte navigue vers la fiche du film
+// recommandé en lui transmettant la liste affichée comme navList (mêmes
+// flèches prev/next que partout ailleurs, voir goFilmNav()) : on peut
+// enchaîner les recommandations flèche après flèche.
+async function renderFilmDetailSimilar(tmdbId){
+  const section = document.getElementById('filmDetailSimilarSection');
+  const wrap = document.getElementById('filmDetailSimilar');
+  try{
+    const results = await fetchSimilarMovies(tmdbId);
+    if(results.length === 0){ section.style.display = 'none'; return; }
+    section.style.display = '';
+    const navList = results.map(r => ({ tmdbId: r.id, title: r.title }));
+    wrap.innerHTML = results.map(r => `
+      <div class="similar-card" data-tmdb-id="${r.id}">
+        ${r.poster_path
+          ? `<img src="${TMDB_IMG_BASE}${r.poster_path}" alt="" loading="lazy" decoding="async">`
+          : `<div class="film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
+        <div class="similar-card-title">${escapeHtml(r.title)}</div>
+        ${r.release_year ? `<div class="similar-card-year">${r.release_year}</div>` : ''}
+      </div>
+    `).join('');
+    wrap.querySelectorAll('.similar-card[data-tmdb-id]').forEach(card => {
+      card.addEventListener('click', () => goToFilmDetail(parseInt(card.dataset.tmdbId, 10), navList));
+    });
+  }catch(e){
+    console.error(e);
+    section.style.display = 'none';
+  }
+}
+
 // Capture la liste "d'à côté" depuis router.js (si on vient d'une liste
 // qui en a posé une) et met à jour les deux flèches en conséquence —
 // séparée d'openFilmDetail() pour rester appelable seule par les tests.
@@ -508,6 +542,7 @@ async function openFilmDetail(tmdbId){
   document.getElementById('filmDetailNotes').innerHTML = '';
   document.getElementById('filmDetailWatchProviders').innerHTML = `<div class="tmdb-empty">Chargement…</div>`;
   document.getElementById('filmDetailCast').innerHTML = `<div class="tmdb-empty">Chargement…</div>`;
+  document.getElementById('filmDetailSimilarSection').style.display = 'none';
   document.getElementById('filmDetailFriendRatings').innerHTML = '';
   document.getElementById('filmDetailLikesSummary').textContent = '';
   document.getElementById('filmDetailCommentsList').innerHTML = `${skeletonRows(3)}`;
@@ -530,6 +565,7 @@ async function openFilmDetail(tmdbId){
     renderFilmDetailNotes(),
     renderFilmDetailWatchProviders(),
     renderFilmDetailCast(tmdbId),
+    renderFilmDetailSimilar(tmdbId),
     renderFilmDetailFriendRatings(tmdbId),
     loadFilmDetailLikes(),
     loadFilmDetailComments()

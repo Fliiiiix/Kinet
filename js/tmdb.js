@@ -97,6 +97,27 @@ async function fetchMovieDetails(tmdbId){
   return res.json();
 }
 
+// Films similaires (retour utilisateur, étude comparative
+// Letterboxd/Goodreads — "Readers also enjoyed") — voir
+// renderFilmDetailSimilar(), js/filmDetail.js. /recommendations plutôt que
+// /similar (legacy côté TMDB, basé sur mots-clés/genres bruts) : résultats
+// généralement mieux curés d'après la doc TMDB.
+// https://developer.themoviedb.org/reference/movie-recommendations
+async function fetchSimilarMovies(tmdbId){
+  const url = `https://api.themoviedb.org/3/movie/${tmdbId}/recommendations?language=fr-FR`;
+  const res = await fetch(url, {
+    headers: { 'Authorization': `Bearer ${TMDB_API_KEY}`, 'Accept': 'application/json' }
+  });
+  if(!res.ok) throw new Error(`Erreur TMDB (${res.status})`);
+  const data = await res.json();
+  return (data.results || []).slice(0, 12).map(r => ({
+    id: r.id,
+    title: r.title,
+    poster_path: r.poster_path || null,
+    release_year: r.release_date ? parseInt(r.release_date.slice(0, 4), 10) : null,
+  }));
+}
+
 // Détail d'une série — statut TMDB, saisons, prochain/dernier épisode.
 // Jamais stocké tel quel côté Supabase au-delà de l'instantané pris à
 // l'ajout (voir js/series.js) : toujours rappelé en direct pour rester à

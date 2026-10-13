@@ -5461,6 +5461,32 @@ body[data-view-mode="list"] #topList .top-rank{width:26px; font-size:16px;}
 }
 .friend-rating-chip .counter{width:32px; height:32px; font-size:11px; border-width:1.5px;}
 
+/* Films similaires sur la fiche film (retour utilisateur, étude
+   comparative Letterboxd/Goodreads — "Readers also enjoyed") — voir
+   renderFilmDetailSimilar(), js/filmDetail.js. Même bande défilable que
+   .cast-strip juste au-dessus, affiches plutôt que portraits (format
+   2:3 TMDB standard), cliquables vers la fiche de CE film recommandé. */
+.similar-strip{display:flex; gap:14px; overflow-x:auto; padding-bottom:6px;}
+.similar-card{flex:none; width:104px; text-align:left; cursor:pointer;}
+.similar-card img, .similar-card .film-poster-placeholder{
+  width:104px; height:156px;
+  border-radius:8px;
+  object-fit:cover;
+  border:1px solid var(--line);
+  background:var(--surface-2);
+  display:flex; align-items:center; justify-content:center;
+  transition:border-color 0.15s ease;
+}
+.similar-card:hover img, .similar-card:hover .film-poster-placeholder{border-color:var(--violet-dim);}
+.similar-card-title{
+  font-size:12px; font-weight:600; margin-top:6px; line-height:1.25;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+}
+.similar-card-year{font-size:11px; color:var(--text-muted); margin-top:2px;}
+@media (prefers-reduced-motion:reduce){
+  .similar-card img, .similar-card .film-poster-placeholder{transition:none;}
+}
+
 /* Listes thématiques partageables (retour utilisateur, étude comparative
    Letterboxd) — voir renderFriendsLists()/js/lists.js. Mosaïque de
    jusqu'à 4 affiches en couverture (même esprit que le mur de posters du
