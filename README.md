@@ -892,9 +892,16 @@ entre 15 et 85 % pour qu'une analyse ratée ne donne jamais un cadrage pire
 qu'avant (un bord franc) — repli à 50 % (le centre d'avant) si l'image est
 trop plate pour en tirer quoi que ce soit. Calculé une fois par image puis
 mis en cache par URL (`backdropFocusCache`) : revisiter la même fiche ne
-relance pas l'analyse. Nécessite `crossOrigin="anonymous"` sur l'image pour
-pouvoir en lire les pixels (canvas) ; jamais bloquant si ça échoue un jour
-(image servie sans CORS) — le bandeau reste alors centré, comme avant.
+relance pas l'analyse. L'analyse tourne sur une image séparée (jamais
+insérée dans la page, avec `crossOrigin="anonymous"` pour pouvoir en lire
+les pixels), toujours lancée AVANT l'affichage de la bannière elle-même —
+piège réel rencontré et corrigé : une fois une URL mise en cache par le
+navigateur sans CORS, une requête CORS ultérieure vers cette même URL peut
+échouer (effet du cache HTTP, pas du CDN), et dans l'autre sens ça marche
+systématiquement. La bannière s'affiche dans tous les cas (succès de
+l'analyse, échec, ou si elle traîne plus d'1,2 s) — jamais plus d'attente
+qu'un chargement d'image normal n'en aurait de toute façon pris, et jamais
+bloquant si l'analyse échoue : le bandeau reste alors centré, comme avant.
 Un seul point d'entrée (`renderDetailBackdrop()`) pour la fiche film ET la
 fiche série : corrigé une fois, corrigé aux deux endroits.
 
