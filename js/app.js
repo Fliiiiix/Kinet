@@ -14,6 +14,11 @@ let editingId = null;
 // (ex. après avoir coché un favori) pour ne pas perdre sa place.
 const FILMS_PER_PAGE = 50;
 let currentPage = 1;
+// Liste "d'à côté" capturée à l'ouverture de la modale (voir openModal()),
+// pour le bouton "Voir la fiche" — toute la liste filtrée/triée courante,
+// pas seulement la page affichée (même esprit que les flèches prev/next
+// de la fiche communautaire, js/filmDetail.js).
+let modalFilmNavList = null;
 
 function computeNote(critObj){
   const vals = CRITERIA.map(c => critObj[c.key]).filter(v => typeof v === 'number');
@@ -218,9 +223,12 @@ async function toggleFilmFavorite(f){
   return true;
 }
 
-function render(){
-  const list = document.getElementById('filmList');
-  const countLine = document.getElementById('countLine');
+// Filtre + trie `films` selon l'état actuel des contrôles (recherche, tri,
+// genre, année) — extrait de render() pour être réutilisable par
+// openModal() (navList des flèches "film d'à côté" vers la fiche
+// communautaire, voir goFilmNav()/js/filmDetail.js) sans dupliquer cette
+// logique ni dépendre de la pagination de l'écran catalogue.
+function getFilteredSortedFilms(){
   const search = normalizeSearch(document.getElementById('search').value.trim());
   const sortBy = document.getElementById('sortBy').value;
   const isAdvanced = sortBy === 'advanced';
@@ -228,12 +236,6 @@ function render(){
   const critFilterMin = isAdvanced ? parseFloat(document.getElementById('critFilterMin').value) : 0;
   const genreFilter = document.getElementById('genreFilter').value;
   const yearFilter = document.getElementById('yearFilter').value;
-
-  // Point d'état sur le bouton Filtres (v2.1.x, mobile — voir index.html) :
-  // seul indice qu'un tri/genre/année non-défaut est actif une fois la
-  // feuille repliée, tri "note-desc" étant la valeur par défaut de #sortBy.
-  document.getElementById('filtersToggleBtn').classList.toggle('has-active-filter', sortBy !== 'note-desc' || !!genreFilter || !!yearFilter);
-  renderBulkActionsBar();
 
   // Matche le titre FR ou le titre VO (ex. "créatures féroces" trouve aussi
   // "Fierce Creatures"), accents/casse ignorés — voir getSearchTerms().
@@ -278,6 +280,27 @@ function render(){
     if(sortBy === 'recent') return b.added - a.added;
     return 0;
   });
+
+  return filtered;
+}
+
+function render(){
+  const list = document.getElementById('filmList');
+  const countLine = document.getElementById('countLine');
+  const search = normalizeSearch(document.getElementById('search').value.trim());
+  const sortBy = document.getElementById('sortBy').value;
+  const isAdvanced = sortBy === 'advanced';
+  const critFilterMin = isAdvanced ? parseFloat(document.getElementById('critFilterMin').value) : 0;
+  const genreFilter = document.getElementById('genreFilter').value;
+  const yearFilter = document.getElementById('yearFilter').value;
+
+  // Point d'état sur le bouton Filtres (v2.1.x, mobile — voir index.html) :
+  // seul indice qu'un tri/genre/année non-défaut est actif une fois la
+  // feuille repliée, tri "note-desc" étant la valeur par défaut de #sortBy.
+  document.getElementById('filtersToggleBtn').classList.toggle('has-active-filter', sortBy !== 'note-desc' || !!genreFilter || !!yearFilter);
+  renderBulkActionsBar();
+
+  const filtered = getFilteredSortedFilms();
 
   const isFiltered = !!search || !!genreFilter || !!yearFilter || (isAdvanced && critFilterMin > 0);
   countLine.textContent = `${filtered.length} film${filtered.length>1?'s':''} ${isFiltered ? '(filtré)' : 'au catalogue'}`;
@@ -637,6 +660,11 @@ function openModal(id, prefillTmdb){
   document.getElementById('modalTitle').textContent = film ? 'Modifier le film' : 'Nouveau film';
   document.getElementById('titleInput').value = film ? film.title : (prefillTmdb ? prefillTmdb.title : '');
   document.getElementById('deleteBtn').style.display = film ? 'inline-block' : 'none';
+  const openFilmDetailBtn = document.getElementById('modalOpenFilmDetailBtn');
+  openFilmDetailBtn.style.display = (film && film.tmdbId) ? '' : 'none';
+  modalFilmNavList = (film && film.tmdbId)
+    ? getFilteredSortedFilms().filter(f => f.tmdbId).map(f => ({ tmdbId: f.tmdbId, title: f.title }))
+    : null;
 
   document.getElementById('manualToggle').checked = manualNote !== null;
   document.getElementById('filmPrivate').checked = !!(film && film.isPrivate);
@@ -990,6 +1018,14 @@ document.getElementById('cancelBtn').addEventListener('click', closeModal);
   saveBtn.addEventListener('click', withSubmitGuard(saveBtn, handleSave));
 }
 document.getElementById('deleteBtn').addEventListener('click', handleDelete);
+document.getElementById('modalOpenFilmDetailBtn').addEventListener('click', () => {
+  if(!editingId) return;
+  const film = films.find(f => f.id === editingId);
+  if(!film || !film.tmdbId) return;
+  const navList = modalFilmNavList;
+  closeModal();
+  goToFilmDetail(film.tmdbId, navList);
+});
 document.getElementById('overlay').addEventListener('click', (e) => {
   if(e.target.id === 'overlay') closeModal();
 });
