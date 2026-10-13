@@ -3900,9 +3900,44 @@ input[type="range"]::-moz-range-thumb{
   0%, 100%{box-shadow:0 0 30px rgba(231,178,76,0.6);}
   50%{box-shadow:0 0 44px rgba(231,178,76,0.85);}
 }
+/* Sheen holographique à la révélation (retour utilisateur, étude
+   comparative sur un simulateur d'ouverture de boosters Pokémon : "pendant
+   le chargement d'une carte rare, un dégradé holographique en biais
+   s'affiche — le joueur sait que c'est du lourd avant même que l'artwork
+   charge") — adapté ici en un passage lumineux en diagonale UNE FOIS, au
+   moment précis où la carte finit de se retourner (.revealed, déjà posé
+   par openBoosterReveal(), js/tcg.js), jamais sur une Commune. Décalage de
+   .55s : la face avant est masquée par backface-visibility jusqu'à ce que
+   la rotation 3D dépasse 90°, inutile de jouer le sheen avant que la carte
+   soit effectivement visible (le flip dure .7s, voir .tcg-booster-card). */
+.tcg-booster-card-front.rarity-rare::after,
+.tcg-booster-card-front.rarity-epique::after,
+.tcg-booster-card-front.rarity-legendaire::after{
+  content:'';
+  position:absolute; inset:0;
+  background:linear-gradient(115deg, transparent 25%, rgba(255,255,255,0.6) 40%, rgba(255,255,255,0.2) 50%, transparent 65%);
+  background-size:250% 250%;
+  background-position:-150% -150%;
+  pointer-events:none;
+  opacity:0;
+}
+.tcg-booster-card.revealed .tcg-booster-card-front.rarity-rare::after,
+.tcg-booster-card.revealed .tcg-booster-card-front.rarity-epique::after,
+.tcg-booster-card.revealed .tcg-booster-card-front.rarity-legendaire::after{
+  animation:tcgHoloSweep 1.1s ease-out .55s both;
+}
+@keyframes tcgHoloSweep{
+  0%{opacity:0; background-position:-150% -150%;}
+  15%{opacity:1;}
+  70%{opacity:1;}
+  100%{opacity:0; background-position:150% 150%;}
+}
 @media (prefers-reduced-motion:reduce){
   .tcg-booster-card{transition:none;}
   .tcg-booster-card-front.rarity-legendaire{animation:none;}
+  .tcg-booster-card.revealed .tcg-booster-card-front.rarity-rare::after,
+  .tcg-booster-card.revealed .tcg-booster-card-front.rarity-epique::after,
+  .tcg-booster-card.revealed .tcg-booster-card-front.rarity-legendaire::after{animation:none; opacity:0;}
 }
 @media (max-width:600px){
   .tcg-booster-card{width:108px; height:162px;}
