@@ -149,6 +149,34 @@ function updateLikeButtonUI(){
   btn.textContent = liked ? '♥ Aimé' : '♡ Aimer';
 }
 
+// Notes des amis sur CE film précis (retour utilisateur, étude comparative
+// Letterboxd/Goodreads) — get_film_friend_ratings() (migrations/057),
+// jamais tout le monde (contrairement à la moyenne communautaire globale
+// affichée plus bas, voir renderFilmDetailNotes()). Jamais bloquant : une
+// erreur ici (réseau, fonction pas encore appliquée) laisse simplement le
+// strip vide plutôt que de casser le reste de la fiche.
+async function renderFilmDetailFriendRatings(tmdbId){
+  const wrap = document.getElementById('filmDetailFriendRatings');
+  if(!wrap) return;
+  try{
+    const { data, error } = await supabaseClient.rpc('get_film_friend_ratings', { p_tmdb_id: tmdbId });
+    if(error){ console.error(error); wrap.innerHTML = ''; return; }
+    const ratings = (data || []).map(r => ({ friendId: r.friend_id, note: Number(r.note) }));
+    if(ratings.length === 0){ wrap.innerHTML = ''; return; }
+    await ensureProfilesCached(ratings.map(r => r.friendId));
+    wrap.innerHTML = ratings.map(r => `
+      <div class="friend-rating-chip">
+        ${friendAvatarHtml(r.friendId, friendDisplayName(r.friendId))}
+        <div class="friend-rating-chip-name">${escapeHtml(friendDisplayName(r.friendId))}</div>
+        <div class="counter ${noteColorClass(r.note)}">${r.note.toFixed(1)}</div>
+      </div>
+    `).join('');
+  }catch(e){
+    console.error(e);
+    wrap.innerHTML = '';
+  }
+}
+
 function renderFilmDetailLikesSummary(){
   const others = filmDetailLikes.filter(l => l.userId !== currentUser.id);
   const summaryEl = document.getElementById('filmDetailLikesSummary');
@@ -464,6 +492,7 @@ async function openFilmDetail(tmdbId){
   document.getElementById('filmDetailNotes').innerHTML = '';
   document.getElementById('filmDetailWatchProviders').innerHTML = `<div class="tmdb-empty">Chargement…</div>`;
   document.getElementById('filmDetailCast').innerHTML = `<div class="tmdb-empty">Chargement…</div>`;
+  document.getElementById('filmDetailFriendRatings').innerHTML = '';
   document.getElementById('filmDetailLikesSummary').textContent = '';
   document.getElementById('filmDetailCommentsList').innerHTML = `${skeletonRows(3)}`;
   document.getElementById('filmDetailCommentInput').value = '';
@@ -485,6 +514,7 @@ async function openFilmDetail(tmdbId){
     renderFilmDetailNotes(),
     renderFilmDetailWatchProviders(),
     renderFilmDetailCast(tmdbId),
+    renderFilmDetailFriendRatings(tmdbId),
     loadFilmDetailLikes(),
     loadFilmDetailComments()
   ]);

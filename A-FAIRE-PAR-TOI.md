@@ -9,6 +9,10 @@ dois prendre. Tout le reste est fait dans le code, poussé sur `main`.
       l'accueil — deux colonnes ajoutées à `profiles`. Tant qu'elle n'est pas
       appliquée, le widget propose quand même de définir un objectif mais
       l'enregistrement échoue avec un toast clair (pas de plantage).
+- [ ] `supabase/migrations/057_add_film_friend_ratings.sql` : notes des amis
+      directement sur la fiche film (get_film_friend_ratings()). Tant qu'elle
+      n'est pas appliquée, le bloc "Amis" de la fiche film reste silencieux
+      (vide), pas de plantage.
 - [ ] `supabase/migrations/048_tcg_pity.sql` : garantie d'une Légendaire après
       N boosters sans elle (pity system). Vérifiée sur base simulée.
 - [ ] `supabase/migrations/049_draft_classement_amis.sql` : BROUILLON. Classement

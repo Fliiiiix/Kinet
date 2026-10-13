@@ -5445,6 +5445,21 @@ body[data-view-mode="list"] #topList .top-rank{width:26px; font-size:16px;}
   font-size:11px; color:var(--text-muted); margin-top:2px;
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 }
+
+/* Notes des amis sur CE film précis (retour utilisateur, étude comparative
+   Letterboxd/Goodreads — "Amis" n'affichait jusqu'ici que les likes, jamais
+   qui parmi eux a vu/noté ce film) — voir renderFilmDetailFriendRatings(),
+   js/filmDetail.js. Même principe de bande défilable que .cast-strip
+   juste au-dessus, mais avec .friend-avatar (déjà utilisé partout ailleurs
+   pour un visage d'ami) plutôt qu'un portrait TMDB. */
+.friend-rating-strip{display:flex; gap:14px; overflow-x:auto; padding-bottom:6px; margin-bottom:10px;}
+.friend-rating-chip{flex:none; display:flex; flex-direction:column; align-items:center; gap:6px; width:64px; text-align:center;}
+.friend-rating-chip .friend-avatar, .friend-rating-chip .friend-avatar-placeholder{width:48px; height:48px;}
+.friend-rating-chip-name{
+  font-size:11px; font-weight:600; line-height:1.25;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+}
+.friend-rating-chip .counter{width:32px; height:32px; font-size:11px; border-width:1.5px;}
 .series-hero-meta{
   display:flex;
   flex-wrap:wrap;
