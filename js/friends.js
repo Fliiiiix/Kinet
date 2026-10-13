@@ -514,6 +514,7 @@ async function openFriends(){
 document.getElementById('friendsBtn').addEventListener('click', goToAmis);
 document.getElementById('amisPageBack').addEventListener('click', goHome);
 document.getElementById('amisGroupsLink').addEventListener('click', goToGroups);
+document.getElementById('amisListsLink').addEventListener('click', goToLists);
 
 // --- Profil d'un ami (lecture seule : catalogue + stats) ---
 // Les films sont lus directement depuis Supabase (pas depuis `films`, qui

@@ -13,6 +13,11 @@ dois prendre. Tout le reste est fait dans le code, poussé sur `main`.
       directement sur la fiche film (get_film_friend_ratings()). Tant qu'elle
       n'est pas appliquée, le bloc "Amis" de la fiche film reste silencieux
       (vide), pas de plantage.
+- [ ] `supabase/migrations/058_add_lists.sql` : Listes thématiques partageables
+      (3 nouvelles tables + get_friends_lists()) — nouvelle page #/listes,
+      accès depuis la page Amis. Tant qu'elle n'est pas appliquée, la page
+      Listes affiche une erreur de chargement (tables inexistantes) mais le
+      reste de l'app n'est pas affecté.
 - [ ] `supabase/migrations/048_tcg_pity.sql` : garantie d'une Légendaire après
       N boosters sans elle (pity system). Vérifiée sur base simulée.
 - [ ] `supabase/migrations/049_draft_classement_amis.sql` : BROUILLON. Classement

@@ -34,7 +34,7 @@
 // le reste, et js/auth.js → initAuth() qui la laisse passer avant même de
 // vérifier la session Supabase.
 
-const PAGE_IDS = ['appContainer', 'groupsListPage', 'groupDetailPage', 'proposalDetailPage', 'watchlistPage', 'seriesPage', 'seriesDetailPage', 'upcomingPage', 'amisPage', 'topPage', 'publicProfilePage', 'invitePage', 'filmDetailPage'];
+const PAGE_IDS = ['appContainer', 'groupsListPage', 'groupDetailPage', 'proposalDetailPage', 'watchlistPage', 'seriesPage', 'seriesDetailPage', 'upcomingPage', 'amisPage', 'topPage', 'publicProfilePage', 'invitePage', 'filmDetailPage', 'listsPage', 'listDetailPage'];
 
 // null cache tout (utile pour l'écran de connexion / maintenance, qui gère
 // sa propre visibilité par ailleurs).
@@ -81,7 +81,7 @@ function updateMobileTabbar(routeName){
     mobileTabHome: homeActive,
     mobileTabWatchlist: routeName === 'watchlist',
     mobileTabUpcoming: routeName === 'upcoming',
-    mobileTabFriends: routeName === 'amis' || routeName === 'groupsList' || routeName === 'groupDetail' || routeName === 'proposalDetail'
+    mobileTabFriends: routeName === 'amis' || routeName === 'groupsList' || routeName === 'groupDetail' || routeName === 'proposalDetail' || routeName === 'listsList' || routeName === 'listDetail'
   };
   Object.keys(map).forEach(id => {
     document.getElementById(id).classList.toggle('active', map[id]);
@@ -108,6 +108,12 @@ function goHome(){
   if(parseRoute().name === 'home'){ resetHomeView(); return; }
   location.hash = '';
 }
+// Listes thématiques (retour utilisateur, étude comparative Letterboxd :
+// "Movies everyone should watch once") — même raisonnement que Groupes
+// juste en dessous : accès depuis la page Amis plutôt qu'une icône dédiée
+// dans l'entête, voir js/lists.js.
+function goToLists(){ location.hash = '#/listes'; }
+function goToListDetail(listId){ location.hash = `#/listes/${listId}`; }
 function goToGroups(){ location.hash = '#/groupes'; }
 function goToGroup(groupId){ location.hash = `#/groupes/${groupId}`; }
 function goToProposal(groupId, proposalId){ location.hash = `#/groupes/${groupId}/propositions/${proposalId}`; }
@@ -160,6 +166,12 @@ function parseRoute(){
   if(parts[0] === 'top' && parts.length === 1) return { name: 'top' };
   if(parts[0] === 'u' && parts.length === 2) return { name: 'publicProfile', userId: parts[1] };
   if(parts[0] === 'invite' && parts.length === 2) return { name: 'invite', token: parts[1] };
+  if(parts[0] === 'listes'){
+    if(parts.length === 1) return { name: 'listsList' };
+    const listId = parseInt(parts[1], 10);
+    if(parts.length === 2 && Number.isFinite(listId)) return { name: 'listDetail', listId };
+    return { name: 'home' };
+  }
   if(parts[0] !== 'groupes') return { name: 'home' };
   if(parts.length === 1) return { name: 'groupsList' };
   const groupId = parseInt(parts[1], 10);
@@ -249,6 +261,12 @@ async function renderRoute(){
   }else if(route.name === 'proposalDetail'){
     showOnlyPage('proposalDetailPage');
     await openProposalDetailRoute(route.groupId, route.proposalId);
+  }else if(route.name === 'listsList'){
+    showOnlyPage('listsPage');
+    await openLists();
+  }else if(route.name === 'listDetail'){
+    showOnlyPage('listDetailPage');
+    await openListDetail(route.listId);
   }
 }
 

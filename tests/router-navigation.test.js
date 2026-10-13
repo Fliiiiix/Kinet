@@ -43,6 +43,10 @@ function buildContext(initialHash){
     ['#/groupes', 'groupsList'],
     ['#/groupes/12', 'groupDetail'],
     ['#/groupes/12/propositions/3', 'proposalDetail'],
+    ['#/listes', 'listsList'],
+    ['#/listes/7', 'listDetail'],
+    ['#/listes/abc', 'home'],       // id non numérique -> repli home
+    ['#/listes/7/extra', 'home'],   // segment en trop -> repli home
     ['#/n-importe-quoi', 'home'],   // route inconnue -> repli home
   ];
   for(const [hash, expected] of cases){
