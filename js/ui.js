@@ -334,11 +334,22 @@ function getTheme(){
   catch(e){ return 'dark'; }
 }
 
+// Couleurs de <meta name="theme-color"> (barre de statut/chrome du
+// navigateur) pour chaque thème — doivent matcher --ink/--surface (voir
+// css/style.css), la couleur tout en haut de la page, pas une couleur de
+// marque. Audit design (skill mobile-native) : le thème de Kinet est un
+// choix manuel en appareil (pas prefers-color-scheme), donc une seule
+// balise <meta> statique ne suivait jamais le bouton clair/sombre — figée
+// sur le sombre même une fois passé en thème clair.
+const THEME_COLOR = { dark: '#0f0e16', light: '#fbfaff' };
+
 function setTheme(theme){
   document.documentElement.dataset.theme = theme;
   try{ localStorage.setItem('kinetTheme', theme); }catch(e){}
   const toggle = document.getElementById('lightThemeToggle');
   if(toggle) toggle.checked = theme === 'light';
+  const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+  if(themeColorMeta) themeColorMeta.setAttribute('content', THEME_COLOR[theme] || THEME_COLOR.dark);
 }
 
 setTheme(getTheme());

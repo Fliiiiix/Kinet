@@ -216,6 +216,24 @@ html.reduce-motion *, html.reduce-motion *::before, html.reduce-motion *::after{
    des deux. */
 html.scroll-locked, html.scroll-locked body{overflow:hidden;}
 
+/* Base "se sent installée, pas juste ouverte dans un onglet" (audit design,
+   skill mobile-native) — chacune de ces lignes corrige un signal précis
+   qui trahit un site web plutôt qu'une app :
+   - tap-highlight : le flash gris/bleu qu'iOS/Android posent sur tout élément
+     cliquable au toucher, jamais vu dans une vraie app, jamais désactivé
+     ici avant — chaque élément tactile a déjà son propre retour (:active,
+     voir .btn plus bas), inutile de garder celui du navigateur par-dessus.
+   - overscroll-behavior:none sur html/body : empêche le rebond natif du
+     navigateur ET le pull-to-refresh natif d'Android Chrome de se
+     déclencher EN PLUS du geste tirer-pour-rafraîchir déjà posé à la main
+     (js/ui.js) — sans ça, les deux peuvent se chevaucher. */
+html{
+  -webkit-tap-highlight-color:transparent;
+  -webkit-text-size-adjust:100%;
+  overscroll-behavior:none;
+}
+body{overscroll-behavior:none;}
+
 body{
   background:
     radial-gradient(1100px 800px at 8% -12%, rgba(140,124,255,0.28), transparent 55%),
@@ -229,7 +247,13 @@ body{
   animation:auroraDrift 55s ease-in-out infinite alternate;
   color:var(--text);
   font-family:'Instrument Sans', sans-serif;
+  /* 100vh = la plus GRANDE hauteur de viewport mobile (barre d'adresse
+     masquée) — au premier affichage, cette barre est visible, donc 100vh
+     dépasse la zone réellement visible (audit design, skill mobile-native).
+     100dvh suit la zone visible en direct ; 100vh reste en repli pour les
+     navigateurs qui ne connaissent pas encore dvh. */
   min-height:100vh;
+  min-height:100dvh;
   padding:0 0 80px 0;
   position:relative;
 }
@@ -903,15 +927,35 @@ h1{
 @media (prefers-reduced-motion:reduce){
   .pull-refresh-indicator.loading{animation:none;}
 }
-input[type="text"], input[type="email"], input[type="number"], select, textarea{
+/* type="date" ajouté ici (audit design, skill mobile-native) — même raison
+   que font-size ci-dessous : sans lui dans cette liste, le seul champ date
+   de l'app (viewingDateInput, revisionnage) héritait de la taille par
+   défaut du navigateur, sous le seuil zoom iOS comme les autres avant
+   correction. */
+input[type="text"], input[type="email"], input[type="number"], input[type="date"], select, textarea{
   background:var(--surface);
   border:1px solid var(--line);
   color:var(--text);
   font-family:'Instrument Sans', sans-serif;
-  font-size:14px;
+  /* 16px minimum (audit design, skill mobile-native) — en dessous, iOS
+     Safari zoome automatiquement la page au focus d'un champ et NE
+     DÉZOOME PAS tout seul au blur : la vue reste recadrée tant que la
+     personne ne pince pas pour revenir en arrière. Touchait LITTÉRALEMENT
+     chaque champ de texte de toute l'app (recherche, email de connexion,
+     titre de film, commentaire...) — repli à 14px gardé pour la souris/le
+     clavier physique (voir @media (pointer:coarse) juste en dessous). */
+  font-size:16px;
   padding:10px 12px;
   border-radius:8px;
   outline:none;
+}
+/* Desktop (souris/clavier précis, jamais de zoom tactile à éviter) :
+   repli sur la taille d'origine, plus cohérente avec le reste de
+   l'interface à cette échelle — seul le tactile exige 16px. */
+@media (pointer:fine){
+  input[type="text"], input[type="email"], input[type="number"], input[type="date"], select, textarea{
+    font-size:14px;
+  }
 }
 input[type="text"]{flex:1; min-width:180px;}
 /* input[type="email"] manquait ici (v2.1, retour utilisateur) : sans lui
@@ -962,6 +1006,16 @@ input[type="file"]::file-selector-button:hover{color:var(--text); border-color:v
   font-weight:600;
   white-space:nowrap;
   transition:background .15s, transform .1s, box-shadow .2s;
+  /* Audit design, skill mobile-native : touch-action supprime le délai de
+     300ms que certains navigateurs tactiles gardent avant de déclencher le
+     clic (ils attendent de voir si un 2e tap arrive, pour le zoom
+     double-tap — inutile ici, aucun bouton n'a besoin de ce geste).
+     user-select évite qu'un appui un peu long sélectionne le texte du
+     bouton au lieu de l'activer — jamais posé sur du texte de CONTENU
+     (résumé, commentaire...), seulement sur un contrôle. */
+  touch-action:manipulation;
+  user-select:none;
+  -webkit-user-select:none;
 }
 /* v2.9, "Halation" : un vrai halo au survol, pas juste un changement de
    teinte — la lueur qu'un point actif dégage, voir la section Le style de

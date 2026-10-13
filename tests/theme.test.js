@@ -61,4 +61,40 @@ test('setTheme() : appelée automatiquement au chargement avec la préférence d
   assert.strictEqual(toggle.checked, true);
 });
 
+// Audit design (skill mobile-native) : la barre de statut/chrome du
+// navigateur suit <meta name="theme-color">, qui restait figée sur le
+// sombre même après être passé en thème clair (une seule balise statique,
+// jamais mise à jour) — voir THEME_COLOR, js/ui.js.
+// getAttribute/setAttribute du stub par défaut sont des no-op (renvoient
+// toujours null, voir tests/README.md) — un vrai stockage est nécessaire
+// ici pour vérifier la valeur posée par setTheme().
+function stubMetaWithRealAttributes(){
+  const attrs = {};
+  return stubElement({
+    setAttribute: (name, value) => { attrs[name] = value; },
+    getAttribute: (name) => (name in attrs ? attrs[name] : null),
+  });
+}
+
+test('setTheme() : met à jour <meta name="theme-color"> avec la couleur du thème actif', () => {
+  const toggle = stubElement({ checked: false });
+  const html = stubElement();
+  const metaThemeColor = stubMetaWithRealAttributes();
+  const doc = stubDocument({ lightThemeToggle: toggle });
+  doc.documentElement = html;
+  doc.querySelector = (sel) => (sel === 'meta[name="theme-color"]' ? metaThemeColor : null);
+  const ctx = createContext({ document: doc, localStorage: fakeLocalStorage() });
+  loadFiles(ctx, ['js/ui.js']);
+
+  ctx.setTheme('light');
+  assert.strictEqual(metaThemeColor.getAttribute('content'), '#fbfaff');
+  ctx.setTheme('dark');
+  assert.strictEqual(metaThemeColor.getAttribute('content'), '#0f0e16');
+});
+
+test('setTheme() : balise <meta name="theme-color"> absente du DOM -> ne plante pas (repli défensif)', () => {
+  const { ctx } = buildContext(); // querySelector() par défaut renvoie null, voir tests/README.md
+  assert.doesNotThrow(() => ctx.setTheme('light'));
+});
+
 module.exports = run('theme.test.js');
