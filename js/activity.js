@@ -13,7 +13,11 @@ const ACTIVITY_ICON = {
   proposal_commented: '💬',
   proposal_chosen: '🎟️',
   group_joined: '👋',
-  film_rated: '⭐'
+  film_rated: '⭐',
+  // Flux amis élargi (retour utilisateur, étude comparative Strava/Goodreads
+  // — un flux social mélange plusieurs types d'événements), migrations/060.
+  watchlist_added: '🔖',
+  list_created: '📋'
 };
 
 function rowToActivityEvent(row){
@@ -73,6 +77,8 @@ function activityEventLabel(e){
     case 'proposal_chosen': return `${name} a élu « ${e.targetLabel} » comme prochaine séance`;
     case 'group_joined': return `${name} a rejoint le groupe`;
     case 'film_rated': return `${name} a noté « ${e.targetLabel} »${e.targetNote != null ? ` ${e.targetNote}/5` : ''}`;
+    case 'watchlist_added': return `${name} a ajouté « ${e.targetLabel} » à sa watchlist`;
+    case 'list_created': return `${name} a créé la liste « ${e.targetLabel} »`;
     default: return name;
   }
 }

@@ -22,6 +22,11 @@ dois prendre. Tout le reste est fait dans le code, poussé sur `main`.
       de répartition des notes sur la fiche film (get_film_note_distribution()).
       Tant qu'elle n'est pas appliquée, la moyenne reste affichée normalement,
       seul l'histogramme est absent.
+- [ ] `supabase/migrations/060_widen_friend_activity.sql` : flux d'activité
+      amis élargi (watchlist_added + list_created, en plus de film_rated).
+      À appliquer APRÈS 058 (le trigger list_created a besoin de la table
+      `lists`). Sans elle, le fil continue de fonctionner comme avant,
+      juste sans ces deux nouveaux types d'événements.
 - [ ] `supabase/migrations/048_tcg_pity.sql` : garantie d'une Légendaire après
       N boosters sans elle (pity system). Vérifiée sur base simulée.
 - [ ] `supabase/migrations/049_draft_classement_amis.sql` : BROUILLON. Classement
