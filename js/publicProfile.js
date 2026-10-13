@@ -92,8 +92,9 @@ async function renderPublicProfilePage(userId){
     </div>
   `;
 
+  const navList = topFilms.map(f => ({ tmdbId: f.tmdb_id, title: f.title }));
   content.querySelectorAll('.top-films-showcase-item[data-tmdb-id]').forEach(item => {
-    makeRowClickable(item, () => goToFilmDetail(parseInt(item.dataset.tmdbId, 10)));
+    makeRowClickable(item, () => goToFilmDetail(parseInt(item.dataset.tmdbId, 10), navList));
   });
 }
 

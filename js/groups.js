@@ -303,8 +303,9 @@ function renderGroupTopFilms(films){
   // communautaire (js/filmDetail.js), pas openFilmReviewDetail() : on n'a
   // ici qu'un agrégat (avg_note/rating_count), jamais le détail par
   // critère d'un film précis.
+  const navList = films.map(f => ({ tmdbId: f.tmdb_id, title: f.title }));
   wrap.querySelectorAll('[data-tmdb-id]').forEach(row => {
-    makeRowClickable(row, () => goToFilmDetail(parseInt(row.dataset.tmdbId, 10)));
+    makeRowClickable(row, () => goToFilmDetail(parseInt(row.dataset.tmdbId, 10), navList));
   });
 }
 
@@ -342,8 +343,9 @@ function renderGroupTasteComparison(rows){
   // Même fiche communautaire que "Goûts du groupe" ci-dessus, pas
   // openFilmReviewDetail() (avg_note/notes ici, jamais le détail par
   // critère d'un film précis).
+  const navList = rows.map(f => ({ tmdbId: f.tmdb_id, title: f.title }));
   wrap.querySelectorAll('[data-tmdb-id]').forEach(row => {
-    makeRowClickable(row, () => goToFilmDetail(parseInt(row.dataset.tmdbId, 10)));
+    makeRowClickable(row, () => goToFilmDetail(parseInt(row.dataset.tmdbId, 10), navList));
   });
 }
 

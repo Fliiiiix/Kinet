@@ -5203,6 +5203,40 @@ body[data-view-mode="list"] #topList .top-rank{width:26px; font-size:16px;}
   .detail-backdrop{height:140px; border-radius:12px; margin-bottom:20px;}
 }
 
+/* Flèches "film/série d'à côté" (retour utilisateur : "vu qu'on a de
+   l'espace... j'aimerais naviguer à ceux d'à côté"). Position fixe, pas
+   liée à la banderole (qui peut être masquée) : flottent au bord de
+   l'écran, toujours au même endroit pendant le défilement. */
+.detail-nav-arrow{
+  position:fixed;
+  top:50%;
+  transform:translateY(-50%);
+  z-index:40;
+  width:44px; height:44px;
+  border-radius:50%;
+  border:1px solid var(--line);
+  background:var(--surface-2);
+  color:var(--text);
+  font-size:24px;
+  line-height:1;
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer;
+  box-shadow:0 4px 14px rgba(0,0,0,0.25);
+  transition:background 0.15s ease, transform 0.15s ease, border-color 0.15s ease;
+}
+.detail-nav-arrow:hover{background:var(--surface-3); border-color:var(--violet-dim); transform:translateY(-50%) scale(1.08);}
+.detail-nav-arrow:focus-visible{outline:2px solid var(--violet-dim); outline-offset:2px;}
+.detail-nav-prev{left:12px;}
+.detail-nav-next{right:12px;}
+@media (max-width:600px){
+  .detail-nav-arrow{width:36px; height:36px; font-size:20px;}
+  .detail-nav-prev{left:6px;}
+  .detail-nav-next{right:6px;}
+}
+@media (prefers-reduced-motion:reduce){
+  .detail-nav-arrow{transition:none;}
+}
+
 .series-hero{
   display:grid;
   grid-template-columns:180px 1fr;

@@ -15,6 +15,14 @@
 
 let currentFilmTmdbId = null;
 let currentFilmData = null;    // forme tmdbSelected : {tmdb_id, title, poster_url, overview, release_year, original_title, genre_ids}
+// Navigation flèche gauche/droite vers le film d'à côté (retour
+// utilisateur : "vu qu'on a de l'espace... j'aimerais pouvoir naviguer à
+// ceux d'à côté") — capturée depuis pendingFilmNavList (js/router.js) à
+// l'ouverture de CETTE fiche précise, jamais gardée au-delà : une fiche
+// ouverte sans liste d'origine (lien direct, F5) n'a tout simplement pas
+// de flèches, plutôt que d'en proposer qui ne mèneraient nulle part.
+let filmNavList = null;  // [{ tmdbId, title }] ou null
+let filmNavIndex = -1;
 let filmDetailLikes = [];      // [{ id, userId }]
 let filmDetailComments = [];   // [{ id, userId, body, createdAt }]
 // Réactions rapides sur une critique d'ami (retour utilisateur, migration
@@ -413,8 +421,42 @@ async function renderFilmDetailCast(tmdbId){
   }
 }
 
+// Capture la liste "d'à côté" depuis router.js (si on vient d'une liste
+// qui en a posé une) et met à jour les deux flèches en conséquence —
+// séparée d'openFilmDetail() pour rester appelable seule par les tests.
+function setFilmNavFromPending(tmdbId){
+  filmNavList = (typeof pendingFilmNavList !== 'undefined' && pendingFilmNavList) || null;
+  if(typeof pendingFilmNavList !== 'undefined') pendingFilmNavList = null;
+  filmNavIndex = filmNavList ? filmNavList.findIndex(f => f.tmdbId === tmdbId) : -1;
+  renderFilmNavArrows();
+}
+
+function renderFilmNavArrows(){
+  const prevBtn = document.getElementById('filmDetailPrevBtn');
+  const nextBtn = document.getElementById('filmDetailNextBtn');
+  if(!prevBtn || !nextBtn) return;
+  const hasPrev = filmNavIndex > 0;
+  const hasNext = filmNavIndex >= 0 && filmNavIndex < filmNavList.length - 1;
+  prevBtn.style.display = hasPrev ? '' : 'none';
+  nextBtn.style.display = hasNext ? '' : 'none';
+  prevBtn.title = hasPrev ? `Film précédent : ${filmNavList[filmNavIndex - 1].title}` : '';
+  prevBtn.setAttribute('aria-label', prevBtn.title || 'Film précédent');
+  nextBtn.title = hasNext ? `Film suivant : ${filmNavList[filmNavIndex + 1].title}` : '';
+  nextBtn.setAttribute('aria-label', nextBtn.title || 'Film suivant');
+}
+
+function goFilmNav(delta){
+  if(!filmNavList) return;
+  const cible = filmNavList[filmNavIndex + delta];
+  if(!cible) return;
+  // Repasse la MÊME liste : on reste dedans tant qu'on avance flèche après
+  // flèche, jusqu'à en sortir (ouvrir un film depuis ailleurs la remplace).
+  goToFilmDetail(cible.tmdbId, filmNavList);
+}
+
 async function openFilmDetail(tmdbId){
   currentFilmTmdbId = tmdbId;
+  setFilmNavFromPending(tmdbId);
   document.getElementById('filmDetailTitle').textContent = 'Chargement…';
   document.getElementById('filmDetailBackdrop').style.display = 'none';
   document.getElementById('filmDetailOverview').textContent = '';
@@ -449,6 +491,8 @@ async function openFilmDetail(tmdbId){
 }
 
 document.getElementById('filmDetailBack').addEventListener('click', goHome);
+document.getElementById('filmDetailPrevBtn').addEventListener('click', () => goFilmNav(-1));
+document.getElementById('filmDetailNextBtn').addEventListener('click', () => goFilmNav(1));
 document.getElementById('filmDetailRateBtn').addEventListener('click', handleFilmDetailRate);
 {
   const filmDetailWatchlistBtn = document.getElementById('filmDetailWatchlistBtn');

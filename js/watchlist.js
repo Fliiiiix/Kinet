@@ -108,6 +108,7 @@ function renderWatchlist(){
     return;
   }
   list.innerHTML = '';
+  const navList = filtered.filter(item => item.tmdbId).map(item => ({ tmdbId: item.tmdbId, title: item.title }));
   filtered.forEach(item => {
     const row = document.createElement('div');
     row.className = 'wl-row';
@@ -158,7 +159,7 @@ function renderWatchlist(){
       row.classList.add('wl-row-clickable');
       makeRowClickable(row, (e) => {
         if(e.target.closest('.wl-actions, .wl-quick-form')) return;
-        goToFilmDetail(item.tmdbId);
+        goToFilmDetail(item.tmdbId, navList);
       });
     }
     list.appendChild(row);

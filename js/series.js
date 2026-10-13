@@ -19,6 +19,12 @@ let maxEpisodeTimesWatched = 0; // le plus grand times_watched vu sur UN SEUL é
 let notedEpisodeCount = 0;      // nombre total d'épisodes ayant une note (note IS NOT NULL)
 let seriesTmdbSelected = null; // { tmdb_id, poster_url, overview, release_year, title, original_title }
 
+// Série précédente/suivante dans la liste d'où l'on vient (retour
+// utilisateur : "vu qu'on a de l'espace... j'aimerais naviguer à ceux
+// d'à côté") — même principe que filmNavList/filmNavIndex, js/filmDetail.js.
+let showNavList = null;  // [{ id, title }] ou null
+let showNavIndex = -1;
+
 let currentShowId = null;       // série affichée sur #seriesDetailPage
 let currentShowSeasons = [];    // [{ season_number, name, episode_count, air_date }], depuis fetchTvDetails()
 let watchedEpisodeSet = new Set(); // "saison-episode" vus, pour la série actuellement ouverte
@@ -178,8 +184,9 @@ function renderTrackedShows(){
       </div>
     `;
   }).join('');
+  const navList = trackedShows.map(s => ({ id: s.id, title: s.title }));
   list.querySelectorAll('.wl-row[data-id]').forEach(row => {
-    makeRowClickable(row, () => goToSeriesDetail(parseInt(row.dataset.id, 10)));
+    makeRowClickable(row, () => goToSeriesDetail(parseInt(row.dataset.id, 10), navList));
   });
 }
 
@@ -915,6 +922,37 @@ async function renderShowDetailWatchProviders(tmdbId){
   }
 }
 
+// setShowNavFromPending()/renderShowNavArrows()/goShowNav() : même principe
+// que setFilmNavFromPending() etc., js/filmDetail.js — voir pendingShowNavList,
+// js/router.js.
+function setShowNavFromPending(showId){
+  showNavList = (typeof pendingShowNavList !== 'undefined' && pendingShowNavList) || null;
+  if(typeof pendingShowNavList !== 'undefined') pendingShowNavList = null;
+  showNavIndex = showNavList ? showNavList.findIndex(s => s.id === showId) : -1;
+  renderShowNavArrows();
+}
+
+function renderShowNavArrows(){
+  const prevBtn = document.getElementById('seriesDetailPrevBtn');
+  const nextBtn = document.getElementById('seriesDetailNextBtn');
+  if(!prevBtn || !nextBtn) return;
+  const hasPrev = showNavIndex > 0;
+  const hasNext = showNavIndex >= 0 && showNavIndex < showNavList.length - 1;
+  prevBtn.style.display = hasPrev ? '' : 'none';
+  nextBtn.style.display = hasNext ? '' : 'none';
+  prevBtn.title = hasPrev ? `Série précédente : ${showNavList[showNavIndex - 1].title}` : '';
+  prevBtn.setAttribute('aria-label', prevBtn.title || 'Série précédente');
+  nextBtn.title = hasNext ? `Série suivante : ${showNavList[showNavIndex + 1].title}` : '';
+  nextBtn.setAttribute('aria-label', nextBtn.title || 'Série suivante');
+}
+
+function goShowNav(delta){
+  if(!showNavList) return;
+  const cible = showNavList[showNavIndex + delta];
+  if(!cible) return;
+  goToSeriesDetail(cible.id, showNavList);
+}
+
 // Page détail d'une série — appelée par le routeur (#/series/:id). Robuste
 // à un lien direct (F5) : recharge la liste des séries si besoin, comme
 // openGroupDetail() (js/groups.js).
@@ -927,6 +965,7 @@ async function openShowDetail(showId){
     return;
   }
   currentShowId = showId;
+  setShowNavFromPending(showId);
   currentShowSeasons = [];
   // Cache par série (voir seasonUiCache plus haut) : garde les saisons
   // dépliées et déjà téléchargées d'une visite à l'autre de CETTE série,
@@ -958,6 +997,8 @@ async function openShowDetail(showId){
 }
 
 document.getElementById('seriesDetailBack').addEventListener('click', goToSeries);
+document.getElementById('seriesDetailPrevBtn').addEventListener('click', () => goShowNav(-1));
+document.getElementById('seriesDetailNextBtn').addEventListener('click', () => goShowNav(1));
 document.getElementById('seriesSaveNoteBtn').addEventListener('click', handleSaveSeriesNote);
 document.getElementById('seriesNoteSlider').addEventListener('input', (e) => {
   document.getElementById('seriesNoteVal').textContent = parseFloat(e.target.value).toFixed(2);

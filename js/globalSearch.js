@@ -186,14 +186,16 @@ function performGlobalSearch(rawQuery){
   // ci-dessus (même ordre que le DOM généré) plutôt que d'essayer de
   // retrouver l'item correspondant à un clic après coup.
   const rows = Array.from(resultsEl.querySelectorAll('.global-search-row'));
+  const filmNavList = filmMatches.filter(f => f.tmdbId).map(f => ({ tmdbId: f.tmdbId, title: f.title }));
+  const showNavListSearch = showMatches.map(s => ({ id: s.id, title: s.title }));
   const clickTargets = [
     ...filmMatches.map(f => () => {
       closeOverlay('globalSearchOverlay', () => {
-        if(f.tmdbId) goToFilmDetail(f.tmdbId);
+        if(f.tmdbId) goToFilmDetail(f.tmdbId, filmNavList);
         else openModal(f.id);
       });
     }),
-    ...showMatches.map(s => () => closeOverlay('globalSearchOverlay', () => goToSeriesDetail(s.id))),
+    ...showMatches.map(s => () => closeOverlay('globalSearchOverlay', () => goToSeriesDetail(s.id, showNavListSearch))),
     ...friendMatches.map(userId => () => closeOverlay('globalSearchOverlay', () => openFriendProfile(userId))),
     ...groupMatches.map(g => () => closeOverlay('globalSearchOverlay', () => goToGroup(g.id)))
   ];

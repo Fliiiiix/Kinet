@@ -208,8 +208,20 @@ function renderUpcomingCalendar(){
   // : ces mini-affiches cliquables (audit accessibilité) étaient inatteignables
   // au clavier — ni tabindex, ni activation par Entrée/Espace, alors que
   // c'est la seule action possible sur une case du calendrier.
+  // Navigation "série d'à côté" : les séries du mois affiché, dans l'ordre
+  // où elles apparaissent dans le calendrier (déjà trié par date de
+  // diffusion, voir le tri de soonItems plus haut), sans doublon pour une
+  // série ayant plusieurs épisodes ce mois-ci.
+  const monthShowIds = new Set();
+  const navList = [];
+  Object.values(byDay).flat().forEach(item => {
+    if(item.type === 'episode' && !monthShowIds.has(item.showId)){
+      monthShowIds.add(item.showId);
+      navList.push({ id: item.showId, title: item.title });
+    }
+  });
   wrap.querySelectorAll('[data-cal-show]').forEach(el => {
-    makeRowClickable(el, () => goToSeriesDetail(parseInt(el.dataset.calShow, 10)));
+    makeRowClickable(el, () => goToSeriesDetail(parseInt(el.dataset.calShow, 10), navList));
   });
 }
 
@@ -237,8 +249,9 @@ function renderUpcoming(){
   endedEl.innerHTML = upcomingEndedShows.length === 0
     ? `<div class="empty-state">Aucune série terminée parmi celles que tu suis.</div>`
     : upcomingEndedShows.map(upcomingEndedRowHtml).join('');
+  const endedNavList = upcomingEndedShows.map(s => ({ id: s.id, title: s.title }));
   endedEl.querySelectorAll('button[data-id]').forEach(btn => {
-    btn.addEventListener('click', () => goToSeriesDetail(parseInt(btn.dataset.id, 10)));
+    btn.addEventListener('click', () => goToSeriesDetail(parseInt(btn.dataset.id, 10), endedNavList));
   });
 }
 

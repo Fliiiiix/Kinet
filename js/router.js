@@ -113,7 +113,17 @@ function goToGroup(groupId){ location.hash = `#/groupes/${groupId}`; }
 function goToProposal(groupId, proposalId){ location.hash = `#/groupes/${groupId}/propositions/${proposalId}`; }
 function goToWatchlist(){ location.hash = '#/watchlist'; }
 function goToSeries(){ location.hash = '#/series'; }
-function goToSeriesDetail(showId){ location.hash = `#/series/${showId}`; }
+// pendingShowNavList : liste "d'à côté" (retour utilisateur : "je veux
+// pouvoir naviguer à ceux d'à côté"), dans l'ordre affiché sur la liste
+// d'où on vient — consommée UNE SEULE FOIS par openShowDetail() au
+// prochain routage (voir js/series.js), jamais gardée au-delà : un lien
+// direct ou F5 sur #/series/:id n'a pas de "liste d'à côté", les flèches
+// sont alors simplement absentes plutôt que de pointer n'importe où.
+let pendingShowNavList = null; // [{ id, title }] ou null
+function goToSeriesDetail(showId, navList){
+  pendingShowNavList = Array.isArray(navList) ? navList : null;
+  location.hash = `#/series/${showId}`;
+}
 function goToUpcoming(){ location.hash = '#/prochainement'; }
 function goToAmis(){ location.hash = '#/amis'; }
 function goToTop(){ location.hash = '#/top'; }
@@ -122,7 +132,13 @@ function goToPublicProfile(userId){ location.hash = `#/u/${userId}`; }
 // ferme jamais tout seul une modale déjà ouverte (profil d'ami...) : à
 // chaque site d'appel de fermer la sienne avant de naviguer ici, sinon
 // elle resterait visuellement par-dessus la nouvelle page.
-function goToFilmDetail(tmdbId){ location.hash = `#/film/${tmdbId}`; }
+// pendingFilmNavList : même principe que pendingShowNavList ci-dessus,
+// pour les films — voir openFilmDetail(), js/filmDetail.js.
+let pendingFilmNavList = null; // [{ tmdbId, title }] ou null
+function goToFilmDetail(tmdbId, navList){
+  pendingFilmNavList = Array.isArray(navList) ? navList : null;
+  location.hash = `#/film/${tmdbId}`;
+}
 
 function parseRoute(){
   const hash = location.hash.replace(/^#\/?/, '');

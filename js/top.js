@@ -48,8 +48,9 @@ function renderTopFilms(){
     </div>
   `).join('');
   // Fiche film (v2.1, retour utilisateur) — voir js/filmDetail.js.
+  const navList = topFilms.map(f => ({ tmdbId: f.tmdb_id, title: f.title }));
   list.querySelectorAll('[data-tmdb-id]').forEach(row => {
-    makeRowClickable(row, () => goToFilmDetail(parseInt(row.dataset.tmdbId, 10)));
+    makeRowClickable(row, () => goToFilmDetail(parseInt(row.dataset.tmdbId, 10), navList));
   });
 }
 

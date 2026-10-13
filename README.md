@@ -857,6 +857,28 @@ interprété — réutilise `fetchMovieCredits()` (`js/tcg.js`, déjà appelée
 pour générer les cartes à collectionner) plutôt qu'un 2e appel réseau
 équivalent.
 
+**Navigation vers le film/la série d'à côté** (retour utilisateur : "vu
+qu'on a de l'espace... j'aimerais pouvoir naviguer à ceux d'à côté" —
+exemple donné : depuis Arrival, flèche gauche vers Paprika, flèche droite
+vers "Que justice soit faite") : deux flèches flottantes (`.detail-nav-
+arrow`, position fixe au bord de l'écran, verticalement centrées) sur
+`#/film/:tmdbId` et `#/series/:id`, qui font défiler la liste **d'où l'on
+vient** — Top films, catalogue d'un ami, "Films en commun", goûts d'un
+groupe, watchlist, calendrier/séries terminées, série suivie, recherche
+globale. Jamais la vue "canonique" d'un film/série (il n'y en a pas : un
+même titre apparaît dans des listes différentes selon d'où on clique).
+Fonctionnement (`goToFilmDetail()`/`goToSeriesDetail()`, `js/router.js`) :
+la page d'origine passe sa liste affichée (`[{tmdbId, title}]` ou
+`[{id, title}]`) juste avant de changer le hash, posée dans une variable
+`pending*NavList` module-level ; la page de destination la consomme une
+seule fois à l'ouverture (`setFilmNavFromPending()`/
+`setShowNavFromPending()`) et la vide tout de suite après — un lien direct
+ou un F5 sur la fiche n'a donc tout simplement pas de flèches plutôt que
+d'en proposer qui ne mèneraient nulle part. Avancer flèche après flèche
+reste dans la même liste (elle est retransmise telle quelle à chaque
+clic) ; les flèches de bout de liste se masquent automatiquement (pas de
+retour en boucle sur le premier/dernier élément).
+
 ## Où regarder (disponibilité VOD/SVOD)
 
 Sur la fiche film communautaire (`#/film/:tmdbId`) et la fiche d'une série

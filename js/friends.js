@@ -463,8 +463,9 @@ function renderFriendRecommendations(films){
       `).join('');
   // Fiche film (retour utilisateur, audit) — voir le même commentaire dans
   // renderGroupTopFilms(), js/groups.js.
+  const navList = films.map(f => ({ tmdbId: f.tmdb_id, title: f.title }));
   wrap.querySelectorAll('[data-tmdb-id]').forEach(row => {
-    makeRowClickable(row, () => goToFilmDetail(parseInt(row.dataset.tmdbId, 10)));
+    makeRowClickable(row, () => goToFilmDetail(parseInt(row.dataset.tmdbId, 10), navList));
   });
 }
 
@@ -586,8 +587,9 @@ async function openFriendProfile(userId){
       </div>
     `;
     content.appendChild(topWrap);
+    const topNavList = friendTopFilms.map(f => ({ tmdbId: f.tmdbId, title: f.title }));
     topWrap.querySelectorAll('.top-films-showcase-item[data-tmdb-id]').forEach(item => {
-      makeRowClickable(item, () => goToFilmDetail(parseInt(item.dataset.tmdbId, 10)));
+      makeRowClickable(item, () => goToFilmDetail(parseInt(item.dataset.tmdbId, 10), topNavList));
     });
   }
 
@@ -650,8 +652,9 @@ async function openFriendProfile(userId){
           </div>
         </div>
       `, { previewCount: 6 });
+      const commonNavList = commonFilms.map(f => ({ tmdbId: f.tmdbId, title: f.title }));
       commonWrap.querySelectorAll('[data-tmdb-id]').forEach(row => {
-        makeRowClickable(row, () => goToFilmDetail(parseInt(row.dataset.tmdbId, 10)));
+        makeRowClickable(row, () => goToFilmDetail(parseInt(row.dataset.tmdbId, 10), commonNavList));
       });
     }
   }
