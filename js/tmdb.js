@@ -251,65 +251,59 @@ function pourcentageFocusDepuisEnergie(energieParLigne){
   return Math.round(Math.min(0.85, Math.max(0.15, fraction)) * 100);
 }
 
-// L'ORDRE compte, vérifié en conditions réelles (pas juste en théorie) :
-// une fois une URL mise en cache par le navigateur SANS CORS (un chargement
-// normal), une 2e requête CORS vers cette MÊME url échoue, même des
-// secondes après et même sans aucune collision — un simple effet du cache
-// HTTP. Dans l'autre sens (CORS d'abord, affichage normal ensuite), les
-// deux réussissent systématiquement. L'analyse tourne donc TOUJOURS avant
-// l'affichage, sur une image séparée jamais insérée dans la page — et dans
-// tous les cas (succès, échec, ou un calcul qui traîne), l'affichage suit,
-// jamais retardé de plus d'1,2 s : jamais plus d'attente qu'un chargement
-// d'image normal n'en aurait de toute façon pris.
-//
-// backdropJeton (sur l'élément) : si on change de fiche pendant qu'une
-// analyse est encore en vol (son propre délai, ou un réseau lent), elle ne
-// doit jamais venir écraser l'affichage de la fiche suivante une fois
-// terminée — chaque appel pose son propre jeton, et seul le dernier posé
-// est autorisé à agir.
+// Vrai comportement du CDN TMDB, vérifié en conditions réelles (pas en
+// théorie) : une URL déjà visitée NORMALEMENT (sans CORS) N'IMPORTE QUAND
+// AVANT AUJOURD'HUI (le navigateur garde ce cache des semaines) renvoie une
+// erreur 503 à une requête CORS vers cette MÊME url exacte, systématiquement
+// — rien à voir avec l'ordre des requêtes DANS cette page (un essai
+// précédent partait de cette hypothèse, insuffisante : elle ne peut rien
+// contre un cache déjà là depuis une visite plus ancienne). Un simple
+// suffixe sur l'URL de l'image d'ANALYSE (jamais sur celle affichée)
+// suffit à toujours l'éviter : vérifié plusieurs fois de suite, y compris
+// sur une URL qui échouait systématiquement sans lui.
+const SUFFIXE_ANALYSE = '_analyse=1';
+
+// Fonction pure (testée telle quelle) : ajoute le suffixe au bon endroit,
+// qu'il y ait déjà des paramètres dans l'URL ou non.
+function urlAnalyseBackdrop(url){
+  return url + (url.includes('?') ? '&' : '?') + SUFFIXE_ANALYSE;
+}
+
 function applySmartBackdropFocus(imgEl, url){
   const jeton = (imgEl.dataset.backdropJeton = String(Date.now()) + Math.random());
-  const perime = () => imgEl.dataset.backdropJeton !== jeton;
-  let regle = false;
-  const afficher = () => {
-    if(regle || perime()) return;
-    regle = true;
-    imgEl.src = url; // affichage normal, dans tous les cas
-  };
-  const delai = setTimeout(afficher, 1200);
-
   const analyse = new Image();
   analyse.crossOrigin = 'anonymous';
   analyse.onload = () => {
-    clearTimeout(delai);
-    if(!perime()){
-      try{
-        // Sous-échantillonné à 120px de large : largement assez pour
-        // repérer où est le détail, et instantané à analyser.
-        const LARGEUR = 120;
-        const hauteur = Math.max(1, Math.round(LARGEUR * (analyse.naturalHeight / analyse.naturalWidth)));
-        const canvas = document.createElement('canvas');
-        canvas.width = LARGEUR; canvas.height = hauteur;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(analyse, 0, 0, LARGEUR, hauteur);
-        const { data } = ctx.getImageData(0, 0, LARGEUR, hauteur);
-        const gris = new Float32Array(LARGEUR * hauteur);
-        for(let i = 0; i < gris.length; i++){
-          const o = i * 4;
-          gris[i] = 0.299 * data[o] + 0.587 * data[o + 1] + 0.114 * data[o + 2];
-        }
-        const pourcentage = pourcentageFocusDepuisEnergie(energieParLigneDepuisGris(gris, LARGEUR, hauteur));
-        backdropFocusCache.set(url, pourcentage);
-        imgEl.style.objectPosition = `center ${pourcentage}%`;
-      }catch(e){
-        // Jamais bloquant : le centre reste, l'affichage suit juste en dessous.
-        console.error(e);
+    // imgEl peut déjà montrer une AUTRE image si on a changé de fiche
+    // pendant l'analyse : on ne touche sa position que si c'est toujours
+    // la bonne.
+    if(imgEl.dataset.backdropJeton !== jeton) return;
+    try{
+      // Sous-échantillonné à 120px de large : largement assez pour
+      // repérer où est le détail, et instantané à analyser.
+      const LARGEUR = 120;
+      const hauteur = Math.max(1, Math.round(LARGEUR * (analyse.naturalHeight / analyse.naturalWidth)));
+      const canvas = document.createElement('canvas');
+      canvas.width = LARGEUR; canvas.height = hauteur;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(analyse, 0, 0, LARGEUR, hauteur);
+      const { data } = ctx.getImageData(0, 0, LARGEUR, hauteur);
+      const gris = new Float32Array(LARGEUR * hauteur);
+      for(let i = 0; i < gris.length; i++){
+        const o = i * 4;
+        gris[i] = 0.299 * data[o] + 0.587 * data[o + 1] + 0.114 * data[o + 2];
       }
+      const pourcentage = pourcentageFocusDepuisEnergie(energieParLigneDepuisGris(gris, LARGEUR, hauteur));
+      backdropFocusCache.set(url, pourcentage);
+      imgEl.style.objectPosition = `center ${pourcentage}%`;
+    }catch(e){
+      // Jamais bloquant : le centre reste — la bannière, elle, est déjà
+      // affichée depuis longtemps à ce stade (voir renderDetailBackdrop()).
+      console.error(e);
     }
-    afficher();
   };
-  analyse.onerror = () => { clearTimeout(delai); afficher(); };
-  analyse.src = url;
+  analyse.onerror = () => {}; // silencieux : le centre reste, rien d'autre à faire
+  analyse.src = urlAnalyseBackdrop(url);
 }
 
 function renderDetailBackdrop(containerId, imgId, backdropPath){
@@ -320,15 +314,10 @@ function renderDetailBackdrop(containerId, imgId, backdropPath){
   }
   const img = document.getElementById(imgId);
   const url = TMDB_BACKDROP_IMG_BASE + backdropPath;
+  img.style.objectPosition = backdropFocusCache.has(url) ? `center ${backdropFocusCache.get(url)}%` : 'center 50%';
+  img.src = url; // affichage normal et immédiat, jamais retardé par l'analyse
   container.style.display = '';
-  if(backdropFocusCache.has(url)){
-    img.dataset.backdropJeton = ''; // invalide toute analyse encore en vol pour une AUTRE image
-    img.style.objectPosition = `center ${backdropFocusCache.get(url)}%`;
-    img.src = url;
-    return;
-  }
-  img.style.objectPosition = 'center 50%';
-  applySmartBackdropFocus(img, url);
+  if(!backdropFocusCache.has(url)) applySmartBackdropFocus(img, url);
 }
 
 function renderTmdbResults(results){

@@ -894,16 +894,23 @@ trop plate pour en tirer quoi que ce soit. Calculé une fois par image puis
 mis en cache par URL (`backdropFocusCache`) : revisiter la même fiche ne
 relance pas l'analyse. L'analyse tourne sur une image séparée (jamais
 insérée dans la page, avec `crossOrigin="anonymous"` pour pouvoir en lire
-les pixels), toujours lancée AVANT l'affichage de la bannière elle-même —
-piège réel rencontré et corrigé : une fois une URL mise en cache par le
-navigateur sans CORS, une requête CORS ultérieure vers cette même URL peut
-échouer (effet du cache HTTP, pas du CDN), et dans l'autre sens ça marche
-systématiquement. La bannière s'affiche dans tous les cas (succès de
-l'analyse, échec, ou si elle traîne plus d'1,2 s) — jamais plus d'attente
-qu'un chargement d'image normal n'en aurait de toute façon pris, et jamais
-bloquant si l'analyse échoue : le bandeau reste alors centré, comme avant.
-Un seul point d'entrée (`renderDetailBackdrop()`) pour la fiche film ET la
-fiche série : corrigé une fois, corrigé aux deux endroits.
+les pixels) ; la bannière, elle, s'affiche normalement et immédiatement,
+jamais retardée par l'analyse. Piège réel rencontré et corrigé, vérifié en
+conditions réelles contre le vrai CDN TMDB (pas en théorie) : une URL déjà
+visitée normalement par le navigateur, N'IMPORTE QUAND avant aujourd'hui
+(le cache dure des semaines), renvoie une erreur 503 à une requête CORS
+vers cette MÊME url exacte — pour certaines images, jamais pour d'autres,
+selon ce qui avait déjà été visité (retour utilisateur : "Paprika c'est
+bon mais Arrival, ça ne l'est pas"). `urlAnalyseBackdrop()` ajoute un
+suffixe à l'URL d'analyse (jamais à celle affichée) pour toujours l'éviter,
+quel que soit l'historique de navigation. Y compris sans ce suffixe,
+jamais bloquant si l'analyse échoue : le bandeau reste alors centré, comme
+avant. `loading="lazy"` retiré des deux bannières (toujours visibles dès
+l'ouverture de la page, jamais une raison de les charger en différé) — un
+autre vrai piège rencontré : avec cet attribut, l'image pouvait ne jamais
+finir de charger. Un seul point d'entrée (`renderDetailBackdrop()`) pour
+la fiche film ET la fiche série : corrigé une fois, corrigé aux deux
+endroits.
 
 ## Profil public
 

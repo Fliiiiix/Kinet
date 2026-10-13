@@ -67,4 +67,28 @@ test('pourcentageFocusDepuisEnergie() : le détail pile au centre donne 50 %', (
   assert.strictEqual(ctx.pourcentageFocusDepuisEnergie(energie), 50);
 });
 
+// urlAnalyseBackdrop() : retour utilisateur, bug réel corrigé — "Paprika
+// c'est bon mais arrival ou que justice soit faite, ça ne l'est pas".
+// Vérifié en conditions réelles (requêtes vers le vrai CDN TMDB, pas en
+// théorie) : une URL déjà visitée normalement par le navigateur N'IMPORTE
+// QUAND avant aujourd'hui renvoie une erreur 503 à une requête CORS vers
+// cette MÊME url exacte — systématiquement, pour certaines images, jamais
+// pour d'autres, selon ce qui a déjà été visité. Un suffixe sur l'URL
+// d'analyse (jamais sur celle affichée) l'évite à coup sûr.
+test('urlAnalyseBackdrop() : ajoute le suffixe avec un point d\'interrogation sur une URL sans paramètres', () => {
+  const ctx = buildContext();
+  assert.strictEqual(ctx.urlAnalyseBackdrop('https://image.tmdb.org/t/p/w780/x.jpg'), 'https://image.tmdb.org/t/p/w780/x.jpg?_analyse=1');
+});
+
+test('urlAnalyseBackdrop() : ajoute le suffixe avec un esperluette si l\'URL a déjà des paramètres', () => {
+  const ctx = buildContext();
+  assert.strictEqual(ctx.urlAnalyseBackdrop('https://image.tmdb.org/t/p/w780/x.jpg?a=1'), 'https://image.tmdb.org/t/p/w780/x.jpg?a=1&_analyse=1');
+});
+
+test('urlAnalyseBackdrop() : l\'URL d\'analyse est toujours différente de l\'URL d\'origine (jamais la même requête que l\'affichage)', () => {
+  const ctx = buildContext();
+  const originale = 'https://image.tmdb.org/t/p/w780/x.jpg';
+  assert.notStrictEqual(ctx.urlAnalyseBackdrop(originale), originale);
+});
+
 module.exports = run('backdrop-focus.test.js');
