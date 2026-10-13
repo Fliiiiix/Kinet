@@ -91,10 +91,23 @@ async function showApp(){
   maybeStartOnboarding();
 }
 
+// Supabase revérifie/rafraîchit la session toute seule (notamment à chaque
+// retour de l'onglet au premier plan, comportement de la librairie) et
+// déclenche onAuthStateChange() à chaque fois, même quand c'est exactement
+// le même compte déjà affiché — ça n'a rien d'une vraie (re)connexion.
+// Sans ce garde-fou, showApp() (tout le chargement : profil, films,
+// visionnages, + rejoue la page actuelle depuis zéro) tournait à chaque
+// fois, d'où un flash visible sur toute page avec un état dépliable (ex.
+// une saison de série) — retour utilisateur : "elle se ferme une toute
+// petite seconde". Le jeton de session, lui, est déjà géré en interne par
+// supabaseClient : currentUser n'a besoin que d'être à jour pour les
+// requêtes qui filtrent par user_id, pas de recharger quoi que ce soit.
 function handleSession(session){
-  currentUser = session ? session.user : null;
-  if(currentUser){
-    showApp();
+  const user = session ? session.user : null;
+  const memeCompteDejaAffiche = currentUser && user && currentUser.id === user.id;
+  currentUser = user;
+  if(user){
+    if(!memeCompteDejaAffiche) showApp();
   }else{
     showAuthScreen();
   }
