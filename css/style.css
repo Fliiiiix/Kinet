@@ -1076,22 +1076,42 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   overflow:hidden;
 }
 .annual-goal-fill{
+  width:100%;
   height:100%;
   border-radius:999px;
   background:var(--violet);
-  /* Largeur posée en ligne par renderAnnualGoalWidget() (pourcentage exact) —
-     seule la transition est ici, pour que la barre glisse vers sa nouvelle
-     position après une note/un visionnage plutôt que de sauter d'un coup. */
-  transition:width 0.5s ease;
+  /* scaleX() plutôt que width (audit design, emil-design-eng) : width
+     déclenche layout+paint à chaque frame, scaleX() ne touche que le
+     compositeur (GPU). --pct posé en ligne par renderAnnualGoalWidget()
+     (0 à 1) ; transform-origin:left pour que la barre grandisse depuis la
+     gauche, jamais depuis le centre. ease-in-out (pas ease) : un élément
+     qui se déplace/se transforme À L'ÉCRAN, pas un simple changement de
+     couleur au survol. */
+  transform-origin:left;
+  transform:scaleX(var(--pct, 0));
+  transition:transform 0.5s ease-in-out;
 }
 .annual-goal-widget.is-complete .annual-goal-fill{background:var(--gold, #e7b24c);}
 @media (prefers-reduced-motion:reduce){
   .annual-goal-fill{transition:none;}
 }
+/* Moment rare et mérité (audit design, emil-design-eng : "rare/first-time
+   → peut se permettre du délice") — seule animation d'entrée de tout ce
+   widget, réservée à l'instant précis où l'objectif de l'année est
+   atteint. Jamais scale(0) (rien n'apparaît de rien dans le monde réel) :
+   part d'une échelle déjà visible. */
 .annual-goal-done-msg{
   font-size:13px;
   color:var(--violet);
   font-weight:600;
+  animation:annualGoalDone 0.4s cubic-bezier(.2,.8,.3,1) both;
+}
+@keyframes annualGoalDone{
+  from{opacity:0; transform:scale(0.92) translateY(2px);}
+  to{opacity:1; transform:scale(1) translateY(0);}
+}
+@media (prefers-reduced-motion:reduce){
+  .annual-goal-done-msg{animation:none;}
 }
 .annual-goal-form{
   display:flex;
@@ -1737,8 +1757,14 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 /* Fermeture (js/ui.js, closeOverlay()) : symétrique de .open, garde
    display:flex le temps de l'animation de sortie plutôt que de disparaître
    d'un coup. */
-.overlay.closing{display:flex; animation:overlayOut .15s ease-in forwards;}
-.overlay.closing .modal{animation:modalOut .15s ease-in forwards;}
+/* ease-out, pas ease-in, même à la fermeture (audit design, emil-design-eng :
+   "never use ease-in for UI animations" — ease-in démarre lentement,
+   exactement au moment où la réactivité compte le plus, celui où
+   l'utilisateur vient de cliquer pour fermer). Fermeture aussi plus rapide
+   que l'ouverture (.18s à l'entrée, modalIn) : se fermer doit toujours se
+   sentir plus instantané que s'ouvrir. */
+.overlay.closing{display:flex; animation:overlayOut .12s ease-out forwards;}
+.overlay.closing .modal{animation:modalOut .12s ease-out forwards;}
 /* padding 28px -> 34px (retour utilisateur : "on manque d'espace, ça
    manque d'être épuré") — .modal est LA coquille partagée par toutes les
    fenêtres de l'app (profil, stats, succès, journal, film, admin...), un
@@ -1828,7 +1854,9 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   pointer-events:auto;
   animation:overlayIn .15s ease-out;
 }
-.onboarding-layer.closing .onboarding-backdrop{animation:overlayOut .15s ease-in forwards;}
+/* Même correctif ease-out qu'.overlay.closing plus haut (audit design,
+   emil-design-eng). */
+.onboarding-layer.closing .onboarding-backdrop{animation:overlayOut .12s ease-out forwards;}
 
 /* Clone décoratif de l'icône/bouton visé — jamais le vrai élément, jamais
    interactif (pointer-events:none posé ici, aria-hidden + id retiré posés
@@ -1868,7 +1896,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   box-shadow:0 20px 44px rgba(0,0,0,0.4);
   animation:modalIn .18s cubic-bezier(.2,.8,.3,1);
 }
-.onboarding-layer.closing .onboarding-card{animation:modalOut .15s ease-in forwards;}
+.onboarding-layer.closing .onboarding-card{animation:modalOut .12s ease-out forwards;}
 /* Bienvenue/clôture (pas de cible précise) : carte centrée plutôt que
    positionnée près d'un élément — voir showOnboardingCenter(), js/onboarding.js. */
 .onboarding-card.onboarding-card-center{

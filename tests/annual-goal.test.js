@@ -58,7 +58,9 @@ test('renderAnnualGoalWidget() : objectif fixé cette année -> barre de progres
   });
   ctx.renderAnnualGoalWidget();
   assert.ok(widgetEl.innerHTML.includes('2 / 10'), widgetEl.innerHTML);
-  assert.ok(widgetEl.innerHTML.includes('width:20%'), widgetEl.innerHTML);
+  // scaleX() plutôt que width (audit design, emil-design-eng : transform/
+  // opacity seuls sont compositor-friendly) — voir --pct, css/style.css.
+  assert.ok(widgetEl.innerHTML.includes('--pct:0.2'), widgetEl.innerHTML);
   assert.ok(!widgetEl.innerHTML.includes('is-complete'), 'pas encore atteint à 2/10');
 });
 
@@ -81,7 +83,7 @@ test('renderAnnualGoalWidget() : objectif atteint -> classe is-complete + messag
   });
   ctx.renderAnnualGoalWidget();
   assert.ok(widgetEl.innerHTML.includes('is-complete'), widgetEl.innerHTML);
-  assert.ok(widgetEl.innerHTML.includes('width:100%'), 'jamais au-delà de 100% même à 3/2');
+  assert.ok(widgetEl.innerHTML.includes('--pct:1'), 'jamais au-delà de 100% (scaleX(1) max) même à 3/2');
   assert.ok(widgetEl.innerHTML.includes('atteint'), widgetEl.innerHTML);
 });
 

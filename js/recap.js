@@ -107,7 +107,7 @@ function renderAnnualGoalWidget(){
         <span class="annual-goal-count">${watched} / ${goal} film${goal > 1 ? 's' : ''}</span>
         <button type="button" class="annual-goal-edit" id="annualGoalEditBtn" title="Modifier l'objectif" aria-label="Modifier l'objectif">✎</button>
       </div>
-      <div class="annual-goal-bar"><div class="annual-goal-fill" style="width:${pct}%"></div></div>
+      <div class="annual-goal-bar"><div class="annual-goal-fill" style="--pct:${pct / 100}"></div></div>
       ${done ? `<div class="annual-goal-done-msg">🎉 Objectif ${year} atteint !</div>` : ''}
     </div>
   `;
