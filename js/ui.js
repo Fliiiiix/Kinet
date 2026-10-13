@@ -265,6 +265,20 @@ function pulseElement(el){
   el.addEventListener('animationend', () => el.classList.remove('pulse'), { once: true });
 }
 
+// pulseCheckbox() : même principe que pulseElement() ci-dessus (rejoue
+// checkbox-pop, css/style.css), réservé aux cases à cocher — déclenché EN
+// MÊME TEMPS que le clic, pas après la réponse réseau, pour un retour
+// instantané (voir toggleEpisodeWatched(), js/series.js, qui reconstruit
+// ensuite toute la ligne : sans ce coup de pouce immédiat, la case
+// réapparaîtrait déjà cochée, sans jamais avoir eu l'air de s'animer).
+function pulseCheckbox(el){
+  if(!el) return;
+  el.classList.remove('checkbox-pop');
+  void el.offsetWidth;
+  el.classList.add('checkbox-pop');
+  el.addEventListener('animationend', () => el.classList.remove('checkbox-pop'), { once: true });
+}
+
 // --- Bascule grille / liste (catalogue, watchlist, séries, top) ---
 // Une seule préférence partagée par toutes les listes à affiches plutôt
 // qu'un réglage par page — si quelqu'un préfère scanner en grille ou en

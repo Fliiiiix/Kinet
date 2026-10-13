@@ -27,7 +27,15 @@ let watchedEpisodeSet = new Set(); // "saison-episode" vus, pour la série actue
 // globale) : "saison-episode" -> { note, timesWatched }, uniquement pour
 // les clés présentes dans watchedEpisodeSet ci-dessus.
 let watchedEpisodeExtras = {};
-let loadedSeasonEpisodes = {};  // season_number -> episodes[] (TMDB), cache pour la série actuellement ouverte
+let loadedSeasonEpisodes = {};  // season_number -> episodes[] (TMDB), alias courant de seasonUiCache[currentShowId].episodes
+// Saisons dépliées + épisodes déjà téléchargés, PAR SÉRIE (retour
+// utilisateur : "je déplie la saison 1, je change de page et je reviens,
+// elle n'est plus dépliée") — le routeur rappelle openShowDetail() à CHAQUE
+// retour sur #/series/:id, qui reconstruit toute la liste des saisons depuis
+// zéro ; ce cache (durée de la session, pas persisté) garde ce qui était
+// ouvert pour cette série, et les épisodes déjà en mémoire pour ne pas les
+// retélécharger. showId -> { expanded: Set<season_number>, episodes: {...} }.
+let seasonUiCache = {};
 
 function rowToShow(row){
   return {
@@ -482,6 +490,36 @@ function seasonProgressLabel(seasonNumber, episodeCount){
   return `${watched}/${episodeCount} vus${avg != null ? ` · ★ ${avg.toFixed(1)}` : ''}`;
 }
 
+// Progression dans l'en-tête (retour utilisateur : "le résumé tient sur 2
+// lignes ... ça laisse un grand espace non utilisé au milieu") — épisodes
+// vus/total et la note déjà donnée, juste sous le résumé (voir
+// .series-hero-stats, css/style.css). Rafraîchie à chaque changement de la
+// progression (updateSeasonProgressUI() plus bas) ou de la note
+// (handleSaveSeriesNote()), jamais une section à part qu'il faudrait
+// défiler pour voir.
+function renderSeriesHeroStats(show){
+  const el = document.getElementById('seriesDetailStats');
+  if(!el || !show) return;
+  const total = show.numberOfEpisodes || currentShowSeasons.reduce((a, s) => a + (s.episode_count || 0), 0);
+  const watched = watchedEpisodeSet.size;
+  const blocs = [];
+  if(total > 0){
+    blocs.push(`
+      <div class="series-hero-stat">
+        <span class="series-hero-progress-pill">${watched} / ${total} vus</span>
+        <div class="series-hero-stat-label">Épisodes</div>
+      </div>`);
+  }
+  if(show.manualNote != null){
+    blocs.push(`
+      <div class="series-hero-stat">
+        <div class="counter ${noteColorClass(show.manualNote)}">${show.manualNote.toFixed(1)}</div>
+        <div class="series-hero-stat-label">Ta note</div>
+      </div>`);
+  }
+  el.innerHTML = blocs.join('');
+}
+
 function renderSeasonsList(){
   const wrap = document.getElementById('seriesSeasonsList');
   if(currentShowSeasons.length === 0){
@@ -503,14 +541,16 @@ function renderSeasonsList(){
   });
 }
 
-async function toggleSeason(seasonNumber){
+// Déplie une saison : chargée une seule fois par série (voir
+// seasonUiCache/loadedSeasonEpisodes plus haut) — ne rappelle pas TMDB si
+// cette saison a déjà été dépliée, y compris après un aller-retour sur une
+// autre page. Mémorise aussi qu'elle est dépliée pour la redéplier toute
+// seule au prochain retour sur cette série (openShowDetail()).
+async function openSeason(seasonNumber){
   const block = document.querySelector(`.season-block[data-season="${seasonNumber}"]`);
-  if(!block) return;
-  const isOpening = !block.classList.contains('open');
-  block.classList.toggle('open', isOpening);
-  if(!isOpening) return;
-  // Chargé une seule fois par ouverture de page détail — ne rappelle pas
-  // TMDB si cette saison a déjà été dépliée une première fois.
+  if(!block || block.classList.contains('open')) return;
+  block.classList.add('open');
+  if(seasonUiCache[currentShowId]) seasonUiCache[currentShowId].expanded.add(seasonNumber);
   if(!loadedSeasonEpisodes[seasonNumber]){
     const episodesEl = document.getElementById(`seasonEpisodes-${seasonNumber}`);
     episodesEl.innerHTML = `<div class="tmdb-empty">Chargement…</div>`;
@@ -525,6 +565,19 @@ async function toggleSeason(seasonNumber){
     }
   }
   renderSeasonEpisodes(seasonNumber);
+}
+
+function closeSeason(seasonNumber){
+  const block = document.querySelector(`.season-block[data-season="${seasonNumber}"]`);
+  if(block) block.classList.remove('open');
+  if(seasonUiCache[currentShowId]) seasonUiCache[currentShowId].expanded.delete(seasonNumber);
+}
+
+async function toggleSeason(seasonNumber){
+  const block = document.querySelector(`.season-block[data-season="${seasonNumber}"]`);
+  if(!block) return;
+  if(block.classList.contains('open')) closeSeason(seasonNumber);
+  else await openSeason(seasonNumber);
 }
 
 function renderSeasonEpisodes(seasonNumber){
@@ -569,7 +622,13 @@ function renderSeasonEpisodes(seasonNumber){
     }).join('')}
   `;
   episodesEl.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-    cb.addEventListener('change', () => toggleEpisodeWatched(seasonNumber, parseInt(cb.dataset.episode, 10), cb.checked, cb));
+    cb.addEventListener('change', () => {
+      // Rebond immédiat si on coche (retour utilisateur : "une petite
+      // animation de ce carré quand on le coche") — avant même l'écriture
+      // réseau, voir pulseCheckbox(), js/ui.js.
+      if(cb.checked) pulseCheckbox(cb);
+      toggleEpisodeWatched(seasonNumber, parseInt(cb.dataset.episode, 10), cb.checked, cb);
+    });
   });
   episodesEl.querySelectorAll('.episode-note-input').forEach(inp => {
     inp.addEventListener('change', () => updateEpisodeNote(seasonNumber, parseInt(inp.dataset.episode, 10), inp.value));
@@ -586,6 +645,7 @@ function renderSeasonEpisodes(seasonNumber){
 function updateSeasonProgressUI(seasonNumber, episodeCount){
   const el = document.getElementById(`seasonProgress-${seasonNumber}`);
   if(el) el.textContent = seasonProgressLabel(seasonNumber, episodeCount);
+  renderSeriesHeroStats(trackedShows.find(s => s.id === currentShowId));
 }
 
 // checkboxEl : la case cliquée — sur échec réseau, le navigateur a déjà
@@ -837,7 +897,7 @@ async function handleSaveSeriesNote(){
     return;
   }
   const show = trackedShows.find(s => s.id === currentShowId);
-  if(show){ show.manualNote = note; show.review = review; }
+  if(show){ show.manualNote = note; show.review = review; renderSeriesHeroStats(show); }
   showToast('Note enregistrée');
 }
 
@@ -868,7 +928,12 @@ async function openShowDetail(showId){
   }
   currentShowId = showId;
   currentShowSeasons = [];
-  loadedSeasonEpisodes = {};
+  // Cache par série (voir seasonUiCache plus haut) : garde les saisons
+  // dépliées et déjà téléchargées d'une visite à l'autre de CETTE série,
+  // pour la durée de la session — jamais partagé entre deux séries
+  // différentes, jamais persisté au-delà d'un rechargement complet.
+  if(!seasonUiCache[showId]) seasonUiCache[showId] = { expanded: new Set(), episodes: {} };
+  loadedSeasonEpisodes = seasonUiCache[showId].episodes;
   watchedEpisodeSet = new Set();
   watchedEpisodeExtras = {};
 
@@ -882,7 +947,14 @@ async function openShowDetail(showId){
     renderShowDetailWatchProviders(show.tmdbId)
   ]);
   renderShowDetailHeader(show); // statut éventuellement mis à jour par refreshShowMeta()
+  renderSeriesHeroStats(show);
   renderSeasonsList();
+  // Redéplie les saisons qui l'étaient avant de quitter la page (retour
+  // utilisateur) — les épisodes déjà en cache ci-dessus évitent un nouvel
+  // appel réseau à TMDB.
+  for(const seasonNumber of seasonUiCache[showId].expanded){
+    await openSeason(seasonNumber);
+  }
 }
 
 document.getElementById('seriesDetailBack').addEventListener('click', goToSeries);

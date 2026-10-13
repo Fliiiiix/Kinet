@@ -501,11 +501,20 @@ l'**épisode près**, pas juste un statut par saison :
   encore en cours peut avoir gagné une saison depuis), une note manuelle sur
   5 + un commentaire libre (pas la grille à 7 critères des films — une série
   qui s'étale sur plusieurs saisons ne s'y prête pas), et un accordéon d'une
-  saison par ligne.
+  saison par ligne. Sous le résumé, une ligne de progression (épisodes
+  vus/total, et la note si déjà donnée, `renderSeriesHeroStats()`) et "Où
+  regarder" remontée juste à côté de l'affiche (retour utilisateur : un
+  résumé court à côté d'une affiche haute laissait un grand vide) —
+  affichées seulement s'il y a quelque chose à montrer.
 - **Chaque saison**, dépliée à la demande (les épisodes d'une saison ne sont
   chargés depuis TMDB qu'à sa première ouverture, jamais toutes en même
-  temps) : une case à cocher par épisode, plus **Tout marquer vu** / **Tout
-  marquer non vu** pour la saison entière.
+  temps) : une case à cocher par épisode (agrandie, avec une coche animée,
+  retour utilisateur), plus **Tout marquer vu** / **Tout marquer non vu**
+  pour la saison entière. Les saisons dépliées sont mémorisées par série
+  (`seasonUiCache`, en mémoire pour la session) : revenir sur `#/series/:id`
+  après être passé par une autre page les retrouve dépliées, sans
+  retélécharger les épisodes déjà en cache (retour utilisateur : "je déplie
+  la saison 1, je change de page et je reviens, elle n'est plus dépliée").
 - **Retirer une série** supprime aussi tous ses épisodes cochés (suppression
   en cascade côté base) — depuis la fiche détail (bouton "Retirer cette
   série"), pas depuis la liste (v2.3, voir ci-dessous).

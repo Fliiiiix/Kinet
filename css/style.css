@@ -5219,11 +5219,40 @@ body[data-view-mode="list"] #topList .top-rank{width:26px; font-size:16px;}
   border:1px solid var(--line);
   font-size:40px;
 }
-.series-hero-info{min-width:0; padding-top:2px;}
+/* Colonne flex plutôt qu'un simple bloc (retour utilisateur : un résumé
+   court à côté d'une affiche haute laissait un grand vide) — la progression
+   et "Où regarder" (ci-dessous) viennent occuper cet espace avec du contenu
+   réellement utile, pas juste pour "remplir". */
+.series-hero-info{min-width:0; padding-top:2px; display:flex; flex-direction:column; gap:16px;}
 @media (max-width:600px){
   .series-hero{grid-template-columns:1fr;}
   .series-hero-poster{width:140px; margin:0 auto;}
 }
+
+/* Progression (épisodes vus, note) — même langage que .film-detail-note-row
+   (badge .counter rond + légende), seulement affiché si on a de quoi dire
+   quelque chose (voir renderSeriesHeroStats(), js/series.js). */
+.series-hero-stats{display:flex; flex-wrap:wrap; align-items:center; gap:18px;}
+.series-hero-stat{display:flex; align-items:center; gap:10px;}
+.series-hero-stat-label{font-size:13px; color:var(--text-muted); line-height:1.3;}
+.series-hero-stat-label b{color:var(--text); font-weight:600;}
+/* Même forme que .status-badge (juste au-dessus, dans .series-hero-meta) :
+   le badge de progression reprend la pilule déjà posée là, couleur violette
+   plutôt que verte/grise pour ne pas se confondre avec "en cours"/"terminée". */
+.series-hero-progress-pill{
+  display:inline-block;
+  font-family:'Space Mono', monospace;
+  font-size:12.5px;
+  font-weight:700;
+  letter-spacing:0.02em;
+  border-radius:999px;
+  padding:5px 12px;
+  color:var(--violet);
+  background:var(--violet-wash, rgba(140,124,255,0.12));
+  border:1px solid var(--violet-dim);
+  flex:none;
+}
+.series-hero-providers .eyebrow{margin-bottom:6px;}
 
 /* Où regarder (fiche film communautaire ET fiche série, retour
    utilisateur), voir renderWatchProvidersHtml()/watchProviderChipsHtml()
@@ -5408,11 +5437,46 @@ body[data-view-mode="grid"] #seriesList .new-episode-dot{display:block;}
   min-width:200px;
   cursor:pointer;
 }
+/* Case à cocher sur mesure (retour utilisateur : "le carré est un peu trop
+   petit", "une petite animation quand on le coche") — la case native
+   accent-color restait minuscule et sans retour visuel au clic. 22px (contre
+   16px avant) et une coche qui apparaît en rebondissant légèrement plutôt
+   qu'un remplissage instantané. checkbox-pop (js/ui.js, pulseCheckbox())
+   ajoute en plus un petit rebond sur la case elle-même à l'instant du clic,
+   AVANT même que l'écriture réseau n'ait répondu — sans ça, comme toute la
+   ligne est reconstruite après coup (renderSeasonEpisodes()), la coche
+   apparaîtrait déjà cochée au premier affichage, sans jamais s'animer. */
 .episode-row-main input[type="checkbox"]{
-  margin-top:3px;
-  width:16px; height:16px;
-  accent-color:var(--violet);
+  appearance:none;
+  -webkit-appearance:none;
+  margin-top:1px;
+  width:22px; height:22px;
+  border-radius:6px;
+  border:2px solid var(--line);
+  background:var(--surface-2);
   flex:none;
+  cursor:pointer;
+  position:relative;
+  transition:border-color .15s ease, background-color .15s ease;
+}
+.episode-row-main input[type="checkbox"]:hover{border-color:var(--violet-dim);}
+.episode-row-main input[type="checkbox"]:focus-visible{outline:2px solid var(--violet); outline-offset:2px;}
+.episode-row-main input[type="checkbox"]::after{
+  content:"";
+  position:absolute; inset:0;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='4 12 10 18 20 6'/%3E%3C/svg%3E") center/65% no-repeat;
+  opacity:0;
+  transform:scale(.4);
+  transition:opacity .15s ease, transform .22s cubic-bezier(.34,1.56,.64,1);
+}
+.episode-row-main input[type="checkbox"]:checked{background:var(--violet); border-color:var(--violet);}
+.episode-row-main input[type="checkbox"]:checked::after{opacity:1; transform:scale(1);}
+@keyframes checkboxPop{0%{transform:scale(1);} 40%{transform:scale(1.22);} 100%{transform:scale(1);}}
+.episode-row-main input[type="checkbox"].checkbox-pop{animation:checkboxPop .32s cubic-bezier(.34,1.56,.64,1);}
+@media (prefers-reduced-motion: reduce){
+  .episode-row-main input[type="checkbox"]{transition:none;}
+  .episode-row-main input[type="checkbox"]::after{transition:none;}
+  .episode-row-main input[type="checkbox"].checkbox-pop{animation:none;}
 }
 .episode-num{
   font-family:'Space Mono', monospace;
