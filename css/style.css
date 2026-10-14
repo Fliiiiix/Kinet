@@ -17,40 +17,44 @@
    parallèle dès le tout début du chargement de la page. */
 
 :root{
-  /* --ink : réservée au texte posé SUR une surface colorée (bouton/onglet
-     violet ou or, voir color:var(--ink) plus loin) + quelques liserés
-     décoratifs — toujours sombre dans les deux thèmes, puisque violet/or
-     eux-mêmes ne changent pas de thème à l'autre. --ink-surface : le VRAI
-     fond sombre (placeholders d'affiche, dégradés de carte stat/succès) —
-     seule celle-ci s'éclaircit en thème clair (voir [data-theme="light"]
-     plus bas). Les deux partagent la même valeur ici uniquement parce que
-     le thème par défaut est sombre — pas un hasard de nommage. */
-  --ink:#0f0e16;
-  --ink-surface:#0f0e16;
-  --surface:#1b1826;
-  --surface-2:#262032;
-  --surface-3:#302a3d;
-  --line:#342f42;
-  --line-soft:#241f2e;
-  --text:#f2eee6;
-  --text-muted:#9a93a8;
-  /* Violet : tout ce qui est interactif (boutons, liens, focus, actif) —
-     seul rôle qu'a l'ambre unique de l'ancien thème (23 usages différents
-     pour une seule couleur : marque, actif, donnée, action). */
-  --violet:#8c7cff;
-  --violet-dim:#5b4fb0;
-  --violet-wash:rgba(140,124,255,0.12);
-  /* Or : accent des données/notes en général (stats, succès...). Le cadran
-     lui-même (.counter) ne s'en sert que pour son palier "moyen" — voir le
-     barème rouge/jaune/vert juste plus bas, retenu à la place d'une
-     couleur unique après retour utilisateur (le rouge/jaune/vert dit
-     immédiatement "bon ou pas", une seule teinte dorée ne disait rien). */
-  --gold:#e7b24c;
-  --gold-dim:#8a6a2e;
-  --gold-wash:rgba(231,178,76,0.1);
-  /* Teal de l'ancien thème conservé pour son rôle informationnel étroit
-     (badge manuel/revisionnage, aide, succès) — pas remplacé sans raison,
-     juste retenté légèrement plus froid pour s'accorder au nouveau fond. */
+  /* ==========================================================
+     KINET — v3.0 "Scope"
+     Retour utilisateur (long échange) : la DA v2.x "lisait IA" — violet
+     comme couleur primaire, aurore en dégradés animés plein écran, verre
+     dépoli partout. Palette table rase, validée sur draft séparée
+     ("Kinet Scope") avant d'atterrir ici : noir quasi neutre (pas de
+     teinte violette dans les gris), UN SEUL accent interactif (bleu
+     glace — remplace le violet partout, même rôle exact), UN SEUL accent
+     de suivi personnel (ambre — remplace l'or, même rôle). Les couleurs
+     sémantiques du cadran (rouge/vert) et les accents fonctionnels
+     étroits (teal, bronze) restent : ce n'était pas le problème signalé.
+     ========================================================== */
+  /* --ink : texte posé SUR une surface colorée (bouton glace/ambre) —
+     toujours sombre dans les deux thèmes. --ink-surface : le vrai fond
+     sombre, s'éclaircit en thème clair (voir [data-theme="light"]). */
+  --ink:#0a0a0a;
+  --ink-surface:#0a0a0a;
+  --surface:#161616;
+  --surface-2:#1f1f1f;
+  --surface-3:#262626;
+  --line:#2a2a2a;
+  --line-soft:#1c1c1c;
+  --text:#f4f3ee;
+  --text-muted:#8d8c86;
+  /* Glace : tout ce qui est interactif (boutons, liens, focus, actif) —
+     seul rôle, comme l'ambre juste en dessous : une couleur, un métier. */
+  --violet:#4fcfff;
+  --violet-dim:#1f6f8f;
+  --violet-wash:rgba(79,207,255,0.12);
+  /* Ambre : réservé au suivi personnel (ce que vous regardez, votre
+     progression) — jamais décoratif. Le cadran (.counter) garde son
+     propre barème rouge/jaune/vert juste en dessous, indépendant. */
+  --gold:#e8a33d;
+  --gold-dim:#a66f1f;
+  --gold-wash:rgba(232,163,61,0.1);
+  /* Teal conservé pour son rôle informationnel étroit (badge
+     manuel/revisionnage, aide, succès) — jamais remis en cause, ce
+     n'était pas un ton violet. */
   --teal:#6fa39f;
   --teal-wash:rgba(111,163,159,0.14);
   --coral:#ff6b57;
@@ -60,19 +64,16 @@
   --green:#6ad18b;
   --green-dim:#3f7a52;
   --green-wash:rgba(106,209,139,0.1);
-  /* Bronze et plum (v2.7, DA élargie — retour utilisateur : "trop
-     monochrome") : le bronze n'est PAS choisi à la main, c'est la vraie
-     transparence de l'or posé sur le violet dans le mark (voir
-     .brand-mark-gold plus bas) — devenu 3e couleur, réservée aux moments
-     rares (succès, mise en avant). Plum : un violet profond et saturé,
-     pas juste "surface plus sombre", pour de vrais blocs de couleur
-     (voir .top-films-showcase, .ach-summary) plutôt que du violet plat
-     sur fond noir partout. */
+  /* Bronze conservé (accent rare, succès/mise en avant) — ton chaud déjà
+     voisin de l'ambre, pas un dérivé du violet, donc inchangé. Plum
+     repointé sur des gris neutres : c'était "un bloc violet profond et
+     saturé" par design (v2.7) — le concept de bloc plein reste utile
+     (.top-films-showcase, .ach-summary) mais plus en violet. */
   --bronze:#d9aa67;
   --bronze-dim:#8f6a3a;
   --bronze-wash:rgba(217,170,103,0.12);
-  --plum:#3a1f52;
-  --plum-2:#4d2a68;
+  --plum:#1a1a1a;
+  --plum-2:#222222;
   /* Hauteur de #mobileTabbar (v2.1.x) — référencée par elle-même et par
      tout ce qui doit se décaler pour ne pas passer dessous une fois
      qu'elle occupe le bas de l'écran (mobile only) : .fab,
@@ -87,13 +88,13 @@
      découplage, ces 3 panneaux resteraient un verre sombre même en thème
      clair — leur texte (var(--text), lui bien réassigné) y deviendrait
      illisible (texte sombre sur verre sombre). */
-  --glass-rgb:27,24,38;
+  --glass-rgb:10,10,10;
   /* Triplet RGB de --text (même logique que --glass-rgb ci-dessus) — pour
      un liseré "toujours la couleur du texte, très estompée" sur les
      panneaux vitrés (menu déroulant, .modal) : s'inverse correctement tout
      seul avec le thème plutôt que de rester un blanc fixe qui disparaîtrait
      en thème clair. */
-  --text-rgb:242,238,230;
+  --text-rgb:244,243,238;
 }
 /* Thème clair en option (retour utilisateur) — sombre par défaut, activé
    par [data-theme="light"] sur <html> (voir setTheme(), js/ui.js). Pas de
@@ -102,34 +103,34 @@
    explicitement choisi, jamais posé par défaut.
    Seuls les tokens qui échoueraient tels quels sont redéfinis ici :
    - --ink reste identique dans les deux thèmes (texte posé sur une
-     surface violet/or, qui elle-même ne change pas de teinte de base
+     surface glace/ambre, qui elle-même ne change pas de teinte de base
      entre thèmes — voir le commentaire sur --ink dans :root).
-   - --plum/--plum-2 (blocs de couleur pleins, ex. .top-films-showcase)
-     restent identiques aussi : un bloc violet profond reste lisible et
-     voulu quel que soit le thème du reste de la page, comme une carte à
+   - --plum/--plum-2 restent identiques aussi (gris neutres désormais,
+     plus un bloc violet) : un bloc sombre plein reste lisible et voulu
+     quel que soit le thème du reste de la page, comme une carte à
      contraste inversé assumée plutôt qu'une surface neutre.
-   - Les accents (violet/or/teal/corail/vert/bronze) sont RE-TEINTÉS (pas
-     juste réutilisés) : leurs valeurs sombres sont choisies pour ressortir
-     sur un fond quasi noir — utilisées telles quelles comme TEXTE sur un
-     fond clair, elles échoueraient le contraste (ex. --violet actuel,
-     #8c7cff, illisible en texte sur blanc). Assombris ici pour rester
-     lisibles en texte ET rester de vrais boutons pleins avec du texte
-     blanc/--ink par-dessus — même logique de teinte, ajustée en clarté. */
+   - Les accents (glace/ambre/teal/corail/vert/bronze) sont RE-TEINTÉS
+     (pas juste réutilisés) : leurs valeurs sombres sont choisies pour
+     ressortir sur un fond quasi noir — utilisées telles quelles comme
+     TEXTE sur un fond clair, elles échoueraient le contraste. Assombris
+     ici pour rester lisibles en texte ET rester de vrais boutons pleins
+     avec du texte blanc/--ink par-dessus — même logique de teinte,
+     ajustée en clarté (le glace #4fcfff devient un bleu nuit profond). */
 :root[data-theme="light"]{
-  --ink-surface:#efe9f5;
-  --surface:#fbfaff;
-  --surface-2:#efe9f7;
-  --surface-3:#e3daf2;
-  --line:#ddd3ee;
-  --line-soft:#e9e1f5;
-  --text:#231f2e;
-  --text-muted:#6f6884;
-  --violet:#6a4fd6;
-  --violet-dim:#4a3599;
-  --violet-wash:rgba(106,79,214,0.1);
-  --gold:#a3720e;
-  --gold-dim:#6b4f10;
-  --gold-wash:rgba(163,114,14,0.12);
+  --ink-surface:#f4f2ec;
+  --surface:#faf9f5;
+  --surface-2:#f0efe9;
+  --surface-3:#e5e3db;
+  --line:#dddad1;
+  --line-soft:#e9e7e0;
+  --text:#1c1c1a;
+  --text-muted:#6b6a63;
+  --violet:#0e6f8f;
+  --violet-dim:#0a4f66;
+  --violet-wash:rgba(14,111,143,0.1);
+  --gold:#9c6a1f;
+  --gold-dim:#6b4913;
+  --gold-wash:rgba(156,106,31,0.12);
   --teal:#3f7d78;
   --teal-wash:rgba(63,125,120,0.14);
   --coral:#c73f2c;
@@ -140,8 +141,8 @@
   --bronze:#9c7020;
   --bronze-dim:#8f6a3a;
   --bronze-wash:rgba(156,112,32,0.12);
-  --glass-rgb:251,250,255;
-  --text-rgb:35,31,46;
+  --glass-rgb:250,249,245;
+  --text-rgb:28,28,26;
 }
 /* Fond de page en thème clair : même recette que le fond sombre plus bas
    (mêmes taches de couleur, même grille de points) — pas une composition
@@ -155,11 +156,7 @@
    composition à redessiner. */
 :root[data-theme="light"] body{
   background:
-    radial-gradient(1100px 800px at 8% -12%, rgba(140,124,255,0.18), transparent 55%),
-    radial-gradient(950px 720px at 92% 6%, rgba(231,178,76,0.16), transparent 55%),
-    radial-gradient(1000px 750px at 45% 100%, rgba(58,31,82,0.1), transparent 58%),
-    radial-gradient(750px 580px at 96% 85%, rgba(217,170,103,0.12), transparent 52%),
-    radial-gradient(rgba(35,31,46,0.05) 1px, transparent 1px) 0 0/26px 26px,
+    radial-gradient(rgba(28,28,26,0.045) 1px, transparent 1px) 0 0/26px 26px,
     var(--ink-surface);
   /* Le raccourci background: ci-dessus réinitialise TOUS ses sous-attributs
      (position/attachment/repeat) à leur valeur initiale s'ils ne sont pas
@@ -184,16 +181,12 @@
    halo plus marqué propre à cet écran (voir plus bas) — pas de doublon
    visuel gênant, elle vient juste renforcer ce que le corps de page fait
    déjà partout. */
-/* Aurore (v2.9, "Halation" — retour utilisateur : "on s'ennuie, c'est
-   toujours monochrome") : 4 lueurs (violet/or/plum/bronze) qui dérivent
-   très lentement (55s, quasi imperceptible seconde par seconde), plutôt
-   que les 2 taches à 9%/5% d'opacité d'avant — celles-ci ne se voyaient
-   quasiment plus une fois le contenu posé dessus. Le quadrillage de points
-   reste fixe (dernière position de la liste, jamais animée) : seules les
-   couleurs bougent, la texture reste nette. Cartes/lignes gardent leur
-   propre fond opaque par-dessus (.film-row, etc.) — la densité du
-   catalogue n'en souffre pas, c'est le VIDE entre les éléments qui prend
-   vie. */
+/* Aurore retirée (v3.0, retour utilisateur — "ça fait IA" : dégradés
+   colorés animés en fond plein écran, justement le genre de signature
+   qu'on cherche à ne PAS avoir). Fond redescendu à un noir quasi neutre
+   uni + le même quadrillage de points très discret qu'avant (texture,
+   pas lumière) — plus aucune animation de fond, prefers-reduced-motion
+   n'a donc plus rien à couper ici. */
 /* Réduire les animations (retour utilisateur, Ton profil → Paramètres →
    Accessibilité) : un réglage DANS Kinet, pour qui préfère l'activer ici
    plutôt que dans les réglages de son système — voir setReduceMotion(),
@@ -236,15 +229,9 @@ body{overscroll-behavior:none;}
 
 body{
   background:
-    radial-gradient(1100px 800px at 8% -12%, rgba(140,124,255,0.28), transparent 55%),
-    radial-gradient(950px 720px at 92% 6%, rgba(231,178,76,0.22), transparent 55%),
-    radial-gradient(1000px 750px at 45% 100%, rgba(58,31,82,0.45), transparent 58%),
-    radial-gradient(750px 580px at 96% 85%, rgba(217,170,103,0.16), transparent 52%),
-    radial-gradient(rgba(242,238,230,0.04) 1px, transparent 1px) 0 0/26px 26px,
+    radial-gradient(rgba(244,243,238,0.04) 1px, transparent 1px) 0 0/26px 26px,
     var(--ink);
   background-attachment:fixed;
-  background-position:0 0, 0 0, 0 0, 0 0, 0 0;
-  animation:auroraDrift 55s ease-in-out infinite alternate;
   color:var(--text);
   font-family:'Instrument Sans', sans-serif;
   /* 100vh = la plus GRANDE hauteur de viewport mobile (barre d'adresse
@@ -257,10 +244,6 @@ body{
   padding:0 0 80px 0;
   position:relative;
 }
-@keyframes auroraDrift{
-  to{background-position:3% 4%, -3% 3%, 2% -2%, -3% -2%, 0 0;}
-}
-@media (prefers-reduced-motion: reduce){body{animation:none;}}
 /* Grain argentique (v2.7) — texture fine sur tout le fond, comme une
    pellicule plutôt qu'un filtre : se sent plus qu'il ne se voit (2.5%
    d'opacité). Fixed + pointer-events:none, jamais devant le contenu
@@ -281,9 +264,9 @@ header{
   margin-bottom:32px;
   position:relative;
   overflow:hidden;
-  /* Seule touche "atmosphère" du nouveau thème — une tache de lumière
-     violette très douce en haut à gauche, jamais un dégradé plein écran :
-     le cadran reste la seule vraie signature, ceci n'est qu'un fond. */
+  /* Seule touche "atmosphère" du thème — une tache de lumière glace très
+     douce en haut à gauche, jamais un dégradé plein écran : le cadran
+     reste la seule vraie signature, ceci n'est qu'un fond. */
   background:radial-gradient(560px 240px at 10% -30%, var(--violet-wash), transparent 70%);
 }
 .title-row{
@@ -300,54 +283,27 @@ header{
 }
 .brand-link:hover{opacity:0.82;}
 .brand-link:focus-visible{outline:2px solid var(--violet-dim); outline-offset:4px; border-radius:2px;}
-/* Logo (v2.7) — deux cadres qui se superposent, voir le commentaire dans
-   index.html pour le concept. Div plutôt que SVG : un essai précédent
-   avec des <rect> SVG animées ne s'affichait tout simplement pas de
-   façon fiable (transform-origin ambigu selon le moteur) — deux div
-   simples, pourcentages, transform-origin par défaut (50% 50% de chaque
-   élément), zéro ambiguïté. */
-.brand-mark{position:relative; width:34px; height:34px; flex:none;}
-.brand-mark-violet, .brand-mark-gold{position:absolute; border-radius:24%; transform-origin:50% 50%;}
-.brand-mark-violet{
-  left:18%; top:18%; width:54%; height:54%;
-  background:var(--violet);
-  animation:brandMarkViolet 0.6s cubic-bezier(.34,1.56,.64,1) both;
-}
-.brand-mark-gold{
-  left:40%; top:40%; width:40%; height:40%;
-  background:var(--gold); opacity:0.85;
-  transform:rotate(-12deg);
-  animation:brandMarkGold 0.6s 0.15s cubic-bezier(.34,1.56,.64,1) both;
-}
-@keyframes brandMarkViolet{
-  from{transform:scale(0);}
-  to{transform:scale(1);}
-}
-@keyframes brandMarkGold{
-  from{transform:scale(0) rotate(-12deg);}
-  to{transform:scale(1) rotate(-12deg);}
-}
-@keyframes brandMarkFlicker{
-  0%, 100%{transform:scale(1) rotate(-12deg);}
-  50%{transform:scale(1) rotate(-8deg);}
-}
-.brand-mark-gold.idle{animation:brandMarkFlicker 3.4s ease-in-out infinite;}
-/* v2.8 : clin d'œil au survol (retour utilisateur — "ce serait cool
-   d'avoir l'animation quand on passe la souris dessus"). Spécificité
-   .brand-link:hover .brand-mark-gold (0,3,0) > .brand-mark-gold.idle
-   (0,2,0) : gagne pendant le survol sans rien désactiver en JS, l'oscillation
-   .idle reprend d'elle-même à la sortie. */
-.brand-link:hover .brand-mark-gold{animation:brandMarkWink 0.5s ease-out;}
-@keyframes brandMarkWink{
-  0%{transform:scale(1) rotate(-12deg);}
-  35%{transform:scale(1.18) rotate(-24deg);}
-  65%{transform:scale(1.05) rotate(-4deg);}
-  100%{transform:scale(1) rotate(-12deg);}
+/* Logo (v3.0) — monogramme K "filé cinétique" : les deux bras du K sont
+   redoublés en transparence (glace, 45%), légèrement décalés, comme un
+   filé de mouvement. Remplace le mark "double exposition" violet/or
+   (v2.7) — abandonné avec le reste de la palette violette. SVG, pas des
+   div : contrairement à l'essai v2.1 (rotation + transform-origin en
+   %, qui avait posé problème), ce mark n'a NI rotation NI
+   transform-origin en pourcentage — translate() fixe uniquement, donc
+   pas le même risque de rendu incohérent entre moteurs. */
+.brand-mark{flex:none; width:30px; height:30px; animation:brandMarkIn 0.4s cubic-bezier(.3,.9,.4,1) both;}
+.brand-mark svg{display:block; width:100%; height:100%;}
+@keyframes brandMarkIn{
+  from{opacity:0; transform:scale(0.8);}
+  to{opacity:1; transform:scale(1);}
 }
 @media (prefers-reduced-motion: reduce){
-  .brand-mark-violet, .brand-mark-gold{animation:none;}
-  .brand-mark-gold{transform:rotate(-12deg);}
-  .brand-link:hover .brand-mark-gold{animation:none;}
+  .brand-mark{animation:none;}
+}
+.brand-tag{
+  font-family:'Space Mono', monospace; font-size:10px; color:var(--gold);
+  letter-spacing:0.04em; padding-left:9px; margin-left:2px;
+  border-left:1px solid var(--line); align-self:center;
 }
 /* Ligne du haut (v2.1.x, retour utilisateur — "l'organisation entre
    icône, Kinet et série/film") : marque (.title-row) et rangée
@@ -568,7 +524,7 @@ header{
   color:var(--ink);
   background:var(--violet);
   border-color:var(--violet);
-  box-shadow:0 0 20px 2px rgba(140,124,255,0.35);
+  box-shadow:0 0 20px 2px rgba(79,207,255,0.35);
 }
 .primary-tab[aria-selected="true"]:hover{background:var(--violet);}
 .eyebrow{
@@ -858,11 +814,11 @@ h1{
   font-weight:600;
   line-height:1;
   cursor:pointer;
-  box-shadow:0 10px 28px rgba(140,124,255,0.35);
+  box-shadow:0 10px 28px rgba(79,207,255,0.35);
   z-index:40;
   transition:transform .15s ease;
 }
-.fab:hover{transform:scale(1.06); box-shadow:0 10px 28px rgba(140,124,255,0.35), 0 0 32px 6px rgba(231,178,76,0.3);}
+.fab:hover{transform:scale(1.06); box-shadow:0 10px 28px rgba(79,207,255,0.35), 0 0 32px 6px rgba(232,163,61,0.3);}
 .fab:active{transform:scale(0.92);}
 
 /* Retour en haut (retour utilisateur : le catalogue peut dépasser 300
@@ -968,7 +924,7 @@ input[type="text"]{flex:1; min-width:180px;}
    cohérent avec les boutons plus bas. */
 input[type="text"]:focus, input[type="email"]:focus, input[type="number"]:focus, select:focus, textarea:focus{
   border-color:var(--violet-dim);
-  box-shadow:0 0 0 3px rgba(140,124,255,0.16);
+  box-shadow:0 0 0 3px rgba(79,207,255,0.16);
 }
 textarea{width:100%; resize:vertical; line-height:1.5; font-family:'Instrument Sans', sans-serif;}
 select{cursor:pointer;}
@@ -1020,7 +976,7 @@ input[type="file"]::file-selector-button:hover{color:var(--text); border-color:v
 /* v2.9, "Halation" : un vrai halo au survol, pas juste un changement de
    teinte — la lueur qu'un point actif dégage, voir la section Le style de
    la page de référence pour le principe complet. */
-.btn:hover{background:#a297ff; box-shadow:0 0 0 1px rgba(140,124,255,0.35), 0 0 24px 4px rgba(140,124,255,0.35);}
+.btn:hover{background:#7ad9ff; box-shadow:0 0 0 1px rgba(79,207,255,0.35), 0 0 24px 4px rgba(79,207,255,0.35);}
 .btn:active{transform:scale(0.96);}
 @media (prefers-reduced-motion: reduce){.btn:active{transform:none;}}
 .btn:disabled{opacity:0.35; cursor:default; transform:none;}
@@ -1101,7 +1057,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 }
 .annual-goal-widget.is-complete{
   border-color:var(--violet-dim);
-  background:var(--violet-wash, rgba(140,124,255,0.12));
+  background:var(--violet-wash, rgba(79,207,255,0.12));
 }
 .annual-goal-head{
   display:flex;
@@ -1273,7 +1229,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
    curseur" se voie aussi en couleur, pas juste en mouvement. */
 .film-row.tilting, .wl-row.tilting{
   border-color:var(--gold-dim);
-  box-shadow:0 16px 32px rgba(0,0,0,0.4), 0 0 28px rgba(231,178,76,0.14);
+  box-shadow:0 16px 32px rgba(0,0,0,0.4), 0 0 28px rgba(232,163,61,0.14);
 }
 /* Perforations façon pellicule à l'intérieur de chaque ligne : motif de
    l'ancien thème cinéma, retiré en v2.0 (voir aussi les .sprockets des
@@ -1428,8 +1384,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
    ailleurs dans ce fichier. */
 .counter.pulse{animation:savePulse .5s ease-out, counterFlip .6s cubic-bezier(.34,1.56,.64,1);}
 @keyframes savePulse{
-  0%{box-shadow:0 0 0 0 rgba(231,178,76,0.55);}
-  100%{box-shadow:0 0 0 8px rgba(231,178,76,0);}
+  0%{box-shadow:0 0 0 0 rgba(232,163,61,0.55);}
+  100%{box-shadow:0 0 0 8px rgba(232,163,61,0);}
 }
 @keyframes counterFlip{
   0%{transform:rotateY(0) scale(1);}
@@ -1878,14 +1834,14 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
      CES valeurs sombres plutôt que de celles du thème choisi, quel qu'il
      soit — les tokens CSS suivent l'arbre du DOM, pas la feuille de style
      d'origine de chaque classe. */
-  --violet:#8c7cff; --violet-dim:#5b4fb0; --violet-wash:rgba(140,124,255,0.12);
-  --gold:#e7b24c; --gold-dim:#8a6a2e; --gold-wash:rgba(231,178,76,0.1);
+  --violet:#4fcfff; --violet-dim:#1f6f8f; --violet-wash:rgba(79,207,255,0.12);
+  --gold:#e8a33d; --gold-dim:#a66f1f; --gold-wash:rgba(232,163,61,0.1);
   --teal:#6fa39f; --teal-wash:rgba(111,163,159,0.14);
   --bronze:#d9aa67; --bronze-dim:#8f6a3a; --bronze-wash:rgba(217,170,103,0.12);
   --coral:#ff6b57; --coral-dim:#8a3f34;
-  --ink:#0f0e16; --surface:#1b1826; --surface-2:#262032; --surface-3:#302a3d;
-  --line:#342f42; --text:#f2eee6; --text-muted:#9a93a8;
-  --glass-rgb:27,24,38; --text-rgb:242,238,230;
+  --ink:#0a0a0a; --surface:#161616; --surface-2:#1f1f1f; --surface-3:#262626;
+  --line:#2a2a2a; --text:#f4f3ee; --text-muted:#8d8c86;
+  --glass-rgb:10,10,10; --text-rgb:244,243,238;
   /* Bug retour utilisateur (2e passe, "Rappel terminé... illisible") : les
      variables ci-dessus ne suffisaient PAS partout. Redéfinir --text ne
      change RIEN pour un élément qui n'écrit jamais color:var(--text) lui-
@@ -1931,7 +1887,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   pointer-events:none;
   /* Halo plus marqué (retour utilisateur : "visibles mais pas assez à mon
      goût") — anneau et lueur renforcés (0.55→0.8, 0.35→0.55). */
-  box-shadow:0 0 0 4px rgba(140,124,255,0.8), 0 0 30px 8px rgba(140,124,255,0.55);
+  box-shadow:0 0 0 4px rgba(79,207,255,0.8), 0 0 30px 8px rgba(79,207,255,0.55);
   /* Un bouton NON actif (onglet non sélectionné, avatar de repli...) est
      délibérément discret dans son état normal (var(--text-muted), parfois
      opacity:0.6) — correct hors spotlight, mais ici c'est justement LUI le
@@ -2660,7 +2616,7 @@ input[type="range"]::-moz-range-thumb{
   background:var(--violet); color:var(--ink); border:2px solid var(--surface);
   display:flex; align-items:center; justify-content:center; cursor:pointer; transition:background .15s;
 }
-.pf-avatar-edit:hover{background:#a297ff;}
+.pf-avatar-edit:hover{background:#7ad9ff;}
 .pf-avatar-edit svg{width:13px; height:13px;}
 .pf-name-input{
   font-family:'Bricolage Grotesque', sans-serif; font-weight:700; font-size:19px; text-align:center;
@@ -2864,7 +2820,7 @@ input[type="range"]::-moz-range-thumb{
 .top-films-showcase-item[data-tmdb-id]:hover .film-poster-placeholder{
   border-color:var(--gold);
   transform:translateY(-2px);
-  box-shadow:0 0 0 1px rgba(231,178,76,0.3), 0 0 26px 4px rgba(231,178,76,0.3), 0 0 50px 10px rgba(140,124,255,0.16);
+  box-shadow:0 0 0 1px rgba(232,163,61,0.3), 0 0 26px 4px rgba(232,163,61,0.3), 0 0 50px 10px rgba(79,207,255,0.16);
 }
 .top-films-showcase-title{
   font-size:12px;
@@ -3565,7 +3521,7 @@ input[type="range"]::-moz-range-thumb{
 .stats-extreme-best{
   position:relative;
   border-color:transparent;
-  box-shadow:0 0 18px 2px rgba(231,178,76,0.16);
+  box-shadow:0 0 18px 2px rgba(232,163,61,0.16);
 }
 .stats-extreme-best::before{
   content:'';
@@ -3789,7 +3745,7 @@ input[type="range"]::-moz-range-thumb{
   background:rgba(15,14,22,0.78);
 }
 .tcg-card.rarity-rare{border-color:var(--teal); box-shadow:0 0 14px rgba(111,163,159,0.3);}
-.tcg-card.rarity-epique{border-color:var(--violet); box-shadow:0 0 16px rgba(140,124,255,0.35);}
+.tcg-card.rarity-epique{border-color:var(--violet); box-shadow:0 0 16px rgba(79,207,255,0.35);}
 /* Confettis au 5/5 (celebrateConfetti, js/ui.js) : pastilles tombantes,
    retirées par le JS après l'animation. */
 /* Curseur de volume (Paramètres → Son) : couleur de la palette, largeur fixe. */
@@ -3803,7 +3759,7 @@ input[type="range"]::-moz-range-thumb{
   0%{transform:translateY(0) rotate(0deg); opacity:1;}
   100%{transform:translateY(105vh) rotate(540deg); opacity:0;}
 }
-.tcg-card.rarity-legendaire{border-color:var(--gold); box-shadow:0 0 20px rgba(231,178,76,0.45);}
+.tcg-card.rarity-legendaire{border-color:var(--gold); box-shadow:0 0 20px rgba(232,163,61,0.45);}
 /* Légendaire : un reflet doré lent qui traverse la carte. Discret, et jamais
    si le mouvement est réduit. */
 .tcg-card.rarity-legendaire::after{
@@ -3930,7 +3886,7 @@ input[type="range"]::-moz-range-thumb{
 .tcg-card-detail{display:flex; flex-direction:column; align-items:center; gap:10px; border:2px solid var(--line); border-radius:14px; padding:16px; background:var(--ink-surface);}
 .tcg-card-detail.rarity-rare{border-color:var(--teal);}
 .tcg-card-detail.rarity-epique{border-color:var(--violet);}
-.tcg-card-detail.rarity-legendaire{border-color:var(--gold); box-shadow:0 0 22px rgba(231,178,76,0.35);}
+.tcg-card-detail.rarity-legendaire{border-color:var(--gold); box-shadow:0 0 22px rgba(232,163,61,0.35);}
 .tcg-card-detail-img{width:200px; height:300px; object-fit:cover; border-radius:10px;}
 .tcg-card-detail-name{font-weight:700; font-size:1.05rem;}
 .tcg-card-detail-actions{display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:14px;}
@@ -3974,8 +3930,6 @@ input[type="range"]::-moz-range-thumb{
   background:linear-gradient(160deg, var(--violet) 0%, var(--plum) 100%);
 }
 .tcg-booster-card-back .brand-mark{width:48px; height:48px; animation:none;}
-.tcg-booster-card-back .brand-mark-violet,
-.tcg-booster-card-back .brand-mark-gold{animation:none; transform:scale(1);}
 .tcg-booster-card-front{
   transform:rotateY(180deg);
   background:var(--surface-2);
@@ -3984,15 +3938,15 @@ input[type="range"]::-moz-range-thumb{
 .tcg-booster-card-front img{width:100%; height:100%; object-fit:cover; display:block;}
 .tcg-booster-card-front .tcg-card-name{font-size:12.5px; padding:20px 10px 9px;}
 .tcg-booster-card-front.rarity-rare{border-color:var(--teal); box-shadow:0 0 20px rgba(111,163,159,0.4);}
-.tcg-booster-card-front.rarity-epique{border-color:var(--violet); box-shadow:0 0 24px rgba(140,124,255,0.5);}
+.tcg-booster-card-front.rarity-epique{border-color:var(--violet); box-shadow:0 0 24px rgba(79,207,255,0.5);}
 .tcg-booster-card-front.rarity-legendaire{
   border-color:var(--gold);
-  box-shadow:0 0 30px rgba(231,178,76,0.6);
+  box-shadow:0 0 30px rgba(232,163,61,0.6);
   animation:tcgLegendaryGlow 1.6s ease-in-out infinite;
 }
 @keyframes tcgLegendaryGlow{
-  0%, 100%{box-shadow:0 0 30px rgba(231,178,76,0.6);}
-  50%{box-shadow:0 0 44px rgba(231,178,76,0.85);}
+  0%, 100%{box-shadow:0 0 30px rgba(232,163,61,0.6);}
+  50%{box-shadow:0 0 44px rgba(232,163,61,0.85);}
 }
 /* Sheen holographique à la révélation (retour utilisateur, étude
    comparative sur un simulateur d'ouverture de boosters Pokémon : "pendant
@@ -4248,7 +4202,7 @@ input[type="range"]::-moz-range-thumb{
 .ach-hidden-card.unlocked{
   position:relative;
   border-color:transparent;
-  box-shadow:0 0 18px 2px rgba(231,178,76,0.16);
+  box-shadow:0 0 18px 2px rgba(232,163,61,0.16);
 }
 .ach-tier-card.maxed::before,
 .ach-hidden-card.unlocked::before{
@@ -4336,7 +4290,7 @@ input[type="range"]::-moz-range-thumb{
    position sous le repère. */
 .surprise-roulette-item.winner{
   border-color:var(--gold);
-  box-shadow:0 0 0 1px rgba(231,178,76,0.4), 0 0 26px 4px rgba(231,178,76,0.45);
+  box-shadow:0 0 0 1px rgba(232,163,61,0.4), 0 0 26px 4px rgba(232,163,61,0.45);
   transform:scale(1.04);
   animation:surpriseWinnerPulse .6s ease-out;
 }
@@ -4358,7 +4312,7 @@ input[type="range"]::-moz-range-thumb{
   width:2px;
   background:var(--gold);
   transform:translateX(-50%);
-  box-shadow:0 0 12px 2px rgba(231,178,76,0.6);
+  box-shadow:0 0 12px 2px rgba(232,163,61,0.6);
   pointer-events:none;
 }
 .surprise-roulette-marker::before, .surprise-roulette-marker::after{
@@ -4441,7 +4395,7 @@ input[type="range"]::-moz-range-thumb{
 #suggestionsList .wl-row:hover{
   border-color:var(--violet-dim);
   transform:translateY(-1px);
-  box-shadow:0 10px 24px rgba(0,0,0,0.35), 0 0 24px 3px rgba(140,124,255,0.18);
+  box-shadow:0 10px 24px rgba(0,0,0,0.35), 0 0 24px 3px rgba(79,207,255,0.18);
 }
 .wl-main{flex:1; min-width:0;}
 .wl-title{
@@ -5320,7 +5274,7 @@ body[data-view-mode="grid"] #topList .top-rank{
   font-size:12px;
   z-index:1;
 }
-body[data-view-mode="grid"] #topList .top-row:nth-child(-n+3) .top-rank{background:rgba(231,178,76,0.22);}
+body[data-view-mode="grid"] #topList .top-row:nth-child(-n+3) .top-rank{background:rgba(232,163,61,0.22);}
 body[data-view-mode="grid"] #topList .counter{align-self:flex-end;}
 
 /* Mode LISTE : une bannière pleine largeur par film plutôt qu'une ligne
@@ -5417,8 +5371,8 @@ body[data-view-mode="list"] #topList .top-rank{width:26px; font-size:16px;}
   position:absolute; inset:0;
   background:
     linear-gradient(0deg, rgba(15,14,22,0.65) 0%, rgba(15,14,22,0.1) 55%, transparent 78%),
-    linear-gradient(100deg, rgba(140,124,255,0.22) 0%, transparent 45%),
-    linear-gradient(260deg, rgba(231,178,76,0.16) 0%, transparent 40%);
+    linear-gradient(100deg, rgba(79,207,255,0.22) 0%, transparent 45%),
+    linear-gradient(260deg, rgba(232,163,61,0.16) 0%, transparent 40%);
 }
 @media (prefers-reduced-motion:reduce){
   .detail-backdrop img{animation:none; opacity:1;}
@@ -5506,7 +5460,7 @@ body[data-view-mode="list"] #topList .top-rank{width:26px; font-size:16px;}
   border-radius:999px;
   padding:5px 12px;
   color:var(--violet);
-  background:var(--violet-wash, rgba(140,124,255,0.12));
+  background:var(--violet-wash, rgba(79,207,255,0.12));
   border:1px solid var(--violet-dim);
   flex:none;
 }
