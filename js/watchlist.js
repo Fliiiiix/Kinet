@@ -198,19 +198,30 @@ async function loadWatchlistFriendRatings(){
 // que tout le lot soit fini n'aurait pas de sens ici (contrairement à
 // openWatchlist() plus bas qui, lui, affiche déjà la liste sans attendre) —
 // le filtre lui-même n'a aucun intérêt tant qu'il ne connaît qu'une partie
-// des films, Promise.all attend donc le lot entier avant de rendre la main.
+// des films, on attend donc le lot entier avant de rendre la main.
+// Audit C2 : une watchlist réelle compte plus de 200 films, tout lancer d'un
+// coup faisait répondre TMDB « trop de requêtes » (429) en rafale. Au plus
+// WATCHLIST_PROVIDERS_CONCURRENCY requêtes en vol ; fetchWatchProviders()
+// réessaie après un 429 et garde ses réponses en cache (js/tmdb.js).
+const WATCHLIST_PROVIDERS_CONCURRENCY = 6;
+
 async function loadWatchlistProviders(){
   watchlistProviders = {};
-  const withTmdbId = watchlist.filter(item => item.tmdbId);
-  await Promise.all(withTmdbId.map(async (item) => {
-    try{
-      const providers = await fetchWatchProviders(item.tmdbId, 'movie');
-      watchlistProviders[item.tmdbId] = (providers && providers.flatrate) || [];
-    }catch(e){
-      console.error(e);
-      watchlistProviders[item.tmdbId] = [];
+  const queue = watchlist.filter(item => item.tmdbId);
+  const worker = async () => {
+    while(queue.length > 0){
+      const item = queue.shift();
+      try{
+        const providers = await fetchWatchProviders(item.tmdbId, 'movie');
+        watchlistProviders[item.tmdbId] = (providers && providers.flatrate) || [];
+      }catch(e){
+        console.error(e);
+        watchlistProviders[item.tmdbId] = [];
+      }
     }
-  }));
+  };
+  const workers = Math.min(WATCHLIST_PROVIDERS_CONCURRENCY, queue.length);
+  await Promise.all(Array.from({ length: workers }, worker));
   renderWatchlistReminder();
 }
 

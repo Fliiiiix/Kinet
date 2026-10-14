@@ -14,8 +14,7 @@ let latestChangelogEntry = null; // la plus récente DANS cette fenêtre de 7 jo
 // UNIQUEMENT au numéro affiché près du logo (#versionTagValue). Distincte
 // de latestChangelogEntry ci-dessus : sans ça, une fois la dernière
 // annonce sortie de la fenêtre de 7 jours (aucune nouvelle publiée
-// depuis), le tag retomberait sur le "2.0" codé en dur dans index.html —
-// une régression visible bien plus gênante que l'absence d'annonce.
+// depuis), le numéro disparaîtrait alors qu'une version existe.
 let latestPublishedVersion = null;
 
 // Visibilité publique limitée à 7 jours (retour utilisateur) — passé ce
@@ -89,10 +88,14 @@ function renderChangelogModal(){
 // automatiquement la dernière Nouveauté publiée plutôt qu'une valeur à
 // mettre à jour à la main à chaque déploiement — voir renderChangelogModal
 // ci-dessus pour le contenu détaillé.
+// Masqué tant qu'aucune version n'est connue (écran de connexion, aucune
+// entrée publiée) plutôt qu'un numéro de départ faux (audit C5).
 function updateVersionTag(){
-  if(!latestPublishedVersion) return; // aucune entrée publiée du tout : garde la valeur codée en dur du HTML
+  const tag = document.getElementById('versionTag');
   const el = document.getElementById('versionTagValue');
-  if(el) el.textContent = latestPublishedVersion;
+  if(!el) return;
+  el.textContent = latestPublishedVersion || '';
+  if(tag) tag.style.display = latestPublishedVersion ? '' : 'none';
 }
 
 async function markChangelogSeen(){

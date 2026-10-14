@@ -422,9 +422,14 @@ function renderShowDetailHeader(show){
 
   document.getElementById('seriesDetailOverview').textContent = show.overview || '';
 
-  const sliderVal = show.manualNote != null ? show.manualNote : 2.5;
-  document.getElementById('seriesNoteSlider').value = sliderVal;
-  document.getElementById('seriesNoteVal').textContent = sliderVal.toFixed(2);
+  // Audit C4 : sans note, le curseur affichait « 2.50 » à côté d'un anneau
+  // vide, comme si la série était notée. Il reste au milieu (point de
+  // départ), mais neutre et annoncé comme non noté jusqu'au premier réglage.
+  const hasNote = show.manualNote != null;
+  const slider = document.getElementById('seriesNoteSlider');
+  slider.value = hasNote ? show.manualNote : 2.5;
+  slider.classList.toggle('is-unset', !hasNote);
+  document.getElementById('seriesNoteVal').textContent = hasNote ? show.manualNote.toFixed(1) : 'Non notée';
 }
 
 // Même cadran que partout ailleurs (.counter, noteColorClass()) — voir le
@@ -1063,12 +1068,18 @@ async function openShowDetail(showId){
 document.getElementById('seriesDetailBack').addEventListener('click', goToSeries);
 document.getElementById('seriesDetailPrevBtn').addEventListener('click', () => goShowNav(-1));
 document.getElementById('seriesDetailNextBtn').addEventListener('click', () => goShowNav(1));
+document.addEventListener('keydown', (e) => {
+  if(e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+  if(!isDetailKeyNavAllowed('seriesDetailPage', e)) return;
+  goShowNav(e.key === 'ArrowLeft' ? -1 : 1);
+});
 // Bouton "Enregistrer" retiré (retour utilisateur, déclutter) : sauvegarde
 // automatique au relâchement du curseur ('change', une fois en fin de
 // glissement, jamais à chaque tick de 'input' — sinon une écriture réseau
 // par pixel glissé).
 document.getElementById('seriesNoteSlider').addEventListener('input', (e) => {
-  document.getElementById('seriesNoteVal').textContent = parseFloat(e.target.value).toFixed(2);
+  e.target.classList.remove('is-unset');
+  document.getElementById('seriesNoteVal').textContent = parseFloat(e.target.value).toFixed(1);
 });
 document.getElementById('seriesNoteSlider').addEventListener('change', handleSaveSeriesNote);
 document.getElementById('seriesRemoveBtn').addEventListener('click', () => handleRemoveShow(currentShowId, true));

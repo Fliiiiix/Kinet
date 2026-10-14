@@ -593,6 +593,11 @@ async function openFilmDetail(tmdbId){
 document.getElementById('filmDetailBack').addEventListener('click', goHome);
 document.getElementById('filmDetailPrevBtn').addEventListener('click', () => goFilmNav(-1));
 document.getElementById('filmDetailNextBtn').addEventListener('click', () => goFilmNav(1));
+document.addEventListener('keydown', (e) => {
+  if(e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+  if(!isDetailKeyNavAllowed('filmDetailPage', e)) return;
+  goFilmNav(e.key === 'ArrowLeft' ? -1 : 1);
+});
 document.getElementById('filmDetailRateBtn').addEventListener('click', handleFilmDetailRate);
 {
   const filmDetailWatchlistBtn = document.getElementById('filmDetailWatchlistBtn');

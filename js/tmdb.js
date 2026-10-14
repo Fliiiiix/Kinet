@@ -177,17 +177,66 @@ function pickTrailerVideo(videos){
 // Données JustWatch via TMDB, une seule région (FR) : l'app n'a pas de
 // sélecteur de pays, ni de raison d'en avoir un pour un usage perso en
 // France. https://developer.themoviedb.org/reference/movie-watch-providers
-// (même endpoint côté /tv). Jamais stocké, toujours rappelé en direct
-// (même principe que fetchMovieDetails()/fetchTvDetails() ci-dessus) : un
-// catalogue change de plateforme sans prévenir.
+// (même endpoint côté /tv). Un catalogue change de plateforme sans
+// prévenir : jamais stocké en base, seulement gardé quelques heures en cache.
+// Audit C2 : la page À voir en demande plus de 200 d'un coup. Les réponses
+// sont gardées WATCH_PROVIDERS_TTL_MS (mémoire + localStorage, pour ne pas
+// tout redemander à chaque visite), et un 429 (« trop de requêtes ») est
+// réessayé après le délai indiqué par TMDB plutôt que compté comme un échec.
+const WATCH_PROVIDERS_TTL_MS = 12 * 60 * 60 * 1000;
+const WATCH_PROVIDERS_STORE_KEY = 'kinetWatchProviders';
+let watchProvidersCache = null;
+
+function watchProvidersCacheMap(){
+  if(watchProvidersCache) return watchProvidersCache;
+  watchProvidersCache = {};
+  try{
+    const raw = typeof localStorage !== 'undefined' && localStorage.getItem(WATCH_PROVIDERS_STORE_KEY);
+    if(raw) watchProvidersCache = JSON.parse(raw) || {};
+  }catch(e){ watchProvidersCache = {}; }
+  return watchProvidersCache;
+}
+
+// Écriture regroupée : un lot de 200 réponses ne réécrit le stockage qu'une fois.
+let watchProvidersSaveTimer = null;
+function saveWatchProvidersCache(){
+  clearTimeout(watchProvidersSaveTimer);
+  watchProvidersSaveTimer = setTimeout(writeWatchProvidersCache, 500);
+}
+
+function writeWatchProvidersCache(){
+  try{
+    if(typeof localStorage === 'undefined') return;
+    const now = Date.now();
+    const cache = watchProvidersCacheMap();
+    Object.keys(cache).forEach(k => { if(now - cache[k].t > WATCH_PROVIDERS_TTL_MS) delete cache[k]; });
+    localStorage.setItem(WATCH_PROVIDERS_STORE_KEY, JSON.stringify(cache));
+  }catch(e){ /* stockage plein ou bloqué : le cache mémoire suffit */ }
+}
+
 async function fetchWatchProviders(tmdbId, mediaType){
+  const key = `${mediaType}:${tmdbId}`;
+  const cached = watchProvidersCacheMap()[key];
+  if(cached && Date.now() - cached.t < WATCH_PROVIDERS_TTL_MS) return cached.v;
+
   const url = `https://api.themoviedb.org/3/${mediaType}/${tmdbId}/watch/providers`;
-  const res = await fetch(url, {
-    headers: { 'Authorization': `Bearer ${TMDB_API_KEY}`, 'Accept': 'application/json' }
-  });
-  if(!res.ok) throw new Error(`Erreur TMDB (${res.status})`);
-  const data = await res.json();
-  return (data.results && data.results.FR) || null;
+  for(let attempt = 0; ; attempt++){
+    const res = await fetch(url, {
+      headers: { 'Authorization': `Bearer ${TMDB_API_KEY}`, 'Accept': 'application/json' }
+    });
+    if(res.status === 429 && attempt < 3){
+      const retryAfter = parseFloat(res.headers && res.headers.get && res.headers.get('Retry-After'));
+      const waitMs = Number.isFinite(retryAfter) ? retryAfter * 1000 : 800 * (attempt + 1);
+      await new Promise(resolve => setTimeout(resolve, waitMs));
+      continue;
+    }
+    if(!res.ok) throw new Error(`Erreur TMDB (${res.status})`);
+    const data = await res.json();
+    const value = (data.results && data.results.FR) || null;
+    watchProvidersCacheMap()[key] = { t: Date.now(), v: value };
+    saveWatchProvidersCache();
+    return value;
+  }
 }
 
 // Un même service apparaît parfois dans plusieurs catégories à la fois

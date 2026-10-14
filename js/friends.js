@@ -205,30 +205,31 @@ function renderFriendsPage(){
   // Suggestions/Recommandé hors champ. La ligne ouvre le vrai profil en
   // lecture seule, pas l'aperçu public — voir le commentaire de
   // wireFriendRowClicks().
+  // Audit C1 : quatre boutons par ami débordaient sur le pseudo. La ligne
+  // ouvre déjà le profil (ex-bouton « Voir ») ; le reste passe dans le menu
+  // « ⋯ » (openRowMenu(), js/ui.js).
   renderCollapsible(
     document.getElementById('friendsList'), accepted,
-    f => friendRowHtml(otherUserId(f), `
-      <button class="btn secondary" data-action="view" data-id="${f.id}" type="button">Voir</button>
-      <button class="btn secondary" data-action="compare" data-friend="${otherUserId(f)}" type="button">Comparer</button>
-      <button class="btn secondary" data-action="trade" data-friend="${otherUserId(f)}" type="button">Échanger des cartes</button>
-      <button class="btn danger" data-action="remove" data-id="${f.id}" type="button">Retirer</button>
-    `),
+    f => friendRowHtml(otherUserId(f), rowMoreButtonHtml(`Actions pour ${friendDisplayName(otherUserId(f))}`)),
     {
       previewCount: 6,
       emptyHtml: `<div class="tmdb-empty">Pas encore d'amis. Cherche un pseudo ou un email ci-dessus.</div>`,
       wire: (el) => {
-        el.querySelectorAll('button[data-action]').forEach(btn => {
-          if(btn.dataset.action === 'compare'){
-            btn.addEventListener('click', () => compareWithFriend(btn.dataset.friend, btn.closest('.wl-row')));
-            return;
-          }
-          if(btn.dataset.action === 'trade'){
-            // Échange : ouvre directement la fenêtre cartes sur l'onglet échange,
-            // avec cet ami déjà sélectionné (voir openTcgTradeWith()).
-            btn.addEventListener('click', () => openTcgTradeWith(btn.dataset.friend));
-            return;
-          }
-          btn.addEventListener('click', () => handleFriendAction(btn.dataset.action, parseInt(btn.dataset.id, 10)));
+        el.querySelectorAll('.wl-row[data-user-id]').forEach(row => {
+          const friendId = row.dataset.userId;
+          const friendship = accepted.find(f => otherUserId(f) === friendId);
+          const moreBtn = row.querySelector('.row-more-btn');
+          if(!moreBtn || !friendship) return;
+          moreBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            openRowMenu(moreBtn, [
+              { label: 'Comparer nos notes', onSelect: () => compareWithFriend(friendId, row) },
+              // Ouvre directement la fenêtre cartes sur l'onglet échange, avec
+              // cet ami déjà sélectionné (voir openTcgTradeWith()).
+              { label: 'Échanger des cartes', onSelect: () => openTcgTradeWith(friendId) },
+              { label: 'Retirer de mes amis', danger: true, onSelect: () => handleFriendAction('remove', friendship.id) }
+            ]);
+          });
         });
         wireFriendRowClicks(el, openFriendProfile);
       }

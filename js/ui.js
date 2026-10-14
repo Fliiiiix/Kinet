@@ -115,6 +115,14 @@ function closeOverlay(id, extraCleanup){
 // complet, est sûre.
 document.addEventListener('keydown', (e) => {
   if(e.key !== 'Escape') return;
+  // Les petits menus flottants passent avant les modales : Échap referme
+  // d'abord ce qui est au premier plan.
+  if(typeof closeRowMenu === 'function' && closeRowMenu()) return;
+  const filters = document.getElementById('toolbarFilters');
+  if(filters && filters.classList.contains('open') && typeof closeToolbarFilters === 'function'){
+    closeToolbarFilters();
+    return;
+  }
   const closers = {
     overlay: () => closeModal(),
     profileOverlay: () => closeProfileModal(),
@@ -763,6 +771,98 @@ function makeRowClickable(el, handler){
     if(e.target !== el) return;
     if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); handler(e); }
   });
+}
+
+// Flèches gauche/droite sur une fiche (film ou série d'à côté, audit C3) :
+// seulement si cette fiche est affichée, sans fenêtre ouverte, et jamais
+// pendant une saisie (un curseur de note se règle lui aussi aux flèches).
+function isDetailKeyNavAllowed(pageId, e){
+  if(e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return false;
+  const page = document.getElementById(pageId);
+  if(!page || page.style.display === 'none') return false;
+  if(document.querySelector('.overlay.open')) return false;
+  const a = document.activeElement;
+  if(a && (a.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))) return false;
+  return true;
+}
+
+// --- Menu d'actions d'une ligne (bouton « ⋯ ») ---
+// Code de design (docs/code-design.md) : une action visible par ligne, les
+// autres ici. Un seul menu ouvert à la fois ; Échap, un clic dehors, le
+// défilement ou le choix d'une action le referment.
+// items : [{ label, danger, onSelect }]
+const ROW_MORE_ICON = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="19" cy="12" r="1.8"></circle></svg>';
+let rowMenuState = null;
+
+function rowMoreButtonHtml(label){
+  return `<button class="row-more-btn" type="button" aria-label="${escapeHtml(label)}" aria-haspopup="menu" aria-expanded="false">${ROW_MORE_ICON}</button>`;
+}
+
+function closeRowMenu(){
+  if(!rowMenuState) return false;
+  const { menu, anchor } = rowMenuState;
+  rowMenuState = null;
+  menu.remove();
+  anchor.setAttribute('aria-expanded', 'false');
+  document.removeEventListener('pointerdown', onRowMenuPointerDown, true);
+  window.removeEventListener('scroll', closeRowMenu, true);
+  window.removeEventListener('resize', closeRowMenu);
+  return true;
+}
+
+function onRowMenuPointerDown(e){
+  if(!rowMenuState) return;
+  if(rowMenuState.menu.contains(e.target) || rowMenuState.anchor.contains(e.target)) return;
+  closeRowMenu();
+}
+
+function openRowMenu(anchor, items){
+  const sameAnchor = rowMenuState && rowMenuState.anchor === anchor;
+  closeRowMenu();
+  if(sameAnchor) return; // second clic sur le même « ⋯ » : on referme seulement
+
+  const menu = document.createElement('div');
+  menu.className = 'row-menu';
+  menu.setAttribute('role', 'menu');
+  items.forEach(item => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'row-menu-item' + (item.danger ? ' danger' : '');
+    b.setAttribute('role', 'menuitem');
+    b.textContent = item.label;
+    b.addEventListener('click', (e) => {
+      e.stopPropagation();
+      closeRowMenu();
+      anchor.focus({ preventScroll: true });
+      item.onSelect();
+    });
+    menu.appendChild(b);
+  });
+  menu.addEventListener('keydown', (e) => {
+    if(e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+    e.preventDefault();
+    const btns = [...menu.querySelectorAll('.row-menu-item')];
+    const i = btns.indexOf(document.activeElement);
+    const next = e.key === 'ArrowDown' ? (i + 1) % btns.length : (i - 1 + btns.length) % btns.length;
+    btns[next].focus();
+  });
+  document.body.appendChild(menu);
+
+  // Sous le bouton, aligné à droite ; au-dessus s'il n'y a pas la place.
+  const r = anchor.getBoundingClientRect();
+  const w = menu.offsetWidth;
+  const h = menu.offsetHeight;
+  const left = Math.max(8, Math.min(r.right - w, window.innerWidth - w - 8));
+  const fitsBelow = r.bottom + 6 + h <= window.innerHeight - 8;
+  menu.style.left = `${left}px`;
+  menu.style.top = `${fitsBelow ? r.bottom + 6 : Math.max(8, r.top - 6 - h)}px`;
+
+  anchor.setAttribute('aria-expanded', 'true');
+  rowMenuState = { menu, anchor };
+  document.addEventListener('pointerdown', onRowMenuPointerDown, true);
+  window.addEventListener('scroll', closeRowMenu, true);
+  window.addEventListener('resize', closeRowMenu);
+  menu.querySelector('.row-menu-item').focus({ preventScroll: true });
 }
 
 // --- Garde anti double-soumission ---

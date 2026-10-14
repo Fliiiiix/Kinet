@@ -2531,6 +2531,10 @@ input[type="range"]::-moz-range-thumb{
   cursor:pointer;
   border:2px solid var(--ink);
 }
+/* Curseur jamais réglé (série sans note, audit C4) : pouce neutre, pour ne
+   pas faire croire à une note déjà posée. */
+input[type="range"].is-unset::-webkit-slider-thumb{background:var(--surface-3); border-color:var(--text-muted);}
+input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); border-color:var(--text-muted);}
 .avatar-source-tabs{
   display:flex;
   gap:6px;
@@ -4423,6 +4427,7 @@ input[type="range"]::-moz-range-thumb{
   font-family:'Bricolage Grotesque', sans-serif;
   font-weight:600;
   font-size:15px;
+  overflow-wrap:anywhere;
 }
 .wl-year{color:var(--text-muted); font-weight:400;}
 .wl-note{
@@ -4444,6 +4449,37 @@ input[type="range"]::-moz-range-thumb{
 }
 .wl-actions{display:flex; gap:6px; flex:none;}
 .wl-actions .btn{padding:8px 12px; font-size:11px;}
+
+/* Bouton « ⋯ » et son menu (openRowMenu(), js/ui.js) — code de design :
+   bouton icône 40px sans fond au repos, menu = surface flottante. */
+.row-more-btn{
+  display:flex; align-items:center; justify-content:center;
+  width:40px; height:40px; flex:none;
+  border:none; border-radius:999px; background:none;
+  color:var(--text-muted); cursor:pointer;
+  transition:background-color .15s, color .15s, transform .1s ease-out;
+}
+.row-more-btn svg{width:20px; height:20px;}
+.row-more-btn:hover, .row-more-btn[aria-expanded="true"]{background:var(--surface-2); color:var(--text);}
+.row-more-btn:active{transform:scale(0.97);}
+.row-menu{
+  position:fixed; z-index:600;
+  display:flex; flex-direction:column; min-width:210px; padding:6px;
+  background:rgba(var(--glass-rgb),0.92);
+  backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+  border:1px solid rgba(var(--text-rgb),0.09); border-radius:14px;
+  box-shadow:0 16px 40px rgba(0,0,0,0.45);
+  animation:menuIn .15s ease-out;
+}
+.row-menu-item{
+  display:block; width:100%; text-align:left;
+  padding:10px 12px; border:none; border-radius:8px; background:none;
+  font-family:'Instrument Sans', sans-serif; font-size:13px; font-weight:500;
+  color:var(--text); cursor:pointer;
+}
+.row-menu-item:hover, .row-menu-item:focus-visible{background:var(--surface-2); outline:none;}
+.row-menu-item.danger{color:var(--coral);}
+@media (prefers-reduced-motion: reduce){ .row-menu{animation:none;} }
 
 /* Note rapide depuis la watchlist (retour utilisateur : convertir un item
    en film noté avec une seule note globale, sans ouvrir la grille complète)
@@ -5518,36 +5554,26 @@ body[data-view-mode="list"] #topList .top-rank{width:26px; font-size:16px;}
 }
 .btn-secondary:hover{color:var(--violet); border-color:var(--violet);}
 
-/* Flèches "film/série d'à côté" (retour utilisateur : "vu qu'on a de
-   l'espace... j'aimerais naviguer à ceux d'à côté"). Position fixe, pas
-   liée à la banderole (qui peut être masquée) : flottent au bord de
-   l'écran, toujours au même endroit pendant le défilement. */
+/* Flèches "film/série d'à côté" (retour utilisateur : "j'aimerais naviguer
+   à ceux d'à côté"). Dans l'entête de la fiche, à droite (audit C3 : fixées
+   au milieu de l'écran, elles recouvraient le contenu). Boutons icône du
+   code de design : 40px, sans fond au repos. */
+.detail-nav{display:flex; gap:4px; margin-left:auto; flex:none;}
 .detail-nav-arrow{
-  position:fixed;
-  top:50%;
-  transform:translateY(-50%);
-  z-index:40;
-  width:44px; height:44px;
-  border-radius:50%;
-  border:1px solid var(--line);
-  background:var(--surface-2);
-  color:var(--text);
+  width:40px; height:40px;
+  border-radius:999px;
+  border:none;
+  background:none;
+  color:var(--text-muted);
   font-size:24px;
   line-height:1;
   display:flex; align-items:center; justify-content:center;
   cursor:pointer;
-  box-shadow:0 4px 14px rgba(0,0,0,0.25);
-  transition:background 0.15s ease, transform 0.15s ease, border-color 0.15s ease;
+  transition:background-color .15s ease, color .15s ease, transform .1s ease-out;
 }
-.detail-nav-arrow:hover{background:var(--surface-3); border-color:var(--violet-dim); transform:translateY(-50%) scale(1.08);}
-.detail-nav-arrow:focus-visible{outline:2px solid var(--violet-dim); outline-offset:2px;}
-.detail-nav-prev{left:12px;}
-.detail-nav-next{right:12px;}
-@media (max-width:600px){
-  .detail-nav-arrow{width:36px; height:36px; font-size:20px;}
-  .detail-nav-prev{left:6px;}
-  .detail-nav-next{right:6px;}
-}
+.detail-nav-arrow:hover{background:var(--surface-2); color:var(--text);}
+.detail-nav-arrow:active{transform:scale(0.97);}
+.detail-nav-arrow:focus-visible{outline:2px solid var(--violet); outline-offset:2px;}
 @media (prefers-reduced-motion:reduce){
   .detail-nav-arrow{transition:none;}
 }

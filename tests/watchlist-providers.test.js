@@ -65,6 +65,29 @@ test('loadWatchlistProviders() : un film en erreur réseau -> [] pour lui, les a
   assert.strictEqual(providers[2].length, 1);
 });
 
+test('loadWatchlistProviders() : jamais plus de 6 requêtes TMDB à la fois (audit C2, erreurs 429)', async () => {
+  let inFlight = 0;
+  let maxInFlight = 0;
+  let calls = 0;
+  const ctx = buildContext({
+    fetchWatchProviders(){
+      calls++;
+      inFlight++;
+      maxInFlight = Math.max(maxInFlight, inFlight);
+      return new Promise(resolve => setTimeout(() => {
+        inFlight--;
+        resolve({ flatrate: [{ provider_id: 8, provider_name: 'Netflix' }] });
+      }, 2));
+    },
+  });
+  const items = Array.from({ length: 40 }, (_, i) => ({ id: i + 1, tmdbId: i + 1, title: `Film ${i + 1}` }));
+  setState(ctx, { watchlist: items });
+  await ctx.loadWatchlistProviders();
+  assert.strictEqual(calls, 40); // tous les films finissent par être interrogés
+  assert.ok(maxInFlight <= 6, `au plus 6 en vol, vu ${maxInFlight}`);
+  assert.strictEqual(Object.keys(getState(ctx, 'watchlistProviders')).length, 40);
+});
+
 test('buildWatchlistProviderFilterOptions() : masqué (display:none) si aucune plateforme connue', () => {
   const sel = stubElement();
   const ctx = buildContext({ elements: { wlProviderFilter: sel } });

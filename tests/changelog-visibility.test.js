@@ -19,8 +19,9 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 
 function buildContext(rows){
   const versionTagEl = stubElement();
+  const versionTagWrap = stubElement();
   const ctx = createContext({
-    document: stubDocument({ versionTagValue: versionTagEl, changelogList: stubElement() }),
+    document: stubDocument({ versionTagValue: versionTagEl, versionTag: versionTagWrap, changelogList: stubElement() }),
     escapeHtml(s){ return s; },
     loadActivityState(){ return Promise.resolve(); },
     activityState: null,
@@ -37,7 +38,7 @@ function buildContext(rows){
     },
   });
   loadFiles(ctx, ['js/changelog.js']);
-  return { ctx, versionTagEl };
+  return { ctx, versionTagEl, versionTagWrap };
 }
 
 test('loadChangelogEntries() : ne garde que les entrées publiées il y a moins de 7 jours dans la liste publique', async () => {
@@ -61,15 +62,24 @@ test('updateVersionTag() : affiche la VRAIE dernière version publiée même si 
   await ctx.loadChangelogEntries();
   assert.strictEqual(getState(ctx, 'changelogEntries').length, 0, 'plus rien de visible dans la liste publique');
   ctx.updateVersionTag();
-  assert.strictEqual(versionTagEl.textContent, '3.3', 'le tag ne doit JAMAIS retomber sur la valeur codée en dur d\'index.html tant qu\'une vraie version a été publiée un jour');
+  assert.strictEqual(versionTagEl.textContent, '3.3', 'le tag doit afficher la vraie dernière version tant qu\'une version a été publiée un jour');
 });
 
-test('updateVersionTag() : aucune entrée publiée du tout -> ne touche pas au tag (garde la valeur HTML par défaut)', async () => {
-  const { ctx, versionTagEl } = buildContext([]);
+test('updateVersionTag() : aucune entrée publiée -> numéro masqué, jamais un faux « v2.0 » (audit C5)', async () => {
+  const { ctx, versionTagEl, versionTagWrap } = buildContext([]);
   await ctx.loadChangelogEntries();
-  const before = versionTagEl.textContent;
   ctx.updateVersionTag();
-  assert.strictEqual(versionTagEl.textContent, before, 'rien à afficher -> aucune écriture, le HTML garde sa valeur par défaut');
+  assert.strictEqual(versionTagEl.textContent, '');
+  assert.strictEqual(versionTagWrap.style.display, 'none');
+});
+
+test('updateVersionTag() : version connue -> numéro affiché', async () => {
+  const { ctx, versionTagWrap } = buildContext([
+    { id: 1, version: '3.4', title: 'Annonce', body: '...', published_at: new Date().toISOString() },
+  ]);
+  await ctx.loadChangelogEntries();
+  ctx.updateVersionTag();
+  assert.strictEqual(versionTagWrap.style.display, '');
 });
 
 test('hasUnreadChangelog() : jamais "non lu" pour une annonce sortie de la fenêtre de 7 jours (même jamais vue)', async () => {

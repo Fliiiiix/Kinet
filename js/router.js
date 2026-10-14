@@ -60,7 +60,9 @@ function showOnlyPage(id){
 // Top...) plutôt que de garder artificiellement le dernier onglet visité
 // actif alors qu'on n'y est plus.
 function updatePrimaryTabs(routeName){
-  const filmsActive = routeName === 'home';
+  // Une fiche film reste « dans » Films, comme une fiche série dans Séries
+  // (audit C6 : aucun onglet n'était allumé sur une fiche film).
+  const filmsActive = routeName === 'home' || routeName === 'filmDetail';
   const seriesActive = routeName === 'seriesList' || routeName === 'seriesDetail';
   document.getElementById('primaryTabFilms').setAttribute('aria-selected', String(filmsActive));
   document.getElementById('primaryTabSeries').setAttribute('aria-selected', String(seriesActive));
@@ -207,6 +209,14 @@ function parseRoute(){
 // direct vers une page groupe/proposition, y compris après un F5).
 async function renderRoute(){
   const route = parseRoute();
+  // États actifs (onglets Films/Séries, barre mobile, entête) mis à jour
+  // AVANT les pages à part ci-dessous : sinon le profil public gardait
+  // l'onglet de la page précédente allumé (audit C6).
+  if(currentUser){
+    updatePrimaryTabs(route.name);
+    updateMobileTabbar(route.name);
+    updateHeaderNav(route.name);
+  }
   // Seule page qui doit marcher sans session (voir le commentaire en haut
   // de ce fichier) — vérifiée avant le if(!currentUser) qui bloque tout le
   // reste, pour rester accessible qu'on soit connecté ou non.
@@ -239,9 +249,6 @@ async function renderRoute(){
     return;
   }
   if(!currentUser) return;
-  updatePrimaryTabs(route.name);
-  updateMobileTabbar(route.name);
-  updateHeaderNav(route.name);
   if(route.name === 'home'){
     showOnlyPage('appContainer');
     // Repart de la page 1 à chaque vraie navigation vers le catalogue
