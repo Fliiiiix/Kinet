@@ -406,7 +406,16 @@ document.getElementById('lightThemeToggle').addEventListener('change', (e) => {
 // présence même est déjà conditionnelle n'a rien à faire dans un ordre à
 // mémoriser (il resterait où il est déjà dans le DOM, jamais déplacé par
 // applyHeaderNavOrder() ci-dessous, qui ne touche que les ids listés ici).
-const HEADER_NAV_DEFAULT_ORDER = ['globalSearchBtn', 'watchlistBtn', 'upcomingBtn', 'friendsBtn', 'topBtn', 'feedbackBtn', 'changelogBtn'];
+// v3.2 (retour utilisateur : "dans l'entête droite je veux me débarasser
+// de la loupe, de l'avis et de l'annonce" — trop d'icônes, l'entête ne
+// respire pas) — Rechercher/Avis/Nouveautés retirés de cette liste ET du
+// DOM de .header-nav (voir index.html, #globalSearchBtn/#feedbackBtn/
+// #changelogBtn déplacés ou masqués) : seuls les 4 vrais liens de page
+// restent réordonnables ici. Rechercher/Avis/Nouveautés vivent désormais
+// dans la modale profil (.mm-row), déjà le seul chemin sur mobile pour
+// Avis/Nouveautés avant ce changement — juste rendu permanent aussi sur
+// desktop plutôt que réservé au seuil mobile.
+const HEADER_NAV_DEFAULT_ORDER = ['watchlistBtn', 'upcomingBtn', 'friendsBtn', 'topBtn'];
 
 function getHeaderNavOrder(){
   let saved = null;

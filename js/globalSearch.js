@@ -210,7 +210,15 @@ async function openGlobalSearch(){
   await ensureGlobalSearchData(); // n'empêche pas de taper pendant le chargement
 }
 
-document.getElementById('globalSearchBtn').addEventListener('click', openGlobalSearch);
+// Déplacé dans la modale profil (v3.2, retour utilisateur — voir le
+// commentaire sur #globalSearchBtn, index.html) : referme d'abord la
+// modale profil, comme #profileFeedbackLinkBtn/#profileChangelogLinkBtn
+// juste à côté de lui désormais (sinon la recherche s'ouvrirait par-dessus
+// un profil resté ouvert en arrière-plan).
+document.getElementById('globalSearchBtn').addEventListener('click', () => {
+  closeProfileModal();
+  openGlobalSearch();
+});
 document.getElementById('closeGlobalSearch').addEventListener('click', () => closeOverlay('globalSearchOverlay'));
 document.getElementById('globalSearchOverlay').addEventListener('click', (e) => {
   if(e.target.id === 'globalSearchOverlay') closeOverlay('globalSearchOverlay');

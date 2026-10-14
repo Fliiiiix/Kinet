@@ -517,44 +517,42 @@ header{
    4px de marge intérieure), chaque onglet sans fond/bord à lui, juste
    la couleur qui change — .topnav de la draft Scope, un segmented
    control classique plutôt que deux cartes séparées. */
+/* v3.2 (retour utilisateur : "les boutons séries et films sont de trop,
+   je veux une solution sans bouton") — la pilule groupée (v3.2 encore
+   plus tôt) réglait "deux cartes séparées" mais restait un bouton. Texte
+   nu désormais : aucun fond, aucun bord, aucun padding-boîte — juste
+   deux mots côte à côte, séparés par un point médian typographique (même
+   registre que les séparateurs déjà en usage ailleurs, pas un nouvel
+   élément). Seule la couleur + un soulignement fin distinguent l'actif,
+   rien à "cliquer comme un bouton" visuellement. */
 .primary-tabs{
   display:flex;
-  gap:2px;
+  align-items:center;
+  gap:10px;
   margin-top:20px;
-  max-width:360px;
-  background:var(--surface);
-  border:1px solid var(--line);
-  border-radius:999px;
-  padding:4px;
 }
+.primary-tab-sep{color:var(--text-muted); font-size:14px;}
 .primary-tab{
-  flex:1;
   display:flex;
   align-items:center;
-  justify-content:center;
-  gap:7px;
+  gap:6px;
   font-family:'Bricolage Grotesque', sans-serif;
   font-weight:700;
-  font-size:14px;
+  font-size:15px;
   color:var(--text-muted);
   background:none;
   border:none;
-  border-radius:999px;
-  padding:10px 16px;
+  padding:2px 0 4px;
   cursor:pointer;
-  transition:background .15s, color .15s, transform .1s;
+  border-bottom:2px solid transparent;
+  transition:color .15s ease, border-color .15s ease;
 }
-.primary-tab svg{width:17px; height:17px; flex:none;}
-.primary-tab:hover{background:var(--surface-2); color:var(--text);}
-.primary-tab:active{transform:scale(0.98);}
-/* Remplissage plein (sans halo, v3.2 — cohérent avec .topnav a.active de
-   la draft et .header-nav-btn.active juste au-dessus) : couleur seule
-   suffit à dire "c'est ici", pas besoin d'une lueur en plus. */
+.primary-tab svg{width:16px; height:16px; flex:none;}
+.primary-tab:hover{color:var(--text);}
 .primary-tab[aria-selected="true"]{
-  color:#06151c;
-  background:var(--violet);
+  color:var(--violet);
+  border-bottom-color:var(--violet);
 }
-.primary-tab[aria-selected="true"]:hover{background:var(--violet);}
 .eyebrow{
   font-family:'Space Mono', monospace;
   font-size:11px;
@@ -1073,19 +1071,20 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
    le même raisonnement que le badge de défi sur le profil Goodreads. Vide
    (display:none) tant que films/profil ne sont pas encore chargés, jamais de
    cadre vide à l'écran pendant ce court instant. */
+/* v3.2 (retour utilisateur : "l'idée est super la façon dont elle est
+   implémentée est super moche... même implémentation que [le bandeau
+   d'install]" — un bloc en carte, fond+bordure+coin arrondi, exactement
+   le même langage que le bandeau retiré juste avant lui dans ce fichier).
+   Posé directement sur le fond de la page désormais : pas de boîte, juste
+   un trait fin en haut pour le séparer de ce qui précède — même registre
+   que .objectif dans la draft Scope (bordure-haut seule, aucun fond). */
 .annual-goal-widget{
   display:flex;
   flex-direction:column;
   gap:8px;
-  padding:14px 16px;
-  margin-bottom:18px;
-  border-radius:14px;
-  border:1px solid var(--line);
-  background:var(--surface-2);
-}
-.annual-goal-widget.is-complete{
-  border-color:var(--violet-dim);
-  background:var(--violet-wash, rgba(79,207,255,0.12));
+  padding-top:16px;
+  margin-bottom:22px;
+  border-top:1px solid var(--line);
 }
 .annual-goal-head{
   display:flex;
@@ -2677,6 +2676,14 @@ input[type="range"]::-moz-range-thumb{
 .mm-row + .mm-row, .mm-row + .pf-public-panel{border-top:1px solid var(--line);}
 .mm-row:hover{background:var(--surface-3);}
 .mm-row.mm-row-danger:hover{background:var(--coral-wash, rgba(255,107,87,0.08));}
+/* #moreMenuWrap (export/import, v3.2) : une ligne seule, hors .mm-card
+   exprès (voir le commentaire dans index.html — overflow:hidden y aurait
+   coupé .dropdown-menu à l'ouverture). Même fond/bord/coin que .mm-card
+   posés directement ici, SANS overflow:hidden — le radius sur .mm-row
+   lui-même (pas juste le conteneur) garde des coins propres aussi au
+   survol, qui change le fond de .mm-row et non de .menu-wrap. */
+.mm-section .menu-wrap{background:var(--surface-2); border:1px solid var(--line); border-radius:13px;}
+.mm-section .menu-wrap .mm-row{border-radius:13px;}
 .mm-icon{width:30px; height:30px; border-radius:9px; display:flex; align-items:center; justify-content:center; flex:none;}
 .mm-icon svg{width:16px; height:16px;}
 .mm-icon.ic-violet{background:var(--violet-wash); color:var(--violet);}
@@ -3046,49 +3053,15 @@ input[type="range"]::-moz-range-thumb{
   margin:16px auto;
   font-size:14px;
 }
-/* Bandeau d'installation (js/pwa.js) — même gabarit que .digest-banner/
-   .offline-banner (bandeau plein-largeur hors des pages à bascule) mais
-   accent --violet : positif/marque, pas un avertissement (coral) ni une
-   info neutre (gold). */
-.install-banner{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:16px;
-  flex-wrap:wrap;
-  background:linear-gradient(120deg, var(--violet-wash) 0%, var(--surface) 65%);
-  border:1px solid var(--violet-dim);
-  border-radius:10px;
-  padding:18px 24px; /* v2.1, retour utilisateur : un peu serré à 14px 20px */
-  margin:16px auto;
-}
-.install-banner-text{display:flex; flex-direction:column; gap:2px; min-width:0;}
-.install-banner-text b{
-  display:inline-flex; align-items:center; gap:6px;
-  font-family:'Bricolage Grotesque', sans-serif;
-  font-weight:700;
-  font-size:14.5px;
-}
-.install-banner-icon{width:16px; height:16px; color:var(--violet); flex:none;}
-.install-banner-text span{
-  font-size:12.5px;
-  color:var(--text-muted);
-}
-.install-banner-actions{display:flex; align-items:center; gap:10px; flex:none;}
-.install-banner-dismiss{
-  background:none;
-  border:none;
-  color:var(--text-muted);
-  font-size:16px;
-  line-height:1;
-  padding:6px;
-  cursor:pointer;
-  border-radius:6px;
-  transition:background .15s, color .15s;
-}
-.install-banner-dismiss:hover{background:var(--surface-2); color:var(--text);}
+/* .install-banner (js/pwa.js) retiré en v3.2, retour utilisateur : "le
+   rectangle pour télécharger l'app... franchement pas beau" — même
+   famille visuelle (bloc en dégradé, bordure, coins ronds) que l'ancien
+   .annual-goal-widget (voir plus haut dans ce fichier), simplifié pour
+   la même raison. */
 /* Bandeau d'édition de l'entête (retour utilisateur, voir index.html et
-   enterHeaderEditMode()/js/ui.js) — même gabarit/accent que .install-banner
+   enterHeaderEditMode()/js/ui.js) — même gabarit/accent qu'avait
+   .install-banner (violet : un outil qu'on active soi-même, pas un
+   avertissement) ; le bandeau lui-même a disparu, pas ce langage
    (violet : un outil qu'on active soi-même, pas un avertissement). */
 .header-edit-banner{
   display:flex;

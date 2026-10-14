@@ -64,7 +64,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,500&family=Space+Mono:wght@400;700&family=Source+Serif+4:ital,opsz,wght@1,8..60,500;1,8..60,600&display=swap">
-<link rel="stylesheet" href="css/style.css?v=240">
+<link rel="stylesheet" href="css/style.css?v=241">
 </head>
 <body>
 
@@ -120,49 +120,40 @@
              couleur, pas seulement à sa forme/son texte, dans l'esprit
              Halation (violet/or/bronze/teal déjà dans la palette, jamais de
              nouvelle couleur ajoutée pour l'occasion). -->
-        <!-- .header-nav-action (v3.2, retour utilisateur : "rechercher/avis/
-             nouveautés ne devraient pas être dans la navbar, ça ne lance pas
-             une autre page donc ça ne fait pas sens") — distingue les 4
-             boutons qui ouvrent une MODALE (Rechercher/Avis/Installer/
-             Nouveautés, jamais de route, jamais .active) des 4 qui mènent à
-             une vraie page (À voir/Prochainement/Amis/Top films, ceux-là
-             seuls en texte nu + remplissage actif, voir updateHeaderNav(),
-             js/router.js). Icône+pastille gardées pour les actions — pas de
-             texte-pilule qui pourrait laisser croire qu'elles s'allument un
-             jour. Même conteneur/liste DOM (.header-nav) volontairement : la
-             réorganisation par glisser-déposer (applyHeaderNavOrder(),
-             js/ui.js) agit sur TOUS les .header-nav-btn comme une seule
-             liste à plat — les séparer en deux <nav> aurait cassé ce
-             réordonnancement déjà construit et testé. -->
+        <!-- v3.2, retour utilisateur ("l'entête ne respire pas... je veux me
+             débarasser de la loupe, de l'avis et de l'annonce") — .header-nav
+             ne garde plus que les 4 vrais liens de page (À voir/Prochainement/
+             Amis/Top films, texte nu + remplissage actif, updateHeaderNav(),
+             js/router.js). Rechercher/Avis/Nouveautés déplacés dans la modale
+             profil (.mm-row, voir plus bas "Mon activité") — Avis/Nouveautés
+             y avaient déjà une entrée de secours réservée au mobile
+             (.profile-mobile-only), rendue permanente ici plutôt que
+             dupliquée ; Rechercher (#globalSearchBtn) y est physiquement
+             déplacé pour garder js/globalSearch.js intact (même id, un seul
+             endroit à écouter). #feedbackBtn/#changelogBtn restent dans le
+             DOM mais masqués juste en dessous : js/changelog.js lit/écrit
+             encore .has-unread sur #changelogBtn (badge repris par
+             #mobileTabProfile), les supprimer aurait cassé cette logique
+             pour un gain purement cosmétique. -->
         <nav class="header-nav">
-          <!-- Recherche globale unifiée (v2.42, retour utilisateur) — un seul
-               point d'entrée, en premier dans la rangée (le plus transversal :
-               films, séries, amis, groupes à la fois), voir js/globalSearch.js. -->
-          <button class="header-nav-btn header-nav-action" id="globalSearchBtn" type="button" title="Rechercher" aria-label="Rechercher"><span class="nav-pip nav-pip-violet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4.3-4.3"></path></svg></span><span>Rechercher</span></button>
           <button class="header-nav-btn" id="watchlistBtn" type="button" title="À voir" aria-label="À voir"><span class="nav-pip nav-pip-violet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3.5h12a.5.5 0 01.5.5v16.2a.5.5 0 01-.77.42L12 16.2l-5.73 4.42a.5.5 0 01-.77-.42V4a.5.5 0 01.5-.5z"></path></svg></span><span>À voir</span></button>
           <button class="header-nav-btn" id="upcomingBtn" type="button" title="Prochainement" aria-label="Prochainement"><span class="nav-pip nav-pip-gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5.5" width="17" height="15" rx="2"></rect><path d="M3.5 10h17"></path><path d="M8 3.5v4"></path><path d="M16 3.5v4"></path></svg></span><span>Bientôt</span></button>
           <button class="header-nav-btn" id="friendsBtn" type="button" title="Amis" aria-label="Amis"><span class="nav-pip nav-pip-teal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9.3" cy="8" r="3.3"></circle><path d="M16 3.8c1.5.7 2.5 2.2 2.5 4S17.5 11.1 16 11.8"></path><path d="M14.5 20.3c0-3-2.3-5-5.2-5s-5.2 2-5.2 5"></path><path d="M19 20c0-2.5-1.7-4.3-4-4.8"></path></svg></span><span>Amis</span></button>
           <button class="header-nav-btn" id="topBtn" type="button" title="Top films" aria-label="Top films"><span class="nav-pip nav-pip-bronze"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4h8v4a4 4 0 01-8 0V4z"></path><path d="M8 5H5.5a2.5 2.5 0 002.5 2.5"></path><path d="M16 5h2.5A2.5 2.5 0 0116 7.5"></path><path d="M12 12v3.5"></path><path d="M9.5 20h5"></path><path d="M10.3 15.5h3.4l.8 4.5H9.5l.8-4.5z"></path></svg></span><span>Top films</span></button>
-          <!-- Donner un avis (v2.1) — vivait dans "Mon activité" (modale
-               profil) ; demande explicite de le rendre accessible directement
-               depuis l'entête, au même niveau que le reste (voir
-               js/feedback.js, inchangé sinon). -->
-          <button class="header-nav-btn header-nav-action" id="feedbackBtn" type="button" title="Donner un avis" aria-label="Donner un avis"><span class="nav-pip nav-pip-violet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H8l-4 4V5z"></path></svg></span><span>Avis</span></button>
-          <!-- Installer l'app (v2.1) — 3e surface après #installBanner (haut
-               de page, dismissible) et #installSection (modale profil,
-               référence permanente) : un accès direct depuis l'entête, sans
-               ouvrir le profil. Masqué par défaut (style inline) tant qu'on
-               ne sait pas encore si l'installation a un sens ici — même
-               logique que #installBanner, voir updateInstallHeaderBtn() dans
-               js/pwa.js. -->
+          <!-- Installer l'app (v2.1) — accès direct sans ouvrir le profil ;
+               seule icône d'action restée ici (v3.2) car conditionnelle
+               (masquée tant que l'install n'a pas de sens, voir
+               updateInstallHeaderBtn(), js/pwa.js) — jamais autant de poids
+               visuel que Rechercher/Avis/Nouveautés qui, eux, étaient
+               TOUJOURS visibles. -->
           <button class="header-nav-btn header-nav-action" id="installHeaderBtn" type="button" title="Installer l'app" aria-label="Installer l'app" style="display:none;"><span class="nav-pip nav-pip-bronze"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2" width="10" height="20" rx="2"></rect><path d="M11 18h2"></path></svg></span><span>Installer</span></button>
-          <!-- Nouveautés (v2.1+) — annonces courtes des mises à jour, voir
-               js/changelog.js. Dernier de la rangée, juste avant la photo de
-               profil : demande explicite de la mettre "à côté des autres et
-               celle du profil". Badge .has-unread (js/activityState.js,
-               réutilisé tel quel) tant qu'il y a une Nouveauté non vue. -->
-          <button class="header-nav-btn header-nav-action" id="changelogBtn" type="button" title="Nouveautés" aria-label="Nouveautés"><span class="nav-pip nav-pip-gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 11 18-5v12L3 14v-3z"></path><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"></path></svg></span><span>Nouveautés</span></button>
         </nav>
+        <!-- #feedbackBtn/#changelogBtn : voir le commentaire au-dessus de
+             .header-nav — gardés hors d'écran, pas supprimés. -->
+        <div style="display:none" aria-hidden="true">
+          <button id="feedbackBtn" type="button" tabindex="-1"></button>
+          <button id="changelogBtn" type="button" tabindex="-1"></button>
+        </div>
         <!-- .user-identity (v2.1, retour utilisateur) : avatar + pseudo groupés
              dans UN SEUL item flex plutôt que deux frères directs de
              .user-bar — sans ça, sous la media query 600px (.user-bar passe
@@ -194,15 +185,14 @@
          Bonus : currentColor suit déjà color/hover de chaque bouton
          (.header-nav-btn, .primary-tab[aria-selected]), un simple emoji
          ne pouvait pas se teinter avec l'état actif/survolé. -->
+    <!-- v3.2, retour utilisateur : "je veux une solution sans bouton" —
+         plus d'icône (elles ne servaient qu'à remplir la boîte du bouton,
+         qui n'existe plus) : deux mots, un séparateur typographique, la
+         couleur + un soulignement fin pour dire lequel est actif. -->
     <nav class="primary-tabs" id="primaryTabs" style="display:none;" role="tablist" aria-label="Films ou séries">
-      <button class="primary-tab" id="primaryTabFilms" type="button" role="tab" aria-selected="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M3 9h18M3 15h18M8.5 4v16M15.5 4v16"></path></svg>
-        Films
-      </button>
-      <button class="primary-tab" id="primaryTabSeries" type="button" role="tab" aria-selected="false">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="12" rx="2"></rect><path d="M8 21h8"></path><path d="M12 17v4"></path></svg>
-        Séries
-      </button>
+      <button class="primary-tab" id="primaryTabFilms" type="button" role="tab" aria-selected="true">Films</button>
+      <span class="primary-tab-sep" aria-hidden="true">·</span>
+      <button class="primary-tab" id="primaryTabSeries" type="button" role="tab" aria-selected="false">Séries</button>
     </nav>
   </div>
 </header>
@@ -252,16 +242,10 @@
      updateInstallBanner() : masqué par défaut tant qu'on ne sait pas
      encore si l'installation a un sens ici (déjà installée ? navigateur
      compatible ?). -->
-<div class="container install-banner" id="installBanner" style="display:none;">
-  <div class="install-banner-text">
-    <b><svg class="install-banner-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2" width="10" height="20" rx="2"></rect><path d="M11 18h2"></path></svg>Installe Kinet</b>
-    <span id="installBannerSub"></span>
-  </div>
-  <div class="install-banner-actions">
-    <button class="btn secondary" id="installBannerBtn" type="button">Installer</button>
-    <button class="install-banner-dismiss" id="installBannerDismiss" type="button" aria-label="Fermer">✕</button>
-  </div>
-</div>
+<!-- #installBanner (v2.0.8) retiré en v3.2, retour utilisateur : "le
+     rectangle pour télécharger l'app... franchement pas beau". Install
+     reste accessible via #installHeaderBtn (entête) et #installSection
+     (modale profil) — voir js/pwa.js. -->
 
 <!-- Bandeau de mise à jour (v2.1.x) — voir watchForUpdate() dans
      js/offline.js. Fixe en bas d'écran (pas dans le flux comme
@@ -499,48 +483,23 @@
       </div>
     </div>
     <div class="toolbar-actions">
-      <!-- À voir / Amis / Groupes / Statistiques / Succès / Journal vivent
-           maintenant dans l'entête et la modale profil (voir js/router.js
-           et js/profile.js) — la toolbar ne garde que ce qui agit sur le
-           catalogue affiché ici. -->
-      <!-- Grille/liste (js/ui.js, getViewMode()/setViewMode()) : une seule
-           préférence partagée par #filmList/#wlList/#topList/#seriesList,
-           répétée sur chaque page plutôt qu'un seul contrôle global — voir
-           le commentaire dans js/ui.js. -->
+      <!-- v3.2, retour utilisateur ("trop de choses... la sélection
+           générale ne sert à rien ça c'est à enlever, l'import export à
+           garder mais peut-être pas ici") — la barre ne garde que ce qui
+           sert à CHAQUE visite (affichage, filtre, ajouter). Sélection
+           groupée retirée (bouton masqué juste en dessous, logique
+           intacte) ; export/import déplacés dans la modale profil,
+           section "Données" (voir #moreMenuWrap là-bas). -->
       <div class="view-toggle" role="group" aria-label="Mode d'affichage">
         <button class="view-toggle-btn is-active" type="button" data-view-btn="grid" title="Grille" aria-label="Vue en grille" aria-pressed="true">▦</button>
         <button class="view-toggle-btn" type="button" data-view-btn="list" title="Liste" aria-label="Vue en liste" aria-pressed="false">☰</button>
       </div>
-      <!-- Actions groupées (retour utilisateur) — bascule un mode où chaque
-           ligne du catalogue affiche une case à cocher (voir render(),
-           js/app.js) ; #bulkActionsBar (fin de body) apparaît dès qu'au
-           moins un film est coché. -->
-      <!-- Icône SVG (retour utilisateur : "le sélecteur multiple... fait un
-           peu tâche") — remplace le glyphe "☑" (rendu très inégal d'une
-           police/d'un OS à l'autre, seul bouton de cette barre encore en
-           texte brut plutôt qu'en SVG comme #filtersToggleBtn/#moreMenuBtn
-           juste à côté). -->
-      <button class="btn secondary icon-only" id="bulkSelectBtn" type="button" title="Sélectionner plusieurs films" aria-label="Sélectionner plusieurs films" aria-pressed="false">
+      <!-- #bulkSelectBtn masqué, pas supprimé : toggleBulkSelectMode()
+           (js/app.js) lit/écrit encore ses classes, et #bulkActionsBar
+           (fin de body) dépend du mode qu'il bascule. -->
+      <button class="btn secondary icon-only" id="bulkSelectBtn" type="button" title="Sélectionner plusieurs films" aria-label="Sélectionner plusieurs films" aria-pressed="false" style="display:none;">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4"></rect><path d="M7.5 12.5l3 3 6-6"></path></svg>
       </button>
-      <div class="menu-wrap" id="moreMenuWrap">
-        <!-- "···" remplacé par une icône d'export (v2.1, retour utilisateur :
-             pas assez clair que ce menu servait à exporter/importer). -->
-        <button class="btn secondary icon-only" id="moreMenuBtn" title="Exporter / importer" aria-label="Exporter / importer" aria-haspopup="true" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 17v3a2 2 0 002 2h12a2 2 0 002-2v-3"></path><path d="M7 10l5 5 5-5"></path><path d="M12 15V3"></path></svg></button>
-        <div class="dropdown-menu" id="moreMenu">
-          <button id="exportBtn"><span class="dropdown-menu-icon">⬇</span> Exporter (JSON)</button>
-          <button id="importBtn"><span class="dropdown-menu-icon">⬆</span> Importer (JSON)</button>
-          <!-- Letterboxd n'ouvre pas son API à un projet perso comme celui-ci
-               (accès sur demande, réservé aux partenaires) — export CSV au
-               format officiel d'import plutôt qu'une synchro automatique,
-               voir exportFilmsToLetterboxd() dans js/app.js. -->
-          <button id="exportLetterboxdBtn"><span class="dropdown-menu-icon">🎬</span> Exporter vers Letterboxd (CSV)</button>
-          <!-- Sens inverse : import depuis un CSV de "Exporter vos données"
-               Letterboxd (ratings.csv, diary.csv, reviews.csv ou
-               watchlist.csv) — voir js/importExternal.js. -->
-          <button id="importLetterboxdBtn"><span class="dropdown-menu-icon">🎬</span> Importer depuis Letterboxd (CSV)</button>
-        </div>
-      </div>
       <input type="file" id="importFile" accept="application/json,.json" style="display:none;">
       <input type="file" id="importLetterboxdFile" accept="text/csv,.csv" style="display:none;">
       <button class="btn magnetic" id="openAddBtn">+ Ajouter un film</button>
@@ -1534,31 +1493,68 @@
           <span class="mm-row-body"><span class="mm-row-title">Assistant</span><span class="mm-row-sub">Conseils ciné, discussion, aide dans l'app.</span></span>
           <span class="mm-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg></span>
         </button>
-        <!-- v2.1.x — Top films/Avis/Nouveautés vivaient UNIQUEMENT dans la
-             rangée d'icônes de l'entête (#topBtn/#feedbackBtn/#changelogBtn),
-             invisible sur mobile (#userBar disparaît entièrement, remplacé
-             par #mobileTabbar plus bas) : seul chemin qui leur reste là-bas.
-             .profile-mobile-only (retour utilisateur, audit) : masqués par
-             défaut, révélés uniquement sous le seuil mobile (voir
-             css/style.css) — sur desktop l'entête suffit déjà, doublonner
-             ici n'aidait personne. Referment cette modale avant de
-             naviguer/ouvrir une autre modale, comme Statistiques/Succès
-             juste au-dessus. -->
+        <!-- Top films reste mobile-only : son vrai lien de page (#topBtn)
+             vit toujours dans .header-nav sur desktop (v3.2), pas besoin de
+             doublon ici au-dessus de ce seuil. -->
         <button class="mm-row profile-mobile-only" id="profileTopFilmsLinkBtn" type="button">
           <span class="mm-icon ic-bronze"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4h8v4a4 4 0 01-8 0V4z"></path><path d="M8 5H5.5a2.5 2.5 0 002.5 2.5"></path><path d="M16 5h2.5A2.5 2.5 0 0116 7.5"></path><path d="M12 12v3.5"></path><path d="M9.5 20h5"></path><path d="M10.3 15.5h3.4l.8 4.5H9.5l.8-4.5z"></path></svg></span>
           <span class="mm-row-body"><span class="mm-row-title">Top films</span></span>
           <span class="mm-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg></span>
         </button>
-        <button class="mm-row profile-mobile-only" id="profileFeedbackLinkBtn" type="button">
+        <!-- Rechercher/Avis/Nouveautés (v3.2, retour utilisateur — voir le
+             commentaire au-dessus de .header-nav) : seul chemin désormais,
+             sur desktop comme mobile. #globalSearchBtn déplacé ici tel quel
+             (même id — js/globalSearch.js n'a rien à savoir du changement) ;
+             Avis/Nouveautés avaient déjà cette rangée, juste réservée au
+             mobile avant (.profile-mobile-only retiré). -->
+        <button class="mm-row" id="globalSearchBtn" type="button">
+          <span class="mm-icon ic-violet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4.3-4.3"></path></svg></span>
+          <span class="mm-row-body"><span class="mm-row-title">Rechercher</span></span>
+          <span class="mm-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg></span>
+        </button>
+        <button class="mm-row" id="profileFeedbackLinkBtn" type="button">
           <span class="mm-icon ic-violet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H8l-4 4V5z"></path></svg></span>
           <span class="mm-row-body"><span class="mm-row-title">Donner un avis</span></span>
           <span class="mm-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg></span>
         </button>
-        <button class="mm-row profile-mobile-only" id="profileChangelogLinkBtn" type="button">
+        <button class="mm-row" id="profileChangelogLinkBtn" type="button">
           <span class="mm-icon ic-gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 11 18-5v12L3 14v-3z"></path><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"></path></svg></span>
           <span class="mm-row-body"><span class="mm-row-title">Nouveautés</span></span>
           <span class="mm-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg></span>
         </button>
+      </div>
+    </div>
+
+    <!-- Export/import (v3.2, retour utilisateur : "l'import export à
+         garder mais peut être pas ici" — vivait dans la barre d'outils du
+         catalogue, #moreMenuWrap). Déplacé tel quel (mêmes ids, rien à
+         toucher dans js/app.js/js/importExternal.js) — HORS de .mm-card
+         exprès : .mm-card a overflow:hidden (coins arrondis propres sur
+         les lignes du dessus), qui aurait coupé .dropdown-menu en plein
+         milieu à l'ouverture. .menu-wrap porte donc son propre cadre ici
+         (voir .mm-section .menu-wrap, css/style.css) plutôt que d'hériter
+         de celui d'une carte qui le couperait. -->
+    <div class="mm-section">
+      <div class="mm-section-title">Données</div>
+      <div class="menu-wrap" id="moreMenuWrap">
+        <button class="mm-row" id="moreMenuBtn" type="button" aria-haspopup="true" aria-expanded="false">
+          <span class="mm-icon ic-teal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 17v3a2 2 0 002 2h12a2 2 0 002-2v-3"></path><path d="M7 10l5 5 5-5"></path><path d="M12 15V3"></path></svg></span>
+          <span class="mm-row-body"><span class="mm-row-title">Exporter / importer</span><span class="mm-row-sub">JSON, ou CSV Letterboxd.</span></span>
+          <span class="mm-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg></span>
+        </button>
+        <div class="dropdown-menu" id="moreMenu">
+          <button id="exportBtn"><span class="dropdown-menu-icon">⬇</span> Exporter (JSON)</button>
+          <button id="importBtn"><span class="dropdown-menu-icon">⬆</span> Importer (JSON)</button>
+          <!-- Letterboxd n'ouvre pas son API à un projet perso comme celui-ci
+               (accès sur demande, réservé aux partenaires) — export CSV au
+               format officiel d'import plutôt qu'une synchro automatique,
+               voir exportFilmsToLetterboxd() dans js/app.js. -->
+          <button id="exportLetterboxdBtn"><span class="dropdown-menu-icon">🎬</span> Exporter vers Letterboxd (CSV)</button>
+          <!-- Sens inverse : import depuis un CSV de "Exporter vos données"
+               Letterboxd (ratings.csv, diary.csv, reviews.csv ou
+               watchlist.csv) — voir js/importExternal.js. -->
+          <button id="importLetterboxdBtn"><span class="dropdown-menu-icon">🎬</span> Importer depuis Letterboxd (CSV)</button>
+        </div>
       </div>
     </div>
 
@@ -2215,133 +2211,133 @@ Légende du 7e art (Légendaire) 2%</div>
 <!-- ?v=N sur chaque js/*.js ci-dessous (voir le commentaire dans <head>) —
      à incrémenter à chaque déploiement, même numéro pour tous les fichiers. -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/supabaseConfig.js?v=240"></script>
+<script src="js/supabaseConfig.js?v=241"></script>
 <!-- Juste après supabaseConfig.js (a besoin de supabaseClient) et avant
      tout le reste : capte les erreurs de chargement des scripts suivants,
      pas seulement celles de l'app une fois démarrée — voir js/logging.js. -->
-<script src="js/logging.js?v=240"></script>
-<script src="js/tmdbConfig.js?v=240"></script>
-<script src="js/data.js?v=240"></script>
-<script src="js/happenings.js?v=240"></script>
+<script src="js/logging.js?v=241"></script>
+<script src="js/tmdbConfig.js?v=241"></script>
+<script src="js/data.js?v=241"></script>
+<script src="js/happenings.js?v=241"></script>
 <!-- Ressort physique vanilla (audit design, apple-design) — avant ui.js,
      qui l'utilise pour le geste tirer-pour-rafraîchir. Aucune dépendance
      entre les deux au chargement (animateSpring() n'est appelée que dans
      des écouteurs tactiles, bien après le chargement complet), gardé
      avant par lisibilité : un utilitaire se charge avant ce qui s'en sert. -->
-<script src="js/spring.js?v=240"></script>
+<script src="js/spring.js?v=241"></script>
 <!-- Avant app.js et les 6 autres modules qui ouvrent/ferment une modale
      (openOverlay/closeOverlay) — l'ordre exact importe peu au runtime
      (rien n'y est appelé au chargement), gardé en premier des scripts
      "app" pour la lisibilité, comme un utilitaire partagé. -->
-<script src="js/ui.js?v=240"></script>
+<script src="js/ui.js?v=241"></script>
 <!-- Avant watchlist.js, qui appelle playRouletteTick()/playRouletteWin()
      (roulette "Surprends-moi") — l'ordre exact importe peu au runtime
      (rien n'y est appelé au chargement), gardé ici pour la lisibilité,
      comme ui.js juste au-dessus. -->
-<script src="js/sound.js?v=240"></script>
+<script src="js/sound.js?v=241"></script>
 <!-- Avant app.js/journal.js/watchlist.js, qui appellent saveOfflineCache()/
      loadOfflineCache()/blockIfOffline() (v1.6, mode hors ligne lecture
      seule) — l'ordre exact importe peu au runtime (rien n'y est appelé au
      chargement, seulement des listeners posés pour plus tard), gardé ici
      pour la lisibilité, comme ui.js juste au-dessus. -->
-<script src="js/offlineQueue.js?v=240"></script>
-<script src="js/offline.js?v=240"></script>
-<script src="js/app.js?v=240"></script>
-<script src="js/tmdb.js?v=240"></script>
-<script src="js/stats.js?v=240"></script>
-<script src="js/achievements.js?v=240"></script>
+<script src="js/offlineQueue.js?v=241"></script>
+<script src="js/offline.js?v=241"></script>
+<script src="js/app.js?v=241"></script>
+<script src="js/tmdb.js?v=241"></script>
+<script src="js/stats.js?v=241"></script>
+<script src="js/achievements.js?v=241"></script>
 <!-- Avant app.js/watchlist.js à l'exécution (pas au chargement — rien
      n'est appelé ici avant un vrai clic/ajout) : les deux appellent
      generateTcgCardsForFilm(), définie ici. -->
-<script src="js/tcg.js?v=240"></script>
-<script src="js/chatbot.js?v=240"></script>
-<script src="js/journal.js?v=240"></script>
+<script src="js/tcg.js?v=241"></script>
+<script src="js/chatbot.js?v=241"></script>
+<script src="js/journal.js?v=241"></script>
 <!-- Après app.js (showToast) — appelée par js/profile.js juste après. -->
-<script src="js/pwa.js?v=240"></script>
-<script src="js/profile.js?v=240"></script>
+<script src="js/pwa.js?v=241"></script>
+<script src="js/profile.js?v=241"></script>
 <!-- Paramètres — après profile.js (referme/rouvre "Ton profil") et pwa.js
      (updateInstallUI()), voir js/settings.js. -->
-<script src="js/settings.js?v=240"></script>
+<script src="js/settings.js?v=241"></script>
 <!-- Après profile.js (closeProfileModal/openProfileModal) et data.js
      (FEEDBACK_CATEGORIES) — même raisonnement que pwa.js juste au-dessus. -->
-<script src="js/feedback.js?v=240"></script>
+<script src="js/feedback.js?v=241"></script>
 <!-- Bilan cinéphile partageable (v2.43) — après journal.js (viewings) et
      profile.js (currentProfile), voir js/recap.js. -->
-<script src="js/recap.js?v=240"></script>
+<script src="js/recap.js?v=241"></script>
 <!-- N'a besoin que de ui.js (openOverlay/closeOverlay) et app.js
      (showToast), chargés bien avant — placé ici pour rester groupé avec
      les autres modales accessibles depuis le chrome plutôt que pour une
      vraie dépendance. -->
-<script src="js/share.js?v=240"></script>
+<script src="js/share.js?v=241"></script>
 <!-- Après happenings.js/achievements.js (définitions) et profile.js
      (closeProfileModal) : admin.js s'appuie sur les trois au clic, jamais au
      chargement — l'ordre exact importe peu, gardé groupé ici pour la
      lisibilité. -->
-<script src="js/admin.js?v=240"></script>
-<script src="js/router.js?v=240"></script>
-<script src="js/publicProfile.js?v=240"></script>
-<script src="js/top.js?v=240"></script>
-<script src="js/friends.js?v=240"></script>
+<script src="js/admin.js?v=241"></script>
+<script src="js/router.js?v=241"></script>
+<script src="js/publicProfile.js?v=241"></script>
+<script src="js/top.js?v=241"></script>
+<script src="js/friends.js?v=241"></script>
 <!-- Après friends.js (cacheProfile/friendDisplayName/friendAvatarHtml) et
      journal.js (formatViewingDate), avant groups.js qui l'appelle depuis
      openGroupDetail() — l'ordre exact importe peu au runtime (tout est en
      fonctions globales appelées après chargement complet), gardé groupé
      ici pour la lisibilité. -->
-<script src="js/activity.js?v=240"></script>
-<script src="js/watchlist.js?v=240"></script>
+<script src="js/activity.js?v=241"></script>
+<script src="js/watchlist.js?v=241"></script>
 <!-- Après watchlist.js (loadWatchlist/watchlist, réutilisés pour exclure
      ce qui y est déjà) et app.js (getDisplayNote, chargé plus haut) — voir
      js/suggestions.js. Avant auth.js, qui appelle loadSuggestions() depuis
      showApp(). -->
-<script src="js/suggestions.js?v=240"></script>
+<script src="js/suggestions.js?v=241"></script>
 <!-- Import externe (Letterboxd pour l'instant) — après watchlist.js/app.js/
      tmdb.js/journal.js dont il réutilise films/watchlist/searchTmdb()/
      addViewing(). Voir js/importExternal.js. -->
-<script src="js/importExternal.js?v=240"></script>
+<script src="js/importExternal.js?v=241"></script>
 <!-- Fiche film (v2.1) — voir js/filmDetail.js. Regroupée ici avec
      friends.js/watchlist.js dont elle réutilise les helpers (même
      remarque que suggestions.js juste au-dessus : l'ordre exact n'importe
      pas au runtime, tout est en fonctions appelées après chargement
      complet — router.js, plus haut, appelle déjà openFriends()/
      openWatchlist() en aval de leur propre script de la même façon). -->
-<script src="js/filmDetail.js?v=240"></script>
+<script src="js/filmDetail.js?v=241"></script>
 <!-- Après watchlist.js : js/upcoming.js réutilise le tableau watchlist déjà
      chargé (voir plus bas). -->
-<script src="js/series.js?v=240"></script>
+<script src="js/series.js?v=241"></script>
 <!-- Après watchlist.js ET series.js — a besoin des deux tableaux chargés
      (loadWatchlist()/loadTrackedShows()), voir js/upcoming.js. -->
-<script src="js/upcoming.js?v=240"></script>
-<script src="js/groups.js?v=240"></script>
-<script src="js/proposals.js?v=240"></script>
+<script src="js/upcoming.js?v=241"></script>
+<script src="js/groups.js?v=241"></script>
+<script src="js/proposals.js?v=241"></script>
 <!-- Après groups.js (renderInviteBox appelée depuis renderGroupDetail) et
      proposals.js (chosenProposal) — voir js/invites.js. -->
-<script src="js/invites.js?v=240"></script>
+<script src="js/invites.js?v=241"></script>
 <!-- Listes thématiques (retour utilisateur, étude comparative Letterboxd) —
      après friends.js (ensureProfilesCached vient de filmDetail.js, déjà
      chargé ; friendDisplayName/cacheProfile de friends.js) et filmDetail.js
      (goToFilmDetail réutilisé pour ouvrir un film d'une liste), voir
      js/lists.js. -->
-<script src="js/lists.js?v=240"></script>
+<script src="js/lists.js?v=241"></script>
 <!-- Après activity.js (rowToActivityEvent/renderActivityRowHtml) et
      friends.js (friendProfiles/cacheProfile) qu'elle réutilise pour le
      digest, avant auth.js qui appelle refreshActivityBadge()/
      maybeShowDigest() depuis showApp(). -->
-<script src="js/activityState.js?v=240"></script>
+<script src="js/activityState.js?v=241"></script>
 <!-- Après activityState.js (loadActivityState/activityState réutilisés
      pour son propre badge "vu") et avant auth.js qui appelle
      initChangelog() depuis showApp(). -->
-<script src="js/changelog.js?v=240"></script>
+<script src="js/changelog.js?v=241"></script>
 <!-- Recherche globale unifiée (v2.42) — après series.js/friends.js/
      groups.js dont elle réutilise les tableaux déjà chargés et les
      fonctions d'ouverture (openFriendProfile/goToSeriesDetail/goToGroup),
      et après app.js/data.js pour getSearchTerms()/normalizeSearch()/
      FILM_PLACEHOLDER_SVG. Voir js/globalSearch.js. -->
-<script src="js/globalSearch.js?v=240"></script>
+<script src="js/globalSearch.js?v=241"></script>
 <!-- Tuto d'accueil interactif — avant auth.js dont showApp() appelle
      maybeStartOnboarding() ; après ui.js/router.js/profile.js/logging.js
      dont il réutilise respectivement openOverlay-style/goHome/
      closeProfileModal/logEvent. -->
-<script src="js/onboarding.js?v=240"></script>
-<script src="js/auth.js?v=240"></script>
+<script src="js/onboarding.js?v=241"></script>
+<script src="js/auth.js?v=241"></script>
 </body>
 </html>

@@ -26,7 +26,12 @@ const { createSuite, assert } = require('./helpers/tiny-test');
 const { createContext, loadFiles, stubDocument, stubElement, stubEventTarget, fakeLocalStorage } = require('./helpers/vm-harness');
 const { test, run } = createSuite();
 
-const ALL_IDS = ['globalSearchBtn', 'watchlistBtn', 'upcomingBtn', 'friendsBtn', 'topBtn', 'feedbackBtn', 'changelogBtn'];
+// v3.2, retour utilisateur ("l'entête ne respire pas... je veux me
+// débarasser de la loupe, de l'avis et de l'annonce") — Rechercher/Avis/
+// Nouveautés retirés de .header-nav (déplacés dans la modale profil,
+// voir index.html/js/globalSearch.js) et de HEADER_NAV_DEFAULT_ORDER :
+// seuls les 4 vrais liens de page restent réordonnables.
+const ALL_IDS = ['watchlistBtn', 'upcomingBtn', 'friendsBtn', 'topBtn'];
 
 // classList réel (Set), même recette que stubElementWithRealClassList()
 // dans pull-to-refresh.test.js — nécessaire ici : on vérifie que
@@ -71,15 +76,15 @@ function makeItem(id){
 }
 
 // Conteneur "DOM" minimal représentant .header-nav — garde une vraie liste
-// ordonnée d'items (7 icônes réordonnables + installHeaderBtn, comme dans
-// index.html) — insertBefore()/appendChild() la mutent pour de vrai, comme
+// ordonnée d'items (4 icônes réordonnables + installHeaderBtn, comme dans
+// index.html, v3.2) — insertBefore()/appendChild() la mutent pour de vrai, comme
 // le ferait un vrai navigateur, pour pouvoir relire l'ordre final au
 // relâchement. Hérite de stubEventTarget() : addEventListener/dispatch
 // réels, nécessaires pour rejouer pointerdown/pointermove/pointerup/
 // pointercancel/click comme un vrai geste.
 function makeNav(itemIds){
   let children = itemIds.map(makeItem);
-  children.splice(5, 0, makeItem('installHeaderBtn')); // même position relative que index.html (entre feedbackBtn et changelogBtn)
+  children.push(makeItem('installHeaderBtn')); // même position relative que index.html (dernier de .header-nav, v3.2)
   return Object.assign(stubEventTarget(), {
     classList: realClassList(),
     querySelectorAll(sel){
@@ -170,7 +175,7 @@ test('getHeaderNavOrder() : ordre par défaut si rien n\'est enregistré', () =>
 
 test('getHeaderNavOrder() : relit un ordre personnalisé enregistré', () => {
   const { ctx } = buildContext();
-  const custom = ['topBtn', 'globalSearchBtn', 'watchlistBtn', 'upcomingBtn', 'friendsBtn', 'feedbackBtn', 'changelogBtn'];
+  const custom = ['topBtn', 'watchlistBtn', 'upcomingBtn', 'friendsBtn'];
   ctx.saveHeaderNavOrder(custom);
   assert.deepStrictEqual(JSON.parse(JSON.stringify(ctx.getHeaderNavOrder())), custom);
 });
@@ -186,8 +191,8 @@ test('getHeaderNavOrder() : un id obsolète est filtré, un id manquant est rajo
 
 test('applyHeaderNavOrder() : déplace les boutons (.header-nav) dans l\'ordre enregistré', () => {
   const { ctx, appended } = buildContext();
-  ctx.saveHeaderNavOrder(['changelogBtn', 'globalSearchBtn', 'watchlistBtn', 'upcomingBtn', 'friendsBtn', 'topBtn', 'feedbackBtn']);
-  assert.deepStrictEqual(appended.slice(-7), ['changelogBtn', 'globalSearchBtn', 'watchlistBtn', 'upcomingBtn', 'friendsBtn', 'topBtn', 'feedbackBtn']);
+  ctx.saveHeaderNavOrder(['topBtn', 'friendsBtn', 'watchlistBtn', 'upcomingBtn']);
+  assert.deepStrictEqual(appended.slice(-4), ['topBtn', 'friendsBtn', 'watchlistBtn', 'upcomingBtn']);
 });
 
 test('enterHeaderEditMode() : referme le profil, ramène sur l\'accueil, active .edit-mode et le bandeau', () => {
@@ -230,16 +235,16 @@ test('wireHeaderNavDrag() : l\'ordre enregistré au relâchement est celui du DO
   ctx.enterHeaderEditMode();
   const items = nav.querySelectorAll('.header-nav-btn:not(.dragging)');
   const dragged = items.find(i => i.id === 'topBtn');
-  const target = items.find(i => i.id === 'globalSearchBtn');
+  const target = items.find(i => i.id === 'watchlistBtn');
   nav.dispatch('pointerdown', { pointerId: 1, target: dragged });
   // Simule ce que pointermove aurait fait une fois le pointeur passé
-  // au-dessus du milieu de "globalSearchBtn" (géométrie non simulée ici,
+  // au-dessus du milieu de "watchlistBtn" (géométrie non simulée ici,
   // voir le commentaire en tête de fichier) : topBtn inséré juste avant.
   nav.insertBefore(dragged, target);
   nav.dispatch('pointerup', {});
   const order = JSON.parse(JSON.stringify(ctx.getHeaderNavOrder()));
   assert.strictEqual(order[0], 'topBtn');
-  assert.strictEqual(order[1], 'globalSearchBtn');
+  assert.strictEqual(order[1], 'watchlistBtn');
 });
 
 test('wireHeaderNavDrag() : pointercancel termine le glisser comme pointerup (jamais bloqué en mode "dragging")', () => {
@@ -263,13 +268,13 @@ test('wireHeaderNavDrag() : installHeaderBtn n\'apparaît jamais dans l\'ordre e
   const { ctx, nav } = buildDragContext();
   ctx.enterHeaderEditMode();
   const items = nav.querySelectorAll('.header-nav-btn:not(.dragging)');
-  const dragged = items.find(i => i.id === 'changelogBtn');
+  const dragged = items.find(i => i.id === 'friendsBtn');
   nav.dispatch('pointerdown', { pointerId: 1, target: dragged });
   nav.appendChild(dragged); // glisser jusqu'à la toute fin, après installHeaderBtn
   nav.dispatch('pointerup', {});
   const order = JSON.parse(JSON.stringify(ctx.getHeaderNavOrder()));
   assert.ok(!order.includes('installHeaderBtn'));
-  assert.strictEqual(order.length, 7);
+  assert.strictEqual(order.length, 4);
 });
 
 test('bloqueur de clic : un clic sur une icône pendant l\'édition est bloqué (preventDefault + stopImmediatePropagation)', () => {
