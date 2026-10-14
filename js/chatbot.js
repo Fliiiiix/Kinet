@@ -172,14 +172,14 @@ function answerChatbotQuestion(texte, donnees){
   }
 
   if(contientUn(q, ['hasard', 'surprends', 'surprise', 'quoi regarder', 'que regarder', 'ce soir'])){
-    if(watchlist.length === 0) return "Ta watchlist est vide : ajoute quelques films et je t\'en tirerai un au hasard.";
+    if(watchlist.length === 0) return "Ta liste À voir est vide : ajoute quelques films et je t\'en tirerai un au hasard.";
     const choisi = watchlist[Math.floor(Math.random() * watchlist.length)];
     return `Et si tu regardais « ${choisi.title} » ce soir ?`;
   }
 
   if(contientUn(q, ['watchlist', 'a voir']) && contientUn(q, ['combien', 'nombre', 'liste', 'contient'])){
-    if(watchlist.length === 0) return "Ta watchlist est vide pour l\'instant.";
-    return `Tu as ${watchlist.length} film${watchlist.length > 1 ? 's' : ''} dans ta watchlist.`;
+    if(watchlist.length === 0) return "Ta liste À voir est vide pour l\'instant.";
+    return `Tu as ${watchlist.length} film${watchlist.length > 1 ? 's' : ''} dans ta liste À voir.`;
   }
 
   for(const sujet of CHATBOT_HELP_TOPICS){

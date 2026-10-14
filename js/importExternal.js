@@ -400,7 +400,7 @@ async function importLetterboxdWatchlist(records){
   await Promise.all(Array.from({ length: 4 }, worker));
 
   if(toInsert.length === 0){
-    showToast(`Rien à ajouter (${skipped} déjà dans ta watchlist, ${unmatched} introuvable(s) sur TMDB)`);
+    showToast(`Rien à ajouter (${skipped} déjà dans À voir, ${unmatched} introuvable(s) sur TMDB)`);
     return;
   }
   const { data: inserted, error } = await supabaseClient.from('watchlist').insert(toInsert).select();
@@ -416,7 +416,7 @@ async function importLetterboxdWatchlist(records){
     added: row.added
   }));
   renderWatchlist();
-  showToast(`${added} film(s) ajouté(s) à ta watchlist (${skipped} déjà présent(s), ${unmatched} introuvable(s) sur TMDB)`);
+  showToast(`${added} film(s) ajouté(s) à À voir (${skipped} déjà présent(s), ${unmatched} introuvable(s) sur TMDB)`);
 }
 
 async function importLetterboxdFile(file){

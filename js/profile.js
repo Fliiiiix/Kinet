@@ -361,7 +361,7 @@ function renderTopFilmsPicker(){
     }).join('');
   }
   document.getElementById('topFilmsSearch').placeholder = topFilmsSelection.length >= 4
-    ? 'Maximum 4 films — retire-en un pour en ajouter un autre'
+    ? '4 films au maximum'
     : 'Chercher un film déjà noté…';
   wrap.querySelectorAll('.top-film-chip').forEach(chip => {
     const tmdbId = parseInt(chip.dataset.tmdbId, 10);

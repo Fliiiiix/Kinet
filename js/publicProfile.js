@@ -20,7 +20,7 @@ function publicProfilePosterHtml(f){
         : `<div class="film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
       <div class="poster-wall-note ${noteColorClass(f.note)}">${f.note !== null && f.note !== undefined ? Number(f.note).toFixed(1) : '—'}</div>
       ${f.fav ? `<div class="poster-wall-fav" title="Favori">★</div>` : ''}
-      <div class="poster-wall-caption">${escapeHtml(f.title)}${f.release_year ? ` <span class="wl-year">(${f.release_year})</span>` : ''}</div>
+      <div class="poster-wall-caption">${escapeHtml(f.title)}${f.release_year && !String(f.title).includes(`(${f.release_year})`) ? ` <span class="wl-year">(${f.release_year})</span>` : ''}</div>
     </div>
   `;
 }

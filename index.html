@@ -64,7 +64,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,500&display=swap">
-<link rel="stylesheet" href="css/style.css?v=255">
+<link rel="stylesheet" href="css/style.css?v=256">
 </head>
 <body>
 
@@ -308,7 +308,7 @@
      redéploiement nécessaire. -->
 <div class="container" id="maintenanceContainer" style="display:none;">
   <div class="auth-card">
-    <h2>🔧 En maintenance</h2>
+    <h2>En maintenance</h2>
     <p class="auth-intro" id="maintenanceMessage">Le site est en pause le temps de quelques réglages, de retour très vite.</p>
   </div>
 </div>
@@ -341,7 +341,6 @@
   <div class="auth-pattern" aria-hidden="true"></div>
   <div class="auth-hero">
     <div class="auth-pitch">
-      <div class="eyebrow">Bienvenue sur Kinet</div>
       <h2 class="auth-headline">Ta grille, tes films, tes séries.</h2>
       <p class="auth-pitch-sub">Une vraie grille de notation, pas une étoile balancée à l'instinct.</p>
       <!-- Démo jouable (v2.0.16) : curseurs générés depuis CRITERIA
@@ -529,11 +528,11 @@
        requête Supabase), jamais réinjectées ensuite. Largeurs volontairement
        différentes pour ne pas avoir l'air d'un motif répété. -->
   <div id="filmList">
-    <div class="film-row skeleton"><div class="holes"><span></span><span></span><span></span></div><div class="skeleton-block skeleton-poster"></div><div class="film-main"><div class="skeleton-block skeleton-line" style="width:55%;"></div><div class="skeleton-block skeleton-line" style="width:30%; margin-top:8px;"></div></div><div class="skeleton-block skeleton-counter"></div></div>
-    <div class="film-row skeleton"><div class="holes"><span></span><span></span><span></span></div><div class="skeleton-block skeleton-poster"></div><div class="film-main"><div class="skeleton-block skeleton-line" style="width:70%;"></div><div class="skeleton-block skeleton-line" style="width:40%; margin-top:8px;"></div></div><div class="skeleton-block skeleton-counter"></div></div>
-    <div class="film-row skeleton"><div class="holes"><span></span><span></span><span></span></div><div class="skeleton-block skeleton-poster"></div><div class="film-main"><div class="skeleton-block skeleton-line" style="width:45%;"></div><div class="skeleton-block skeleton-line" style="width:32%; margin-top:8px;"></div></div><div class="skeleton-block skeleton-counter"></div></div>
-    <div class="film-row skeleton"><div class="holes"><span></span><span></span><span></span></div><div class="skeleton-block skeleton-poster"></div><div class="film-main"><div class="skeleton-block skeleton-line" style="width:62%;"></div><div class="skeleton-block skeleton-line" style="width:28%; margin-top:8px;"></div></div><div class="skeleton-block skeleton-counter"></div></div>
-    <div class="film-row skeleton"><div class="holes"><span></span><span></span><span></span></div><div class="skeleton-block skeleton-poster"></div><div class="film-main"><div class="skeleton-block skeleton-line" style="width:50%;"></div><div class="skeleton-block skeleton-line" style="width:36%; margin-top:8px;"></div></div><div class="skeleton-block skeleton-counter"></div></div>
+    <div class="film-row skeleton"><div class="skeleton-block skeleton-poster"></div><div class="film-main"><div class="skeleton-block skeleton-line" style="width:55%;"></div><div class="skeleton-block skeleton-line" style="width:30%; margin-top:8px;"></div></div><div class="skeleton-block skeleton-counter"></div></div>
+    <div class="film-row skeleton"><div class="skeleton-block skeleton-poster"></div><div class="film-main"><div class="skeleton-block skeleton-line" style="width:70%;"></div><div class="skeleton-block skeleton-line" style="width:40%; margin-top:8px;"></div></div><div class="skeleton-block skeleton-counter"></div></div>
+    <div class="film-row skeleton"><div class="skeleton-block skeleton-poster"></div><div class="film-main"><div class="skeleton-block skeleton-line" style="width:45%;"></div><div class="skeleton-block skeleton-line" style="width:32%; margin-top:8px;"></div></div><div class="skeleton-block skeleton-counter"></div></div>
+    <div class="film-row skeleton"><div class="skeleton-block skeleton-poster"></div><div class="film-main"><div class="skeleton-block skeleton-line" style="width:62%;"></div><div class="skeleton-block skeleton-line" style="width:28%; margin-top:8px;"></div></div><div class="skeleton-block skeleton-counter"></div></div>
+    <div class="film-row skeleton"><div class="skeleton-block skeleton-poster"></div><div class="film-main"><div class="skeleton-block skeleton-line" style="width:50%;"></div><div class="skeleton-block skeleton-line" style="width:36%; margin-top:8px;"></div></div><div class="skeleton-block skeleton-counter"></div></div>
   </div>
   <div class="pagination" id="pagination"></div>
 </div>
@@ -604,7 +603,7 @@
        watchlist pour aider à décider quoi regarder ce soir plutôt que de
        parcourir toute la liste — voir js/watchlist.js. -->
   <div class="toolbar" style="margin-bottom:16px;">
-    <button class="btn secondary" id="wlSurpriseBtn" type="button">🎲 Surprends-moi</button>
+    <button class="btn secondary" id="wlSurpriseBtn" type="button">Surprends-moi</button>
     <!-- Filtre "dispo sur ma plateforme" (retour utilisateur : "trouver
          facilement les films de ma watchlist dispo sur Netflix") — voir
          loadWatchlistProviders()/buildWatchlistProviderFilterOptions() dans
@@ -652,7 +651,7 @@
 <div class="overlay" id="surpriseOverlay">
   <div class="modal">
     <div class="modal-head">
-      <h2>🎲 Surprends-moi</h2>
+      <h2>Surprends-moi</h2>
       <button class="close-x" id="closeSurprise" aria-label="Fermer">✕</button>
     </div>
     <!-- Roulette façon ouverture de caisse (retour utilisateur, motion
@@ -667,7 +666,7 @@
     </div>
     <div id="surpriseContent" aria-live="polite"></div>
     <div class="modal-footer">
-      <button class="btn secondary" id="surpriseRerollBtn" type="button">🎲 Encore un</button>
+      <button class="btn secondary" id="surpriseRerollBtn" type="button">Encore un</button>
       <div class="right"><button class="btn" id="surpriseRateBtn" type="button">Noter maintenant</button></div>
     </div>
   </div>
@@ -1566,17 +1565,17 @@
           <span class="mm-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg></span>
         </button>
         <div class="dropdown-menu" id="moreMenu">
-          <button id="exportBtn"><span class="dropdown-menu-icon">⬇</span> Exporter (JSON)</button>
-          <button id="importBtn"><span class="dropdown-menu-icon">⬆</span> Importer (JSON)</button>
+          <button id="exportBtn">Exporter (JSON)</button>
+          <button id="importBtn">Importer (JSON)</button>
           <!-- Letterboxd n'ouvre pas son API à un projet perso comme celui-ci
                (accès sur demande, réservé aux partenaires) — export CSV au
                format officiel d'import plutôt qu'une synchro automatique,
                voir exportFilmsToLetterboxd() dans js/app.js. -->
-          <button id="exportLetterboxdBtn"><span class="dropdown-menu-icon">🎬</span> Exporter vers Letterboxd (CSV)</button>
+          <button id="exportLetterboxdBtn">Exporter vers Letterboxd (CSV)</button>
           <!-- Sens inverse : import depuis un CSV de "Exporter vos données"
                Letterboxd (ratings.csv, diary.csv, reviews.csv ou
                watchlist.csv) — voir js/importExternal.js. -->
-          <button id="importLetterboxdBtn"><span class="dropdown-menu-icon">🎬</span> Importer depuis Letterboxd (CSV)</button>
+          <button id="importLetterboxdBtn">Importer depuis Letterboxd (CSV)</button>
         </div>
       </div>
     </div>
@@ -1784,7 +1783,7 @@
     </div>
     <!-- Bilan cinéphile partageable (v2.43, retour utilisateur) — image
          exportable résumant l'année en cours, voir js/recap.js. -->
-    <button class="btn secondary" id="openRecapBtn" type="button">🎬 Mon bilan cinéphile</button>
+    <button class="btn secondary" id="openRecapBtn" type="button">Mon bilan cinéphile</button>
     <div id="statsContent"></div>
   </div>
 </div>
@@ -1808,14 +1807,14 @@
            téléchargement). Masqué par défaut, révélé seulement si le
            navigateur peut vraiment partager un FICHIER (pas juste du
            texte/liens) — voir js/recap.js. -->
-      <button class="btn secondary" id="shareRecapBtn" type="button" style="display:none;">📤 Partager</button>
+      <button class="btn secondary" id="shareRecapBtn" type="button" style="display:none;">Partager</button>
       <!-- Export PDF (retour utilisateur) — PDF minimal construit à la main
            (pas de librairie, cohérent avec le reste du projet) : l'image
            déjà dessinée sur #recapCanvas, réencodée en JPEG et embarquée
            telle quelle dans une page à sa taille, voir buildRecapPdf()
            dans js/recap.js. -->
-      <button class="btn secondary" id="downloadRecapPdfBtn" type="button">📄 Télécharger en PDF</button>
-      <button class="btn" id="downloadRecapBtn" type="button">📥 Télécharger l'image</button>
+      <button class="btn secondary" id="downloadRecapPdfBtn" type="button">Télécharger en PDF</button>
+      <button class="btn" id="downloadRecapBtn" type="button">Télécharger l'image</button>
     </div>
   </div>
 </div>
@@ -1839,7 +1838,7 @@
 <div class="overlay" id="tcgOverlay">
   <div class="modal stats-modal tcg-modal">
     <div class="modal-head">
-      <h2>🃏 Cartes</h2>
+      <h2>Cartes</h2>
       <button class="close-x" id="closeTcg" aria-label="Fermer">✕</button>
     </div>
     <div class="avatar-source-tabs" role="tablist" id="tcgTabs">
@@ -1883,7 +1882,7 @@ Légende du 7e art (Légendaire) 2%</div>
            appareil à l'ouverture (voir openTcgModal(), js/tcg.js), ce bouton
            reprend la main si c'était interrompu ou pour un nouveau passage. -->
       <div class="tcg-scan-row">
-        <button class="btn secondary" id="tcgScanBtn" type="button">🔍 Scanner mon catalogue</button>
+        <button class="btn secondary" id="tcgScanBtn" type="button">Scanner mon catalogue</button>
         <span class="tcg-scan-status" id="tcgScanStatus"></span>
       </div>
       <div class="tcg-completion-row">
@@ -2014,7 +2013,7 @@ Légende du 7e art (Légendaire) 2%</div>
 <div class="overlay" id="chatbotOverlay">
   <div class="modal chatbot-modal">
     <div class="modal-head">
-      <h2>💬 Assistant Kinet</h2>
+      <h2>Assistant Kinet</h2>
       <button class="close-x" id="closeChatbot" aria-label="Fermer">✕</button>
     </div>
     <div class="chatbot-messages" id="chatbotMessages"></div>
@@ -2226,7 +2225,7 @@ Légende du 7e art (Légendaire) 2%</div>
   <div class="bulk-actions-buttons">
     <button type="button" class="btn secondary" id="bulkFavBtn">★ Favoris</button>
     <button type="button" class="btn secondary" id="bulkUnfavBtn">☆ Retirer</button>
-    <button type="button" class="btn secondary" id="bulkExportBtn">⬇ Exporter</button>
+    <button type="button" class="btn secondary" id="bulkExportBtn">Exporter</button>
     <button type="button" class="btn danger" id="bulkDeleteBtn">Supprimer</button>
   </div>
 </div>
@@ -2234,133 +2233,133 @@ Légende du 7e art (Légendaire) 2%</div>
 <!-- ?v=N sur chaque js/*.js ci-dessous (voir le commentaire dans <head>) —
      à incrémenter à chaque déploiement, même numéro pour tous les fichiers. -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/supabaseConfig.js?v=255"></script>
+<script src="js/supabaseConfig.js?v=256"></script>
 <!-- Juste après supabaseConfig.js (a besoin de supabaseClient) et avant
      tout le reste : capte les erreurs de chargement des scripts suivants,
      pas seulement celles de l'app une fois démarrée — voir js/logging.js. -->
-<script src="js/logging.js?v=255"></script>
-<script src="js/tmdbConfig.js?v=255"></script>
-<script src="js/data.js?v=255"></script>
-<script src="js/happenings.js?v=255"></script>
+<script src="js/logging.js?v=256"></script>
+<script src="js/tmdbConfig.js?v=256"></script>
+<script src="js/data.js?v=256"></script>
+<script src="js/happenings.js?v=256"></script>
 <!-- Ressort physique vanilla (audit design, apple-design) — avant ui.js,
      qui l'utilise pour le geste tirer-pour-rafraîchir. Aucune dépendance
      entre les deux au chargement (animateSpring() n'est appelée que dans
      des écouteurs tactiles, bien après le chargement complet), gardé
      avant par lisibilité : un utilitaire se charge avant ce qui s'en sert. -->
-<script src="js/spring.js?v=255"></script>
+<script src="js/spring.js?v=256"></script>
 <!-- Avant app.js et les 6 autres modules qui ouvrent/ferment une modale
      (openOverlay/closeOverlay) — l'ordre exact importe peu au runtime
      (rien n'y est appelé au chargement), gardé en premier des scripts
      "app" pour la lisibilité, comme un utilitaire partagé. -->
-<script src="js/ui.js?v=255"></script>
+<script src="js/ui.js?v=256"></script>
 <!-- Avant watchlist.js, qui appelle playRouletteTick()/playRouletteWin()
      (roulette "Surprends-moi") — l'ordre exact importe peu au runtime
      (rien n'y est appelé au chargement), gardé ici pour la lisibilité,
      comme ui.js juste au-dessus. -->
-<script src="js/sound.js?v=255"></script>
+<script src="js/sound.js?v=256"></script>
 <!-- Avant app.js/journal.js/watchlist.js, qui appellent saveOfflineCache()/
      loadOfflineCache()/blockIfOffline() (v1.6, mode hors ligne lecture
      seule) — l'ordre exact importe peu au runtime (rien n'y est appelé au
      chargement, seulement des listeners posés pour plus tard), gardé ici
      pour la lisibilité, comme ui.js juste au-dessus. -->
-<script src="js/offlineQueue.js?v=255"></script>
-<script src="js/offline.js?v=255"></script>
-<script src="js/app.js?v=255"></script>
-<script src="js/tmdb.js?v=255"></script>
-<script src="js/stats.js?v=255"></script>
-<script src="js/achievements.js?v=255"></script>
+<script src="js/offlineQueue.js?v=256"></script>
+<script src="js/offline.js?v=256"></script>
+<script src="js/app.js?v=256"></script>
+<script src="js/tmdb.js?v=256"></script>
+<script src="js/stats.js?v=256"></script>
+<script src="js/achievements.js?v=256"></script>
 <!-- Avant app.js/watchlist.js à l'exécution (pas au chargement — rien
      n'est appelé ici avant un vrai clic/ajout) : les deux appellent
      generateTcgCardsForFilm(), définie ici. -->
-<script src="js/tcg.js?v=255"></script>
-<script src="js/chatbot.js?v=255"></script>
-<script src="js/journal.js?v=255"></script>
+<script src="js/tcg.js?v=256"></script>
+<script src="js/chatbot.js?v=256"></script>
+<script src="js/journal.js?v=256"></script>
 <!-- Après app.js (showToast) — appelée par js/profile.js juste après. -->
-<script src="js/pwa.js?v=255"></script>
-<script src="js/profile.js?v=255"></script>
+<script src="js/pwa.js?v=256"></script>
+<script src="js/profile.js?v=256"></script>
 <!-- Paramètres — après profile.js (referme/rouvre "Ton profil") et pwa.js
      (updateInstallUI()), voir js/settings.js. -->
-<script src="js/settings.js?v=255"></script>
+<script src="js/settings.js?v=256"></script>
 <!-- Après profile.js (closeProfileModal/openProfileModal) et data.js
      (FEEDBACK_CATEGORIES) — même raisonnement que pwa.js juste au-dessus. -->
-<script src="js/feedback.js?v=255"></script>
+<script src="js/feedback.js?v=256"></script>
 <!-- Bilan cinéphile partageable (v2.43) — après journal.js (viewings) et
      profile.js (currentProfile), voir js/recap.js. -->
-<script src="js/recap.js?v=255"></script>
+<script src="js/recap.js?v=256"></script>
 <!-- N'a besoin que de ui.js (openOverlay/closeOverlay) et app.js
      (showToast), chargés bien avant — placé ici pour rester groupé avec
      les autres modales accessibles depuis le chrome plutôt que pour une
      vraie dépendance. -->
-<script src="js/share.js?v=255"></script>
+<script src="js/share.js?v=256"></script>
 <!-- Après happenings.js/achievements.js (définitions) et profile.js
      (closeProfileModal) : admin.js s'appuie sur les trois au clic, jamais au
      chargement — l'ordre exact importe peu, gardé groupé ici pour la
      lisibilité. -->
-<script src="js/admin.js?v=255"></script>
-<script src="js/router.js?v=255"></script>
-<script src="js/publicProfile.js?v=255"></script>
-<script src="js/top.js?v=255"></script>
-<script src="js/friends.js?v=255"></script>
+<script src="js/admin.js?v=256"></script>
+<script src="js/router.js?v=256"></script>
+<script src="js/publicProfile.js?v=256"></script>
+<script src="js/top.js?v=256"></script>
+<script src="js/friends.js?v=256"></script>
 <!-- Après friends.js (cacheProfile/friendDisplayName/friendAvatarHtml) et
      journal.js (formatViewingDate), avant groups.js qui l'appelle depuis
      openGroupDetail() — l'ordre exact importe peu au runtime (tout est en
      fonctions globales appelées après chargement complet), gardé groupé
      ici pour la lisibilité. -->
-<script src="js/activity.js?v=255"></script>
-<script src="js/watchlist.js?v=255"></script>
+<script src="js/activity.js?v=256"></script>
+<script src="js/watchlist.js?v=256"></script>
 <!-- Après watchlist.js (loadWatchlist/watchlist, réutilisés pour exclure
      ce qui y est déjà) et app.js (getDisplayNote, chargé plus haut) — voir
      js/suggestions.js. Avant auth.js, qui appelle loadSuggestions() depuis
      showApp(). -->
-<script src="js/suggestions.js?v=255"></script>
+<script src="js/suggestions.js?v=256"></script>
 <!-- Import externe (Letterboxd pour l'instant) — après watchlist.js/app.js/
      tmdb.js/journal.js dont il réutilise films/watchlist/searchTmdb()/
      addViewing(). Voir js/importExternal.js. -->
-<script src="js/importExternal.js?v=255"></script>
+<script src="js/importExternal.js?v=256"></script>
 <!-- Fiche film (v2.1) — voir js/filmDetail.js. Regroupée ici avec
      friends.js/watchlist.js dont elle réutilise les helpers (même
      remarque que suggestions.js juste au-dessus : l'ordre exact n'importe
      pas au runtime, tout est en fonctions appelées après chargement
      complet — router.js, plus haut, appelle déjà openFriends()/
      openWatchlist() en aval de leur propre script de la même façon). -->
-<script src="js/filmDetail.js?v=255"></script>
+<script src="js/filmDetail.js?v=256"></script>
 <!-- Après watchlist.js : js/upcoming.js réutilise le tableau watchlist déjà
      chargé (voir plus bas). -->
-<script src="js/series.js?v=255"></script>
+<script src="js/series.js?v=256"></script>
 <!-- Après watchlist.js ET series.js — a besoin des deux tableaux chargés
      (loadWatchlist()/loadTrackedShows()), voir js/upcoming.js. -->
-<script src="js/upcoming.js?v=255"></script>
-<script src="js/groups.js?v=255"></script>
-<script src="js/proposals.js?v=255"></script>
+<script src="js/upcoming.js?v=256"></script>
+<script src="js/groups.js?v=256"></script>
+<script src="js/proposals.js?v=256"></script>
 <!-- Après groups.js (renderInviteBox appelée depuis renderGroupDetail) et
      proposals.js (chosenProposal) — voir js/invites.js. -->
-<script src="js/invites.js?v=255"></script>
+<script src="js/invites.js?v=256"></script>
 <!-- Listes thématiques (retour utilisateur, étude comparative Letterboxd) —
      après friends.js (ensureProfilesCached vient de filmDetail.js, déjà
      chargé ; friendDisplayName/cacheProfile de friends.js) et filmDetail.js
      (goToFilmDetail réutilisé pour ouvrir un film d'une liste), voir
      js/lists.js. -->
-<script src="js/lists.js?v=255"></script>
+<script src="js/lists.js?v=256"></script>
 <!-- Après activity.js (rowToActivityEvent/renderActivityRowHtml) et
      friends.js (friendProfiles/cacheProfile) qu'elle réutilise pour le
      digest, avant auth.js qui appelle refreshActivityBadge()/
      maybeShowDigest() depuis showApp(). -->
-<script src="js/activityState.js?v=255"></script>
+<script src="js/activityState.js?v=256"></script>
 <!-- Après activityState.js (loadActivityState/activityState réutilisés
      pour son propre badge "vu") et avant auth.js qui appelle
      initChangelog() depuis showApp(). -->
-<script src="js/changelog.js?v=255"></script>
+<script src="js/changelog.js?v=256"></script>
 <!-- Recherche globale unifiée (v2.42) — après series.js/friends.js/
      groups.js dont elle réutilise les tableaux déjà chargés et les
      fonctions d'ouverture (openFriendProfile/goToSeriesDetail/goToGroup),
      et après app.js/data.js pour getSearchTerms()/normalizeSearch()/
      FILM_PLACEHOLDER_SVG. Voir js/globalSearch.js. -->
-<script src="js/globalSearch.js?v=255"></script>
+<script src="js/globalSearch.js?v=256"></script>
 <!-- Tuto d'accueil interactif — avant auth.js dont showApp() appelle
      maybeStartOnboarding() ; après ui.js/router.js/profile.js/logging.js
      dont il réutilise respectivement openOverlay-style/goHome/
      closeProfileModal/logEvent. -->
-<script src="js/onboarding.js?v=255"></script>
-<script src="js/auth.js?v=255"></script>
+<script src="js/onboarding.js?v=256"></script>
+<script src="js/auth.js?v=256"></script>
 </body>
 </html>

@@ -25,10 +25,10 @@ function buildContext(){
   return ctx;
 }
 
-test('activityEventLabel() : watchlist_added -> "a ajouté « titre » à sa watchlist"', () => {
+test('activityEventLabel() : watchlist_added -> "a ajouté « titre » à sa liste À voir" (audit T1)', () => {
   const ctx = buildContext();
   const label = ctx.activityEventLabel({ actorId: 'ami1', eventType: 'watchlist_added', targetLabel: 'Paprika' });
-  assert.strictEqual(label, 'Sam a ajouté « Paprika » à sa watchlist');
+  assert.strictEqual(label, 'Sam a ajouté « Paprika » à sa liste À voir');
 });
 
 test('activityEventLabel() : list_created -> "a créé la liste « titre »"', () => {

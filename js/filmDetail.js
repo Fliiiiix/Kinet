@@ -61,7 +61,10 @@ function formatRuntime(minutes){
 // ligne bleue année · genres · durée, résumé.
 function renderFilmDetailHeader(){
   const d = currentFilmData;
-  document.getElementById('filmDetailTitle').textContent = d.title;
+  // Même titre que dans ton catalogue (audit T2 : « Arrival » dans la
+  // grille, « Premier Contact » sur sa fiche) ; titre TMDB sinon.
+  const myFilm = films.find(f => f.tmdbId === currentFilmTmdbId);
+  document.getElementById('filmDetailTitle').textContent = myFilm ? myFilm.title : d.title;
 
   const backdropContainer = document.getElementById('filmDetailBackdrop');
   const backdropImg = document.getElementById('filmDetailBackdropImg');

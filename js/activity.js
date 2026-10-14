@@ -77,7 +77,7 @@ function activityEventLabel(e){
     case 'proposal_chosen': return `${name} a élu « ${e.targetLabel} » comme prochaine séance`;
     case 'group_joined': return `${name} a rejoint le groupe`;
     case 'film_rated': return `${name} a noté « ${e.targetLabel} »${e.targetNote != null ? ` ${e.targetNote}/5` : ''}`;
-    case 'watchlist_added': return `${name} a ajouté « ${e.targetLabel} » à sa watchlist`;
+    case 'watchlist_added': return `${name} a ajouté « ${e.targetLabel} » à sa liste À voir`;
     case 'list_created': return `${name} a créé la liste « ${e.targetLabel} »`;
     default: return name;
   }

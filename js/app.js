@@ -375,7 +375,7 @@ function render(){
     const critLabel = note === null ? 'Pas encore noté' : '';
     const sub = [critLabel, f.releaseYear, genres ? `<span class="film-sub-genre">${genres}</span>` : ''].filter(Boolean).join(' · ');
     row.innerHTML = `
-      <div class="holes"><span></span><span></span><span></span></div>
+      
       ${bulkSelectMode ? `<input type="checkbox" class="bulk-select-checkbox" data-id="${f.id}" aria-label="Sélectionner ${escapeHtml(f.title)}" ${selectedFilmIds.has(f.id) ? 'checked' : ''}>` : ''}
       ${f.posterUrl
         ? `<img class="film-poster" src="${f.posterUrl}" alt="" loading="lazy">`
@@ -750,7 +750,7 @@ function openModal(id, prefillTmdb){
   document.getElementById('filmPrivate').checked = !!(film && film.isPrivate);
   const sliderVal = manualNote !== null ? manualNote : 2.5;
   document.getElementById('manualScoreSlider').value = sliderVal;
-  document.getElementById('manualScoreVal').textContent = sliderVal.toFixed(2);
+  document.getElementById('manualScoreVal').textContent = sliderVal.toFixed(1);
 
   document.getElementById('reviewInput').value = film && film.review ? film.review : '';
 
@@ -1086,7 +1086,7 @@ document.getElementById('exportLetterboxdBtn').addEventListener('click', exportF
 
 document.getElementById('manualToggle').addEventListener('change', updateManualVisibility);
 document.getElementById('manualScoreSlider').addEventListener('input', (e) => {
-  document.getElementById('manualScoreVal').textContent = parseFloat(e.target.value).toFixed(2);
+  document.getElementById('manualScoreVal').textContent = parseFloat(e.target.value).toFixed(1);
   updateLiveScore();
 });
 document.getElementById('openAddBtn').addEventListener('click', () => openModal(null));

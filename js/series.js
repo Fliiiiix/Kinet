@@ -553,6 +553,15 @@ function seasonProgressLabel(seasonNumber, episodeCount){
   return `${watched}/${episodeCount} vus${avg != null ? ` · ★ ${avg.toFixed(1)}` : ''}`;
 }
 
+// Nom de saison en français (audit T1) : TMDB renvoie « Season 1 » quand
+// aucune traduction n'existe. Un vrai nom (« Le Livre de Boba Fett »...) est
+// gardé tel quel.
+function seasonLabel(s){
+  const name = (s.name || '').trim();
+  if(s.season_number === 0 && (!name || /^(specials|épisodes spéciaux)$/i.test(name))) return 'Épisodes spéciaux';
+  if(!name || /^(season|saison|temporada|staffel)\s*\d+$/i.test(name)) return `Saison ${s.season_number}`;
+  return name;
+}
 
 function renderSeasonsList(){
   const wrap = document.getElementById('seriesSeasonsList');
@@ -563,7 +572,7 @@ function renderSeasonsList(){
   wrap.innerHTML = currentShowSeasons.map(s => `
     <div class="season-block" data-season="${s.season_number}">
       <button class="season-header" type="button" data-season-toggle="${s.season_number}">
-        <span class="season-name">${escapeHtml(s.name || `Saison ${s.season_number}`)}</span>
+        <span class="season-name">${escapeHtml(seasonLabel(s))}</span>
         <span class="season-progress" id="seasonProgress-${s.season_number}">${seasonProgressLabel(s.season_number, s.episode_count)}</span>
         <span class="season-caret">▾</span>
       </button>
