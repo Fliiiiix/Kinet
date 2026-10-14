@@ -1377,8 +1377,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 /* Remplace l'ancien rectangle plat .counter — un badge circulaire, toujours
    au même endroit qu'une note apparaît (catalogue, amis, groupes, top,
    profil public...). Couleur par BARÈME plutôt que par origine de la note
-   (manuel ou grille — c'est déjà signalé par .manual-badge à côté du
-   titre, indépendamment de ceci) : rouge en dessous de 2.5, or entre 2.5
+   (manuel ou grille, une distinction que plus rien n'affiche depuis le
+   retrait de .manual-badge) : rouge en dessous de 2.5, or entre 2.5
    et 4, vert à partir de 4 — voir noteColorClass() dans js/ui.js, appelée
    à chaque site qui construit un .counter. Pas un anneau de progression
    proportionnel (ça demanderait de faire passer la valeur en style inline
@@ -1422,22 +1422,11 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   100%{transform:rotateY(360deg) scale(1);}
 }
 
-/* "Manuel" reste signalé UNIQUEMENT ici (petit texte à côté du titre) —
-   plus sur la couleur du cadran, désormais réservée au barème de note. */
-.manual-badge{
-  display:inline-block;
-  font-family:'Space Mono', monospace;
-  font-size:9px;
-  letter-spacing:0.08em;
-  text-transform:uppercase;
-  color:var(--teal);
-  border:1px solid var(--teal);
-  border-radius:4px;
-  padding:2px 5px;
-  margin-left:8px;
-  vertical-align:middle;
-  font-weight:600;
-}
+/* .manual-badge ("manuel" à côté du titre) retiré en v3.2, retour
+   utilisateur : "pareil pour le tag manuel qui est de trop" — même sort
+   que "Note manuelle · ancien référentiel" juste avant. f.manualNote
+   sert encore au calcul de la note (getDisplayNote(), js/app.js), plus à
+   aucun affichage dédié. */
 
 /* État de chargement (index.html, #filmList) : 5 lignes statiques le temps
    du 1er chargement réel, remplacées dès que render() tourne (voir le
@@ -4221,7 +4210,15 @@ input[type="range"]::-moz-range-thumb{
 }
 .ach-hidden-card.locked{opacity:0.55;}
 .ach-hidden-icon{font-size:22px;}
-.ach-hidden-title{font-family:'Bricolage Grotesque', sans-serif; font-weight:600; font-size:13.5px;}
+/* Même correctif que .film-sub/.wl-title/.wl-note (v3.2, retour
+   utilisateur : "tous les carrés [aient] la même longueur et largeur")
+   — titre et description de succès sont du texte libre, de longueur très
+   variable d'un succès à l'autre ; sans limite, une carte à description
+   longue grandissait par rapport à ses voisines dans la même grille. */
+.ach-hidden-title{
+  font-family:'Bricolage Grotesque', sans-serif; font-weight:600; font-size:13.5px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%;
+}
 .ach-hidden-card.locked .ach-hidden-title{
   font-family:'Space Mono', monospace;
   font-weight:400;
@@ -4233,6 +4230,10 @@ input[type="range"]::-moz-range-thumb{
   font-size:10.5px;
   color:var(--text-muted);
   line-height:1.4;
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:3;
+  overflow:hidden;
 }
 /* v2.1.x, "Halation" plus loin : même bordure en dégradé que .ach-summary
    ci-dessus (par masque, voir le commentaire dessus), réservée aux 2 seuls
@@ -5235,6 +5236,20 @@ body[data-view-mode="grid"] #filmList .film-poster-placeholder{
   border-radius:8px;
 }
 body[data-view-mode="grid"] #filmList .film-main{grid-area:main;}
+/* Même correctif que .wl-title/.wl-note juste plus bas (v2.0.15, retour
+   utilisateur "les carrés ne sont pas de la même taille") — jamais
+   étendu à #filmList à l'époque. .film-title tronque déjà en 1 ligne,
+   mais .film-sub (année + genres, voir render() dans js/app.js) n'avait
+   aucune limite : un film avec 2 genres longs ("Animation,
+   Science-Fiction") passait sur 2 lignes à côté d'un voisin resté sur 1,
+   rendant sa carte plus haute que les autres de la même rangée. Retour
+   utilisateur v3.2 : "tous les carrés [aient] la même longueur et
+   largeur". */
+body[data-view-mode="grid"] #filmList .film-sub{
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
 /* .star-btn et .counter partagent la même zone "footer" plutôt qu'une 4e
    zone dédiée : justify-self les place chacun à une extrémité de la même
    ligne, comme deux enfants d'une rangée flex, sans changer le DOM. */

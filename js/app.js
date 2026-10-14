@@ -323,7 +323,6 @@ function render(){
   list.innerHTML = '';
   pageItems.forEach(f => {
     const note = getDisplayNote(f);
-    const isManual = f.manualNote != null;
     const rewatches = typeof rewatchCount === 'function' ? rewatchCount(f.id) : 0;
     const happening = getClickHappeningForFilm(f);
     const row = document.createElement('div');
@@ -341,10 +340,12 @@ function render(){
     // m'en fiche"). "7 critères notés" / "Note manuelle · ancien
     // référentiel" ne disaient tous les deux que "oui, c'est noté" avec
     // des mots différents — aucune info qu'on vient chercher en
-    // parcourant son catalogue, et le badge "manuel" à côté du titre
-    // (voir plus bas, .manual-badge) porte déjà ce détail pour qui y
-    // tient. Seul "Pas encore noté" reste : ça, c'est actionnable (un
-    // trou à combler), pas juste du bruit sur une note qui existe déjà.
+    // parcourant son catalogue. Seul "Pas encore noté" reste : ça, c'est
+    // actionnable (un trou à combler), pas juste du bruit sur une note
+    // qui existe déjà. Le badge "manuel" à côté du titre (même retour,
+    // "pareil pour le tag manuel qui est de trop") est retiré aussi —
+    // f.manualNote ne sert donc plus qu'au calcul de la note elle-même
+    // (getDisplayNote()), plus à l'affichage.
     const critLabel = note === null ? 'Pas encore noté' : '';
     const sub = [critLabel, f.releaseYear, genres ? `<span class="film-sub-genre">${genres}</span>` : ''].filter(Boolean).join(' · ');
     row.innerHTML = `
@@ -354,7 +355,7 @@ function render(){
         ? `<img class="film-poster" src="${f.posterUrl}" alt="" loading="lazy">`
         : `<div class="film-poster film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
       <div class="film-main">
-        <div class="film-title">${escapeHtml(f.title)}${isManual ? '<span class="manual-badge" title="Note manuelle (référentiel différent)">manuel</span>' : ''}${f.review ? '<span class="review-badge" title="Commentaire enregistré">💬</span>' : ''}${rewatches > 1 ? `<span class="rewatch-badge" title="Revu ${rewatches} fois">↻ ×${rewatches}</span>` : ''}${happening ? `<button class="happening-badge" type="button" title="Un petit quelque chose à découvrir..." aria-label="Un petit quelque chose à découvrir...">${happening.icon}</button>` : ''}</div>
+        <div class="film-title">${escapeHtml(f.title)}${f.review ? '<span class="review-badge" title="Commentaire enregistré">💬</span>' : ''}${rewatches > 1 ? `<span class="rewatch-badge" title="Revu ${rewatches} fois">↻ ×${rewatches}</span>` : ''}${happening ? `<button class="happening-badge" type="button" title="Un petit quelque chose à découvrir..." aria-label="Un petit quelque chose à découvrir...">${happening.icon}</button>` : ''}</div>
         <div class="film-sub">${sub}</div>
       </div>
       <button class="star-btn ${f.fav ? 'active' : ''}" data-id="${f.id}" type="button" title="Favori" aria-label="${f.fav ? 'Retirer des favoris' : 'Ajouter aux favoris'}" aria-pressed="${f.fav}">${f.fav ? '★' : '☆'}</button>

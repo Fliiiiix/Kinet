@@ -586,8 +586,8 @@ applyHeaderNavOrder();
 // Retenté v2.0 : la première version distinguait manuel/grille par
 // couleur (or vs teal), ce qui ne voulait rien dire pour quelqu'un qui
 // regarde juste la note — le barème demandé porte sur la VALEUR, pas sur
-// la façon dont elle a été calculée (déjà signalée par .manual-badge, à
-// côté du titre, indépendamment de ceci). Seuils : <2.5 rouge, 2.5-3.99
+// la façon dont elle a été calculée (une distinction que plus rien
+// n'affiche depuis le retrait de .manual-badge, v3.2). Seuils : <2.5 rouge, 2.5-3.99
 // jaune/or, >=4 vert — appelée à chaque endroit qui construit un
 // `.counter` (js/app.js, friends.js, groups.js, publicProfile.js, top.js).
 function noteColorClass(note){
