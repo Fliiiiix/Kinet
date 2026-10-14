@@ -336,15 +336,17 @@ function render(){
     // Genre en bronze (v2.8, retour utilisateur — "où est la couleur ?") :
     // seul segment de .film-sub à sortir du gris muet, sur la ligne la
     // plus vue de toute l'app (le catalogue).
-    // "7 critères notés" supposait à tort qu'un film non manuel avait
-    // forcément sa grille remplie — faux pour un import watched.csv
-    // (Letterboxd, voir js/importExternal.js), qui crée le film avec
-    // crit:{} (aucune note du tout, pas même partielle) : chaque ligne du
-    // nouveau filtre "Sans note" (retour utilisateur) affichait pourtant
-    // "7 critères notés", trompeur. note === null (ni manuelle, ni grille
-    // remplie) couvre les deux raisons possibles d'absence de note.
-    const critLabel = note === null ? 'Pas encore noté' : (isManual ? 'Note manuelle · ancien référentiel' : '7 critères notés');
-    const sub = critLabel + (f.releaseYear ? ` · ${f.releaseYear}` : '') + (genres ? ` · <span class="film-sub-genre">${genres}</span>` : '');
+    // Ligne allégée (v3.2, retour utilisateur : "trop de choses écrites,
+    // pas forcément utiles" — "savoir que c'est une note manuelle... je
+    // m'en fiche"). "7 critères notés" / "Note manuelle · ancien
+    // référentiel" ne disaient tous les deux que "oui, c'est noté" avec
+    // des mots différents — aucune info qu'on vient chercher en
+    // parcourant son catalogue, et le badge "manuel" à côté du titre
+    // (voir plus bas, .manual-badge) porte déjà ce détail pour qui y
+    // tient. Seul "Pas encore noté" reste : ça, c'est actionnable (un
+    // trou à combler), pas juste du bruit sur une note qui existe déjà.
+    const critLabel = note === null ? 'Pas encore noté' : '';
+    const sub = [critLabel, f.releaseYear, genres ? `<span class="film-sub-genre">${genres}</span>` : ''].filter(Boolean).join(' · ');
     row.innerHTML = `
       <div class="holes"><span></span><span></span><span></span></div>
       ${bulkSelectMode ? `<input type="checkbox" class="bulk-select-checkbox" data-id="${f.id}" aria-label="Sélectionner ${escapeHtml(f.title)}" ${selectedFilmIds.has(f.id) ? 'checked' : ''}>` : ''}
