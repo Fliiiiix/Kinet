@@ -365,6 +365,16 @@ header{
    updateHeaderNav(), js/router.js, pose .active sur le SEUL bouton qui
    correspond à la route en cours. */
 .header-nav-btn.active{background:var(--violet); color:#06151c;}
+/* Boutons d'action (v3.2) — Rechercher/Avis/Installer/Nouveautés : pas
+   une page, pas de .active possible, donc pas le même langage que les
+   vrais liens (texte nu qui peut s'allumer). Icône+pastille reprises ici
+   (inverse de la règle juste au-dessus, spécificité plus élevée car
+   deux classes) — un bouton d'action, pas un onglet éteint. */
+.header-nav-btn.header-nav-action{padding:7px;}
+.header-nav-btn.header-nav-action .nav-pip{display:flex;}
+.header-nav-btn.header-nav-action span:not(.nav-pip){
+  position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap;
+}
 /* Pastille (v2.1.x) : le rond teinté derrière chaque icône — la
    destination se reconnaît aussi à sa couleur, pas seulement à sa forme/
    son texte. Couleurs reprises telles quelles de la palette Halation
