@@ -509,11 +509,23 @@ header{
 /* Sélecteur principal Films/Séries (v2.0.6) — voir index.html pour le
    pourquoi. Pleine largeur du header, sous le titre : assez proéminent
    pour se voir comme LA navigation de l'app, pas une option secondaire. */
+/* v3.2 (retour utilisateur : "les 2 boutons qui traînent tout seuls,
+   Film et Série") — chacun avait sa propre carte (fond/bord/radius
+   individuels), deux boîtes flottantes déconnectées du reste depuis que
+   .header-nav est devenue une seule pilule groupée. Même langage ici :
+   UN seul conteneur pilule (fond surface, bord hairline, radius 999px,
+   4px de marge intérieure), chaque onglet sans fond/bord à lui, juste
+   la couleur qui change — .topnav de la draft Scope, un segmented
+   control classique plutôt que deux cartes séparées. */
 .primary-tabs{
   display:flex;
-  gap:8px;
+  gap:2px;
   margin-top:20px;
   max-width:360px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:999px;
+  padding:4px;
 }
 .primary-tab{
   flex:1;
@@ -523,25 +535,24 @@ header{
   gap:7px;
   font-family:'Bricolage Grotesque', sans-serif;
   font-weight:700;
-  font-size:14.5px;
+  font-size:14px;
   color:var(--text-muted);
-  background:var(--surface);
-  border:1px solid var(--line);
-  border-radius:11px;
-  padding:11px 16px;
+  background:none;
+  border:none;
+  border-radius:999px;
+  padding:10px 16px;
   cursor:pointer;
-  transition:background .15s, color .15s, border-color .15s, transform .1s;
+  transition:background .15s, color .15s, transform .1s;
 }
 .primary-tab svg{width:17px; height:17px; flex:none;}
 .primary-tab:hover{background:var(--surface-2); color:var(--text);}
 .primary-tab:active{transform:scale(0.98);}
-/* v2.9, "Halation" : léger halo sur l'onglet actif — visible en
-   permanence (pas juste au survol), signale "c'est ici" sans mot. */
+/* Remplissage plein (sans halo, v3.2 — cohérent avec .topnav a.active de
+   la draft et .header-nav-btn.active juste au-dessus) : couleur seule
+   suffit à dire "c'est ici", pas besoin d'une lueur en plus. */
 .primary-tab[aria-selected="true"]{
-  color:var(--ink);
+  color:#06151c;
   background:var(--violet);
-  border-color:var(--violet);
-  box-shadow:0 0 20px 2px rgba(79,207,255,0.35);
 }
 .primary-tab[aria-selected="true"]:hover{background:var(--violet);}
 .eyebrow{
