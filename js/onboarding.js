@@ -34,10 +34,11 @@
 const ONBOARDING_STEPS = [
   {
     key:'add',
-    target:{ desktop:'openAddBtn', mobile:'fabAddBtn' },
-    place:{ desktop:'bottom', mobile:'top' },
+    // Ajouter passe par la recherche du catalogue (audit M2).
+    target:{ desktop:'search', mobile:'search' },
+    place:{ desktop:'bottom', mobile:'bottom' },
     title:'Note un film',
-    body:'Cherche-le puis note-le sur 7 critères — ou donne directement une note manuelle si tu es pressé.'
+    body:'Tape son titre ici : s\'il n\'est pas dans ton catalogue, ajoute-le et note-le sur 7 critères, ou donne une note directe si tu es pressé.'
   },
   {
     key:'watchlist',

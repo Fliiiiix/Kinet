@@ -6373,3 +6373,29 @@ button.btn-secondary{background:none; border:none; border-bottom:1px solid var(-
 #filmDetailRatingRing:active{transform:scale(0.97);}
 #filmDetailNotes .film-detail-my-review-btn{width:auto; display:inline-block; margin-top:var(--sp-3);}
 #filmDetailNotes .wl-note{margin-top:0;}
+
+/* ==========================================================
+   LOT 5 DE L'AUDIT : ajouter un film depuis la recherche, entête plus
+   court sur téléphone.
+   ========================================================== */
+/* Le bouton flottant « + » est remplacé par la recherche (audit M2/M13) ;
+   il reste dans le HTML pour le JS qui le lit. */
+#fabAddBtn{display:none !important;}
+/* Case « Ajouter « titre » » en tête des résultats (buildAddFromSearchTile(), js/app.js) */
+.add-from-search{cursor:pointer;}
+.add-from-search .add-from-search-poster{
+  display:flex; align-items:center; justify-content:center;
+  border:1.5px dashed var(--line-strong) !important; background:none;
+  color:var(--text-2); font-size:var(--fs-xl); font-weight:400; line-height:1;
+  transition:border-color var(--dur-fast), color var(--dur-fast);
+}
+.add-from-search:hover .add-from-search-poster,
+.add-from-search:focus-visible .add-from-search-poster{border-color:var(--accent) !important; color:var(--accent);}
+.add-from-search .film-title{color:var(--text);}
+/* Objectif annuel sans trait au-dessus (moins de lignes, audit M13) */
+.annual-goal-widget{border-top:none; padding-top:0;}
+@media (max-width:600px){
+  header{margin-bottom:var(--sp-4);}
+  .annual-goal-widget{padding:0;}
+  .toolbar{margin-bottom:var(--sp-5);}
+}

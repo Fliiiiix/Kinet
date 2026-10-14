@@ -84,7 +84,6 @@ function renderFilmDetailHeader(){
   const metaParts = [];
   if(d.release_year) metaParts.push(d.release_year);
   if(genres) metaParts.push(genres);
-  if(d.runtime) metaParts.push(formatRuntime(d.runtime));
   document.getElementById('filmDetailMeta').textContent = metaParts.join(' · ');
 
   const runtimeRow = document.getElementById('filmDetailRuntimeRow');

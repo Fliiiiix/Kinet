@@ -310,9 +310,23 @@ function render(){
   const isFiltered = !!search || !!genreFilter || !!yearFilter || (isAdvanced && critFilterMin > 0);
   countLine.textContent = `${filtered.length} film${filtered.length>1?'s':''} ${isFiltered ? '(filtré)' : 'au catalogue'}`;
 
+  // Ajouter un film passe par la recherche (audit M2, retour du 14/10 :
+  // « l'ajout de film devrait se faire par la recherche et non un
+  // bouton ») : dès qu'un titre est tapé, une case « Ajouter » ouvre la
+  // notation avec ce titre déjà cherché sur TMDB.
+  const rawSearch = document.getElementById('search').value.trim();
+  const addTile = rawSearch.length >= 2 ? buildAddFromSearchTile(rawSearch) : null;
+
   if(filtered.length === 0){
-    list.innerHTML = `<div class="empty-state">Aucun film. Clique sur « + Ajouter un film » pour commencer ton catalogue.</div>`;
-    document.getElementById('pagination').innerHTML = '';
+    if(addTile){
+      list.innerHTML = '';
+      list.appendChild(addTile);
+    }else{
+      list.innerHTML = `<div class="empty-state">${films.length === 0
+        ? 'Aucun film pour l\'instant. Tape un titre dans la recherche pour ajouter ton premier film.'
+        : 'Aucun film ne correspond à ces filtres.'}</div>`;
+    }
+    renderLoadMore(false);
     return;
   }
 
@@ -331,6 +345,7 @@ function render(){
   // goToFilmDetail() que Top/Watchlist/Amis (js/top.js, js/watchlist.js).
   // Le sens inverse (fiche film -> notation) existe déjà via "Modifier ma
   // note" sur cette fiche (handleFilmDetailRate(), js/filmDetail.js).
+  if(addTile) list.appendChild(addTile);
   const navList = pageItems.filter(f => f.tmdbId).map(f => ({ tmdbId: f.tmdbId, title: f.title }));
   pageItems.forEach(f => {
     const note = getDisplayNote(f);
@@ -411,6 +426,28 @@ function render(){
   });
 
   renderLoadMore(currentPage < totalPages);
+}
+
+// Case « Ajouter « titre » » en tête des résultats de recherche (audit M2).
+function buildAddFromSearchTile(query){
+  const row = document.createElement('div');
+  row.className = 'film-row add-from-search';
+  row.innerHTML = `
+    <div class="film-poster add-from-search-poster" aria-hidden="true">+</div>
+    <div class="film-main">
+      <div class="film-title">Ajouter « ${escapeHtml(query)} »</div>
+      <div class="film-sub">Le chercher et le noter</div>
+    </div>
+  `;
+  makeRowClickable(row, () => openAddFromSearch(query));
+  return row;
+}
+
+function openAddFromSearch(query){
+  openModal(null);
+  const titleInput = document.getElementById('titleInput');
+  titleInput.value = query;
+  titleInput.dispatchEvent(new Event('input', { bubbles: true }));
 }
 
 // Paquet suivant du catalogue : chargé tout seul quand le bas de la liste

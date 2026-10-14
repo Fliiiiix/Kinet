@@ -59,6 +59,10 @@ async function loadChangelogEntries(){
   const cutoff = Date.now() - CHANGELOG_PUBLIC_VISIBILITY_DAYS * 24 * 60 * 60 * 1000;
   changelogEntries = all.filter(e => new Date(e.publishedAt).getTime() >= cutoff);
   latestChangelogEntry = changelogEntries[0] || null;
+  // Audit M12 : « Nouveautés » menait à « Rien pour l'instant ». L'entrée
+  // du menu profil n'apparaît que s'il y a vraiment du nouveau.
+  const link = document.getElementById('profileChangelogLinkBtn');
+  if(link) link.style.display = changelogEntries.length ? '' : 'none';
 }
 
 function changelogDateLabel(iso){

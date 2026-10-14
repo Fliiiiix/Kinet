@@ -42,7 +42,7 @@ function makeRealTarget(){
 }
 
 const ALL_TARGET_IDS = [
-  'openAddBtn', 'fabAddBtn', 'watchlistBtn', 'mobileTabWatchlist',
+  'search', 'openAddBtn', 'fabAddBtn', 'watchlistBtn', 'mobileTabWatchlist',
   'primaryTabSeries', 'friendsBtn', 'mobileTabFriends',
   'userAvatarBtn', 'mobileTabProfile'
 ];
