@@ -356,39 +356,37 @@ header{
   border-radius:999px;
   padding:4px;
 }
+/* v3.0 (draft Scope, "respecte cette page à la lettre") — .topnav a dans
+   la draft est du texte nu, sans icône ni pastille : pas de fond/bord au
+   repos, juste la couleur qui change, un radius:999px qui ne sert qu'à
+   l'état actif (plein) et au survol. Les .nav-pip (pastilles rondes
+   colorées derrière chaque icône, v2.1.x) sont masquées ici — gardées
+   dans le DOM pour ne rien casser côté JS/tests, juste plus affichées,
+   exactement le registre visuel de la draft. */
 .header-nav-btn{
   position:relative; /* point du badge .has-unread ci-dessous */
-  display:flex; align-items:center; gap:8px;
+  display:flex; align-items:center;
   background:none;
-  border:1px solid transparent;
+  border:none;
   color:var(--text-muted);
-  padding:6px 13px 6px 6px;
+  padding:8px 16px;
   border-radius:999px;
   font-family:'Instrument Sans', sans-serif;
   font-weight:600;
-  font-size:12.5px;
+  font-size:12px;
+  letter-spacing:0.02em;
   white-space:nowrap;
   cursor:pointer;
-  transition:background .15s, border-color .15s;
+  transition:color .15s ease, background-color .15s ease;
 }
-/* v2.1.x, "pastille couleur" (draft D validé) — remplace le fond/liseré
-   or uniforme au survol : la teinte propre à CHAQUE bouton (voir
-   .nav-pip-* plus bas) porte déjà la couleur, inutile de la répéter ici.
-   Seul le libellé s'éclaircit, pour rester lisible sans dominer la
-   pastille. */
-.header-nav-btn:hover{background:var(--surface-2); border-color:var(--line);}
-.header-nav-btn:hover span:not(.nav-pip){color:var(--text);}
+.header-nav-btn .nav-pip{display:none;}
+.header-nav-btn:hover{color:var(--text);}
 /* Pilule active (v3.0, draft Scope, retour utilisateur : "une couleur
    bleue pour le bouton sur lequel on est") — remplissage glace plein,
-   texte sombre dessus, même traitement que .topnav a.active dans la
-   draft. La pastille (.nav-pip, cercle teinté derrière l'icône) passe en
-   transparent ici : posée sur un fond déjà glace, SA PROPRE teinte
-   glace-sur-glace-wash devenait illisible — l'icône garde le même
-   sombre que le texte à la place. updateHeaderNav(), js/router.js, pose
-   .active sur le SEUL bouton qui correspond à la route en cours. */
-.header-nav-btn.active{background:var(--violet); border-color:var(--violet);}
-.header-nav-btn.active span:not(.nav-pip){color:#06151c;}
-.header-nav-btn.active .nav-pip{background:transparent; color:#06151c;}
+   texte sombre dessus, exactement .topnav a.active dans la draft.
+   updateHeaderNav(), js/router.js, pose .active sur le SEUL bouton qui
+   correspond à la route en cours. */
+.header-nav-btn.active{background:var(--violet); color:#06151c;}
 /* Pastille (v2.1.x) : le rond teinté derrière chaque icône — la
    destination se reconnaît aussi à sa couleur, pas seulement à sa forme/
    son texte. Couleurs reprises telles quelles de la palette Halation
