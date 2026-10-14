@@ -274,13 +274,13 @@ header{
   backdrop-filter:blur(14px);
   -webkit-backdrop-filter:blur(14px);
 }
-/* Tache "atmosphère" déplacée sur .title-row (header lui-même ne peut
-   plus faire overflow:hidden + position:sticky sans casser le fondu du
-   dégradé au scroll) — même rendu, juste posée un niveau plus bas. */
-.title-row{
-  position:relative;
-  background:radial-gradient(560px 240px at 10% -60%, var(--violet-wash), transparent 70%);
-}
+/* Tache "atmosphère" (v3.0) retirée en v3.2 — retour utilisateur : posée
+   sur .title-row (une boîte qui ne fait que la largeur de "Kinet v2.0",
+   flex shrink-to-fit), le dégradé radial de 560x240px n'avait pas la
+   place de s'estomper : seul son centre quasi opaque restait visible,
+   un bloc plein avec un bord net plutôt qu'une lueur douce. Elle n'avait
+   de sens que sur la largeur du header entier (voir l'historique git) —
+   pas réessayée ici, purement décorative, pas une perte fonctionnelle. */
 .title-row{
   display:flex;
   align-items:flex-end;
