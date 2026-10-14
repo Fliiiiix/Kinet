@@ -43,30 +43,70 @@ function normalizeMovieDetails(details){
     overview: details.overview || null,
     release_year: details.release_date ? parseInt(details.release_date.slice(0, 4), 10) : null,
     release_date: details.release_date || null,
-    genre_ids: (details.genres || []).map(g => g.id)
+    genre_ids: (details.genres || []).map(g => g.id),
+    runtime: details.runtime || null
   };
 }
 
+// « 1 h 56 » à partir d'une durée TMDB en minutes.
+function formatRuntime(minutes){
+  if(!minutes) return '';
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return h ? `${h} h ${String(m).padStart(2, '0')}` : `${m} min`;
+}
+
+// Fiche alignée sur la fiche série (audit M4) : bandeau toujours visible
+// (photo de plateau > affiche > repli neutre, point ouvert n° 4), titre,
+// ligne bleue année · genres · durée, résumé.
 function renderFilmDetailHeader(){
   const d = currentFilmData;
   document.getElementById('filmDetailTitle').textContent = d.title;
-  renderDetailBackdrop('filmDetailBackdrop', 'filmDetailBackdropImg', d.backdrop_path);
-  const posterImg = document.getElementById('filmDetailPoster');
-  const posterPlaceholder = document.getElementById('filmDetailPosterPlaceholder');
-  if(d.poster_url){
-    posterImg.src = d.poster_url;
-    posterImg.style.display = '';
-    posterPlaceholder.style.display = 'none';
+
+  const backdropContainer = document.getElementById('filmDetailBackdrop');
+  const backdropImg = document.getElementById('filmDetailBackdropImg');
+  if(d.backdrop_path){
+    renderDetailBackdrop('filmDetailBackdrop', 'filmDetailBackdropImg', d.backdrop_path);
+    backdropContainer.classList.remove('is-placeholder');
   }else{
-    posterImg.style.display = 'none';
-    posterPlaceholder.style.display = '';
+    backdropContainer.style.display = '';
+    if(d.poster_url){
+      backdropImg.src = d.poster_url;
+      backdropImg.style.objectPosition = 'center 15%';
+      backdropContainer.classList.remove('is-placeholder');
+    }else{
+      backdropImg.removeAttribute('src');
+      backdropContainer.classList.add('is-placeholder');
+    }
   }
+
   const genres = (d.genre_ids || []).map(id => GENRE_MAP[id]).filter(Boolean).join(', ');
   const metaParts = [];
-  if(d.release_year) metaParts.push(`<span class="wl-year">(${d.release_year})</span>`);
-  if(genres) metaParts.push(escapeHtml(genres));
-  document.getElementById('filmDetailMeta').innerHTML = metaParts.join(' · ');
+  if(d.release_year) metaParts.push(d.release_year);
+  if(genres) metaParts.push(genres);
+  if(d.runtime) metaParts.push(formatRuntime(d.runtime));
+  document.getElementById('filmDetailMeta').textContent = metaParts.join(' · ');
+
+  const runtimeRow = document.getElementById('filmDetailRuntimeRow');
+  runtimeRow.style.display = d.runtime ? '' : 'none';
+  document.getElementById('filmDetailRuntime').textContent = formatRuntime(d.runtime);
+
   document.getElementById('filmDetailOverview').textContent = d.overview || 'Aucun résumé disponible.';
+  renderFilmDetailRatingRing();
+}
+
+// Ta note, à droite du titre (même anneau que la fiche série). Un clic
+// ouvre la notation.
+function renderFilmDetailRatingRing(){
+  const ring = document.getElementById('filmDetailRatingRing');
+  if(!ring) return;
+  const myFilm = films.find(f => f.tmdbId === currentFilmTmdbId);
+  const myNote = myFilm ? getDisplayNote(myFilm) : null;
+  ring.textContent = myNote !== null ? myNote.toFixed(1) : '—';
+  ring.className = `counter ${noteColorClass(myNote)}`;
+  const label = myNote !== null ? `Ta note : ${myNote.toFixed(1)}. Modifier ma note` : 'Noter ce film';
+  ring.title = label;
+  ring.setAttribute('aria-label', label);
 }
 
 // Historique des notes (migration 051) : les derniers changements de MA note
@@ -119,18 +159,15 @@ async function renderFilmDetailNotes(){
     ? (distResult.data || []).map(row => ({ label: Number(row.note).toFixed(1), count: row.note_count }))
     : null;
 
+  // Moyenne dans la fiche (ligne « Note Kinet »), ta note à droite du titre :
+  // cette section ne garde que la répartition et le détail de ta critique
+  // (audit M4 : deux anneaux de note empilés ici auparavant).
+  document.getElementById('filmDetailAvg').textContent = avgNote !== null
+    ? `${avgNote.toFixed(1)} / 5 · ${ratingCount} note${ratingCount > 1 ? 's' : ''}`
+    : 'Personne ne l\'a encore noté';
   wrap.innerHTML = `
-    <div class="film-detail-note-row">
-      <div class="counter ${noteColorClass(avgNote)}">${avgNote !== null ? avgNote.toFixed(1) : '—'}</div>
-      <div class="wl-note">Note moyenne Kinet ${ratingCount ? `(${ratingCount} note${ratingCount > 1 ? 's' : ''})` : "(personne ne l'a encore noté)"}</div>
-    </div>
-    ${myNote !== null ? `
-    <div class="film-detail-note-row">
-      <div class="counter ${noteColorClass(myNote)}">${myNote.toFixed(1)}</div>
-      <div class="wl-note">Ta note</div>
-    </div>
-    <button class="btn secondary film-detail-my-review-btn" type="button" id="filmDetailMyReviewBtn">Voir le détail de ta critique</button>` : ''}
-    ${distItems ? renderBarChart(distItems) : ''}
+    ${distItems ? renderBarChart(distItems) : (ratingCount < 2 ? `<div class="wl-note">La répartition s'affiche à partir de deux notes.</div>` : '')}
+    ${myNote !== null ? `<button class="btn-secondary film-detail-my-review-btn" type="button" id="filmDetailMyReviewBtn">Voir le détail de ta critique</button>` : ''}
   `;
 
   // Réutilise openFilmReviewDetail() (js/stats.js) plutôt que de dupliquer
@@ -138,8 +175,9 @@ async function renderFilmDetailNotes(){
   // dans la modale d'ajout ET dans cette fiche critique). Cette page
   // communautaire n'affichait jusqu'ici que le chiffre de la note, jamais
   // le détail par critère (retour utilisateur, backlog).
-  if(myFilm){
-    document.getElementById('filmDetailMyReviewBtn').addEventListener('click', () => openFilmReviewDetail(myFilm));
+  const myReviewBtn = document.getElementById('filmDetailMyReviewBtn');
+  if(myFilm && myReviewBtn){
+    myReviewBtn.addEventListener('click', () => openFilmReviewDetail(myFilm));
   }
 }
 
@@ -381,6 +419,27 @@ function updateFilmDetailActionButtons(){
   // Un film déjà noté n'a plus sa place dans "à voir" — masqué plutôt que
   // désactivé, pas d'action possible qui aurait un sens ici.
   watchlistBtn.style.display = (myFilm || inWatchlist) ? 'none' : '';
+
+  // Favori depuis la fiche (jusqu'ici seulement l'étoile du catalogue,
+  // peu pratique au doigt) : seulement pour un film de ton catalogue.
+  const favBtn = document.getElementById('filmDetailFavBtn');
+  if(favBtn){
+    favBtn.style.display = myFilm ? '' : 'none';
+    const isFav = !!(myFilm && myFilm.fav);
+    favBtn.textContent = isFav ? '★ Favori' : '☆ Ajouter aux favoris';
+    favBtn.setAttribute('aria-pressed', String(isFav));
+    favBtn.classList.toggle('active', isFav);
+  }
+  renderFilmDetailRatingRing();
+}
+
+async function handleFilmDetailToggleFav(){
+  const myFilm = films.find(f => f.tmdbId === currentFilmTmdbId);
+  if(!myFilm) return;
+  const changed = await toggleFilmFavorite(myFilm);
+  if(!changed) return;
+  updateFilmDetailActionButtons();
+  if(typeof render === 'function') render();
 }
 
 function handleFilmDetailRate(){
@@ -445,6 +504,13 @@ async function renderFilmDetailCast(tmdbId){
   const wrap = document.getElementById('filmDetailCast');
   try{
     const credits = await fetchMovieCredits(tmdbId);
+    // Ligne « Réalisation » de la fiche, tirée des mêmes crédits que le casting.
+    const directors = (credits.crew || []).filter(c => c.job === 'Director').map(c => c.name);
+    const directorRow = document.getElementById('filmDetailDirectorRow');
+    if(directorRow && tmdbId === currentFilmTmdbId){
+      directorRow.style.display = directors.length ? '' : 'none';
+      document.getElementById('filmDetailDirector').textContent = directors.join(', ');
+    }
     const cast = (credits.cast || []).slice(0, 15);
     if(cast.length === 0){
       wrap.innerHTML = `<div class="tmdb-empty">Casting non référencé pour ce film.</div>`;
@@ -553,9 +619,17 @@ async function openFilmDetail(tmdbId){
   currentFilmTmdbId = tmdbId;
   setFilmNavFromPending(tmdbId);
   document.getElementById('filmDetailTitle').textContent = 'Chargement…';
-  document.getElementById('filmDetailBackdrop').style.display = 'none';
+  // Bandeau neutre pendant le chargement plutôt que masqué : la page ne
+  // saute pas quand l'image arrive.
+  const backdrop = document.getElementById('filmDetailBackdrop');
+  backdrop.style.display = '';
+  backdrop.classList.add('is-placeholder');
+  document.getElementById('filmDetailBackdropImg').removeAttribute('src');
   document.getElementById('filmDetailOverview').textContent = '';
-  document.getElementById('filmDetailMeta').innerHTML = '';
+  document.getElementById('filmDetailMeta').textContent = '';
+  document.getElementById('filmDetailDirectorRow').style.display = 'none';
+  document.getElementById('filmDetailRuntimeRow').style.display = 'none';
+  document.getElementById('filmDetailAvg').textContent = '—';
   document.getElementById('filmDetailNotes').innerHTML = '';
   document.getElementById('filmDetailWatchProviders').innerHTML = `<div class="tmdb-empty">Chargement…</div>`;
   document.getElementById('filmDetailCast').innerHTML = `<div class="tmdb-empty">Chargement…</div>`;
@@ -599,6 +673,11 @@ document.addEventListener('keydown', (e) => {
   goFilmNav(e.key === 'ArrowLeft' ? -1 : 1);
 });
 document.getElementById('filmDetailRateBtn').addEventListener('click', handleFilmDetailRate);
+document.getElementById('filmDetailRatingRing').addEventListener('click', handleFilmDetailRate);
+{
+  const filmDetailFavBtn = document.getElementById('filmDetailFavBtn');
+  filmDetailFavBtn.addEventListener('click', withSubmitGuard(filmDetailFavBtn, handleFilmDetailToggleFav));
+}
 {
   const filmDetailWatchlistBtn = document.getElementById('filmDetailWatchlistBtn');
   filmDetailWatchlistBtn.addEventListener('click', withSubmitGuard(filmDetailWatchlistBtn, handleFilmDetailAddWatchlist));

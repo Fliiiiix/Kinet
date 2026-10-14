@@ -10,7 +10,8 @@ const { test, run } = createSuite();
 
 function buildContext(rpcResponses){
   const notesEl = stubElement();
-  const doc = stubDocument({ filmDetailNotes: notesEl, filmDetailHistory: stubElement() });
+  const avgEl = stubElement();
+  const doc = stubDocument({ filmDetailNotes: notesEl, filmDetailHistory: stubElement(), filmDetailAvg: avgEl });
   const ctx = createContext({
     document: doc,
     goHome(){},
@@ -35,7 +36,7 @@ function buildContext(rpcResponses){
   });
   loadFiles(ctx, ['js/stats.js', 'js/filmDetail.js']);
   setState(ctx, { currentFilmTmdbId: 550 });
-  return { ctx, notesEl };
+  return { ctx, notesEl, avgEl };
 }
 
 test('renderFilmDetailNotes() : 0 ou 1 note -> pas d\'histogramme (rien à répartir)', async () => {
@@ -60,13 +61,14 @@ test('renderFilmDetailNotes() : au moins 2 notes -> histogramme affiché avec le
 });
 
 test('renderFilmDetailNotes() : erreur sur la répartition (ex. migration 059 pas encore appliquée) -> moyenne affichée quand même, pas d\'histogramme, pas d\'exception', async () => {
-  const { ctx, notesEl } = buildContext({
+  const { ctx, notesEl, avgEl } = buildContext({
     get_film_stats: { data: [{ avg_note: 4, rating_count: 5 }], error: null },
     get_film_note_distribution: { data: null, error: { message: 'function get_film_note_distribution does not exist' } },
   });
   await ctx.renderFilmDetailNotes();
   assert.ok(!notesEl.innerHTML.includes('bar-chart'), notesEl.innerHTML);
-  assert.ok(notesEl.innerHTML.includes('4.0'), 'la moyenne reste affichée malgré l\'échec de la répartition');
+  // La moyenne vit dans la ligne « Note Kinet » de la fiche (audit M4).
+  assert.ok(avgEl.textContent.includes('4.0'), 'la moyenne reste affichée malgré l\'échec de la répartition');
 });
 
 module.exports = run('film-note-distribution.test.js');

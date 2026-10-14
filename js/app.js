@@ -560,9 +560,21 @@ function escapeHtml(str){
   return d.innerHTML;
 }
 
+// Audit M11 : chaque critère s'affiche sur la même échelle que la note
+// (sur 5, point décimal comme partout), alors qu'il est stocké de 0 à 1.
+// Seul l'affichage change : les curseurs et la base gardent 0 à 1.
+const CRIT_DISPLAY_SCALE = 5;
+function critToDisplay(v){
+  return String(Math.round(v * CRIT_DISPLAY_SCALE * 100) / 100);
+}
+// Tant qu'un nouveau film n'a reçu aucun réglage, sa note calculée (2.5 par
+// défaut) reste neutre plutôt que colorée comme une vraie note (audit M11).
+let critPristine = false;
+
 function buildCriteriaInputs(critObj){
   const wrap = document.getElementById('criteriaWrap');
   wrap.innerHTML = '';
+  critPristine = !critObj;
   CRITERIA.forEach((c, idx) => {
     const val = (critObj && typeof critObj[c.key] === 'number') ? critObj[c.key] : 0.5;
     const block = document.createElement('div');
@@ -574,7 +586,7 @@ function buildCriteriaInputs(critObj){
              précision) — voir js/ui.js pour le réglage à la molette,
              complémentaire, et la note en tête de fichier sur .crit-val
              (css/style.css) pour la spécificité CSS. -->
-        <input type="number" class="crit-val" id="val-${c.key}" data-key="${c.key}" min="0" max="1" step="0.05" value="${val.toFixed(2)}" inputmode="decimal">
+        <input type="number" class="crit-val" id="val-${c.key}" data-key="${c.key}" min="0" max="${CRIT_DISPLAY_SCALE}" step="0.25" lang="en" value="${critToDisplay(val)}" inputmode="decimal" aria-label="${escapeHtml(c.label)}, sur 5">
       </div>
       <div class="crit-def">${escapeHtml(c.def)}</div>
       <div class="crit-slider-row">
@@ -588,7 +600,8 @@ function buildCriteriaInputs(critObj){
 
   wrap.querySelectorAll('input[type="range"]').forEach(input => {
     input.addEventListener('input', () => {
-      document.getElementById('val-' + input.dataset.key).value = parseFloat(input.value).toFixed(2);
+      critPristine = false;
+      document.getElementById('val-' + input.dataset.key).value = critToDisplay(parseFloat(input.value));
       updateLiveScore();
     });
   });
@@ -600,10 +613,11 @@ function buildCriteriaInputs(critObj){
   wrap.querySelectorAll('.crit-val').forEach(input => {
     const slider = () => document.getElementById('slider-' + input.dataset.key);
     const sync = (clampDisplay) => {
-      let v = parseFloat(input.value);
+      critPristine = false;
+      let v = parseFloat(input.value) / CRIT_DISPLAY_SCALE;
       if(isNaN(v)) v = parseFloat(slider().value);
       v = Math.min(1, Math.max(0, v));
-      if(clampDisplay) input.value = v.toFixed(2);
+      if(clampDisplay) input.value = critToDisplay(v);
       slider().value = v;
       updateLiveScore();
     };
@@ -653,7 +667,7 @@ function updateLiveScore(){
   // que .counter partout ailleurs, jamais une couleur à part pour lui.
   const hero = document.getElementById('critDialHero');
   hero.textContent = display;
-  hero.className = 'counter crit-dial-hero-counter ' + noteColorClass(note);
+  hero.className = 'counter crit-dial-hero-counter ' + (critPristine && !isManualMode() ? '' : noteColorClass(note));
   document.getElementById('critDialHeroLabel').textContent = label;
   document.getElementById('critDialHeroHint').textContent = isManualMode()
     ? 'Glisse le curseur ci-dessous, elle bouge en direct.'

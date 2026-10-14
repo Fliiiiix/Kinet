@@ -6362,3 +6362,14 @@ body[data-view-mode="grid"] #wlList .wl-quick-form{margin-top:6px;}
   transition:color var(--dur-fast), border-color var(--dur-fast);
 }
 .load-more-btn:hover{color:var(--text); border-color:var(--text-2);}
+
+/* ==========================================================
+   LOT 4 DE L'AUDIT : fiche film alignée sur la fiche série.
+   ========================================================== */
+#filmDetailPage .cta-row{justify-content:flex-start; column-gap:28px; row-gap:14px;}
+button.btn-secondary{background:none; border:none; border-bottom:1px solid var(--text-muted); border-radius:0; cursor:pointer;}
+.btn-secondary.active{color:var(--accent); border-color:var(--accent);}
+#filmDetailRatingRing{cursor:pointer; transition:transform var(--dur-press) var(--ease-out);}
+#filmDetailRatingRing:active{transform:scale(0.97);}
+#filmDetailNotes .film-detail-my-review-btn{width:auto; display:inline-block; margin-top:var(--sp-3);}
+#filmDetailNotes .wl-note{margin-top:0;}

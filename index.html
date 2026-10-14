@@ -64,7 +64,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,500&display=swap">
-<link rel="stylesheet" href="css/style.css?v=252">
+<link rel="stylesheet" href="css/style.css?v=253">
 </head>
 <body>
 
@@ -819,93 +819,80 @@
      cliquant un film n'importe où dans l'app (profil d'un ami, Top...),
      pas seulement depuis son propre catalogue — voir js/filmDetail.js. -->
 <div class="container page" id="filmDetailPage" role="main" tabindex="-1" style="display:none;">
+  <!-- Fiche film alignée sur la fiche série (audit M4, point ouvert n° 3) :
+       même ordre que la draft Scope. Bandeau, titre, ligne bleue
+       année · genres · durée avec ta note à droite, fiche, résumé, actions,
+       puis où regarder, amis, note Kinet, casting, similaires, commentaires.
+       Remplissage : js/filmDetail.js. -->
   <div class="page-header">
     <button class="btn secondary" id="filmDetailBack">← Retour</button>
-    <h2 id="filmDetailTitle">Film</h2>
     <!-- Film d'à côté (retour utilisateur : "j'aimerais pouvoir naviguer à
          ceux d'à côté"), voir setFilmNavFromPending()/goFilmNav(),
          js/filmDetail.js. Masquées par défaut, affichées seulement si on
-         vient d'une liste qui a un précédent/suivant. Dans l'entête et non
-         plus fixées au milieu de l'écran, où elles recouvraient le contenu
-         (audit C3) ; les flèches du clavier font la même chose. -->
+         vient d'une liste qui a un précédent/suivant. -->
     <div class="detail-nav">
       <button class="detail-nav-arrow" id="filmDetailPrevBtn" type="button" style="display:none;" aria-label="Film précédent">‹</button>
       <button class="detail-nav-arrow" id="filmDetailNextBtn" type="button" style="display:none;" aria-label="Film suivant">›</button>
     </div>
   </div>
 
-  <!-- Même bandeau que #seriesDetailBackdrop ci-dessus (classe partagée
-       .detail-backdrop) — voir js/filmDetail.js pour le remplissage. -->
-  <div class="detail-backdrop" id="filmDetailBackdrop" style="display:none;">
+  <!-- Toujours visible : photo de plateau, sinon l'affiche, sinon un repli
+       neutre (point ouvert n° 4, même règle que la fiche série). -->
+  <div class="detail-backdrop" id="filmDetailBackdrop">
     <img id="filmDetailBackdropImg" alt="">
   </div>
 
-  <div class="series-hero">
-    <img class="series-hero-poster" id="filmDetailPoster" alt="" style="display:none;">
-    <!-- Même correctif que #seriesDetailPosterPlaceholder juste au-dessus :
-         SVG (FILM_PLACEHOLDER_SVG, js/data.js) plutôt que l'emoji 🎬. -->
-    <div class="film-poster film-poster-placeholder series-hero-poster" id="filmDetailPosterPlaceholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M3 9h18M3 15h18M8.5 4v16M15.5 4v16"></path></svg></div>
-    <div class="series-hero-info">
-      <div class="series-hero-meta" id="filmDetailMeta"></div>
-      <p class="auth-intro" id="filmDetailOverview"></p>
+  <div class="detail-text">
+    <div>
+      <h1 class="detail-title" id="filmDetailTitle">Film</h1>
+      <div class="detail-meta" id="filmDetailMeta"></div>
     </div>
+    <button class="counter" id="filmDetailRatingRing" type="button" title="Noter ce film" aria-label="Noter ce film">—</button>
   </div>
 
-  <!-- Où regarder (retour utilisateur), voir renderWatchProvidersHtml()
-       (js/tmdb.js) et openFilmDetail() (js/filmDetail.js). Juste sous
-       l'affiche/résumé, avant même noter/aimer : "où je peux le voir" vient
-       avant de décider quoi en faire dans l'app. -->
+  <div class="fiche">
+    <div class="fiche-row" id="filmDetailDirectorRow" style="display:none;"><span class="fiche-label">Réalisation</span><span class="fiche-value" id="filmDetailDirector"></span></div>
+    <div class="fiche-row" id="filmDetailRuntimeRow" style="display:none;"><span class="fiche-label">Durée</span><span class="fiche-value mono" id="filmDetailRuntime"></span></div>
+    <div class="fiche-row"><span class="fiche-label">Note Kinet</span><span class="fiche-value mono" id="filmDetailAvg">—</span></div>
+  </div>
+
+  <p class="synopsis" id="filmDetailOverview"></p>
+
+  <div class="cta-row">
+    <button class="btn-primary" id="filmDetailRateBtn" type="button">Noter ce film</button>
+    <button class="btn-secondary" id="filmDetailWatchlistBtn" type="button">Ajouter à À voir</button>
+    <button class="btn-secondary" id="filmDetailFavBtn" type="button" style="display:none;" aria-pressed="false">Favori</button>
+    <button class="btn-secondary" id="filmDetailLikeBtn" type="button">♡ Aimer</button>
+    <!-- Vraie vidéo TMDB (pas de lien mort), masqué tant qu'aucune n'est
+         trouvée, voir updateFilmDetailTrailerBtn(), js/filmDetail.js. -->
+    <a class="btn-secondary" id="filmDetailTrailerBtn" href="#" target="_blank" rel="noopener noreferrer" style="display:none;">Bande-annonce</a>
+  </div>
+
   <div class="stats-section">
     <div class="stats-section-title">Où regarder</div>
     <div id="filmDetailWatchProviders"><div class="tmdb-empty">Chargement…</div></div>
   </div>
 
-  <!-- Casting (retour utilisateur : "pour les films ce serait bien de
-       pouvoir voir le cast aussi") — voir renderFilmDetailCast(),
-       js/filmDetail.js. Bande défilable, jamais une liste qui allongerait
-       la page. -->
   <div class="stats-section">
-    <div class="stats-section-title">Casting</div>
-    <div class="cast-strip" id="filmDetailCast"><div class="tmdb-empty">Chargement…</div></div>
-  </div>
-
-  <!-- Films similaires (retour utilisateur, étude comparative
-       Letterboxd/Goodreads — "Readers also enjoyed") — voir
-       renderFilmDetailSimilar(), js/filmDetail.js. Section entière masquée
-       tant qu'aucune recommandation TMDB, jamais un bandeau vide. -->
-  <div class="stats-section" id="filmDetailSimilarSection" style="display:none;">
-    <div class="stats-section-title">Films similaires</div>
-    <div class="similar-strip" id="filmDetailSimilar"></div>
-  </div>
-
-  <!-- .season-episodes-actions (css/style.css) réutilisée telle quelle
-       (simple rangée de boutons secondaires) plutôt qu'une classe dédiée
-       pour 3 boutons. -->
-  <div class="season-episodes-actions">
-    <button class="btn" id="filmDetailRateBtn" type="button">Noter ce film</button>
-    <button class="btn secondary" id="filmDetailWatchlistBtn" type="button">+ À voir</button>
-    <button class="btn secondary" id="filmDetailLikeBtn" type="button">♡ Aimer</button>
-    <!-- Vraie vidéo TMDB (pas de lien mort), masqué tant qu'aucune n'est
-         trouvée — voir updateFilmDetailTrailerBtn(), js/filmDetail.js.
-         Même principe que #seriesTrailerBtn. -->
-    <a class="btn secondary" id="filmDetailTrailerBtn" href="#" target="_blank" rel="noopener noreferrer" style="display:none;">Bande-annonce</a>
+    <div class="stats-section-title">Amis</div>
+    <div class="friend-rating-strip" id="filmDetailFriendRatings"></div>
+    <div class="wl-note" id="filmDetailLikesSummary"></div>
   </div>
 
   <div class="stats-section">
-    <div class="stats-section-title">Note</div>
+    <div class="stats-section-title">Notes sur Kinet</div>
     <div id="filmDetailNotes"></div>
     <div class="wl-note" id="filmDetailHistory" aria-live="polite"></div>
   </div>
 
   <div class="stats-section">
-    <div class="stats-section-title">Amis</div>
-    <!-- Qui parmi mes amis a vu/noté CE film (retour utilisateur, étude
-         comparative Letterboxd/Goodreads) — voir
-         renderFilmDetailFriendRatings(), js/filmDetail.js. Vide (aucun
-         élément) tant qu'aucun ami n'a ce film noté dans son catalogue,
-         jamais un strip vide à l'écran. -->
-    <div class="friend-rating-strip" id="filmDetailFriendRatings"></div>
-    <div class="wl-note" id="filmDetailLikesSummary"></div>
+    <div class="stats-section-title">Casting</div>
+    <div class="cast-strip" id="filmDetailCast"><div class="tmdb-empty">Chargement…</div></div>
+  </div>
+
+  <div class="stats-section" id="filmDetailSimilarSection" style="display:none;">
+    <div class="stats-section-title">Films similaires</div>
+    <div class="similar-strip" id="filmDetailSimilar"></div>
   </div>
 
   <div class="stats-section">
@@ -2235,133 +2222,133 @@ Légende du 7e art (Légendaire) 2%</div>
 <!-- ?v=N sur chaque js/*.js ci-dessous (voir le commentaire dans <head>) —
      à incrémenter à chaque déploiement, même numéro pour tous les fichiers. -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/supabaseConfig.js?v=252"></script>
+<script src="js/supabaseConfig.js?v=253"></script>
 <!-- Juste après supabaseConfig.js (a besoin de supabaseClient) et avant
      tout le reste : capte les erreurs de chargement des scripts suivants,
      pas seulement celles de l'app une fois démarrée — voir js/logging.js. -->
-<script src="js/logging.js?v=252"></script>
-<script src="js/tmdbConfig.js?v=252"></script>
-<script src="js/data.js?v=252"></script>
-<script src="js/happenings.js?v=252"></script>
+<script src="js/logging.js?v=253"></script>
+<script src="js/tmdbConfig.js?v=253"></script>
+<script src="js/data.js?v=253"></script>
+<script src="js/happenings.js?v=253"></script>
 <!-- Ressort physique vanilla (audit design, apple-design) — avant ui.js,
      qui l'utilise pour le geste tirer-pour-rafraîchir. Aucune dépendance
      entre les deux au chargement (animateSpring() n'est appelée que dans
      des écouteurs tactiles, bien après le chargement complet), gardé
      avant par lisibilité : un utilitaire se charge avant ce qui s'en sert. -->
-<script src="js/spring.js?v=252"></script>
+<script src="js/spring.js?v=253"></script>
 <!-- Avant app.js et les 6 autres modules qui ouvrent/ferment une modale
      (openOverlay/closeOverlay) — l'ordre exact importe peu au runtime
      (rien n'y est appelé au chargement), gardé en premier des scripts
      "app" pour la lisibilité, comme un utilitaire partagé. -->
-<script src="js/ui.js?v=252"></script>
+<script src="js/ui.js?v=253"></script>
 <!-- Avant watchlist.js, qui appelle playRouletteTick()/playRouletteWin()
      (roulette "Surprends-moi") — l'ordre exact importe peu au runtime
      (rien n'y est appelé au chargement), gardé ici pour la lisibilité,
      comme ui.js juste au-dessus. -->
-<script src="js/sound.js?v=252"></script>
+<script src="js/sound.js?v=253"></script>
 <!-- Avant app.js/journal.js/watchlist.js, qui appellent saveOfflineCache()/
      loadOfflineCache()/blockIfOffline() (v1.6, mode hors ligne lecture
      seule) — l'ordre exact importe peu au runtime (rien n'y est appelé au
      chargement, seulement des listeners posés pour plus tard), gardé ici
      pour la lisibilité, comme ui.js juste au-dessus. -->
-<script src="js/offlineQueue.js?v=252"></script>
-<script src="js/offline.js?v=252"></script>
-<script src="js/app.js?v=252"></script>
-<script src="js/tmdb.js?v=252"></script>
-<script src="js/stats.js?v=252"></script>
-<script src="js/achievements.js?v=252"></script>
+<script src="js/offlineQueue.js?v=253"></script>
+<script src="js/offline.js?v=253"></script>
+<script src="js/app.js?v=253"></script>
+<script src="js/tmdb.js?v=253"></script>
+<script src="js/stats.js?v=253"></script>
+<script src="js/achievements.js?v=253"></script>
 <!-- Avant app.js/watchlist.js à l'exécution (pas au chargement — rien
      n'est appelé ici avant un vrai clic/ajout) : les deux appellent
      generateTcgCardsForFilm(), définie ici. -->
-<script src="js/tcg.js?v=252"></script>
-<script src="js/chatbot.js?v=252"></script>
-<script src="js/journal.js?v=252"></script>
+<script src="js/tcg.js?v=253"></script>
+<script src="js/chatbot.js?v=253"></script>
+<script src="js/journal.js?v=253"></script>
 <!-- Après app.js (showToast) — appelée par js/profile.js juste après. -->
-<script src="js/pwa.js?v=252"></script>
-<script src="js/profile.js?v=252"></script>
+<script src="js/pwa.js?v=253"></script>
+<script src="js/profile.js?v=253"></script>
 <!-- Paramètres — après profile.js (referme/rouvre "Ton profil") et pwa.js
      (updateInstallUI()), voir js/settings.js. -->
-<script src="js/settings.js?v=252"></script>
+<script src="js/settings.js?v=253"></script>
 <!-- Après profile.js (closeProfileModal/openProfileModal) et data.js
      (FEEDBACK_CATEGORIES) — même raisonnement que pwa.js juste au-dessus. -->
-<script src="js/feedback.js?v=252"></script>
+<script src="js/feedback.js?v=253"></script>
 <!-- Bilan cinéphile partageable (v2.43) — après journal.js (viewings) et
      profile.js (currentProfile), voir js/recap.js. -->
-<script src="js/recap.js?v=252"></script>
+<script src="js/recap.js?v=253"></script>
 <!-- N'a besoin que de ui.js (openOverlay/closeOverlay) et app.js
      (showToast), chargés bien avant — placé ici pour rester groupé avec
      les autres modales accessibles depuis le chrome plutôt que pour une
      vraie dépendance. -->
-<script src="js/share.js?v=252"></script>
+<script src="js/share.js?v=253"></script>
 <!-- Après happenings.js/achievements.js (définitions) et profile.js
      (closeProfileModal) : admin.js s'appuie sur les trois au clic, jamais au
      chargement — l'ordre exact importe peu, gardé groupé ici pour la
      lisibilité. -->
-<script src="js/admin.js?v=252"></script>
-<script src="js/router.js?v=252"></script>
-<script src="js/publicProfile.js?v=252"></script>
-<script src="js/top.js?v=252"></script>
-<script src="js/friends.js?v=252"></script>
+<script src="js/admin.js?v=253"></script>
+<script src="js/router.js?v=253"></script>
+<script src="js/publicProfile.js?v=253"></script>
+<script src="js/top.js?v=253"></script>
+<script src="js/friends.js?v=253"></script>
 <!-- Après friends.js (cacheProfile/friendDisplayName/friendAvatarHtml) et
      journal.js (formatViewingDate), avant groups.js qui l'appelle depuis
      openGroupDetail() — l'ordre exact importe peu au runtime (tout est en
      fonctions globales appelées après chargement complet), gardé groupé
      ici pour la lisibilité. -->
-<script src="js/activity.js?v=252"></script>
-<script src="js/watchlist.js?v=252"></script>
+<script src="js/activity.js?v=253"></script>
+<script src="js/watchlist.js?v=253"></script>
 <!-- Après watchlist.js (loadWatchlist/watchlist, réutilisés pour exclure
      ce qui y est déjà) et app.js (getDisplayNote, chargé plus haut) — voir
      js/suggestions.js. Avant auth.js, qui appelle loadSuggestions() depuis
      showApp(). -->
-<script src="js/suggestions.js?v=252"></script>
+<script src="js/suggestions.js?v=253"></script>
 <!-- Import externe (Letterboxd pour l'instant) — après watchlist.js/app.js/
      tmdb.js/journal.js dont il réutilise films/watchlist/searchTmdb()/
      addViewing(). Voir js/importExternal.js. -->
-<script src="js/importExternal.js?v=252"></script>
+<script src="js/importExternal.js?v=253"></script>
 <!-- Fiche film (v2.1) — voir js/filmDetail.js. Regroupée ici avec
      friends.js/watchlist.js dont elle réutilise les helpers (même
      remarque que suggestions.js juste au-dessus : l'ordre exact n'importe
      pas au runtime, tout est en fonctions appelées après chargement
      complet — router.js, plus haut, appelle déjà openFriends()/
      openWatchlist() en aval de leur propre script de la même façon). -->
-<script src="js/filmDetail.js?v=252"></script>
+<script src="js/filmDetail.js?v=253"></script>
 <!-- Après watchlist.js : js/upcoming.js réutilise le tableau watchlist déjà
      chargé (voir plus bas). -->
-<script src="js/series.js?v=252"></script>
+<script src="js/series.js?v=253"></script>
 <!-- Après watchlist.js ET series.js — a besoin des deux tableaux chargés
      (loadWatchlist()/loadTrackedShows()), voir js/upcoming.js. -->
-<script src="js/upcoming.js?v=252"></script>
-<script src="js/groups.js?v=252"></script>
-<script src="js/proposals.js?v=252"></script>
+<script src="js/upcoming.js?v=253"></script>
+<script src="js/groups.js?v=253"></script>
+<script src="js/proposals.js?v=253"></script>
 <!-- Après groups.js (renderInviteBox appelée depuis renderGroupDetail) et
      proposals.js (chosenProposal) — voir js/invites.js. -->
-<script src="js/invites.js?v=252"></script>
+<script src="js/invites.js?v=253"></script>
 <!-- Listes thématiques (retour utilisateur, étude comparative Letterboxd) —
      après friends.js (ensureProfilesCached vient de filmDetail.js, déjà
      chargé ; friendDisplayName/cacheProfile de friends.js) et filmDetail.js
      (goToFilmDetail réutilisé pour ouvrir un film d'une liste), voir
      js/lists.js. -->
-<script src="js/lists.js?v=252"></script>
+<script src="js/lists.js?v=253"></script>
 <!-- Après activity.js (rowToActivityEvent/renderActivityRowHtml) et
      friends.js (friendProfiles/cacheProfile) qu'elle réutilise pour le
      digest, avant auth.js qui appelle refreshActivityBadge()/
      maybeShowDigest() depuis showApp(). -->
-<script src="js/activityState.js?v=252"></script>
+<script src="js/activityState.js?v=253"></script>
 <!-- Après activityState.js (loadActivityState/activityState réutilisés
      pour son propre badge "vu") et avant auth.js qui appelle
      initChangelog() depuis showApp(). -->
-<script src="js/changelog.js?v=252"></script>
+<script src="js/changelog.js?v=253"></script>
 <!-- Recherche globale unifiée (v2.42) — après series.js/friends.js/
      groups.js dont elle réutilise les tableaux déjà chargés et les
      fonctions d'ouverture (openFriendProfile/goToSeriesDetail/goToGroup),
      et après app.js/data.js pour getSearchTerms()/normalizeSearch()/
      FILM_PLACEHOLDER_SVG. Voir js/globalSearch.js. -->
-<script src="js/globalSearch.js?v=252"></script>
+<script src="js/globalSearch.js?v=253"></script>
 <!-- Tuto d'accueil interactif — avant auth.js dont showApp() appelle
      maybeStartOnboarding() ; après ui.js/router.js/profile.js/logging.js
      dont il réutilise respectivement openOverlay-style/goHome/
      closeProfileModal/logEvent. -->
-<script src="js/onboarding.js?v=252"></script>
-<script src="js/auth.js?v=252"></script>
+<script src="js/onboarding.js?v=253"></script>
+<script src="js/auth.js?v=253"></script>
 </body>
 </html>
