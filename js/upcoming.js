@@ -102,18 +102,17 @@ function upcomingRowHtml(item){
   `;
 }
 
+// Audit M8 : une ligne simple, cliquable en entier (plus de badge ni de
+// bouton « Ouvrir »), dans une section repliée sous la liste à venir.
 function upcomingEndedRowHtml(show){
   return `
-    <div class="wl-row">
+    <div class="wl-row ended-row" data-id="${show.id}">
       ${show.posterUrl
         ? `<img class="film-poster" src="${show.posterUrl}" alt="" loading="lazy">`
         : `<div class="film-poster film-poster-placeholder">${TV_PLACEHOLDER_SVG}</div>`}
       <div class="wl-main">
         <div class="wl-title">${escapeHtml(show.title)}</div>
-        <div class="wl-note"><span class="status-badge ended">${escapeHtml(showStatusLabel(show.status))}</span> (plus aucune nouvelle saison prévue)</div>
-      </div>
-      <div class="wl-actions">
-        <button class="btn secondary" data-id="${show.id}" type="button">Ouvrir</button>
+        <div class="wl-note">${escapeHtml(showStatusLabel(show.status))}, plus de nouvelle saison prévue</div>
       </div>
     </div>
   `;
@@ -250,9 +249,11 @@ function renderUpcoming(){
     ? `<div class="empty-state">Aucune série terminée parmi celles que tu suis.</div>`
     : upcomingEndedShows.map(upcomingEndedRowHtml).join('');
   const endedNavList = upcomingEndedShows.map(s => ({ id: s.id, title: s.title }));
-  endedEl.querySelectorAll('button[data-id]').forEach(btn => {
-    btn.addEventListener('click', () => goToSeriesDetail(parseInt(btn.dataset.id, 10), endedNavList));
+  endedEl.querySelectorAll('.ended-row[data-id]').forEach(row => {
+    makeRowClickable(row, () => goToSeriesDetail(parseInt(row.dataset.id, 10), endedNavList));
   });
+  const count = document.getElementById('upcomingEndedCount');
+  if(count) count.textContent = upcomingEndedShows.length ? `(${upcomingEndedShows.length})` : '';
 }
 
 // Page Prochainement — appelée par le routeur (#/prochainement).

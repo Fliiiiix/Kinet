@@ -702,13 +702,14 @@ function renderStatsInto(content, list = films){
   // un élément qui n'est pas encore dans le document serait fragile.
   content.classList.add('reveal-stagger');
   content.innerHTML = `
-    <div class="stat-tiles reveal">
-      <div class="stat-tile accent-violet"><div class="stat-value">${s.total}</div><div class="stat-label">Films notés</div></div>
-      <div class="stat-tile accent-gradient"><div class="stat-value">${s.avg !== null ? s.avg.toFixed(2) : '—'}</div><div class="stat-label">Note moyenne</div></div>
-      <div class="stat-tile accent-bronze"><div class="stat-value">${s.favCount}</div><div class="stat-label">Favoris</div></div>
-      <div class="stat-tile accent-violet"><div class="stat-value">${s.gridCount}</div><div class="stat-label">Grille 7 critères</div></div>
-      <div class="stat-tile accent-gold"><div class="stat-value">${s.manualCount}</div><div class="stat-label">Note manuelle</div></div>
-      <div class="stat-tile accent-violet"><div class="stat-value">${rythmeAnnuel(s)}</div><div class="stat-label">Films par mois actif (${new Date().getFullYear()})</div></div>
+    <!-- Audit M10 : quatre chiffres sur une ligne, en blanc. « Grille 7
+         critères » et « Note manuelle » retirés (retour du 14/10 : le mode
+         de notation n'intéresse pas). -->
+    <div class="stat-tiles stat-tiles-4 reveal">
+      <div class="stat-tile"><div class="stat-value">${s.total}</div><div class="stat-label">Films notés</div></div>
+      <div class="stat-tile"><div class="stat-value">${s.avg !== null ? s.avg.toFixed(1) : '—'}</div><div class="stat-label">Note moyenne</div></div>
+      <div class="stat-tile"><div class="stat-value">${s.favCount}</div><div class="stat-label">Favoris</div></div>
+      <div class="stat-tile"><div class="stat-value">${rythmeAnnuel(s)}</div><div class="stat-label">Films par mois actif (${new Date().getFullYear()})</div></div>
     </div>
 
     ${list === films ? renderYearComparison() : ''}
