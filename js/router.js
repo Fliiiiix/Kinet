@@ -87,6 +87,25 @@ function updateMobileTabbar(routeName){
     document.getElementById(id).classList.toggle('active', map[id]);
   });
 }
+
+// Pilule de l'entête (v3.0, draft Scope, retour utilisateur : "une
+// couleur bleue pour le bouton sur lequel on est" — la pilule active se
+// remplit en glace pleine, .header-nav-btn.active dans css/style.css)
+// — même principe qu'updateMobileTabbar() ci-dessus, pour les seuls
+// boutons qui correspondent à une VRAIE route (pas une modale : Rechercher/
+// Avis/Installer/Nouveautés restent sans état actif, comme #mobileTabProfile
+// juste au-dessus).
+function updateHeaderNav(routeName){
+  const map = {
+    watchlistBtn: routeName === 'watchlist',
+    upcomingBtn: routeName === 'upcoming',
+    friendsBtn: routeName === 'amis' || routeName === 'groupsList' || routeName === 'groupDetail' || routeName === 'proposalDetail' || routeName === 'listsList' || routeName === 'listDetail',
+    topBtn: routeName === 'top'
+  };
+  Object.keys(map).forEach(id => {
+    document.getElementById(id).classList.toggle('active', map[id]);
+  });
+}
 document.getElementById('mobileTabHome').addEventListener('click', goHome);
 document.getElementById('mobileTabWatchlist').addEventListener('click', goToWatchlist);
 document.getElementById('mobileTabUpcoming').addEventListener('click', goToUpcoming);
@@ -222,6 +241,7 @@ async function renderRoute(){
   if(!currentUser) return;
   updatePrimaryTabs(route.name);
   updateMobileTabbar(route.name);
+  updateHeaderNav(route.name);
   if(route.name === 'home'){
     showOnlyPage('appContainer');
     // Repart de la page 1 à chaque vraie navigation vers le catalogue
