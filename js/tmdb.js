@@ -146,20 +146,31 @@ async function fetchTvSeason(tmdbId, seasonNumber){
   return res.json();
 }
 
-// Bande-annonce (draft Scope, bouton "Bande-annonce" de la fiche série,
-// voir updateSeriesTrailerBtn(), js/series.js). Sans language=fr-FR
+// Bande-annonce (films ET séries, bouton "Bande-annonce" des fiches détail,
+// voir updateTrailerBtn(), js/filmDetail.js et js/series.js). Même forme de
+// réponse des deux côtés chez TMDB (contrairement à /details, très
+// différent) — un seul helper avec mediaType, même principe que
+// fetchWatchProviders() juste en dessous. Sans language=fr-FR
 // (contrairement aux autres appels de ce fichier) : TMDB référence
 // beaucoup moins de vidéos en français, une bande-annonce VO reste
 // préférable à aucun bouton.
+// https://developer.themoviedb.org/reference/movie-videos
 // https://developer.themoviedb.org/reference/tv-series-videos
-async function fetchTvVideos(tmdbId){
-  const url = `https://api.themoviedb.org/3/tv/${tmdbId}/videos`;
+async function fetchVideos(tmdbId, mediaType){
+  const url = `https://api.themoviedb.org/3/${mediaType}/${tmdbId}/videos`;
   const res = await fetch(url, {
     headers: { 'Authorization': `Bearer ${TMDB_API_KEY}`, 'Accept': 'application/json' }
   });
   if(!res.ok) throw new Error(`Erreur TMDB (${res.status})`);
   const data = await res.json();
   return data.results || [];
+}
+
+// Trouve la meilleure vidéo YouTube dispo (vraie bande-annonce en priorité,
+// n'importe quelle vidéo YouTube sinon) — factorisé ici plutôt que dupliqué
+// dans updateTrailerBtn()/updateSeriesTrailerBtn().
+function pickTrailerVideo(videos){
+  return videos.find(v => v.site === 'YouTube' && v.type === 'Trailer') || videos.find(v => v.site === 'YouTube') || null;
 }
 
 // --- Où regarder (films ET séries, retour utilisateur) ---
@@ -226,7 +237,7 @@ function renderWatchProvidersHtml(providers){
     <div class="watch-providers">
       ${flatrateHtml}
       ${buyRentHtml}
-      <a href="${providers.link}" target="_blank" rel="noopener" class="watch-provider-justwatch">Voir tout, données JustWatch ↗</a>
+      <a href="${providers.link}" target="_blank" rel="noopener" class="watch-provider-justwatch">Données JustWatch</a>
     </div>
   `;
 }

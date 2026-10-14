@@ -409,7 +409,14 @@ function renderShowDetailHeader(show){
   document.getElementById('seriesDetailMeta').textContent = metaParts.join(' · ');
 
   renderRatingRing(show);
-  document.getElementById('seriesDetailCreators').textContent = show.creators || '—';
+  // Ligne masquée plutôt qu'un "—" muet (retour utilisateur) : TMDB ne
+  // renseigne created_by que pour une partie des séries (surtout les
+  // productions US/EU, quasi jamais pour l'animation japonaise par
+  // exemple) — une info qu'on n'a pas systématiquement, pas une anomalie
+  // sur une série précise.
+  const creatorsRow = document.getElementById('seriesDetailCreatorsRow');
+  if(creatorsRow) creatorsRow.style.display = show.creators ? '' : 'none';
+  document.getElementById('seriesDetailCreators').textContent = show.creators || '';
   renderEpisodesFicheValue(show);
   document.getElementById('seriesDetailStatus').textContent = show.status ? showStatusLabel(show.status) : '—';
 
@@ -418,7 +425,6 @@ function renderShowDetailHeader(show){
   const sliderVal = show.manualNote != null ? show.manualNote : 2.5;
   document.getElementById('seriesNoteSlider').value = sliderVal;
   document.getElementById('seriesNoteVal').textContent = sliderVal.toFixed(2);
-  document.getElementById('seriesReviewInput').value = show.review || '';
 }
 
 // Même cadran que partout ailleurs (.counter, noteColorClass()) — voir le
@@ -623,10 +629,10 @@ function renderSeasonEpisodes(seasonNumber){
       return `
         <div class="episode-row">
           <label class="episode-row-main">
-            <input type="checkbox" data-season="${seasonNumber}" data-episode="${ep.episode_number}" ${checked ? 'checked' : ''}>
             <span class="episode-num">E${String(ep.episode_number).padStart(2, '0')}</span>
             <span class="episode-title">${escapeHtml(ep.name || `Épisode ${ep.episode_number}`)}</span>
             ${air ? `<span class="episode-air">${air}</span>` : ''}
+            <input type="checkbox" data-season="${seasonNumber}" data-episode="${ep.episode_number}" ${checked ? 'checked' : ''}>
           </label>
           ${checked ? `
           <div class="episode-extra">
@@ -926,13 +932,16 @@ async function markNextEpisodeWatched(){
   showToast('Tous les épisodes référencés sont déjà vus');
 }
 
+// Champ "Commentaire" retiré de cette fiche (v3.2, retour utilisateur,
+// déclutter) — ne touche plus que la note, plus sa colonne `review` en
+// base (show.review reste chargé par rowToShow() mais n'est plus affiché
+// ni réécrit ici).
 async function handleSaveSeriesNote(){
   if(blockIfOffline()) return;
   const note = parseFloat(document.getElementById('seriesNoteSlider').value);
-  const review = document.getElementById('seriesReviewInput').value.trim() || null;
   const { error } = await supabaseClient
     .from('tv_shows')
-    .update({ manual_note: note, review })
+    .update({ manual_note: note })
     .eq('id', currentShowId);
   if(error){
     showToast('Erreur de sauvegarde, réessaie');
@@ -940,7 +949,7 @@ async function handleSaveSeriesNote(){
     return;
   }
   const show = trackedShows.find(s => s.id === currentShowId);
-  if(show){ show.manualNote = note; show.review = review; renderRatingRing(show); }
+  if(show){ show.manualNote = note; renderRatingRing(show); }
   showToast('Note enregistrée');
 }
 
@@ -958,17 +967,17 @@ async function renderShowDetailWatchProviders(tmdbId){
   }
 }
 
-// Bande-annonce (draft Scope, bouton #seriesTrailerBtn) — masqué par
+// Bande-annonce (draft Scope, bouton #seriesTrailerBtn ; même principe côté
+// film, voir updateFilmDetailTrailerBtn(), js/filmDetail.js) — masqué par
 // défaut (jamais de bouton mort, voir tous les autres liens optionnels de
-// cette fiche) : n'apparaît que si fetchTvVideos() renvoie vraiment une
+// cette fiche) : n'apparaît que si fetchVideos() renvoie vraiment une
 // bande-annonce YouTube pour cette série.
 async function updateSeriesTrailerBtn(tmdbId){
   const btn = document.getElementById('seriesTrailerBtn');
   if(!btn) return;
   btn.style.display = 'none';
   try{
-    const videos = await fetchTvVideos(tmdbId);
-    const video = videos.find(v => v.site === 'YouTube' && v.type === 'Trailer') || videos.find(v => v.site === 'YouTube');
+    const video = pickTrailerVideo(await fetchVideos(tmdbId, 'tv'));
     if(!video) return;
     btn.href = `https://www.youtube.com/watch?v=${video.key}`;
     btn.style.display = '';

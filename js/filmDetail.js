@@ -499,6 +499,23 @@ async function renderFilmDetailSimilar(tmdbId){
   }
 }
 
+// Bande-annonce (retour utilisateur) — même principe que
+// updateSeriesTrailerBtn(), js/series.js : masqué tant que fetchVideos()
+// (js/tmdb.js) ne renvoie pas vraiment une vidéo YouTube pour ce film.
+async function updateFilmDetailTrailerBtn(tmdbId){
+  const btn = document.getElementById('filmDetailTrailerBtn');
+  if(!btn) return;
+  btn.style.display = 'none';
+  try{
+    const video = pickTrailerVideo(await fetchVideos(tmdbId, 'movie'));
+    if(!video) return;
+    btn.href = `https://www.youtube.com/watch?v=${video.key}`;
+    btn.style.display = '';
+  }catch(e){
+    console.error(e);
+  }
+}
+
 // Capture la liste "d'à côté" depuis router.js (si on vient d'une liste
 // qui en a posé une) et met à jour les deux flèches en conséquence —
 // séparée d'openFilmDetail() pour rester appelable seule par les tests.
@@ -568,7 +585,8 @@ async function openFilmDetail(tmdbId){
     renderFilmDetailSimilar(tmdbId),
     renderFilmDetailFriendRatings(tmdbId),
     loadFilmDetailLikes(),
-    loadFilmDetailComments()
+    loadFilmDetailComments(),
+    updateFilmDetailTrailerBtn(tmdbId)
   ]);
 }
 

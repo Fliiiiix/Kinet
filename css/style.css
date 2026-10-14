@@ -1014,6 +1014,10 @@ input[type="file"]::file-selector-button:hover{color:var(--text); border-color:v
 .btn.secondary:hover{color:var(--text); border-color:var(--violet-dim);}
 .btn.danger{background:transparent; color:var(--coral); border:1px solid var(--coral-dim);}
 .btn.danger:hover{background:rgba(255,107,87,0.1); border-color:var(--coral);}
+/* .btn posé sur un <a> (ex. #filmDetailTrailerBtn) plutôt qu'un <button> :
+   un vrai lien externe (YouTube), pas une action JS — sans ça le
+   soulignement par défaut du navigateur s'ajouterait à la bordure. */
+a.btn{display:inline-flex; align-items:center; text-decoration:none;}
 
 /* Lien d'évitement (audit accessibilité) : invisible tant qu'il n'a pas le
    focus clavier (premier Tab de la page), permet de sauter l'entête entier
@@ -5373,7 +5377,7 @@ body[data-view-mode="list"] #topList .top-rank{width:26px; font-size:16px;}
    ancien/confidentiel) — jamais un cadre vide à sa place. */
 .detail-backdrop{
   position:relative;
-  height:220px;
+  height:340px;
   border-radius:16px;
   overflow:hidden;
   margin-bottom:28px;
@@ -5409,7 +5413,7 @@ body[data-view-mode="list"] #topList .top-rank{width:26px; font-size:16px;}
   .detail-backdrop img{animation:none; opacity:1;}
 }
 @media (max-width:600px){
-  .detail-backdrop{height:140px; border-radius:12px; margin-bottom:20px;}
+  .detail-backdrop{height:200px; border-radius:12px; margin-bottom:20px;}
 }
 /* Repli (v3.2) : le panneau reste visible même sans photo de plateau —
    affiche en plein cadre si dispo, sinon un dégradé neutre plutôt qu'un
@@ -5467,6 +5471,7 @@ body[data-view-mode="list"] #topList .top-rank{width:26px; font-size:16px;}
   line-height:1.65;
   color:var(--text);
   margin-top:20px;
+  margin-bottom:24px;
   max-width:68ch;
 }
 
@@ -5590,14 +5595,19 @@ body[data-view-mode="list"] #topList .top-rank{width:26px; font-size:16px;}
   background:var(--surface-2);
 }
 .watch-provider-chip img{width:100%; height:100%; object-fit:cover; display:block;}
+/* Attribution imposée par TMDB pour cet endpoint (voir le commentaire sur
+   renderWatchProvidersHtml(), js/tmdb.js) — jamais supprimable, mais rendue
+   aussi discrète que possible (retour utilisateur) : petite, grise, sans
+   soulignement ni flèche, presque invisible tant qu'on ne la cherche pas. */
 .watch-provider-justwatch{
   font-family:'Space Mono', monospace;
-  font-size:10.5px;
+  font-size:9.5px;
   color:var(--text-muted);
-  text-decoration:underline;
-  text-underline-offset:2px;
+  opacity:0.6;
   align-self:flex-start;
+  margin-top:2px;
 }
+.watch-provider-justwatch:hover{opacity:1;}
 @media (max-width:480px){
   .watch-provider-row{flex-direction:column; align-items:flex-start; gap:6px;}
   .watch-provider-row-label{width:auto;}
