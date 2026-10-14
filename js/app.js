@@ -321,6 +321,13 @@ function render(){
   const pageItems = filtered.slice((currentPage - 1) * FILMS_PER_PAGE, currentPage * FILMS_PER_PAGE);
 
   list.innerHTML = '';
+  // Fiche film plutôt que la modale de notation au clic (retour
+  // utilisateur : "quand je clique sur un que j'ai déjà vu je veux arriver
+  // sur la fiche des films pas sur ma fiche de notation") — même
+  // goToFilmDetail() que Top/Watchlist/Amis (js/top.js, js/watchlist.js).
+  // Le sens inverse (fiche film -> notation) existe déjà via "Modifier ma
+  // note" sur cette fiche (handleFilmDetailRate(), js/filmDetail.js).
+  const navList = pageItems.filter(f => f.tmdbId).map(f => ({ tmdbId: f.tmdbId, title: f.title }));
   pageItems.forEach(f => {
     const note = getDisplayNote(f);
     const rewatches = typeof rewatchCount === 'function' ? rewatchCount(f.id) : 0;
@@ -369,7 +376,10 @@ function render(){
       // 50 films avec une case minuscule serait pénible, toute la ligne
       // (déjà cliquable) est une cible bien plus grande.
       if(bulkSelectMode){ toggleFilmSelection(f.id); render(); return; }
-      openModal(f.id);
+      // Entrée manuelle sans tmdbId (ancien référentiel, pas de fiche TMDB
+      // possible) : seul cas qui ouvre encore la notation directement.
+      if(f.tmdbId) goToFilmDetail(f.tmdbId, navList);
+      else openModal(f.id);
     });
     if(bulkSelectMode){
       row.querySelector('.bulk-select-checkbox').addEventListener('change', () => {

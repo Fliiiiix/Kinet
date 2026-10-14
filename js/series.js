@@ -377,26 +377,41 @@ function formatDateFr(dateStr){
   return new Date(dateStr + 'T00:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
 }
 
+// v3.2, retour utilisateur — refonte à la lettre de la draft Scope (voir
+// le commentaire en tête de #seriesDetailPage, index.html) : grand
+// panneau toujours visible (photo de plateau > affiche > repli neutre,
+// jamais masqué comme avant), titre, légende date/genre/saisons + note
+// à droite, fiche Création/Épisodes/Statut, résumé.
 function renderShowDetailHeader(show){
   document.getElementById('seriesDetailTitle').textContent = show.title;
-  renderDetailBackdrop('seriesDetailBackdrop', 'seriesDetailBackdropImg', show.backdropPath);
-  const posterImg = document.getElementById('seriesDetailPoster');
-  const posterPlaceholder = document.getElementById('seriesDetailPosterPlaceholder');
-  if(show.posterUrl){
-    posterImg.src = show.posterUrl;
-    posterImg.style.display = '';
-    posterPlaceholder.style.display = 'none';
+
+  const backdropContainer = document.getElementById('seriesDetailBackdrop');
+  const backdropImg = document.getElementById('seriesDetailBackdropImg');
+  if(show.backdropPath){
+    renderDetailBackdrop('seriesDetailBackdrop', 'seriesDetailBackdropImg', show.backdropPath);
+    backdropContainer.classList.remove('is-placeholder');
   }else{
-    posterImg.style.display = 'none';
-    posterPlaceholder.style.display = '';
+    backdropContainer.style.display = '';
+    if(show.posterUrl){
+      backdropImg.src = show.posterUrl;
+      backdropImg.style.objectPosition = 'center 15%';
+      backdropContainer.classList.remove('is-placeholder');
+    }else{
+      backdropImg.removeAttribute('src');
+      backdropContainer.classList.add('is-placeholder');
+    }
   }
 
-  const metaEl = document.getElementById('seriesDetailMeta');
-  const parts = [];
-  if(show.firstAirYear) parts.push(`<span class="wl-year">${show.firstAirYear}</span>`);
-  if(show.numberOfSeasons) parts.push(`<span class="wl-year">${show.numberOfSeasons} saison${show.numberOfSeasons > 1 ? 's' : ''}</span>`);
-  if(show.status) parts.push(`<span class="status-badge ${isShowEnded(show.status) ? 'ended' : 'ongoing'}">${escapeHtml(showStatusLabel(show.status))}</span>`);
-  metaEl.innerHTML = parts.join('');
+  const metaParts = [];
+  if(show.firstAirYear) metaParts.push(show.firstAirYear);
+  if(show.genreNames) metaParts.push(show.genreNames);
+  if(show.numberOfSeasons) metaParts.push(`${show.numberOfSeasons} saison${show.numberOfSeasons > 1 ? 's' : ''}`);
+  document.getElementById('seriesDetailMeta').textContent = metaParts.join(' · ');
+
+  renderRatingRing(show);
+  document.getElementById('seriesDetailCreators').textContent = show.creators || '—';
+  renderEpisodesFicheValue(show);
+  document.getElementById('seriesDetailStatus').textContent = show.status ? showStatusLabel(show.status) : '—';
 
   document.getElementById('seriesDetailOverview').textContent = show.overview || '';
 
@@ -404,6 +419,30 @@ function renderShowDetailHeader(show){
   document.getElementById('seriesNoteSlider').value = sliderVal;
   document.getElementById('seriesNoteVal').textContent = sliderVal.toFixed(2);
   document.getElementById('seriesReviewInput').value = show.review || '';
+}
+
+// Même cadran que partout ailleurs (.counter, noteColorClass()) — voir le
+// commentaire sur #seriesDetailRatingRing, index.html.
+function renderRatingRing(show){
+  const el = document.getElementById('seriesDetailRatingRing');
+  if(!el) return;
+  if(show.manualNote != null){
+    el.textContent = show.manualNote.toFixed(1);
+    el.className = `counter ${noteColorClass(show.manualNote)}`;
+  }else{
+    el.textContent = '—';
+    el.className = 'counter';
+  }
+}
+
+// Ligne "Épisodes" de .fiche — épisodes vus / total, recalculée à chaque
+// changement de progression (updateSeasonProgressUI() plus bas) sans
+// attendre un rechargement complet de la page.
+function renderEpisodesFicheValue(show){
+  const el = document.getElementById('seriesDetailEpisodes');
+  if(!el || !show) return;
+  const total = show.numberOfEpisodes || currentShowSeasons.reduce((a, s) => a + (s.episode_count || 0), 0);
+  el.textContent = total > 0 ? `${watchedEpisodeSet.size} / ${total} vus` : '—';
 }
 
 async function refreshShowMeta(show){
@@ -421,6 +460,12 @@ async function refreshShowMeta(show){
   // l'objet show en mémoire — indépendante du succès de la mise à jour
   // Supabase juste en dessous, contrairement à status/numberOfSeasons.
   show.backdropPath = details.backdrop_path || null;
+  // Création + genres (v3.2, draft Scope — ligne "Création" de .fiche et
+  // légende date/genre/saisons) : même logique que backdropPath
+  // juste au-dessus, TMDB les renvoie déjà dans cette même requête, pas
+  // de colonne dédiée ni d'appel réseau en plus.
+  show.creators = (details.created_by || []).map(c => c.name).filter(Boolean).join(', ') || null;
+  show.genreNames = (details.genres || []).map(g => g.name).filter(Boolean).slice(0, 2).join(', ') || null;
   const updates = {
     status: details.status || null,
     number_of_seasons: details.number_of_seasons || null,
@@ -497,35 +542,6 @@ function seasonProgressLabel(seasonNumber, episodeCount){
   return `${watched}/${episodeCount} vus${avg != null ? ` · ★ ${avg.toFixed(1)}` : ''}`;
 }
 
-// Progression dans l'en-tête (retour utilisateur : "le résumé tient sur 2
-// lignes ... ça laisse un grand espace non utilisé au milieu") — épisodes
-// vus/total et la note déjà donnée, juste sous le résumé (voir
-// .series-hero-stats, css/style.css). Rafraîchie à chaque changement de la
-// progression (updateSeasonProgressUI() plus bas) ou de la note
-// (handleSaveSeriesNote()), jamais une section à part qu'il faudrait
-// défiler pour voir.
-function renderSeriesHeroStats(show){
-  const el = document.getElementById('seriesDetailStats');
-  if(!el || !show) return;
-  const total = show.numberOfEpisodes || currentShowSeasons.reduce((a, s) => a + (s.episode_count || 0), 0);
-  const watched = watchedEpisodeSet.size;
-  const blocs = [];
-  if(total > 0){
-    blocs.push(`
-      <div class="series-hero-stat">
-        <span class="series-hero-progress-pill">${watched} / ${total} vus</span>
-        <div class="series-hero-stat-label">Épisodes</div>
-      </div>`);
-  }
-  if(show.manualNote != null){
-    blocs.push(`
-      <div class="series-hero-stat">
-        <div class="counter ${noteColorClass(show.manualNote)}">${show.manualNote.toFixed(1)}</div>
-        <div class="series-hero-stat-label">Ta note</div>
-      </div>`);
-  }
-  el.innerHTML = blocs.join('');
-}
 
 function renderSeasonsList(){
   const wrap = document.getElementById('seriesSeasonsList');
@@ -652,7 +668,7 @@ function renderSeasonEpisodes(seasonNumber){
 function updateSeasonProgressUI(seasonNumber, episodeCount){
   const el = document.getElementById(`seasonProgress-${seasonNumber}`);
   if(el) el.textContent = seasonProgressLabel(seasonNumber, episodeCount);
-  renderSeriesHeroStats(trackedShows.find(s => s.id === currentShowId));
+  renderEpisodesFicheValue(trackedShows.find(s => s.id === currentShowId));
 }
 
 // checkboxEl : la case cliquée — sur échec réseau, le navigateur a déjà
@@ -890,6 +906,26 @@ async function unmarkAllSeasonsWatched(){
   showToast('Épisodes vus retirés');
 }
 
+// --- "Marquer l'épisode suivant" (draft Scope, bouton #seriesNextEpisodeBtn)
+// --- Cherche le premier épisode non vu, saison par saison dans l'ordre,
+// et le marque vu d'un seul clic — pas besoin de déplier la bonne saison
+// et viser la bonne case à la main. S'appuie sur toggleEpisodeWatched()
+// (déjà hors-ligne-compatible, voir plus haut) plutôt que de dupliquer
+// l'écriture ici.
+async function markNextEpisodeWatched(){
+  const seasons = [...currentShowSeasons].sort((a, b) => a.season_number - b.season_number);
+  for(const season of seasons){
+    for(let ep = 1; ep <= season.episode_count; ep++){
+      if(watchedEpisodeSet.has(`${season.season_number}-${ep}`)) continue;
+      await openSeason(season.season_number);
+      await toggleEpisodeWatched(season.season_number, ep, true);
+      showToast(`Épisode S${season.season_number}E${ep} marqué vu`);
+      return;
+    }
+  }
+  showToast('Tous les épisodes référencés sont déjà vus');
+}
+
 async function handleSaveSeriesNote(){
   if(blockIfOffline()) return;
   const note = parseFloat(document.getElementById('seriesNoteSlider').value);
@@ -904,7 +940,7 @@ async function handleSaveSeriesNote(){
     return;
   }
   const show = trackedShows.find(s => s.id === currentShowId);
-  if(show){ show.manualNote = note; show.review = review; renderSeriesHeroStats(show); }
+  if(show){ show.manualNote = note; show.review = review; renderRatingRing(show); }
   showToast('Note enregistrée');
 }
 
@@ -919,6 +955,25 @@ async function renderShowDetailWatchProviders(tmdbId){
   }catch(e){
     console.error(e);
     wrap.innerHTML = `<div class="tmdb-empty">Disponibilité indisponible pour l'instant.</div>`;
+  }
+}
+
+// Bande-annonce (draft Scope, bouton #seriesTrailerBtn) — masqué par
+// défaut (jamais de bouton mort, voir tous les autres liens optionnels de
+// cette fiche) : n'apparaît que si fetchTvVideos() renvoie vraiment une
+// bande-annonce YouTube pour cette série.
+async function updateSeriesTrailerBtn(tmdbId){
+  const btn = document.getElementById('seriesTrailerBtn');
+  if(!btn) return;
+  btn.style.display = 'none';
+  try{
+    const videos = await fetchTvVideos(tmdbId);
+    const video = videos.find(v => v.site === 'YouTube' && v.type === 'Trailer') || videos.find(v => v.site === 'YouTube');
+    if(!video) return;
+    btn.href = `https://www.youtube.com/watch?v=${video.key}`;
+    btn.style.display = '';
+  }catch(e){
+    console.error(e);
   }
 }
 
@@ -983,10 +1038,10 @@ async function openShowDetail(showId){
   await Promise.all([
     refreshShowMeta(show),
     loadWatchedEpisodes(showId),
-    renderShowDetailWatchProviders(show.tmdbId)
+    renderShowDetailWatchProviders(show.tmdbId),
+    updateSeriesTrailerBtn(show.tmdbId)
   ]);
-  renderShowDetailHeader(show); // statut éventuellement mis à jour par refreshShowMeta()
-  renderSeriesHeroStats(show);
+  renderShowDetailHeader(show); // statut éventuellement mis à jour par refreshShowMeta() (gère déjà la pastille de note et le total d'épisodes)
   renderSeasonsList();
   // Redéplie les saisons qui l'étaient avant de quitter la page (retour
   // utilisateur) — les épisodes déjà en cache ci-dessus évitent un nouvel
@@ -1006,3 +1061,4 @@ document.getElementById('seriesNoteSlider').addEventListener('input', (e) => {
 document.getElementById('seriesRemoveBtn').addEventListener('click', () => handleRemoveShow(currentShowId, true));
 document.getElementById('seriesMarkAllBtn').addEventListener('click', markAllSeasonsWatched);
 document.getElementById('seriesUnmarkAllBtn').addEventListener('click', unmarkAllSeasonsWatched);
+document.getElementById('seriesNextEpisodeBtn').addEventListener('click', markNextEpisodeWatched);

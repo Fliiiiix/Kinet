@@ -146,6 +146,22 @@ async function fetchTvSeason(tmdbId, seasonNumber){
   return res.json();
 }
 
+// Bande-annonce (draft Scope, bouton "Bande-annonce" de la fiche série,
+// voir updateSeriesTrailerBtn(), js/series.js). Sans language=fr-FR
+// (contrairement aux autres appels de ce fichier) : TMDB référence
+// beaucoup moins de vidéos en français, une bande-annonce VO reste
+// préférable à aucun bouton.
+// https://developer.themoviedb.org/reference/tv-series-videos
+async function fetchTvVideos(tmdbId){
+  const url = `https://api.themoviedb.org/3/tv/${tmdbId}/videos`;
+  const res = await fetch(url, {
+    headers: { 'Authorization': `Bearer ${TMDB_API_KEY}`, 'Accept': 'application/json' }
+  });
+  if(!res.ok) throw new Error(`Erreur TMDB (${res.status})`);
+  const data = await res.json();
+  return data.results || [];
+}
+
 // --- Où regarder (films ET séries, retour utilisateur) ---
 // Données JustWatch via TMDB, une seule région (FR) : l'app n'a pas de
 // sélecteur de pays, ni de raison d'en avoir un pour un usage perso en

@@ -4,9 +4,11 @@
 // pas pratique !" openSeason()/closeSeason() (extraites de l'ancien
 // toggleSeason()) mémorisent ce qui est déplié par série (seasonUiCache) et
 // ne retéléchargent jamais une saison déjà en cache — testé ici en comptant
-// les appels à fetchTvSeason(). renderSeriesHeroStats() est la ligne de
-// progression ajoutée sous le résumé (retour utilisateur : "ça laisse un
-// grand espace non utilisé au milieu").
+// les appels à fetchTvSeason(). renderEpisodesFicheValue()/renderRatingRing()
+// sont les lignes "Épisodes"/note de la .fiche (v3.2, draft Scope) —
+// anciennement un unique renderSeriesHeroStats() sous le résumé (retour
+// utilisateur : "ça laisse un grand espace non utilisé au milieu"), éclaté
+// en deux pour suivre le nouveau découpage de la fiche.
 //
 // Piège vm (voir tests/README.md et episode-notes.test.js) : les `let` de
 // script top-level de series.js (seasonUiCache, loadedSeasonEpisodes,
@@ -35,12 +37,14 @@ function stubBlock(overrides = {}){
 function buildContext(){
   const seasonBlock = stubBlock({ dataset: { season: '1' } });
   const episodesEl = stubElement();
-  const statsEl = stubElement();
+  const episodesFicheEl = stubElement();
+  const ratingRingEl = stubElement();
   let fetchCalls = 0;
 
   const elements = {
     'seasonEpisodes-1': episodesEl,
-    'seriesDetailStats': statsEl,
+    'seriesDetailEpisodes': episodesFicheEl,
+    'seriesDetailRatingRing': ratingRingEl,
   };
   const doc = stubDocument(elements);
   // document.querySelector(`.season-block[data-season="1"]`) : seule la
@@ -75,7 +79,7 @@ function buildContext(){
   // (c'est ce qu'openShowDetail() fait en vrai, voir js/series.js) — sinon le
   // test ne prouve rien sur le cache par série.
   setState(ctx, { loadedSeasonEpisodes: getState(ctx, 'seasonUiCache')[1].episodes });
-  return { ctx, seasonBlock, episodesEl, statsEl, getFetchCalls: () => fetchCalls };
+  return { ctx, seasonBlock, episodesEl, episodesFicheEl, ratingRingEl, getFetchCalls: () => fetchCalls };
 }
 
 test('openSeason() : déplie, télécharge une seule fois, et mémorise que la saison est ouverte', async () => {
@@ -105,22 +109,25 @@ test('openSeason() sur une saison déjà ouverte ne fait rien (pas de double app
   assert.strictEqual(getFetchCalls(), 1, 'un seul appel TMDB malgré les deux appels à openSeason()');
 });
 
-test('renderSeriesHeroStats() : progression affichée seulement si on a de quoi dire quelque chose', () => {
-  const { ctx, statsEl } = buildContext();
-  ctx.renderSeriesHeroStats({ numberOfEpisodes: 8, manualNote: null });
-  assert.ok(statsEl.innerHTML.includes('3 / 8 vus'), statsEl.innerHTML);
-  assert.ok(!statsEl.innerHTML.includes('Ta note'), 'pas de note affichée : la série n\'est pas encore notée');
+test('renderEpisodesFicheValue() : épisodes vus/total si on connaît le total, sinon "—"', () => {
+  const { ctx, episodesFicheEl } = buildContext();
+  ctx.renderEpisodesFicheValue({ numberOfEpisodes: 8 });
+  assert.strictEqual(episodesFicheEl.textContent, '3 / 8 vus');
 
-  ctx.renderSeriesHeroStats({ numberOfEpisodes: 8, manualNote: 4.5 });
-  assert.ok(statsEl.innerHTML.includes('Ta note'), statsEl.innerHTML);
-  assert.ok(statsEl.innerHTML.includes('4.5'), statsEl.innerHTML);
+  setState(ctx, { currentShowSeasons: [], watchedEpisodeSet: new Set() });
+  ctx.renderEpisodesFicheValue({ numberOfEpisodes: 0 });
+  assert.strictEqual(episodesFicheEl.textContent, '—');
 });
 
-test('renderSeriesHeroStats() : aucun épisode connu et pas de note -> rien à afficher', () => {
-  const { ctx, statsEl } = buildContext();
-  setState(ctx, { currentShowSeasons: [], watchedEpisodeSet: new Set() });
-  ctx.renderSeriesHeroStats({ numberOfEpisodes: 0, manualNote: null });
-  assert.strictEqual(statsEl.innerHTML.trim(), '');
+test('renderRatingRing() : affiche la note manuelle si elle existe, "—" sinon', () => {
+  const { ctx, ratingRingEl } = buildContext();
+  ctx.renderRatingRing({ manualNote: null });
+  assert.strictEqual(ratingRingEl.textContent, '—');
+  assert.strictEqual(ratingRingEl.className, 'counter');
+
+  ctx.renderRatingRing({ manualNote: 4.5 });
+  assert.strictEqual(ratingRingEl.textContent, '4.5');
+  assert.ok(ratingRingEl.className.startsWith('counter '), ratingRingEl.className);
 });
 
 module.exports = run('season-persistence.test.js');
