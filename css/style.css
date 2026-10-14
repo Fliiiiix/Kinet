@@ -5724,32 +5724,35 @@ body[data-view-mode="list"] #topList .top-rank{width:26px; font-size:16px;}
 body[data-view-mode="grid"] #seriesList .new-episode-dot{display:block;}
 
 /* --- Accordéon de saisons (#seriesSeasonsList) --- */
-.season-block{
-  border:1px solid var(--line);
-  border-radius:10px;
-  margin-bottom:10px;
-  overflow:hidden;
-}
+/* v3.2, retour utilisateur ("pour les séries reprend la draft... c'était
+   parfait") — la draft Scope n'avait ni boîte ni fond sur une saison,
+   juste une étiquette + un trait d'espacement (.season{margin-top:30px},
+   .season-head en texte nu). Carte retirée ici (bordure/radius/fond/
+   overflow:hidden) : seul le repliage saison par saison reste (utile dès
+   qu'un show a beaucoup de saisons, la draft n'avait pas ce problème à
+   résoudre) — display:none/.open ci-dessous n'a jamais dépendu de la
+   boîte, seulement du style. */
+.season-block{margin-top:28px;}
+.season-block:first-child{margin-top:0;}
 .season-header{
   width:100%;
   display:flex;
-  align-items:center;
+  align-items:baseline;
   gap:12px;
-  background:var(--surface);
+  background:none;
   border:none;
   color:var(--text);
-  padding:14px 16px;
+  padding:0 0 4px;
   cursor:pointer;
   text-align:left;
   font-family:'Instrument Sans', sans-serif;
 }
-.season-header:hover{background:var(--surface-2);}
-.season-name{font-weight:600; font-size:14.5px;}
+.season-name{font-family:'Bricolage Grotesque', sans-serif; font-weight:700; font-size:16px;}
 .season-progress{
   margin-left:auto;
   font-family:'Space Mono', monospace;
-  font-size:12px;
-  color:var(--text-muted);
+  font-size:11px;
+  color:var(--violet);
 }
 .season-caret{
   flex:none;
@@ -5757,7 +5760,7 @@ body[data-view-mode="grid"] #seriesList .new-episode-dot{display:block;}
   transition:transform .15s;
 }
 .season-block.open .season-caret{transform:rotate(180deg);}
-.season-episodes{display:none; padding:4px 16px 14px;}
+.season-episodes{display:none; padding:0;}
 .season-block.open .season-episodes{display:block;}
 .season-episodes-actions{
   display:flex;
