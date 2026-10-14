@@ -5475,23 +5475,36 @@ body[data-view-mode="list"] #topList .top-rank{width:26px; font-size:16px;}
   max-width:68ch;
 }
 
-.cta-row{display:flex; flex-wrap:wrap; align-items:center; gap:18px; margin-top:28px;}
-.btn-primary{
-  background:var(--violet);
-  color:#06151c;
-  font-family:'Instrument Sans', sans-serif;
-  font-weight:700;
-  font-size:12.5px;
-  letter-spacing:0.04em;
-  text-transform:uppercase;
-  padding:14px 22px;
-  border:none;
-  border-radius:999px;
-  cursor:pointer;
-  transition:transform .1s ease-out, opacity .15s ease;
+/* Rattaché visuellement à la liste des saisons juste au-dessus (retour
+   utilisateur : "bizarre que ce bouton soit en dehors du menu déroulant
+   par saison") — même registre que .season-header (texte nu, pas de
+   pastille colorée) plutôt qu'un gros bouton CTA qui romprait avec le
+   reste de l'accordéon. Reste un bouton global (pas un par saison) :
+   plus pratique, peu importe quelle saison contient le prochain épisode
+   non vu — voir markNextEpisodeWatched(), js/series.js. */
+.cta-row{
+  display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between;
+  gap:12px; margin-top:28px; padding-top:16px; border-top:1px solid var(--line);
 }
-.btn-primary:active{transform:scale(0.97);}
+.btn-primary{
+  background:none;
+  border:none;
+  padding:0;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-family:'Bricolage Grotesque', sans-serif;
+  font-weight:700;
+  font-size:15px;
+  color:var(--text);
+  cursor:pointer;
+  text-align:left;
+  transition:color .15s ease;
+}
+.btn-primary::after{content:'→'; color:var(--violet); font-weight:400;}
+.btn-primary:hover{color:var(--violet);}
 .btn-primary:disabled{opacity:0.5; cursor:default;}
+.btn-primary:disabled::after{color:var(--text-muted);}
 .btn-secondary{
   font-family:'Instrument Sans', sans-serif;
   font-weight:600;

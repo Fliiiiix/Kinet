@@ -1063,10 +1063,14 @@ async function openShowDetail(showId){
 document.getElementById('seriesDetailBack').addEventListener('click', goToSeries);
 document.getElementById('seriesDetailPrevBtn').addEventListener('click', () => goShowNav(-1));
 document.getElementById('seriesDetailNextBtn').addEventListener('click', () => goShowNav(1));
-document.getElementById('seriesSaveNoteBtn').addEventListener('click', handleSaveSeriesNote);
+// Bouton "Enregistrer" retiré (retour utilisateur, déclutter) : sauvegarde
+// automatique au relâchement du curseur ('change', une fois en fin de
+// glissement, jamais à chaque tick de 'input' — sinon une écriture réseau
+// par pixel glissé).
 document.getElementById('seriesNoteSlider').addEventListener('input', (e) => {
   document.getElementById('seriesNoteVal').textContent = parseFloat(e.target.value).toFixed(2);
 });
+document.getElementById('seriesNoteSlider').addEventListener('change', handleSaveSeriesNote);
 document.getElementById('seriesRemoveBtn').addEventListener('click', () => handleRemoveShow(currentShowId, true));
 document.getElementById('seriesMarkAllBtn').addEventListener('click', markAllSeasonsWatched);
 document.getElementById('seriesUnmarkAllBtn').addEventListener('click', unmarkAllSeasonsWatched);
