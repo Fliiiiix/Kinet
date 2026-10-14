@@ -18,6 +18,29 @@
 
 :root{
   /* ==========================================================
+     CODE DE DESIGN (docs/code-design.md, audit du 14/10/2026).
+     Seules ces variables font foi. Les anciennes (--violet, --gold,
+     --teal, --bronze, --plum...) plus bas ne sont plus que des alias
+     vers elles, gardés pour ne rien casser.
+     ========================================================== */
+  --font-display:'Bricolage Grotesque', "Helvetica Neue", Arial, sans-serif;
+  --font-text:'Instrument Sans', "Helvetica Neue", Arial, sans-serif;
+  --fs-xs:11px; --fs-sm:13px; --fs-md:15px; --fs-lg:20px; --fs-xl:28px;
+  --fs-2xl:clamp(32px, 5vw, 48px);
+  --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:24px; --sp-6:32px; --sp-7:48px; --sp-8:64px;
+  --r-sm:8px; --r-md:14px; --r-full:999px;
+  --dur-press:100ms; --dur-fast:150ms; --dur-base:220ms; --dur-slow:320ms;
+  --ease-out:cubic-bezier(.2,.8,.2,1); --ease-in-out:cubic-bezier(.65,0,.35,1);
+  --text-1:#f4f3ee; --text-2:#9a9993; --text-3:#6b6a66;
+  --line-strong:rgba(244,243,238,0.18);
+  --accent:#4fcfff; --accent-ink:#06151c; --accent-wash:rgba(79,207,255,0.12);
+  /* Note : couleur de DONNÉE, uniquement sur une note. */
+  --note-low:#ff6b57; --note-mid:#e8a33d; --note-mid-dim:#a66f1f; --note-mid-wash:rgba(232,163,61,0.1); --note-high:#6ad18b;
+  /* Rareté des cartes (Cartes uniquement), même statut que la note. */
+  --rarity-legendary:#e8a33d; --rarity-legendary-dim:#a66f1f; --rarity-legendary-wash:rgba(232,163,61,0.16);
+  --rarity-rare:#6fa39f; --rarity-rare-wash:rgba(111,163,159,0.14);
+  --shadow-float:0 16px 40px rgba(0,0,0,0.45);
+  /* ==========================================================
      KINET — v3.0 "Scope"
      Retour utilisateur (long échange) : la DA v2.x "lisait IA" — violet
      comme couleur primaire, aurore en dégradés animés plein écran, verre
@@ -39,29 +62,29 @@
   --surface-3:#262626;
   --line:#2a2a2a;
   --line-soft:#1c1c1c;
-  --text:#f4f3ee;
-  --text-muted:#8d8c86;
+  --text:var(--text-1);
+  --text-muted:var(--text-2);
   /* Glace : tout ce qui est interactif (boutons, liens, focus, actif) —
      seul rôle, comme l'ambre juste en dessous : une couleur, un métier. */
-  --violet:#4fcfff;
+  --violet:var(--accent);
   --violet-dim:#1f6f8f;
-  --violet-wash:rgba(79,207,255,0.12);
+  --violet-wash:var(--accent-wash);
   /* Ambre : réservé au suivi personnel (ce que vous regardez, votre
      progression) — jamais décoratif. Le cadran (.counter) garde son
      propre barème rouge/jaune/vert juste en dessous, indépendant. */
-  --gold:#e8a33d;
-  --gold-dim:#a66f1f;
-  --gold-wash:rgba(232,163,61,0.1);
+  --gold:var(--accent);
+  --gold-dim:var(--violet-dim);
+  --gold-wash:var(--accent-wash);
   /* Teal conservé pour son rôle informationnel étroit (badge
      manuel/revisionnage, aide, succès) — jamais remis en cause, ce
      n'était pas un ton violet. */
-  --teal:#6fa39f;
-  --teal-wash:rgba(111,163,159,0.14);
-  --coral:#ff6b57;
+  --teal:var(--text-2);
+  --teal-wash:rgba(var(--text-rgb),0.06);
+  --coral:var(--note-low);
   --coral-dim:#8a3f34;
   /* Barème du cadran (.counter, noteColorClass() dans js/ui.js) : rouge
      <2.5, or 2.5-3.99 (réutilise --gold ci-dessus), vert >=4. */
-  --green:#6ad18b;
+  --green:var(--note-high);
   --green-dim:#3f7a52;
   --green-wash:rgba(106,209,139,0.1);
   /* Bronze conservé (accent rare, succès/mise en avant) — ton chaud déjà
@@ -69,11 +92,11 @@
      repointé sur des gris neutres : c'était "un bloc violet profond et
      saturé" par design (v2.7) — le concept de bloc plein reste utile
      (.top-films-showcase, .ach-summary) mais plus en violet. */
-  --bronze:#d9aa67;
-  --bronze-dim:#8f6a3a;
-  --bronze-wash:rgba(217,170,103,0.12);
-  --plum:#1a1a1a;
-  --plum-2:#222222;
+  --bronze:var(--text-2);
+  --bronze-dim:var(--line-strong);
+  --bronze-wash:rgba(var(--text-rgb),0.06);
+  --plum:var(--surface);
+  --plum-2:var(--surface-2);
   /* Hauteur de #mobileTabbar (v2.1.x) — référencée par elle-même et par
      tout ce qui doit se décaler pour ne pas passer dessous une fois
      qu'elle occupe le bas de l'écran (mobile only) : .fab,
@@ -123,24 +146,27 @@
   --surface-3:#e5e3db;
   --line:#dddad1;
   --line-soft:#e9e7e0;
-  --text:#1c1c1a;
-  --text-muted:#6b6a63;
-  --violet:#0e6f8f;
+  --text-1:#1c1c1a;
+  --text-2:#5e5d58;
+  --text-3:#8a8983;
+  --line-strong:rgba(28,28,26,0.22);
+  --accent:#0e6f8f;
+  --accent-ink:#ffffff;
   --violet-dim:#0a4f66;
-  --violet-wash:rgba(14,111,143,0.1);
-  --gold:#9c6a1f;
-  --gold-dim:#6b4913;
-  --gold-wash:rgba(156,106,31,0.12);
-  --teal:#3f7d78;
-  --teal-wash:rgba(63,125,120,0.14);
-  --coral:#c73f2c;
+  --accent-wash:rgba(14,111,143,0.1);
+  --note-mid:#9c6a1f;
+  --rarity-legendary:#9c6a1f;
+  --note-mid-dim:#6b4913;
+  --rarity-legendary-dim:#6b4913;
+  --note-mid-wash:rgba(156,106,31,0.12);
+  --rarity-legendary-wash:rgba(156,106,31,0.14);
+  --rarity-rare:#3f7d78;
+  --rarity-rare-wash:rgba(63,125,120,0.14);
+  --note-low:#c73f2c;
   --coral-dim:#8a3f34;
-  --green:#2f9155;
+  --note-high:#2f9155;
   --green-dim:#3f7a52;
   --green-wash:rgba(47,145,85,0.1);
-  --bronze:#9c7020;
-  --bronze-dim:#8f6a3a;
-  --bronze-wash:rgba(156,112,32,0.12);
   --glass-rgb:250,249,245;
   --text-rgb:28,28,26;
 }
@@ -155,9 +181,7 @@
    saturée sur fond sombre, cohérent avec la même identité, pas une
    composition à redessiner. */
 :root[data-theme="light"] body{
-  background:
-    radial-gradient(rgba(28,28,26,0.045) 1px, transparent 1px) 0 0/26px 26px,
-    var(--ink-surface);
+  background:var(--ink-surface);
   /* Le raccourci background: ci-dessus réinitialise TOUS ses sous-attributs
      (position/attachment/repeat) à leur valeur initiale s'ils ne sont pas
      redonnés ici — sans cette ligne, le fond perdrait son attachement fixe
@@ -166,6 +190,11 @@
   background-attachment:fixed;
 }
 *{box-sizing:border-box; margin:0; padding:0;}
+/* Code de design : les contrôles de formulaire héritent de la police de la
+   page (sinon le navigateur les met en Arial 13.33px, audit D1), et le
+   texte sans taille explicite prend la taille de lecture. */
+button, input, select, textarea{font-family:inherit;}
+body{font-size:var(--fs-md);}
 /* Fond de page : le violet du header seul ne suffisait pas (retour
    utilisateur v2.0 — "le fond reste plat/vide dès qu'on scrolle") — deux
    grandes taches très douces, fixées à l'écran plutôt qu'au document, pour
@@ -228,12 +257,10 @@ html{
 body{overscroll-behavior:none;}
 
 body{
-  background:
-    radial-gradient(rgba(244,243,238,0.04) 1px, transparent 1px) 0 0/26px 26px,
-    var(--ink);
+  background:var(--ink);
   background-attachment:fixed;
   color:var(--text);
-  font-family:'Instrument Sans', sans-serif;
+  font-family:var(--font-text);
   /* 100vh = la plus GRANDE hauteur de viewport mobile (barre d'adresse
      masquée) — au premier affichage, cette barre est visible, donc 100vh
      dépasse la zone réellement visible (audit design, skill mobile-native).
@@ -294,7 +321,7 @@ header{
   transition:opacity .15s;
 }
 .brand-link:hover{opacity:0.82;}
-.brand-link:focus-visible{outline:2px solid var(--violet-dim); outline-offset:4px; border-radius:2px;}
+.brand-link:focus-visible{outline:2px solid var(--violet-dim); outline-offset:4px; border-radius:var(--r-sm);}
 /* Ligne du haut (v2.1.x, retour utilisateur — "l'organisation entre
    icône, Kinet et série/film") : marque (.title-row) et rangée
    utilitaire (#userBar) COTE À COTE — la marque dit "qui/où", la rangée
@@ -331,7 +358,7 @@ header{
   flex-wrap:wrap;
   background:var(--surface);
   border:1px solid var(--line);
-  border-radius:999px;
+  border-radius:var(--r-full);
   padding:4px;
 }
 /* v3.0 (draft Scope, "respecte cette page à la lettre") — .topnav a dans
@@ -348,10 +375,10 @@ header{
   border:none;
   color:var(--text-muted);
   padding:8px 16px;
-  border-radius:999px;
-  font-family:'Instrument Sans', sans-serif;
+  border-radius:var(--r-full);
+  font-family:var(--font-text);
   font-weight:600;
-  font-size:12px;
+  font-size:var(--fs-sm);
   letter-spacing:0.02em;
   white-space:nowrap;
   cursor:pointer;
@@ -462,8 +489,8 @@ header{
   color:var(--text-muted);
   padding:8px 4px 6px;
   cursor:pointer;
-  font-family:'Instrument Sans', sans-serif;
-  font-size:10.5px;
+  font-family:var(--font-text);
+  font-size:var(--fs-xs);
   transition:color .15s;
 }
 .mobile-tab svg{width:22px; height:22px;}
@@ -498,8 +525,8 @@ header{
    (l'utilisateur y tient) mais tassé contre le titre plutôt que mis en
    avant — ce n'est pas une donnée que quelqu'un vient chercher. */
 .version-tag{
-  font-family:'Space Mono', monospace;
-  font-size:10px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-xs);
   letter-spacing:0.04em;
   color:var(--text-muted);
   opacity:0.55;
@@ -531,14 +558,14 @@ header{
   gap:10px;
   margin-top:20px;
 }
-.primary-tab-sep{color:var(--text-muted); font-size:14px;}
+.primary-tab-sep{color:var(--text-muted); font-size:var(--fs-sm);}
 .primary-tab{
   display:flex;
   align-items:center;
   gap:6px;
-  font-family:'Bricolage Grotesque', sans-serif;
+  font-family:var(--font-display);
   font-weight:700;
-  font-size:15px;
+  font-size:var(--fs-md);
   color:var(--text-muted);
   background:none;
   border:none;
@@ -554,17 +581,17 @@ header{
   border-bottom-color:var(--violet);
 }
 .eyebrow{
-  font-family:'Space Mono', monospace;
-  font-size:11px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-xs);
   letter-spacing:0.16em;
   color:var(--violet);
   text-transform:uppercase;
   margin-bottom:8px;
 }
 h1{
-  font-family:'Bricolage Grotesque', sans-serif;
+  font-family:var(--font-display);
   font-weight:800;
-  font-size:38px;
+  font-size:var(--fs-2xl);
   letter-spacing:-0.02em;
   line-height:1;
 }
@@ -618,9 +645,9 @@ h1{
   margin-bottom:32px;
 }
 .page-header h2{
-  font-family:'Bricolage Grotesque', sans-serif;
+  font-family:var(--font-display);
   font-weight:700;
-  font-size:24px;
+  font-size:var(--fs-xl);
   flex:1;
   min-width:0;
 }
@@ -686,15 +713,15 @@ h1{
   backdrop-filter:blur(20px) saturate(160%);
   -webkit-backdrop-filter:blur(20px) saturate(160%);
   border:1px solid rgba(var(--text-rgb),0.09);
-  border-radius:12px;
+  border-radius:var(--r-md);
   padding:14px;
   box-shadow:0 16px 36px rgba(0,0,0,0.45);
 }
 .toolbar-filters-sheet select{width:100%;}
 .toolbar-filter-field{display:flex; flex-direction:column; gap:5px;}
 .toolbar-filter-label{
-  font-family:'Space Mono', monospace;
-  font-size:10.5px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-xs);
   letter-spacing:0.04em;
   text-transform:uppercase;
   color:var(--text-muted);
@@ -703,9 +730,9 @@ h1{
   display:flex;
   align-items:center;
   justify-content:space-between;
-  font-family:'Bricolage Grotesque', sans-serif;
+  font-family:var(--font-display);
   font-weight:700;
-  font-size:13px;
+  font-size:var(--fs-sm);
 }
 /* Tri par critère individuel (#sortBy = "advanced") — voir index.html et
    updateSortMode() dans js/app.js. Critère + sens + seuil ensemble plutôt
@@ -718,8 +745,8 @@ h1{
   flex-wrap:wrap;
   gap:12px;
   margin:-14px 0 24px;
-  font-family:'Space Mono', monospace;
-  font-size:12px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-sm);
   color:var(--text-muted);
 }
 .sort-advanced-row b{color:var(--gold); font-weight:600;}
@@ -746,18 +773,18 @@ h1{
   gap:2px;
   padding:3px;
   border:1px solid var(--line);
-  border-radius:10px;
+  border-radius:var(--r-sm);
   background:var(--surface);
   flex:none;
 }
 .view-toggle-btn{
   width:32px; height:28px;
-  border-radius:7px;
+  border-radius:var(--r-sm);
   border:none;
   background:none;
   color:var(--text-muted);
   cursor:pointer;
-  font-size:13px;
+  font-size:var(--fs-sm);
   display:flex; align-items:center; justify-content:center;
   transition:background .15s, color .15s;
 }
@@ -767,7 +794,7 @@ h1{
 /* Menu "⋯" : Export/Import, actions de gestion des données, moins
    fréquentes que le reste — sorties du flux principal de la barre. */
 .menu-wrap{position:relative;}
-.btn.icon-only{padding:10px 13px; font-size:15px; line-height:1;}
+.btn.icon-only{padding:10px 13px; font-size:var(--fs-md); line-height:1;}
 /* Icône SVG (v2.1, #moreMenuBtn) plutôt qu'un glyphe texte comme "⋯" —
    sans taille explicite un <svg> sans width/height s'affiche à sa taille
    intrinsèque par défaut du navigateur (bien trop grande dans un bouton). */
@@ -786,7 +813,7 @@ h1{
   backdrop-filter:blur(20px) saturate(160%);
   -webkit-backdrop-filter:blur(20px) saturate(160%);
   border:1px solid rgba(var(--text-rgb),0.09);
-  border-radius:10px;
+  border-radius:var(--r-sm);
   padding:6px;
   min-width:190px;
   box-shadow:0 16px 36px rgba(0,0,0,0.45);
@@ -801,11 +828,11 @@ h1{
   background:none;
   border:none;
   color:var(--text);
-  font-family:'Space Mono', monospace;
-  font-size:12.5px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-sm);
   text-align:left;
   padding:9px 10px;
-  border-radius:6px;
+  border-radius:var(--r-sm);
   cursor:pointer;
   white-space:nowrap;
 }
@@ -836,7 +863,7 @@ h1{
   background:var(--violet);
   color:var(--ink);
   border:none;
-  font-size:28px;
+  font-size:var(--fs-xl);
   font-weight:600;
   line-height:1;
   cursor:pointer;
@@ -864,7 +891,7 @@ h1{
   background:var(--surface);
   color:var(--text);
   border:1px solid var(--line);
-  font-size:18px;
+  font-size:var(--fs-lg);
   line-height:1;
   cursor:pointer;
   box-shadow:0 8px 20px rgba(0,0,0,0.3);
@@ -896,7 +923,7 @@ h1{
   border:1px solid var(--line);
   color:var(--violet);
   display:flex; align-items:center; justify-content:center;
-  font-size:18px;
+  font-size:var(--fs-lg);
   z-index:45; /* sous .overlay (50), au-dessus du reste — visible même par-dessus la barre de nav mobile pendant le tirer */
   box-shadow:0 8px 20px rgba(0,0,0,0.3);
   transition:background .15s ease, color .15s ease;
@@ -918,7 +945,7 @@ input[type="text"], input[type="email"], input[type="number"], input[type="date"
   background:var(--surface);
   border:1px solid var(--line);
   color:var(--text);
-  font-family:'Instrument Sans', sans-serif;
+  font-family:var(--font-text);
   /* 16px minimum (audit design, skill mobile-native) — en dessous, iOS
      Safari zoome automatiquement la page au focus d'un champ et NE
      DÉZOOME PAS tout seul au blur : la vue reste recadrée tant que la
@@ -926,9 +953,9 @@ input[type="text"], input[type="email"], input[type="number"], input[type="date"
      chaque champ de texte de toute l'app (recherche, email de connexion,
      titre de film, commentaire...) — repli à 14px gardé pour la souris/le
      clavier physique (voir @media (pointer:coarse) juste en dessous). */
-  font-size:16px;
+  font-size:var(--fs-md);
   padding:10px 12px;
-  border-radius:8px;
+  border-radius:var(--r-sm);
   outline:none;
 }
 /* Desktop (souris/clavier précis, jamais de zoom tactile à éviter) :
@@ -936,7 +963,7 @@ input[type="text"], input[type="email"], input[type="number"], input[type="date"
    l'interface à cette échelle — seul le tactile exige 16px. */
 @media (pointer:fine){
   input[type="text"], input[type="email"], input[type="number"], input[type="date"], select, textarea{
-    font-size:14px;
+    font-size:var(--fs-sm);
   }
 }
 input[type="text"]{flex:1; min-width:180px;}
@@ -952,38 +979,38 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="number"]:focus,
   border-color:var(--violet-dim);
   box-shadow:0 0 0 3px rgba(79,207,255,0.16);
 }
-textarea{width:100%; resize:vertical; line-height:1.5; font-family:'Instrument Sans', sans-serif;}
+textarea{width:100%; resize:vertical; line-height:1.5; font-family:var(--font-text);}
 select{cursor:pointer;}
 /* Upload d'avatar (js/profile.js) — ::file-selector-button plutôt que
    .btn.secondary directement (pas de classe possible dessus), même langage
    visuel : transparent, filet, violet au survol. */
-input[type="file"]{font-family:'Instrument Sans', sans-serif; font-size:13px; color:var(--text-muted);}
+input[type="file"]{font-family:var(--font-text); font-size:var(--fs-sm); color:var(--text-muted);}
 input[type="file"]::file-selector-button{
-  font-family:'Space Mono', monospace;
-  font-size:11px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-xs);
   letter-spacing:0.06em;
   text-transform:uppercase;
   background:transparent;
   color:var(--text-muted);
   border:1px solid var(--line);
-  border-radius:7px;
+  border-radius:var(--r-sm);
   padding:8px 12px;
   margin-right:10px;
   cursor:pointer;
   transition:border-color .15s, color .15s;
 }
 input[type="file"]::file-selector-button:hover{color:var(--text); border-color:var(--violet-dim);}
-.avatar-upload-status{font-size:12px; color:var(--text-muted); margin-top:6px; min-height:1em;}
+.avatar-upload-status{font-size:var(--fs-sm); color:var(--text-muted); margin-top:6px; min-height:1em;}
 .avatar-upload-status.error{color:var(--coral);}
 .btn{
-  font-family:'Instrument Sans', sans-serif;
-  font-size:13px;
+  font-family:var(--font-text);
+  font-size:var(--fs-sm);
   letter-spacing:0.01em;
   background:var(--violet);
   color:var(--ink);
   border:none;
   padding:11px 18px;
-  border-radius:9px;
+  border-radius:var(--r-sm);
   cursor:pointer;
   font-weight:600;
   white-space:nowrap;
@@ -1033,10 +1060,10 @@ a.btn{display:inline-flex; align-items:center; text-decoration:none;}
   background:var(--violet);
   color:#fff;
   padding:10px 18px;
-  border-radius:8px;
-  font-family:'Instrument Sans', sans-serif;
+  border-radius:var(--r-sm);
+  font-family:var(--font-text);
   font-weight:600;
-  font-size:13.5px;
+  font-size:var(--fs-sm);
   text-decoration:none;
   transition:top .15s ease;
 }
@@ -1058,12 +1085,12 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 *{scrollbar-width:thin; scrollbar-color:var(--line) transparent;}
 ::-webkit-scrollbar{width:10px; height:10px;}
 ::-webkit-scrollbar-track{background:transparent;}
-::-webkit-scrollbar-thumb{background:var(--line); border-radius:5px; border:2px solid var(--ink);}
+::-webkit-scrollbar-thumb{background:var(--line); border-radius:var(--r-sm); border:2px solid var(--ink);}
 ::-webkit-scrollbar-thumb:hover{background:var(--violet-dim);}
 
 .count-line{
-  font-family:'Space Mono', monospace;
-  font-size:12px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-sm);
   color:var(--text-muted);
   margin-bottom:18px;
 }
@@ -1097,11 +1124,11 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 }
 .annual-goal-label{
   font-weight:600;
-  font-size:14px;
+  font-size:var(--fs-sm);
 }
 .annual-goal-count{
-  font-family:'Space Mono', monospace;
-  font-size:13px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-sm);
   color:var(--text-muted);
   margin-left:auto;
 }
@@ -1111,7 +1138,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   border:none;
   color:var(--text-muted);
   cursor:pointer;
-  font-size:14px;
+  font-size:var(--fs-sm);
   line-height:1;
   padding:2px;
   flex:none;
@@ -1119,14 +1146,14 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .annual-goal-edit:hover{color:var(--text);}
 .annual-goal-bar{
   height:8px;
-  border-radius:999px;
+  border-radius:var(--r-full);
   background:var(--line);
   overflow:hidden;
 }
 .annual-goal-fill{
   width:100%;
   height:100%;
-  border-radius:999px;
+  border-radius:var(--r-full);
   background:var(--violet);
   /* scaleX() plutôt que width (audit design, emil-design-eng) : width
      déclenche layout+paint à chaque frame, scaleX() ne touche que le
@@ -1149,7 +1176,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
    atteint. Jamais scale(0) (rien n'apparaît de rien dans le monde réel) :
    part d'une échelle déjà visible. */
 .annual-goal-done-msg{
-  font-size:13px;
+  font-size:var(--fs-sm);
   color:var(--violet);
   font-weight:600;
   animation:annualGoalDone 0.4s cubic-bezier(.2,.8,.3,1) both;
@@ -1175,7 +1202,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   border:none;
   color:var(--text-muted);
   cursor:pointer;
-  font-size:13px;
+  font-size:var(--fs-sm);
   text-decoration:underline;
 }
 .annual-goal-form-cancel:hover{color:var(--text);}
@@ -1196,7 +1223,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   align-items:center;
   justify-content:center;
   background:var(--surface-2);
-  font-size:16px;
+  font-size:var(--fs-md);
   opacity:0.6;
 }
 /* Catalogue d'un ami (ou détail de stats) : même carte que les films
@@ -1223,8 +1250,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   margin-top:24px;
 }
 .pagination-label{
-  font-family:'Space Mono', monospace;
-  font-size:12px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-sm);
   color:var(--text-muted);
 }
 
@@ -1245,7 +1272,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   column-gap:16px;
   background:linear-gradient(160deg, var(--surface) 0%, var(--surface-2) 220%);
   border:1px solid var(--line);
-  border-radius:12px;
+  border-radius:var(--r-md);
   padding:14px 16px;
   margin-bottom:8px;
   cursor:pointer;
@@ -1291,7 +1318,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   grid-area:poster;
   width:52px; height:78px;
   object-fit:cover;
-  border-radius:8px;
+  border-radius:var(--r-sm);
   border:1px solid var(--line);
   flex:none;
 }
@@ -1322,22 +1349,22 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .review-badge{
   display:inline-block;
   margin-left:6px;
-  font-size:12px;
+  font-size:var(--fs-sm);
   vertical-align:middle;
   opacity:0.75;
 }
 .film-main{grid-area:main; min-width:0;}
 .film-title{
-  font-family:'Bricolage Grotesque', sans-serif;
+  font-family:var(--font-display);
   font-weight:600;
-  font-size:16px;
+  font-size:var(--fs-md);
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
 }
 .film-sub{
-  font-family:'Space Mono', monospace;
-  font-size:11px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-xs);
   color:var(--text-muted);
   margin-top:3px;
   letter-spacing:0.03em;
@@ -1356,7 +1383,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   flex:none;
   background:none;
   border:none;
-  font-size:20px;
+  font-size:var(--fs-lg);
   cursor:pointer;
   color:var(--line);
   line-height:1;
@@ -1389,8 +1416,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
    qui ne se confond jamais avec un bouton ou une donnée quelconque. */
 .counter{
   grid-area:counter;
-  font-family:'Space Mono', monospace;
-  font-size:15px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-md);
   font-weight:700;
   color:var(--text-muted);
   background:var(--surface-2);
@@ -1402,7 +1429,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   font-variant-numeric:tabular-nums;
 }
 .counter.rate-low{color:var(--coral); border-color:var(--coral-dim); background:rgba(255,107,87,0.08);}
-.counter.rate-mid{color:var(--gold); border-color:var(--gold-dim); background:var(--gold-wash);}
+.counter.rate-mid{color:var(--note-mid); border-color:var(--note-mid-dim); background:var(--note-mid-wash);}
 .counter.rate-high{color:var(--green); border-color:var(--green-dim); background:var(--green-wash);}
 /* v2.8 : bascule franchement plus marquée (retour utilisateur — "j'ai pas
    vu" sur la v2.7, un simple quart de tour de 0.4s passait inaperçu) : un
@@ -1441,7 +1468,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .skeleton-block{
   background:linear-gradient(90deg, var(--surface-2) 25%, var(--line) 50%, var(--surface-2) 75%);
   background-size:200% 100%;
-  border-radius:6px;
+  border-radius:var(--r-sm);
   animation:skeletonShimmer 1.4s ease-in-out infinite;
 }
 .skeleton-poster{width:38px; height:56px; flex:none; grid-area:poster;}
@@ -1463,15 +1490,15 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .top-tabs{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px;}
 .top-tabs .btn.active{border-color:var(--violet); color:var(--violet);}
 .top-rank{
-  font-family:'Space Mono', monospace;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
   font-weight:700;
-  font-size:15px;
+  font-size:var(--fs-md);
   color:var(--text-muted);
   width:22px;
   text-align:center;
   flex:none;
 }
-.top-row:nth-child(-n+3) .top-rank{color:var(--gold); font-size:19px;}
+.top-row:nth-child(-n+3) .top-rank{color:var(--gold); font-size:var(--fs-lg);}
 /* Cliquable vers la fiche film (v2.1, retour utilisateur) — voir
    js/filmDetail.js et js/top.js. Chaque ligne du Top a forcément un
    tmdb_id (get_global_top_films/get_friends_top_films les exclut sinon,
@@ -1482,12 +1509,12 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 
 .rewatch-badge{
   display:inline-block;
-  font-family:'Space Mono', monospace;
-  font-size:9px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-xs);
   letter-spacing:0.04em;
   color:var(--teal);
   border:1px solid var(--teal);
-  border-radius:4px;
+  border-radius:var(--r-sm);
   padding:2px 5px;
   margin-left:8px;
   vertical-align:middle;
@@ -1501,7 +1528,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   display:inline-block;
   background:none;
   border:none;
-  font-size:13px;
+  font-size:var(--fs-sm);
   margin-left:6px;
   padding:0;
   cursor:pointer;
@@ -1520,7 +1547,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .auth-card{
   background:linear-gradient(165deg, var(--surface) 0%, var(--surface-2) 200%);
   border:1px solid var(--line);
-  border-radius:14px;
+  border-radius:var(--r-md);
   padding:30px;
   /* Centre son propre contenu verticalement (v2.1) — utile seulement sur
      l'écran de connexion, où .auth-hero l'étire maintenant à la hauteur
@@ -1540,13 +1567,13 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   .auth-card{animation:none;}
 }
 .auth-card h2{
-  font-family:'Bricolage Grotesque', sans-serif;
+  font-family:var(--font-display);
   font-weight:700;
-  font-size:22px;
+  font-size:var(--fs-lg);
   margin-bottom:12px;
 }
 .auth-intro{
-  font-size:13px;
+  font-size:var(--fs-sm);
   color:var(--text-muted);
   line-height:1.65;
   margin-bottom:18px;
@@ -1573,8 +1600,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   align-items:center;
   gap:12px;
   margin:14px 0;
-  font-family:'Space Mono', monospace;
-  font-size:11px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-xs);
   color:var(--text-muted);
 }
 .auth-divider::before, .auth-divider::after{
@@ -1585,8 +1612,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 }
 .auth-status{
   margin-top:14px;
-  font-family:'Space Mono', monospace;
-  font-size:12px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-sm);
   color:var(--teal);
   line-height:1.6;
 }
@@ -1632,9 +1659,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   inset:0;
   z-index:-1;
   pointer-events:none;
-  background:
-    radial-gradient(620px 420px at 12% 10%, var(--violet-wash), transparent 65%),
-    radial-gradient(560px 380px at 90% 55%, var(--gold-wash), transparent 60%);
+  background:none;
 }
 /* Grille 2 colonnes (v2.0.10) : texte + démo à gauche, carte de connexion
    à droite. Colonne 2 fixe (380px, la largeur de la carte) plutôt que
@@ -1669,9 +1694,9 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 }
 .auth-pitch .eyebrow{margin-bottom:10px;}
 .auth-headline{
-  font-family:'Bricolage Grotesque', sans-serif;
+  font-family:var(--font-display);
   font-weight:800;
-  font-size:36px;
+  font-size:var(--fs-2xl);
   letter-spacing:-0.02em;
   line-height:1.15;
   text-wrap:balance;
@@ -1683,11 +1708,11 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
      registre que .section-label dans la draft. Premier endroit où
      l'appli en a besoin ; à réutiliser pour d'autres légendes/sous-titres
      au fil des prochains écrans retouchés. */
-  font-family:'Source Serif 4', Georgia, serif;
-  font-style:italic;
+  font-family:var(--font-text);
+  font-style:normal;
   font-weight:500;
   color:var(--text-muted);
-  font-size:16px;
+  font-size:var(--fs-md);
   line-height:1.6;
   max-width:44ch;
   margin-bottom:24px;
@@ -1700,7 +1725,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .auth-demo{
   background:linear-gradient(160deg, var(--surface) 0%, var(--surface-2) 220%);
   border:1px solid var(--line);
-  border-radius:14px;
+  border-radius:var(--r-md);
   padding:22px 24px;
 }
 .auth-demo-head{
@@ -1713,24 +1738,24 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   border-bottom:1px solid var(--line);
 }
 .auth-demo-head .eyebrow{margin-bottom:4px;}
-.auth-demo-hint{margin:0; font-size:12.5px; color:var(--text-muted);}
+.auth-demo-hint{margin:0; font-size:var(--fs-sm); color:var(--text-muted);}
 /* Même classe .counter que partout dans l'app (grille/liste, vitrine
    d'amis, top films...) — cette note EST une vraie note, calculée par la
    même fonction (computeNote(), js/app.js), pas une maquette qui y
    ressemble. */
-.auth-demo-counter{width:56px; height:56px; font-size:17px; flex:none;}
+.auth-demo-counter{width:56px; height:56px; font-size:var(--fs-md); flex:none;}
 .auth-demo-sliders{display:flex; flex-direction:column; gap:12px;}
 .auth-demo-row{display:flex; align-items:center; gap:16px;}
 .auth-demo-label{
-  font-family:'Space Mono', monospace;
-  font-size:11.5px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-xs);
   color:var(--text-muted);
   width:148px;
   flex:none;
 }
 .auth-pitch-foot{
   margin:18px 0 0;
-  font-size:12.5px;
+  font-size:var(--fs-sm);
   color:var(--text-muted);
   line-height:1.6;
 }
@@ -1744,7 +1769,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .auth-hero .auth-card{max-width:420px;}
 .auth-card-foot{
   margin-top:16px;
-  font-size:11.5px;
+  font-size:var(--fs-xs);
   color:var(--text-muted);
   text-align:center;
 }
@@ -1765,8 +1790,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   text-align:center;
   padding:60px 20px;
   color:var(--text-muted);
-  font-family:'Space Mono', monospace;
-  font-size:13px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-sm);
   /* grid-column:1/-1 (v2.1, retour utilisateur "pourquoi ne pas le
      centrer") : en mode GRILLE, #filmList/#wlList/etc. sont eux-mêmes
      display:grid (voir plus bas) — sans ça, ce message (seul enfant
@@ -1819,7 +1844,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   backdrop-filter:blur(26px) saturate(160%);
   -webkit-backdrop-filter:blur(26px) saturate(160%);
   border:1px solid rgba(var(--text-rgb),0.09);
-  border-radius:16px;
+  border-radius:var(--r-md);
   width:100%;
   max-width:640px;
   padding:34px;
@@ -1936,7 +1961,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   backdrop-filter:blur(20px) saturate(160%);
   -webkit-backdrop-filter:blur(20px) saturate(160%);
   border:1px solid rgba(var(--text-rgb),0.09);
-  border-radius:14px;
+  border-radius:var(--r-md);
   padding:18px;
   box-shadow:0 20px 44px rgba(0,0,0,0.4);
   animation:modalIn .18s cubic-bezier(.2,.8,.3,1);
@@ -1955,20 +1980,20 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 }
 
 .onboarding-eyebrow{
-  font-family:'Space Mono', monospace;
-  font-size:11px; letter-spacing:0.06em; text-transform:uppercase;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-xs); letter-spacing:0.06em; text-transform:uppercase;
   color:var(--violet);
   display:flex; align-items:center; justify-content:space-between;
   margin-bottom:8px;
 }
 .onboarding-title{
-  font-family:'Bricolage Grotesque', sans-serif;
-  font-weight:700; font-size:17px;
+  font-family:var(--font-display);
+  font-weight:700; font-size:var(--fs-md);
   margin-bottom:8px;
   text-wrap:balance;
 }
 .onboarding-body{
-  font-size:13px; line-height:1.6;
+  font-size:var(--fs-sm); line-height:1.6;
   color:var(--text-muted);
   margin-bottom:16px;
 }
@@ -1976,8 +2001,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .onboarding-card-center .onboarding-foot{justify-content:center;}
 .onboarding-link-btn{
   background:none; border:none; padding:0;
-  font-family:'Instrument Sans', sans-serif;
-  font-size:12.5px; font-weight:600;
+  font-family:var(--font-text);
+  font-size:var(--fs-sm); font-weight:600;
   color:var(--text-muted);
   cursor:pointer;
 }
@@ -2015,20 +2040,20 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   gap:12px;
 }
 .modal-head h2{
-  font-family:'Bricolage Grotesque', sans-serif;
+  font-family:var(--font-display);
   font-weight:700;
-  font-size:24px;
+  font-size:var(--fs-xl);
 }
 .close-x{
   background:none; border:none; color:var(--text-muted);
-  font-size:20px; cursor:pointer; line-height:1; padding:4px;
+  font-size:var(--fs-lg); cursor:pointer; line-height:1; padding:4px;
 }
 .close-x:hover{color:var(--text);}
 .field{margin-bottom:16px;}
 .field label{
   display:block;
-  font-family:'Space Mono', monospace;
-  font-size:11px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-xs);
   letter-spacing:0.08em;
   text-transform:uppercase;
   color:var(--text-muted);
@@ -2049,7 +2074,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   align-items:center;
   gap:10px;
   padding:6px;
-  border-radius:8px;
+  border-radius:var(--r-sm);
   cursor:pointer;
   transition:background .1s;
 }
@@ -2057,7 +2082,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .tmdb-result img{
   width:32px; height:48px;
   object-fit:cover;
-  border-radius:5px;
+  border-radius:var(--r-sm);
   flex:none;
 }
 .tmdb-poster-placeholder{
@@ -2067,19 +2092,19 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   align-items:center;
   justify-content:center;
   background:var(--ink-surface);
-  border-radius:5px;
+  border-radius:var(--r-sm);
   opacity:0.5;
 }
 .tmdb-poster-placeholder svg{width:42%; height:42%;}
-.tmdb-result-title{font-size:13px;}
+.tmdb-result-title{font-size:var(--fs-sm);}
 .tmdb-result-year{
-  font-family:'Space Mono', monospace;
-  font-size:11px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-xs);
   color:var(--text-muted);
   margin-top:2px;
 }
 .tmdb-empty{
-  font-size:12px;
+  font-size:var(--fs-sm);
   color:var(--text-muted);
   font-style:italic;
   padding:6px 2px;
@@ -2099,12 +2124,12 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   padding:12px 14px;
   margin-bottom:8px;
   border:1px solid var(--line);
-  border-radius:12px;
+  border-radius:var(--r-md);
   background:linear-gradient(160deg, var(--surface) 0%, var(--surface-2) 220%);
 }
-.skeleton-poster{width:52px; height:78px; border-radius:8px; flex:none;}
+.skeleton-poster{width:52px; height:78px; border-radius:var(--r-sm); flex:none;}
 .skeleton-lines{flex:1; display:flex; flex-direction:column; gap:8px; min-width:0;}
-.skeleton-line{height:11px; border-radius:4px;}
+.skeleton-line{height:11px; border-radius:var(--r-sm);}
 .skeleton-line.short{width:40%;}
 .skeleton-line.medium{width:65%;}
 .skeleton-poster, .skeleton-line{
@@ -2145,7 +2170,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
      agrandis plutôt qu'une simple ligne compacte comme le reste des
      réglages du profil. */
   padding:10px;
-  border-radius:10px;
+  border-radius:var(--r-sm);
   background:var(--surface-2);
   /* Audit design (emil-design-eng) : sans ça, .dragging (juste en dessous)
      posait/retirait son opacity 0.25 d'un coup sec au début/à la fin du
@@ -2153,7 +2178,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
      (aucun transition:all, propriété précise). */
   transition:opacity .15s ease;
 }
-.top-film-chip img, .top-film-chip .tmdb-poster-placeholder{width:52px; height:78px; object-fit:cover; border-radius:6px; flex:none;}
+.top-film-chip img, .top-film-chip .tmdb-poster-placeholder{width:52px; height:78px; object-fit:cover; border-radius:var(--r-sm); flex:none;}
 /* flex:1 — .tmdb-result-info (partagée avec les résultats de recherche
    TMDB, jamais stylée nulle part, un <div> sans layout propre) reste sinon
    à sa largeur de contenu par défaut (flex:0 1 auto) : le texte se
@@ -2164,16 +2189,16 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
    compactes, inchangées. */
 .top-film-chip .tmdb-result-info{flex:1; min-width:0;}
 .top-film-chip .tmdb-result-title{
-  font-size:15px; font-weight:700;
+  font-size:var(--fs-md); font-weight:700;
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 }
-.top-film-chip .tmdb-result-year{font-size:13px;}
+.top-film-chip .tmdb-result-year{font-size:var(--fs-sm);}
 .top-film-grip{
   color:var(--text-muted);
   cursor:grab;
   flex:none;
   padding:4px;
-  font-size:18px;
+  font-size:var(--fs-lg);
   line-height:1;
   touch-action:none;
 }
@@ -2187,7 +2212,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   z-index:1000;
   pointer-events:none;
   box-shadow:0 14px 32px rgba(0,0,0,0.35);
-  border-radius:8px;
+  border-radius:var(--r-sm);
   cursor:grabbing;
 }
 .top-film-chip-remove{
@@ -2195,9 +2220,9 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   border:1px solid var(--line);
   background:var(--surface);
   color:var(--text-muted);
-  border-radius:6px;
+  border-radius:var(--r-sm);
   cursor:pointer;
-  font-size:12px;
+  font-size:var(--fs-sm);
   display:flex; align-items:center; justify-content:center;
   flex:none;
   transition:border-color .15s, color .15s;
@@ -2264,7 +2289,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
     animation:none;
     outline:2px dashed var(--violet-dim);
     outline-offset:3px;
-    border-radius:999px;
+    border-radius:var(--r-full);
   }
 }
 .tmdb-selected{
@@ -2275,11 +2300,11 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   padding:8px;
   background:var(--ink-surface);
   border:1px solid var(--line);
-  border-radius:8px;
+  border-radius:var(--r-sm);
 }
-.tmdb-selected img{width:32px; height:48px; object-fit:cover; border-radius:5px; flex:none;}
+.tmdb-selected img{width:32px; height:48px; object-fit:cover; border-radius:var(--r-sm); flex:none;}
 .tmdb-selected-info{flex:1; min-width:0;}
-#tmdbSelectedTitle{font-size:13px;}
+#tmdbSelectedTitle{font-size:var(--fs-sm);}
 /* #tmdbSelected (modale principale d'ajout/édition) : plus le même
    gabarit que .tmdb-selected (watchlist/séries/proposition, une vignette
    + ce texte côte à côte) depuis que l'affiche a sa propre colonne dédiée
@@ -2287,7 +2312,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
    contient plus que le texte, pas la peine de reprendre un fond/bordure
    de carte en plus de celle déjà posée par .film-modal-poster-col. */
 #tmdbSelected{margin-top:10px;}
-#tmdbSelectedTitle{font-family:'Bricolage Grotesque', sans-serif; font-weight:600; font-size:16px;}
+#tmdbSelectedTitle{font-family:var(--font-display); font-weight:600; font-size:var(--fs-md);}
 /* "Voir la fiche du film" / "Retirer la fiche TMDB" : deux .crit-help-toggle
    côte à côte (inline-block par défaut sur un <button>). Un peu d'air
    entre les deux pour qu'elles se lisent comme deux actions distinctes,
@@ -2307,8 +2332,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   display:flex;
   align-items:center;
   gap:8px;
-  font-family:'Space Mono', monospace;
-  font-size:12px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-sm);
   letter-spacing:0.03em;
   color:var(--text);
   cursor:pointer;
@@ -2316,7 +2341,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 }
 .manual-toggle-label input{accent-color:var(--teal); cursor:pointer;}
 .manual-toggle-hint{
-  font-size:12px;
+  font-size:var(--fs-sm);
   color:var(--text-muted);
   font-style:italic;
   line-height:1.5;
@@ -2333,7 +2358,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   font-style:normal;
 }
 .public-profile-link-row span{
-  font-family:'Space Mono', monospace;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
   color:var(--teal);
   overflow-wrap:anywhere;
   flex:1;
@@ -2368,7 +2393,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   width:100%;
   aspect-ratio:2/3;
   height:auto;
-  border-radius:12px;
+  border-radius:var(--r-md);
   object-fit:cover;
 }
 /* Les 7 critères sur 2 colonnes plutôt qu'une pile verticale unique :
@@ -2408,17 +2433,17 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 }
 .crit-dial-hero-counter{
   width:80px; height:80px;
-  font-size:24px;
+  font-size:var(--fs-xl);
   border-width:3px;
   flex:none;
 }
 .crit-dial-hero-label{
-  font-family:'Bricolage Grotesque', sans-serif;
+  font-family:var(--font-display);
   font-weight:700;
-  font-size:15px;
+  font-size:var(--fs-md);
 }
 .crit-dial-hero-hint{
-  font-size:12px;
+  font-size:var(--fs-sm);
   color:var(--text-muted);
   margin-top:2px;
 }
@@ -2433,8 +2458,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   cursor:pointer;
 }
 .crit-label{
-  font-family:'Space Mono', monospace;
-  font-size:12px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-sm);
   letter-spacing:0.05em;
 }
 .crit-label .num{color:var(--violet-dim); margin-right:6px;}
@@ -2449,8 +2474,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
    plus haut (padding/bordure/fond permanents) l'emporterait à specificité
    égale — voir le commentaire au-dessus de .crit-val. */
 input[type="number"].crit-val{
-  font-family:'Space Mono', monospace;
-  font-size:13px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-sm);
   font-weight:600;
   color:var(--gold);
   width:52px;
@@ -2463,7 +2488,7 @@ input[type="number"].crit-val{
      pouvait taper une valeur précise plutôt que de viser le curseur. Bordure
      toujours visible (discrète), plus marquée au survol/focus. */
   border:1px solid var(--line);
-  border-radius:6px;
+  border-radius:var(--r-sm);
   padding:3px 6px;
   -moz-appearance:textfield;
 }
@@ -2472,7 +2497,7 @@ input[type="number"].crit-val::-webkit-outer-spin-button{-webkit-appearance:none
 input[type="number"].crit-val:hover{border-color:var(--violet-dim);}
 input[type="number"].crit-val:focus{border-color:var(--violet-dim); background:var(--surface); outline:none;}
 .crit-def{
-  font-size:12.5px;
+  font-size:var(--fs-sm);
   color:var(--text-muted);
   font-style:italic;
   margin-top:4px;
@@ -2493,7 +2518,7 @@ input[type="range"]{
   appearance:none;
   height:4px;
   background:var(--line);
-  border-radius:2px;
+  border-radius:var(--r-sm);
   outline:none;
   /* Au doigt, un scroll qui passe sur une barre de notation la faisait
      sauter à la valeur touchée, changeant la note sans le vouloir.
@@ -2542,14 +2567,14 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
 }
 .avatar-source-tab{
   flex:1;
-  font-family:'Space Mono', monospace;
-  font-size:11px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-xs);
   letter-spacing:0.03em;
   padding:8px 6px;
   border:1px solid var(--line);
   background:transparent;
   color:var(--text-muted);
-  border-radius:8px;
+  border-radius:var(--r-sm);
   cursor:pointer;
 }
 .avatar-source-tab.active{
@@ -2558,8 +2583,8 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
   background:var(--violet-wash);
 }
 .crit-help-toggle{
-  font-family:'Space Mono', monospace;
-  font-size:11px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-xs);
   color:var(--text-muted);
   background:none;
   border:none;
@@ -2572,7 +2597,7 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
 .crit-help-toggle:hover{color:var(--teal);}
 .crit-help{
   display:none;
-  font-size:12.5px;
+  font-size:var(--fs-sm);
   line-height:1.7;
   color:var(--text-muted);
   white-space:pre-line;
@@ -2580,12 +2605,12 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
   padding:10px 12px;
   background:var(--ink-surface);
   border-left:2px solid var(--teal);
-  border-radius:4px;
+  border-radius:var(--r-sm);
 }
 .crit-help.open{display:block;}
 .crit-anchors{
-  font-family:'Space Mono', monospace;
-  font-size:11.5px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-xs);
   color:var(--teal);
   white-space:pre-line;
   line-height:1.8;
@@ -2620,7 +2645,7 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
 /* Installation en app (js/pwa.js) — .wl-note réutilisée telle quelle pour
    le texte descriptif/les instructions (pas de nouvelle classe pour un
    simple paragraphe secondaire). */
-#installSectionContent .wl-note{margin-top:0; margin-bottom:10px; max-width:52ch; font-size:12.5px;}
+#installSectionContent .wl-note{margin-top:0; margin-bottom:10px; max-width:52ch; font-size:var(--fs-sm);}
 #installSectionContent .wl-note:last-child{margin-bottom:0;}
 
 /* ============================================================
@@ -2651,16 +2676,16 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
 .pf-avatar-edit:hover{background:#7ad9ff;}
 .pf-avatar-edit svg{width:13px; height:13px;}
 .pf-name-input{
-  font-family:'Bricolage Grotesque', sans-serif; font-weight:700; font-size:19px; text-align:center;
+  font-family:var(--font-display); font-weight:700; font-size:var(--fs-lg); text-align:center;
   background:none; border:none; border-bottom:1px solid transparent; color:var(--text);
   padding:2px 6px; width:auto; max-width:100%;
 }
 .pf-name-input:hover{border-bottom-color:var(--line);}
 .pf-name-input:focus{border-bottom-color:var(--violet-dim); outline:none;}
-.pf-name-hint{font-size:11.5px; color:var(--text-muted); margin-top:2px;}
+.pf-name-hint{font-size:var(--fs-xs); color:var(--text-muted); margin-top:2px;}
 
 .pf-avatar-panel{
-  background:var(--surface-2); border:1px solid var(--line); border-radius:12px;
+  background:var(--surface-2); border:1px solid var(--line); border-radius:var(--r-md);
   padding:14px; margin-bottom:18px; display:none;
 }
 .pf-avatar-panel.open{display:block;}
@@ -2672,14 +2697,14 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
    cliquable était un peu comprimée. */
 .mm-section{margin-top:28px;}
 .mm-section-title{
-  font-family:'Space Mono', monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums; font-size:var(--fs-xs); letter-spacing:0.06em; text-transform:uppercase;
   color:var(--text-muted); margin-bottom:10px;
 }
-.mm-card{background:var(--surface-2); border:1px solid var(--line); border-radius:13px; overflow:hidden;}
+.mm-card{background:var(--surface-2); border:1px solid var(--line); border-radius:var(--r-md); overflow:hidden;}
 .mm-row{
   display:flex; align-items:center; gap:12px; width:100%;
   padding:15px 16px; background:none; border:none; text-align:left; cursor:pointer;
-  font-family:'Instrument Sans', sans-serif; color:var(--text); transition:background .12s;
+  font-family:var(--font-text); color:var(--text); transition:background .12s;
 }
 .mm-row + .mm-row, .mm-row + .pf-public-panel{border-top:1px solid var(--line);}
 .mm-row:hover{background:var(--surface-3);}
@@ -2690,9 +2715,9 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
    posés directement ici, SANS overflow:hidden — le radius sur .mm-row
    lui-même (pas juste le conteneur) garde des coins propres aussi au
    survol, qui change le fond de .mm-row et non de .menu-wrap. */
-.mm-section .menu-wrap{background:var(--surface-2); border:1px solid var(--line); border-radius:13px;}
-.mm-section .menu-wrap .mm-row{border-radius:13px;}
-.mm-icon{width:30px; height:30px; border-radius:9px; display:flex; align-items:center; justify-content:center; flex:none;}
+.mm-section .menu-wrap{background:var(--surface-2); border:1px solid var(--line); border-radius:var(--r-md);}
+.mm-section .menu-wrap .mm-row{border-radius:var(--r-md);}
+.mm-icon{width:30px; height:30px; border-radius:var(--r-sm); display:flex; align-items:center; justify-content:center; flex:none;}
 .mm-icon svg{width:16px; height:16px;}
 .mm-icon.ic-violet{background:var(--violet-wash); color:var(--violet);}
 .mm-icon.ic-gold{background:var(--gold-wash); color:var(--gold);}
@@ -2700,8 +2725,8 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
 .mm-icon.ic-bronze{background:var(--bronze-wash); color:var(--bronze);}
 .mm-icon.ic-coral{background:rgba(255,107,87,0.12); color:var(--coral);}
 .mm-row-body{flex:1; min-width:0;}
-.mm-row-title{font-size:13.5px; font-weight:600;}
-.mm-row-sub{font-size:11.5px; color:var(--text-muted); margin-top:1px;}
+.mm-row-title{font-size:var(--fs-sm); font-weight:600;}
+.mm-row-sub{font-size:var(--fs-xs); color:var(--text-muted); margin-top:1px;}
 .mm-chevron{color:var(--text-muted); flex:none; display:flex;}
 .mm-chevron svg{width:16px; height:16px;}
 
@@ -2711,7 +2736,7 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
    rendre TOUTE la rangée cliquable nativement, sans le moindre JS. */
 .mm-switch-input{position:absolute; opacity:0; width:1px; height:1px; overflow:hidden;}
 .mm-switch{
-  width:38px; height:22px; border-radius:999px; background:var(--surface-3); border:1px solid var(--line);
+  width:38px; height:22px; border-radius:var(--r-full); background:var(--surface-3); border:1px solid var(--line);
   position:relative; flex:none; transition:background .15s, border-color .15s;
 }
 .mm-switch::after{
@@ -2725,28 +2750,28 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
 /* --- Profil public : panneau qui se déplie sous sa rangée --- */
 .pf-public-panel{display:none; padding:14px; background:var(--surface); border-top:1px solid var(--line);}
 .pf-public-panel.open{display:block;}
-.pf-public-note{font-size:11.5px; color:var(--text-muted); line-height:1.5; margin-bottom:14px;}
+.pf-public-note{font-size:var(--fs-xs); color:var(--text-muted); line-height:1.5; margin-bottom:14px;}
 /* Bouton unique "Copier le lien" (retour utilisateur : afficher l'URL en
    clair "de trop, ça gêne") — publicProfileUrl() (js/profile.js) la calcule
    à la demande, jamais besoin de la montrer pour la copier. */
 .pf-copy-link-btn{
   display:flex; align-items:center; justify-content:center; gap:8px; width:100%;
   padding:10px 14px; background:var(--violet-wash); color:var(--violet); border:1px solid var(--violet-dim);
-  border-radius:9px; font-family:'Instrument Sans', sans-serif; font-size:12.5px; font-weight:700; cursor:pointer;
+  border-radius:var(--r-sm); font-family:var(--font-text); font-size:var(--fs-sm); font-weight:700; cursor:pointer;
   transition:background .12s;
 }
 .pf-copy-link-btn:hover{background:var(--violet-dim); color:var(--text);}
 .pf-copy-link-btn svg{width:15px; height:15px; flex:none;}
-.pf-top-title{font-size:12.5px; font-weight:600; margin-bottom:2px;}
-.pf-top-sub{font-size:11.5px; color:var(--text-muted); margin-bottom:10px;}
-.pf-top-title{font-size:12.5px; font-weight:600; margin-bottom:2px;}
-.pf-top-sub{font-size:11.5px; color:var(--text-muted); margin-bottom:10px;}
+.pf-top-title{font-size:var(--fs-sm); font-weight:600; margin-bottom:2px;}
+.pf-top-sub{font-size:var(--fs-xs); color:var(--text-muted); margin-bottom:10px;}
+.pf-top-title{font-size:var(--fs-sm); font-weight:600; margin-bottom:2px;}
+.pf-top-sub{font-size:var(--fs-xs); color:var(--text-muted); margin-bottom:10px;}
 
 /* --- En-tête "Paramètres" avec flèche retour (au lieu du close-x) --- */
 .modal-head-back{display:flex; align-items:center; gap:10px; margin-bottom:20px;}
 .modal-head-back h2{flex:1;}
 .modal-back-btn{
-  width:30px; height:30px; border-radius:9px; border:1px solid var(--line); background:var(--surface-2);
+  width:30px; height:30px; border-radius:var(--r-sm); border:1px solid var(--line); background:var(--surface-2);
   color:var(--text-muted); display:flex; align-items:center; justify-content:center; flex:none; cursor:pointer;
   transition:color .15s, border-color .15s;
 }
@@ -2754,11 +2779,11 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
 .modal-back-btn svg{width:16px; height:16px;}
 .modal-footer .right{display:flex; gap:10px;}
 .live-score{
-  font-family:'Space Mono', monospace;
-  font-size:13px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-sm);
   color:var(--text-muted);
 }
-.live-score b{color:var(--gold); font-size:16px;}
+.live-score b{color:var(--gold); font-size:var(--fs-md);}
 
 /* Tutoriel d'import Letterboxd (index.html #importLetterboxdTutoOverlay) —
    numéros en pastille plutôt qu'une simple liste : cohérent avec le
@@ -2769,12 +2794,12 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
 .import-tuto-num{
   flex:none; width:24px; height:24px; border-radius:50%;
   background:var(--violet-wash); color:var(--violet);
-  font-family:'Space Mono', monospace; font-size:12px; font-weight:700;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums; font-size:var(--fs-sm); font-weight:700;
   display:flex; align-items:center; justify-content:center;
 }
-.import-tuto-steps p{margin:0; font-size:13.5px; line-height:1.5; color:var(--text);}
-.import-tuto-steps code{background:var(--surface-2); border:1px solid var(--line); border-radius:4px; padding:1px 5px; font-family:'Space Mono', monospace; font-size:12px;}
-.import-tuto-note{font-size:12.5px; line-height:1.5; color:var(--text-muted); margin:0 0 18px;}
+.import-tuto-steps p{margin:0; font-size:var(--fs-sm); line-height:1.5; color:var(--text);}
+.import-tuto-steps code{background:var(--surface-2); border:1px solid var(--line); border-radius:var(--r-sm); padding:1px 5px; font-family:var(--font-text); font-variant-numeric:tabular-nums; font-size:var(--fs-sm);}
+.import-tuto-note{font-size:var(--fs-sm); line-height:1.5; color:var(--text-muted); margin:0 0 18px;}
 
 /* Statistiques */
 .stats-modal{max-width:720px;}
@@ -2795,7 +2820,7 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
   width:100%;
   max-width:380px;
   height:auto;
-  border-radius:14px;
+  border-radius:var(--r-md);
   border:1px solid var(--line);
 }
 #downloadRecapBtn{width:100%;}
@@ -2817,12 +2842,12 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
 .public-profile-header .avatar-fallback{
   display:flex; align-items:center; justify-content:center;
   background:var(--surface-2);
-  font-size:26px;
+  font-size:var(--fs-xl);
 }
 .public-profile-header h3{
-  font-family:'Bricolage Grotesque', sans-serif;
+  font-family:var(--font-display);
   font-weight:700;
-  font-size:20px;
+  font-size:var(--fs-lg);
 }
 /* Top films (v2.3) — vitrine façon Letterboxd, distincte de la liste
    .stats-section en dessous (triée par note) : ceux-ci sont un choix
@@ -2846,7 +2871,7 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
   aspect-ratio:2/3;
   height:auto;
   object-fit:cover;
-  border-radius:8px;
+  border-radius:var(--r-sm);
   /* v2.7 : liseré bronze au repos (choix rare/mérité, voir les tokens en
      tête de fichier) — distingue ces affiches du catalogue ordinaire même
      sans survol. */
@@ -2863,7 +2888,7 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
   box-shadow:0 0 0 1px rgba(232,163,61,0.3), 0 0 26px 4px rgba(232,163,61,0.3), 0 0 50px 10px rgba(79,207,255,0.16);
 }
 .top-films-showcase-title{
-  font-size:12px;
+  font-size:var(--fs-sm);
   font-weight:600;
   white-space:nowrap;
   overflow:hidden;
@@ -2885,17 +2910,17 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
   aspect-ratio:2/3;
   height:auto;
   object-fit:cover;
-  border-radius:8px;
+  border-radius:var(--r-sm);
   border:1px solid var(--line);
 }
 .poster-wall-note{
   position:absolute;
   top:6px; right:6px;
   min-width:26px; height:26px; padding:0 6px;
-  border-radius:999px;
+  border-radius:var(--r-full);
   display:flex; align-items:center; justify-content:center;
-  font-family:'Space Mono', monospace;
-  font-size:11.5px; font-weight:700;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-xs); font-weight:700;
   color:var(--text);
   background:rgba(20,17,28,0.82);
   backdrop-filter:blur(2px);
@@ -2904,7 +2929,7 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
    .counter — redéclarées ici plutôt que d'ajouter .counter à cet élément,
    dont le style de base (taille, bordure) ne convient pas à ce badge. */
 .poster-wall-note.rate-low{color:var(--coral);}
-.poster-wall-note.rate-mid{color:var(--gold);}
+.poster-wall-note.rate-mid{color:var(--note-mid);}
 .poster-wall-note.rate-high{color:var(--green);}
 /* Comparaison de goûts élargie (retour utilisateur, js/groups.js) — une
    pastille "Nom note" par membre ayant noté ce film, réutilisant
@@ -2919,26 +2944,26 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
   margin-top:5px;
 }
 .taste-note-pill{
-  font-family:'Space Mono', monospace;
-  font-size:10.5px;
-  border-radius:999px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-xs);
+  border-radius:var(--r-full);
   padding:2px 8px;
   background:var(--surface-2);
   border:1px solid var(--line);
   white-space:nowrap;
 }
 .taste-note-pill.rate-low{color:var(--coral); border-color:var(--coral-dim);}
-.taste-note-pill.rate-mid{color:var(--gold); border-color:var(--gold-dim);}
+.taste-note-pill.rate-mid{color:var(--note-mid); border-color:var(--note-mid-dim);}
 .taste-note-pill.rate-high{color:var(--green); border-color:var(--green-dim);}
 .poster-wall-fav{
   position:absolute;
   top:6px; left:6px;
   color:var(--gold);
   text-shadow:0 1px 3px rgba(0,0,0,0.6);
-  font-size:14px;
+  font-size:var(--fs-sm);
 }
 .poster-wall-caption{
-  font-size:12px;
+  font-size:var(--fs-sm);
   font-weight:600;
   white-space:nowrap;
   overflow:hidden;
@@ -2953,13 +2978,13 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
 .stat-tile{
   background:linear-gradient(160deg, var(--ink-surface) 0%, var(--surface) 220%);
   border:1px solid var(--line);
-  border-radius:10px;
+  border-radius:var(--r-sm);
   padding:14px 12px;
   text-align:center;
 }
 .stat-value{
-  font-family:'Bricolage Grotesque', sans-serif;
-  font-size:24px;
+  font-family:var(--font-display);
+  font-size:var(--fs-xl);
   font-weight:800;
   color:var(--gold);
   font-variant-numeric:tabular-nums;
@@ -2982,8 +3007,8 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
   color:transparent;
 }
 .stat-label{
-  font-family:'Space Mono', monospace;
-  font-size:10.5px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-xs);
   letter-spacing:0.04em;
   color:var(--text-muted);
   text-transform:uppercase;
@@ -3026,10 +3051,10 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
 .chosen-banner{
   background:var(--ink-surface);
   border:1px solid var(--gold-dim);
-  border-radius:10px;
+  border-radius:var(--r-sm);
   padding:12px 16px;
   margin-bottom:20px;
-  font-size:14px;
+  font-size:var(--fs-sm);
 }
 /* Digest de retour (js/activityState.js) : même famille que .chosen-banner
    (accent or, bandeau plein-largeur) mais vit hors des pages à bascule
@@ -3038,14 +3063,14 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
 .digest-banner{
   background:var(--surface);
   border:1px solid var(--gold-dim);
-  border-radius:10px;
+  border-radius:var(--r-sm);
   padding:16px 32px;
   margin:16px auto;
 }
 .digest-title{
-  font-family:'Bricolage Grotesque', sans-serif;
+  font-family:var(--font-display);
   font-weight:700;
-  font-size:16px;
+  font-size:var(--fs-md);
   margin-bottom:12px;
 }
 .digest-banner .wl-list{margin-bottom:14px;}
@@ -3056,10 +3081,10 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
 .offline-banner{
   background:var(--surface);
   border:1px solid var(--coral-dim);
-  border-radius:10px;
+  border-radius:var(--r-sm);
   padding:14px 32px;
   margin:16px auto;
-  font-size:14px;
+  font-size:var(--fs-sm);
 }
 /* .install-banner (js/pwa.js) retiré en v3.2, retour utilisateur : "le
    rectangle pour télécharger l'app... franchement pas beau" — même
@@ -3079,10 +3104,10 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
   flex-wrap:wrap;
   background:linear-gradient(120deg, var(--violet-wash) 0%, var(--surface) 65%);
   border:1px solid var(--violet-dim);
-  border-radius:10px;
+  border-radius:var(--r-sm);
   padding:14px 24px;
   margin:16px auto;
-  font-size:13.5px;
+  font-size:var(--fs-sm);
 }
 /* Bandeau de mise à jour (js/offline.js) — fixe, accent --gold comme
    .digest-banner : une info à traiter, ni la marque (violet) ni un
@@ -3100,7 +3125,7 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
   background:var(--surface-2);
   border-top:1px solid var(--gold-dim);
   padding:12px 20px;
-  font-size:13.5px;
+  font-size:var(--fs-sm);
   box-shadow:0 -8px 24px rgba(0,0,0,0.3);
 }
 .update-banner span{color:var(--text);}
@@ -3108,9 +3133,9 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
   .update-banner{flex-direction:column; gap:8px; text-align:center; padding:14px 16px;}
 }
 .stats-section-title{
-  font-family:'Bricolage Grotesque', sans-serif;
+  font-family:var(--font-display);
   font-weight:700;
-  font-size:15px;
+  font-size:var(--fs-md);
   margin-bottom:14px;
 }
 
@@ -3126,9 +3151,9 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
   display:flex; align-items:center; justify-content:space-between;
   margin-bottom:12px;
 }
-.upcoming-cal-nav .btn{padding:6px 10px; font-size:12px;}
+.upcoming-cal-nav .btn{padding:6px 10px; font-size:var(--fs-sm);}
 .upcoming-cal-label{
-  font-family:'Bricolage Grotesque', sans-serif; font-weight:700; font-size:14px;
+  font-family:var(--font-display); font-weight:700; font-size:var(--fs-sm);
   text-transform:capitalize;
 }
 .upcoming-cal-grid{
@@ -3137,24 +3162,24 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
   gap:4px;
 }
 .upcoming-cal-weekday{
-  font-family:'Space Mono', monospace; font-size:10.5px; color:var(--text-muted);
+  font-family:var(--font-text); font-variant-numeric:tabular-nums; font-size:var(--fs-xs); color:var(--text-muted);
   text-align:center; text-transform:uppercase; letter-spacing:.04em;
   padding-bottom:4px;
 }
 .upcoming-cal-day{
   min-height:68px;
   border:1px solid var(--line);
-  border-radius:8px;
+  border-radius:var(--r-sm);
   background:var(--surface);
   padding:4px;
   display:flex; flex-direction:column; gap:3px;
 }
 .upcoming-cal-day.is-outside{opacity:.35;}
 .upcoming-cal-day.is-today{border-color:var(--violet-dim); box-shadow:inset 0 0 0 1px var(--violet-dim);}
-.upcoming-cal-daynum{font-family:'Space Mono', monospace; font-size:11px; color:var(--text-muted);}
+.upcoming-cal-daynum{font-family:var(--font-text); font-variant-numeric:tabular-nums; font-size:var(--fs-xs); color:var(--text-muted);}
 .upcoming-cal-items{display:flex; flex-wrap:wrap; gap:2px;}
 .upcoming-cal-poster{
-  width:18px; height:27px; object-fit:cover; border-radius:3px; flex:none;
+  width:18px; height:27px; object-fit:cover; border-radius:var(--r-sm); flex:none;
   cursor:default;
 }
 .upcoming-cal-poster.is-clickable{cursor:pointer;}
@@ -3195,13 +3220,13 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
   align-items:flex-end;
   justify-content:center;
   background:var(--ink-surface);
-  border-radius:3px 3px 0 0;
+  border-radius:var(--r-sm) var(--r-sm) 0 0;
 }
 .bar-fill{
   width:100%;
   min-height:2px;
   background:var(--gold);
-  border-radius:3px 3px 0 0;
+  border-radius:var(--r-sm) var(--r-sm) 0 0;
   transition:opacity .1s;
   position:relative;
 }
@@ -3225,14 +3250,14 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
   top:-18px;
   left:50%;
   transform:translateX(-50%);
-  font-family:'Space Mono', monospace;
-  font-size:11px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-xs);
   color:var(--gold);
   white-space:nowrap;
 }
 .bar-label{
-  font-family:'Space Mono', monospace;
-  font-size:9.5px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-xs);
   color:var(--text-muted);
   margin-top:6px;
   white-space:nowrap;
@@ -3243,7 +3268,7 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
    resterait sinon trompeur sur celles qui n'ont rien à montrer. */
 .bar-col-clickable{cursor:pointer;}
 .bar-col-clickable .bar-label{color:var(--text);}
-.bar-col-clickable:focus-visible{outline:2px solid var(--violet-dim); outline-offset:2px; border-radius:3px;}
+.bar-col-clickable:focus-visible{outline:2px solid var(--violet-dim); outline-offset:2px; border-radius:var(--r-sm);}
 .bar-col-active .bar-fill{background:var(--violet);}
 .bar-col-active .bar-label{color:var(--violet-dim); font-weight:700;}
 
@@ -3260,8 +3285,8 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
 .line-chart-svg{width:100%; aspect-ratio:300/150; display:block; margin-top:8px; overflow:visible;}
 .line-chart-grid{stroke:var(--line); stroke-width:1; stroke-dasharray:2 3;}
 .line-chart-axis-label{
-  font-family:'Space Mono', monospace;
-  font-size:9px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-xs);
   fill:var(--text-muted);
 }
 .line-chart-halo{fill:var(--gold); opacity:0.18;}
@@ -3285,12 +3310,12 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
   background:var(--surface-2);
   border:1px solid var(--line);
   color:var(--text);
-  font-family:'Space Mono', monospace;
-  font-size:11px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-xs);
   font-weight:700;
   white-space:nowrap;
   padding:4px 8px;
-  border-radius:6px;
+  border-radius:var(--r-sm);
   pointer-events:none;
   box-shadow:0 4px 12px rgba(0,0,0,0.25);
   z-index:1;
@@ -3304,8 +3329,8 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
   position:relative;
   height:14px;
   margin-top:6px;
-  font-family:'Space Mono', monospace;
-  font-size:9.5px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-xs);
   color:var(--text-muted);
 }
 .line-chart-label{
@@ -3330,16 +3355,16 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
 }
 .genre-month-row:last-child{border-bottom:none;}
 .genre-month-label{
-  font-family:'Space Mono', monospace;
-  font-size:11px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-xs);
   color:var(--text-muted);
   width:56px;
   flex:none;
 }
 .genre-month-genre{flex:1; font-weight:600; color:var(--gold);}
 .genre-month-count{
-  font-family:'Space Mono', monospace;
-  font-size:11.5px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-xs);
   color:var(--text-muted);
 }
 .stats-drilldown{
@@ -3348,8 +3373,8 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
   border-top:1px solid var(--line);
 }
 .stats-drilldown-title{
-  font-family:'Space Mono', monospace;
-  font-size:11px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-xs);
   letter-spacing:0.04em;
   color:var(--text-muted);
   text-transform:uppercase;
@@ -3368,9 +3393,9 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
   align-items:start;
 }
 .film-review-poster-col{display:flex; flex-direction:column; gap:16px;}
-.film-review-poster-col .film-poster{width:100%; aspect-ratio:2/3; border-radius:12px;}
-.film-review-title{font-family:'Bricolage Grotesque', sans-serif; font-weight:700; font-size:22px; line-height:1.2;}
-.film-review-year{font-size:13px; color:var(--text-muted); margin-top:2px; margin-bottom:18px;}
+.film-review-poster-col .film-poster{width:100%; aspect-ratio:2/3; border-radius:var(--r-md);}
+.film-review-title{font-family:var(--font-display); font-weight:700; font-size:var(--fs-lg); line-height:1.2;}
+.film-review-year{font-size:var(--fs-sm); color:var(--text-muted); margin-top:2px; margin-bottom:18px;}
 /* Radar des 7 critères (retour utilisateur), sous l'affiche plutôt
    qu'empilé en pleine largeur au-dessus de la liste à barres : les deux
    visualisent les mêmes 7 valeurs, ils restent dans la même colonne que
@@ -3396,8 +3421,8 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
   overflow:visible;
 }
 .crit-radar-label{
-  font-family:'Space Mono', monospace;
-  font-size:8px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-xs);
   fill:var(--text-muted);
 }
 .crit-review-list{
@@ -3409,27 +3434,27 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
 }
 .crit-review-row{display:flex; flex-direction:column; gap:6px;}
 .crit-review-row-top{display:flex; justify-content:space-between; align-items:baseline; gap:8px;}
-.crit-review-label{font-size:12.5px; color:var(--text-muted);}
+.crit-review-label{font-size:var(--fs-sm); color:var(--text-muted);}
 .crit-review-value{
-  font-family:'Space Mono', monospace;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
   font-weight:700;
-  font-size:12.5px;
+  font-size:var(--fs-sm);
   color:var(--gold);
   flex:none;
 }
 .crit-review-bar{
   height:5px;
   background:rgba(0,0,0,0.28);
-  border-radius:3px;
+  border-radius:var(--r-sm);
   overflow:hidden;
 }
-.crit-review-fill{height:100%; background:var(--violet); border-radius:3px;}
+.crit-review-fill{height:100%; background:var(--violet); border-radius:var(--r-sm);}
 .crit-review-comment{
   background:var(--surface-2);
   border:1px solid var(--line);
-  border-radius:10px;
+  border-radius:var(--r-sm);
   padding:14px 16px;
-  font-size:13.5px;
+  font-size:var(--fs-sm);
   line-height:1.55;
   white-space:pre-line;
   margin-bottom:18px;
@@ -3459,31 +3484,31 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
 .year-compare-col{
   background:linear-gradient(160deg, var(--surface) 0%, var(--surface-2) 220%);
   border:1px solid var(--line);
-  border-radius:10px;
+  border-radius:var(--r-sm);
   padding:16px;
   text-align:center;
 }
 .year-compare-col-empty{display:flex; flex-direction:column; justify-content:center; min-height:120px;}
 .year-compare-year{
-  font-family:'Space Mono', monospace;
-  font-size:11px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-xs);
   color:var(--text-muted);
   text-transform:uppercase;
   letter-spacing:.05em;
   margin-bottom:8px;
 }
 .year-compare-total{
-  font-family:'Bricolage Grotesque', sans-serif;
+  font-family:var(--font-display);
   font-weight:700;
-  font-size:32px;
+  font-size:var(--fs-xl);
   color:var(--violet);
   line-height:1;
 }
-.year-compare-sub{font-size:11.5px; color:var(--text-muted); margin-top:2px;}
+.year-compare-sub{font-size:var(--fs-xs); color:var(--text-muted); margin-top:2px;}
 .year-compare-avg{
-  font-family:'Space Mono', monospace;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
   font-weight:700;
-  font-size:15px;
+  font-size:var(--fs-md);
   color:var(--gold);
   margin-top:10px;
 }
@@ -3492,16 +3517,16 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
   display:inline-block;
   margin-top:8px;
   padding:3px 10px;
-  border-radius:999px;
+  border-radius:var(--r-full);
   background:var(--violet-wash);
   color:var(--violet);
-  font-size:11px;
-  font-family:'Space Mono', monospace;
+  font-size:var(--fs-xs);
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
 }
 .year-compare-delta{
   text-align:center;
-  font-family:'Space Mono', monospace;
-  font-size:12.5px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-sm);
   color:var(--text-muted);
 }
 .year-compare-delta.is-up{color:var(--violet);}
@@ -3518,7 +3543,7 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
   gap:12px;
   background:linear-gradient(160deg, var(--ink-surface) 0%, var(--surface) 220%);
   border:1px solid var(--line);
-  border-radius:10px;
+  border-radius:var(--r-sm);
   padding:12px 14px;
 }
 /* v2.1.x — seul "Mieux noté" reçoit le halo (même logique de retenue que
@@ -3543,7 +3568,7 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
 .stats-extreme-poster{
   width:42px; height:62px;
   object-fit:cover;
-  border-radius:6px;
+  border-radius:var(--r-sm);
   border:1px solid var(--line);
   flex:none;
 }
@@ -3557,25 +3582,25 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
 .stats-extreme-poster-placeholder svg{width:42%; height:42%;}
 .stats-extreme-info{min-width:0;}
 .stats-extreme-label{
-  font-family:'Space Mono', monospace;
-  font-size:10px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-xs);
   letter-spacing:0.06em;
   text-transform:uppercase;
   color:var(--text-muted);
   margin-bottom:6px;
 }
 .stats-extreme-title{
-  font-family:'Bricolage Grotesque', sans-serif;
+  font-family:var(--font-display);
   font-weight:600;
-  font-size:14.5px;
+  font-size:var(--fs-md);
   margin-bottom:4px;
   overflow:hidden;
   text-overflow:ellipsis;
   white-space:nowrap;
 }
 .stats-extreme-note{
-  font-family:'Space Mono', monospace;
-  font-size:13px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-sm);
   color:var(--gold);
 }
 
@@ -3588,7 +3613,7 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
   position:relative;
   background:linear-gradient(155deg, var(--plum) 0%, var(--plum-2) 100%);
   border:1px solid transparent;
-  border-radius:10px;
+  border-radius:var(--r-sm);
   padding:16px 18px;
   text-align:center;
   margin-bottom:28px;
@@ -3608,15 +3633,15 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
   pointer-events:none;
 }
 .ach-summary-count{
-  font-family:'Bricolage Grotesque', sans-serif;
-  font-size:26px;
+  font-family:var(--font-display);
+  font-size:var(--fs-xl);
   font-weight:800;
   color:var(--gold);
   font-variant-numeric:tabular-nums;
 }
 .ach-summary-label{
-  font-family:'Space Mono', monospace;
-  font-size:10.5px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-xs);
   letter-spacing:0.04em;
   color:var(--text-muted);
   text-transform:uppercase;
@@ -3625,11 +3650,11 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
 .ach-summary-bar{
   height:6px;
   background:rgba(0,0,0,0.28); /* pas --surface-2 (v2.7) : se distinguait mal sur le nouveau fond plum */
-  border-radius:3px;
+  border-radius:var(--r-sm);
   overflow:hidden;
   margin-top:12px;
 }
-.ach-summary-fill{height:100%; background:var(--gold); border-radius:3px;}
+.ach-summary-fill{height:100%; background:var(--gold); border-radius:var(--r-sm);}
 
 .ach-tier-grid{
   display:grid;
@@ -3639,26 +3664,26 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
 .ach-tier-card{
   background:linear-gradient(160deg, var(--ink-surface) 0%, var(--surface) 220%);
   border:1px solid var(--line);
-  border-radius:10px;
+  border-radius:var(--r-sm);
   padding:14px;
 }
 .ach-tier-head{display:flex; align-items:center; gap:8px; margin-bottom:8px;}
-.ach-tier-icon{font-size:17px;}
-.ach-tier-label{font-family:'Bricolage Grotesque', sans-serif; font-weight:600; font-size:14px;}
-.ach-tier-medals{margin-bottom:10px; font-size:16px; letter-spacing:2px;}
+.ach-tier-icon{font-size:var(--fs-md);}
+.ach-tier-label{font-family:var(--font-display); font-weight:600; font-size:var(--fs-sm);}
+.ach-tier-medals{margin-bottom:10px; font-size:var(--fs-md); letter-spacing:2px;}
 .ach-medal{filter:grayscale(1) opacity(0.35);}
 .ach-medal.earned{filter:none;}
 .ach-tier-bar{
   height:5px;
   background:var(--surface-2);
-  border-radius:3px;
+  border-radius:var(--r-sm);
   overflow:hidden;
   margin-bottom:8px;
 }
-.ach-tier-fill{height:100%; background:var(--teal); border-radius:3px;}
+.ach-tier-fill{height:100%; background:var(--teal); border-radius:var(--r-sm);}
 .ach-tier-progress{
-  font-family:'Space Mono', monospace;
-  font-size:11px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-xs);
   color:var(--text-muted);
 }
 
@@ -3680,7 +3705,7 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
   gap:12px;
   padding:14px 16px;
   margin-bottom:20px;
-  border-radius:12px;
+  border-radius:var(--r-md);
   border:1px solid var(--line);
   background:linear-gradient(160deg, var(--surface) 0%, var(--surface-2) 220%);
 }
@@ -3697,13 +3722,13 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
   margin-bottom:16px;
 }
 .tcg-scan-status{
-  font-family:'Space Mono', monospace;
-  font-size:11.5px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-xs);
   color:var(--text-muted);
 }
 .tcg-booster-count{
-  font-family:'Space Mono', monospace;
-  font-size:13px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-sm);
   color:var(--text-muted);
 }
 .tcg-grid{
@@ -3714,7 +3739,7 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
 .tcg-card{
   position:relative;
   aspect-ratio:2/3;
-  border-radius:10px;
+  border-radius:var(--r-sm);
   overflow:hidden;
   border:2px solid var(--line);
   background:var(--ink-surface);
@@ -3733,7 +3758,7 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
   position:absolute;
   left:0; right:0; bottom:0;
   padding:16px 8px 7px;
-  font-size:11px;
+  font-size:var(--fs-xs);
   font-weight:600;
   line-height:1.25;
   color:#fff;
@@ -3743,14 +3768,14 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
   position:absolute;
   top:6px; right:6px;
   padding:2px 7px;
-  border-radius:999px;
-  font-family:'Space Mono', monospace;
-  font-size:10.5px;
+  border-radius:var(--r-full);
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-xs);
   font-weight:700;
   color:#fff;
   background:rgba(15,14,22,0.78);
 }
-.tcg-card.rarity-rare{border-color:var(--teal); box-shadow:0 0 14px rgba(111,163,159,0.3);}
+.tcg-card.rarity-rare{border-color:var(--rarity-rare); box-shadow:0 0 14px rgba(111,163,159,0.3);}
 .tcg-card.rarity-epique{border-color:var(--violet); box-shadow:0 0 16px rgba(79,207,255,0.35);}
 /* Confettis au 5/5 (celebrateConfetti, js/ui.js) : pastilles tombantes,
    retirées par le JS après l'animation. */
@@ -3758,14 +3783,14 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
 #soundVolume{width:120px; accent-color:var(--violet); cursor:pointer;}
 .confetti-layer{position:fixed; inset:0; pointer-events:none; overflow:hidden; z-index:9999;}
 .confetti-piece{
-  position:absolute; top:-12px; width:8px; height:12px; border-radius:2px;
+  position:absolute; top:-12px; width:8px; height:12px; border-radius:var(--r-sm);
   animation-name:confettiFall; animation-timing-function:cubic-bezier(.2,.6,.4,1); animation-fill-mode:both;
 }
 @keyframes confettiFall{
   0%{transform:translateY(0) rotate(0deg); opacity:1;}
   100%{transform:translateY(105vh) rotate(540deg); opacity:0;}
 }
-.tcg-card.rarity-legendaire{border-color:var(--gold); box-shadow:0 0 20px rgba(232,163,61,0.45);}
+.tcg-card.rarity-legendaire{border-color:var(--rarity-legendary); box-shadow:0 0 20px rgba(232,163,61,0.45);}
 /* Légendaire : un reflet doré lent qui traverse la carte. Discret, et jamais
    si le mouvement est réduit. */
 .tcg-card.rarity-legendaire::after{
@@ -3784,19 +3809,19 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
    visuel pour l'occasion. */
 .tcg-rarity-tag{
   display:inline-block;
-  font-family:'Space Mono', monospace;
-  font-size:9px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-xs);
   letter-spacing:0.06em;
   text-transform:uppercase;
-  border-radius:4px;
+  border-radius:var(--r-sm);
   padding:2px 6px;
   font-weight:600;
   vertical-align:middle;
 }
 .tcg-rarity-tag.rarity-commun{color:var(--text-muted); border:1px solid var(--line);}
-.tcg-rarity-tag.rarity-rare{color:var(--teal); border:1px solid var(--teal);}
+.tcg-rarity-tag.rarity-rare{color:var(--rarity-rare); border:1px solid var(--rarity-rare);}
 .tcg-rarity-tag.rarity-epique{color:var(--violet); border:1px solid var(--violet);}
-.tcg-rarity-tag.rarity-legendaire{color:var(--gold); border:1px solid var(--gold);}
+.tcg-rarity-tag.rarity-legendaire{color:var(--rarity-legendary); border:1px solid var(--rarity-legendary);}
 
 /* --- Onglet Échanger : constructeur d'échange --- deux colonnes (ma
    collection / celle du partenaire), cartes plus petites qu'en Collection
@@ -3824,7 +3849,7 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
   background:var(--violet);
   color:var(--ink);
   display:flex; align-items:center; justify-content:center;
-  font-size:12px; font-weight:700;
+  font-size:var(--fs-sm); font-weight:700;
   box-shadow:0 0 0 2px var(--ink-surface);
 }
 .tcg-trade-columns{
@@ -3834,15 +3859,15 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
   margin-bottom:16px;
 }
 .tcg-trade-col-title{
-  font-family:'Space Mono', monospace;
-  font-size:11px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-xs);
   text-transform:uppercase;
   letter-spacing:0.06em;
   color:var(--text-muted);
   margin-bottom:8px;
 }
 .tcg-trade-summary{
-  font-size:12.5px;
+  font-size:var(--fs-sm);
   color:var(--text-muted);
   margin-bottom:14px;
   min-height:1.4em;
@@ -3869,9 +3894,9 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
   animation:none; /* la modale elle-même n'a pas besoin du fondu modalIn générique : les cartes font déjà leur propre entrée */
 }
 /* Rappel de visionnage (watchlist) : une ligne discrète, couleur teal de la palette. */
-.wl-reminder{background:var(--ink-surface); border:1px solid var(--line); border-left:3px solid var(--teal); border-radius:10px; padding:10px 14px; margin-bottom:12px; font-size:0.9rem; color:var(--text-muted);}
+.wl-reminder{background:var(--ink-surface); border:1px solid var(--line); border-left:3px solid var(--teal); border-radius:var(--r-sm); padding:10px 14px; margin-bottom:12px; font-size:var(--fs-md); color:var(--text-muted);}
 /* Badge d'échanges reçus en attente (ligne Cartes du profil). */
-.tcg-trade-badge{display:inline-flex; align-items:center; justify-content:center; min-width:20px; height:20px; padding:0 6px; margin-left:8px; border-radius:999px; background:var(--coral); color:#120f1a; font-size:0.72rem; font-weight:700; vertical-align:middle;}
+.tcg-trade-badge{display:inline-flex; align-items:center; justify-content:center; min-width:20px; height:20px; padding:0 6px; margin-left:8px; border-radius:var(--r-full); background:var(--coral); color:#120f1a; font-size:var(--fs-sm); font-weight:700; vertical-align:middle;}
 .tcg-trade-badge[hidden]{display:none;}
 /* Détail d'une carte (tcgCardOverlay) : carte centrée, rareté en bordure. */
 .tcg-card-modal{max-width:340px; text-align:center;}
@@ -3880,23 +3905,23 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
 .recap-slides{position:relative; width:100%; min-height:200px;}
 .recap-slide{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; opacity:0; transform:translateY(8px); transition:opacity .45s ease, transform .45s ease; pointer-events:none;}
 .recap-slide.active{opacity:1; transform:none;}
-.recap-big{font-size:2.6rem; font-weight:700; color:var(--gold); line-height:1.1;}
-.recap-big.recap-title{font-size:1.6rem; color:var(--text);}
-.recap-unit{font-size:1rem; color:var(--text-muted);}
-.recap-line{color:var(--text-muted); font-size:0.98rem;}
+.recap-big{font-size:var(--fs-2xl); font-weight:700; color:var(--gold); line-height:1.1;}
+.recap-big.recap-title{font-size:var(--fs-xl); color:var(--text);}
+.recap-unit{font-size:var(--fs-md); color:var(--text-muted);}
+.recap-line{color:var(--text-muted); font-size:var(--fs-md);}
 .recap-line b{color:var(--text);}
 .recap-dots{display:flex; gap:8px;}
 .recap-dot{width:8px; height:8px; border-radius:50%; background:var(--line); transition:background .3s;}
 .recap-dot.active{background:var(--violet);}
 @media (prefers-reduced-motion: reduce){ .recap-slide{transition:none; transform:none;} }
-.tcg-card-detail{display:flex; flex-direction:column; align-items:center; gap:10px; border:2px solid var(--line); border-radius:14px; padding:16px; background:var(--ink-surface);}
-.tcg-card-detail.rarity-rare{border-color:var(--teal);}
+.tcg-card-detail{display:flex; flex-direction:column; align-items:center; gap:10px; border:2px solid var(--line); border-radius:var(--r-md); padding:16px; background:var(--ink-surface);}
+.tcg-card-detail.rarity-rare{border-color:var(--rarity-rare);}
 .tcg-card-detail.rarity-epique{border-color:var(--violet);}
-.tcg-card-detail.rarity-legendaire{border-color:var(--gold); box-shadow:0 0 22px rgba(232,163,61,0.35);}
-.tcg-card-detail-img{width:200px; height:300px; object-fit:cover; border-radius:10px;}
-.tcg-card-detail-name{font-weight:700; font-size:1.05rem;}
+.tcg-card-detail.rarity-legendaire{border-color:var(--rarity-legendary); box-shadow:0 0 22px rgba(232,163,61,0.35);}
+.tcg-card-detail-img{width:200px; height:300px; object-fit:cover; border-radius:var(--r-sm);}
+.tcg-card-detail-name{font-weight:700; font-size:var(--fs-md);}
 .tcg-card-detail-actions{display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:14px;}
-.tcg-intro{display:flex; gap:14px; align-items:center; justify-content:space-between; flex-wrap:wrap; background:var(--ink-surface); border:1px solid var(--line); border-left:3px solid var(--violet); border-radius:10px; padding:12px 14px; margin-bottom:14px; font-size:0.92rem; color:var(--text-muted);}
+.tcg-intro{display:flex; gap:14px; align-items:center; justify-content:space-between; flex-wrap:wrap; background:var(--ink-surface); border:1px solid var(--line); border-left:3px solid var(--violet); border-radius:var(--r-sm); padding:12px 14px; margin-bottom:14px; font-size:var(--fs-md); color:var(--text-muted);}
 .tcg-intro strong{color:var(--text);}
 .tcg-intro-text{flex:1 1 260px;}
 .tcg-completion-row{display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px;}
@@ -3927,7 +3952,7 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
   position:absolute; inset:0;
   backface-visibility:hidden;
   -webkit-backface-visibility:hidden;
-  border-radius:12px;
+  border-radius:var(--r-md);
   border:2px solid var(--line);
   overflow:hidden;
   display:flex; align-items:center; justify-content:center;
@@ -3940,7 +3965,7 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
    lettres (retour utilisateur, voir le commentaire sur #homeLink,
    index.html) — même règle ici qu'ailleurs dans l'appli. */
 .tcg-booster-wordmark{
-  font-family:'Bricolage Grotesque', sans-serif; font-weight:800; font-size:20px;
+  font-family:var(--font-display); font-weight:800; font-size:var(--fs-lg);
   letter-spacing:0.04em; color:var(--text);
 }
 .tcg-booster-card-front{
@@ -3949,11 +3974,11 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
   display:block;
 }
 .tcg-booster-card-front img{width:100%; height:100%; object-fit:cover; display:block;}
-.tcg-booster-card-front .tcg-card-name{font-size:12.5px; padding:20px 10px 9px;}
-.tcg-booster-card-front.rarity-rare{border-color:var(--teal); box-shadow:0 0 20px rgba(111,163,159,0.4);}
+.tcg-booster-card-front .tcg-card-name{font-size:var(--fs-sm); padding:20px 10px 9px;}
+.tcg-booster-card-front.rarity-rare{border-color:var(--rarity-rare); box-shadow:0 0 20px rgba(111,163,159,0.4);}
 .tcg-booster-card-front.rarity-epique{border-color:var(--violet); box-shadow:0 0 24px rgba(79,207,255,0.5);}
 .tcg-booster-card-front.rarity-legendaire{
-  border-color:var(--gold);
+  border-color:var(--rarity-legendary);
   box-shadow:0 0 30px rgba(232,163,61,0.6);
   animation:tcgLegendaryGlow 1.6s ease-in-out infinite;
 }
@@ -4026,8 +4051,8 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
 .chatbot-msg{
   max-width:85%;
   padding:10px 14px;
-  border-radius:14px;
-  font-size:13.5px;
+  border-radius:var(--r-md);
+  font-size:var(--fs-sm);
   line-height:1.55;
   white-space:pre-line;
 }
@@ -4083,7 +4108,7 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
 }
 .chatbot-suggestions{display:flex; flex-wrap:wrap; gap:8px; margin:4px 0 2px;}
 .chatbot-chip{
-  font:inherit; font-size:0.9rem; padding:7px 12px; border-radius:999px;
+  font:inherit; font-size:var(--fs-md); padding:7px 12px; border-radius:var(--r-full);
   border:1px solid var(--line); background:var(--ink-surface); color:var(--text);
   cursor:pointer; transition:transform .15s ease, border-color .15s ease, background .15s ease;
   animation:chatbotChipIn .35s ease both;
@@ -4125,14 +4150,14 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
 .feedback-row:first-of-type{border-top:none;}
 .feedback-row.is-resolved{opacity:0.5;}
 .feedback-row-main{min-width:0;}
-.feedback-message{margin:0; font-size:13.5px; line-height:1.5;}
+.feedback-message{margin:0; font-size:var(--fs-sm); line-height:1.5;}
 .feedback-meta{
-  font-family:'Space Mono', monospace;
-  font-size:10.5px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-xs);
   color:var(--text-muted);
   margin-top:5px;
 }
-.feedback-row .btn{flex:none; font-size:11px; padding:8px 12px;}
+.feedback-row .btn{flex:none; font-size:var(--fs-xs); padding:8px 12px;}
 
 /* Onglet Stats & logs (admin, v2.1) — les compteurs réutilisent
    .stat-tile/.stat-value/.stat-label tels quels (mêmes classes que la
@@ -4144,17 +4169,17 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
   gap:10px;
   padding:8px 0;
   border-top:1px solid var(--line);
-  font-size:12.5px;
+  font-size:var(--fs-sm);
 }
 .event-row:first-of-type{border-top:none;}
 .event-type-badge{
-  font-family:'Space Mono', monospace;
-  font-size:10px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-xs);
   font-weight:700;
   letter-spacing:0.03em;
   text-transform:uppercase;
   padding:2px 7px;
-  border-radius:999px;
+  border-radius:var(--r-full);
   flex:none;
   background:var(--surface-2);
   border:1px solid var(--line);
@@ -4165,8 +4190,8 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
 .event-type-pwa_install{color:var(--violet); border-color:var(--violet-dim); background:var(--violet-wash);}
 .event-detail{flex:1; min-width:0; color:var(--text-muted); overflow-wrap:anywhere;}
 .event-date{
-  font-family:'Space Mono', monospace;
-  font-size:10.5px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-xs);
   color:var(--text-muted);
   opacity:0.7;
   flex:none;
@@ -4181,7 +4206,7 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
 .ach-hidden-card{
   background:linear-gradient(160deg, var(--ink-surface) 0%, var(--surface) 220%);
   border:1px solid var(--line);
-  border-radius:10px;
+  border-radius:var(--r-sm);
   padding:14px 12px;
   text-align:center;
   display:flex;
@@ -4190,25 +4215,25 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
   gap:4px;
 }
 .ach-hidden-card.locked{opacity:0.55;}
-.ach-hidden-icon{font-size:22px;}
+.ach-hidden-icon{font-size:var(--fs-lg);}
 /* Même correctif que .film-sub/.wl-title/.wl-note (v3.2, retour
    utilisateur : "tous les carrés [aient] la même longueur et largeur")
    — titre et description de succès sont du texte libre, de longueur très
    variable d'un succès à l'autre ; sans limite, une carte à description
    longue grandissait par rapport à ses voisines dans la même grille. */
 .ach-hidden-title{
-  font-family:'Bricolage Grotesque', sans-serif; font-weight:600; font-size:13.5px;
+  font-family:var(--font-display); font-weight:600; font-size:var(--fs-sm);
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%;
 }
 .ach-hidden-card.locked .ach-hidden-title{
-  font-family:'Space Mono', monospace;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
   font-weight:400;
   color:var(--text-muted);
   letter-spacing:0.1em;
 }
 .ach-hidden-desc{
-  font-family:'Space Mono', monospace;
-  font-size:10.5px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-xs);
   color:var(--text-muted);
   line-height:1.4;
   display:-webkit-box;
@@ -4247,7 +4272,7 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
    de redéfinir un layout en ligne de plus. */
 .admin-modal{max-width:780px;}
 .admin-row-disabled{opacity:0.5;}
-.admin-tier-input{width:64px; padding:6px 8px; font-family:'Space Mono', monospace;}
+.admin-tier-input{width:64px; padding:6px 8px; font-family:var(--font-text); font-variant-numeric:tabular-nums;}
 .admin-row .wl-actions{flex-wrap:wrap; justify-content:flex-end; row-gap:6px;}
 .wl-add-form{
   border-bottom:1px solid var(--line);
@@ -4269,7 +4294,7 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
   position:relative;
   height:150px;
   margin-bottom:18px;
-  border-radius:12px;
+  border-radius:var(--r-md);
   border:1px solid var(--line);
   background:var(--surface-2);
   overflow:hidden;
@@ -4299,7 +4324,7 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
 .surprise-roulette-item{
   flex:none;
   width:88px; height:130px;
-  border-radius:8px;
+  border-radius:var(--r-sm);
   overflow:hidden;
   border:2px solid var(--line);
   background:var(--ink-surface);
@@ -4357,7 +4382,7 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
 }
 
 .surprise-info{text-align:center;}
-.surprise-info .wl-title{font-size:18px;}
+.surprise-info .wl-title{font-size:var(--fs-lg);}
 .surprise-info .wl-note{margin-top:8px; max-width:44ch; margin-left:auto; margin-right:auto;}
 
 /* ============================================================
@@ -4377,7 +4402,7 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
   gap:14px;
   background:linear-gradient(160deg, var(--surface) 0%, var(--surface-2) 220%);
   border:1px solid var(--line);
-  border-radius:12px;
+  border-radius:var(--r-md);
   padding:15px 18px;
   margin-bottom:10px;
   position:relative;
@@ -4424,15 +4449,15 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
 }
 .wl-main{flex:1; min-width:0;}
 .wl-title{
-  font-family:'Bricolage Grotesque', sans-serif;
+  font-family:var(--font-display);
   font-weight:600;
-  font-size:15px;
+  font-size:var(--fs-md);
   overflow-wrap:anywhere;
 }
 .wl-year{color:var(--text-muted); font-weight:400;}
 .wl-note{
-  font-family:'Space Mono', monospace;
-  font-size:11px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-xs);
   color:var(--text-muted);
   margin-top:4px;
   line-height:1.4;
@@ -4441,21 +4466,21 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
    js/watchlist.js) — doré comme .new-episode-badge (séries) : même rôle,
    un signal qui invite à l'action plutôt qu'un simple statut. */
 .wl-friend-rating{
-  font-family:'Space Mono', monospace;
-  font-size:11px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-xs);
   color:var(--gold);
   margin-top:4px;
   line-height:1.4;
 }
 .wl-actions{display:flex; gap:6px; flex:none;}
-.wl-actions .btn{padding:8px 12px; font-size:11px;}
+.wl-actions .btn{padding:8px 12px; font-size:var(--fs-xs);}
 
 /* Bouton « ⋯ » et son menu (openRowMenu(), js/ui.js) — code de design :
    bouton icône 40px sans fond au repos, menu = surface flottante. */
 .row-more-btn{
   display:flex; align-items:center; justify-content:center;
   width:40px; height:40px; flex:none;
-  border:none; border-radius:999px; background:none;
+  border:none; border-radius:var(--r-full); background:none;
   color:var(--text-muted); cursor:pointer;
   transition:background-color .15s, color .15s, transform .1s ease-out;
 }
@@ -4467,14 +4492,14 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
   display:flex; flex-direction:column; min-width:210px; padding:6px;
   background:rgba(var(--glass-rgb),0.92);
   backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
-  border:1px solid rgba(var(--text-rgb),0.09); border-radius:14px;
+  border:1px solid rgba(var(--text-rgb),0.09); border-radius:var(--r-md);
   box-shadow:0 16px 40px rgba(0,0,0,0.45);
   animation:menuIn .15s ease-out;
 }
 .row-menu-item{
   display:block; width:100%; text-align:left;
-  padding:10px 12px; border:none; border-radius:8px; background:none;
-  font-family:'Instrument Sans', sans-serif; font-size:13px; font-weight:500;
+  padding:10px 12px; border:none; border-radius:var(--r-sm); background:none;
+  font-family:var(--font-text); font-size:var(--fs-sm); font-weight:500;
   color:var(--text); cursor:pointer;
 }
 .row-menu-item:hover, .row-menu-item:focus-visible{background:var(--surface-2); outline:none;}
@@ -4487,11 +4512,11 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
    "⚡ Note rapide" (voir js/watchlist.js). */
 .wl-quick-form{display:flex; align-items:center; gap:6px; margin-top:8px; flex-wrap:wrap;}
 .wl-quick-note-input{
-  width:68px; padding:6px 8px; border-radius:6px;
+  width:68px; padding:6px 8px; border-radius:var(--r-sm);
   border:1px solid var(--line); background:var(--surface-2); color:var(--text);
-  font-family:'Space Mono', monospace; font-size:12px; text-align:center;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums; font-size:var(--fs-sm); text-align:center;
 }
-.wl-quick-form .btn{padding:6px 10px; font-size:11px;}
+.wl-quick-form .btn{padding:6px 10px; font-size:var(--fs-xs);}
 
 /* Recherche globale unifiée (v2.42, retour utilisateur) — voir
    js/globalSearch.js. Résultats en .wl-row réutilisées telles quelles
@@ -4499,8 +4524,8 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
 .global-search-input{width:100%; margin-bottom:16px;}
 .global-search-group + .global-search-group{margin-top:18px;}
 .global-search-group-title{
-  font-family:'Space Mono', monospace;
-  font-size:11px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-xs);
   text-transform:uppercase;
   letter-spacing:.05em;
   color:var(--text-muted);
@@ -4511,7 +4536,7 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
 /* .film-poster-placeholder centre déjà son contenu (voir plus haut) —
    juste la taille pour les emoji bruts (👤/👥, amis/groupes) ci-dessous,
    qui n'ont pas la règle svg{width:42%} des icônes film/série. */
-.global-search-row .film-poster-placeholder{font-size:18px;}
+.global-search-row .film-poster-placeholder{font-size:var(--fs-lg);}
 
 /* Historique des recherches récentes (retour utilisateur) — voir
    getRecentSearches()/renderEmptySearchState() (js/globalSearch.js).
@@ -4523,11 +4548,11 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
   width:100%;
   text-align:left;
   padding:9px 12px;
-  border-radius:8px;
+  border-radius:var(--r-sm);
   border:1px solid transparent;
   background:none;
   color:var(--text);
-  font-size:13.5px;
+  font-size:var(--fs-sm);
   font-family:inherit;
   cursor:pointer;
   transition:background .15s, border-color .15s;
@@ -4541,29 +4566,29 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
   align-items:center;
   gap:6px;
   flex:none;
-  font-family:'Space Mono', monospace;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
 }
 .vote-controls{
   display:flex;
   align-items:center;
   gap:8px;
-  font-family:'Space Mono', monospace;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
   margin-bottom:20px;
 }
 .vote-btn{
   background:var(--surface);
   border:1px solid var(--line);
   color:var(--text-muted);
-  border-radius:8px;
+  border-radius:var(--r-sm);
   width:30px;
   height:30px;
-  font-size:14px;
+  font-size:var(--fs-sm);
   cursor:pointer;
   transition:border-color .15s, color .15s;
 }
 .vote-btn:hover{border-color:var(--violet-dim); color:var(--text);}
 .vote-btn.active{border-color:var(--violet); color:var(--violet);}
-.vote-count{min-width:22px; text-align:center; font-size:13px; color:var(--text);}
+.vote-count{min-width:22px; text-align:center; font-size:var(--fs-sm); color:var(--text);}
 
 .proposal-detail-film{
   display:flex;
@@ -4579,17 +4604,17 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
   gap:10px;
   background:var(--surface);
   border:1px solid var(--line);
-  border-radius:10px;
+  border-radius:var(--r-sm);
   padding:10px 12px;
 }
 .comment-body-wrap{flex:1; min-width:0;}
 .comment-author{
-  font-family:'Space Mono', monospace;
-  font-size:11px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-xs);
   color:var(--violet);
   margin-bottom:3px;
 }
-.comment-body{font-size:13.5px; line-height:1.5; word-wrap:break-word;}
+.comment-body{font-size:var(--fs-sm); line-height:1.5; word-wrap:break-word;}
 /* Réactions rapides sur une critique d'ami (retour utilisateur) — palette
    fixe toujours visible sous le commentaire, voir commentReactionsHtml()
    (js/filmDetail.js). Pastilles discrètes au repos (pas de bordure tant
@@ -4606,9 +4631,9 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
   gap:3px;
   background:none;
   border:1px solid transparent;
-  border-radius:999px;
+  border-radius:var(--r-full);
   padding:2px 7px;
-  font-size:13px;
+  font-size:var(--fs-sm);
   line-height:1.4;
   cursor:pointer;
   transition:background .12s, border-color .12s;
@@ -4616,8 +4641,8 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
 .reaction-btn:hover{background:var(--surface-2);}
 .reaction-btn.active{border-color:var(--violet-dim); background:var(--violet-wash);}
 .reaction-count{
-  font-family:'Space Mono', monospace;
-  font-size:10.5px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-xs);
   color:var(--text-muted);
 }
 .reaction-btn.active .reaction-count{color:var(--violet);}
@@ -4626,7 +4651,7 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
   border:none;
   color:var(--text-muted);
   cursor:pointer;
-  font-size:13px;
+  font-size:var(--fs-sm);
   flex:none;
   padding:2px 4px;
 }
@@ -4642,13 +4667,13 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
   gap:8px;
   background:var(--ink-surface);
   border:1px solid var(--line);
-  border-radius:7px;
+  border-radius:var(--r-sm);
   padding:7px 10px;
-  font-family:'Space Mono', monospace;
-  font-size:11.5px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-xs);
 }
 .viewing-date{color:var(--text); white-space:nowrap;}
-.viewing-first{color:var(--text-muted); font-size:10px; text-transform:uppercase; letter-spacing:0.04em;}
+.viewing-first{color:var(--text-muted); font-size:var(--fs-xs); text-transform:uppercase; letter-spacing:0.04em;}
 .viewing-note{color:var(--text-muted); font-style:italic; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
 .viewing-remove{
   margin-left:auto;
@@ -4656,7 +4681,7 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
   border:none;
   color:var(--text-muted);
   cursor:pointer;
-  font-size:13px;
+  font-size:var(--fs-sm);
   padding:2px 4px;
   flex:none;
 }
@@ -4666,10 +4691,10 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
   background:var(--surface);
   border:1px solid var(--line);
   color:var(--text);
-  font-family:'Instrument Sans', sans-serif;
-  font-size:13px;
+  font-family:var(--font-text);
+  font-size:var(--fs-sm);
   padding:9px 10px;
-  border-radius:8px;
+  border-radius:var(--r-sm);
   flex:none;
 }
 .viewings-add-row input[type="text"]{flex:1; min-width:140px;}
@@ -4677,8 +4702,8 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
 /* Journal chronologique */
 .journal-modal{max-width:640px;}
 .journal-month{
-  font-family:'Space Mono', monospace;
-  font-size:11px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-xs);
   letter-spacing:0.08em;
   text-transform:uppercase;
   color:var(--violet);
@@ -4691,22 +4716,22 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
   gap:14px;
   background:var(--surface);
   border:1px solid var(--line);
-  border-radius:10px;
+  border-radius:var(--r-sm);
   padding:10px 14px;
   margin-bottom:6px;
 }
 .journal-main{flex:1; min-width:0;}
-.journal-title{font-family:'Bricolage Grotesque', sans-serif; font-weight:600; font-size:14.5px;}
+.journal-title{font-family:var(--font-display); font-weight:600; font-size:var(--fs-md);}
 .journal-note{
-  font-family:'Space Mono', monospace;
-  font-size:11px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-xs);
   color:var(--text-muted);
   margin-top:3px;
   font-style:italic;
 }
 .journal-date{
-  font-family:'Space Mono', monospace;
-  font-size:11px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-xs);
   color:var(--text-muted);
   flex:none;
   text-transform:capitalize;
@@ -4731,31 +4756,31 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
 }
 .changelog-version{
   display:inline-block;
-  font-family:'Space Mono', monospace;
-  font-size:11px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-xs);
   font-weight:600;
   letter-spacing:0.04em;
   color:var(--violet);
   background:var(--violet-wash);
   border:1px solid var(--violet-dim);
-  border-radius:999px;
+  border-radius:var(--r-full);
   padding:3px 10px;
 }
 .changelog-date{
-  font-family:'Space Mono', monospace;
-  font-size:11px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-xs);
   color:var(--text-muted);
   text-transform:capitalize;
 }
 .changelog-title{
-  font-family:'Bricolage Grotesque', sans-serif;
+  font-family:var(--font-display);
   font-weight:700;
-  font-size:16px;
+  font-size:var(--fs-md);
   margin-bottom:4px;
 }
 .changelog-body{
   color:var(--text-muted);
-  font-size:14px;
+  font-size:var(--fs-sm);
   line-height:1.55;
   white-space:pre-line;
 }
@@ -4766,8 +4791,8 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
 .app-footer{
   text-align:center;
   padding:28px 16px 20px;
-  font-family:'Space Mono', monospace;
-  font-size:11px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-xs);
   letter-spacing:0.04em;
   color:var(--text-muted);
 }
@@ -4797,7 +4822,7 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
   margin:0 auto 18px;
   padding:12px;
   background:#ffffff;
-  border-radius:12px;
+  border-radius:var(--r-md);
   display:flex;
   align-items:center;
   justify-content:center;
@@ -4813,9 +4838,9 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
   border:1px solid var(--line);
   color:var(--text);
   padding:10px 18px;
-  border-radius:10px;
-  font-family:'Space Mono', monospace;
-  font-size:12px;
+  border-radius:var(--r-sm);
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-sm);
   opacity:0;
   transition:opacity .2s, transform .2s;
   pointer-events:none;
@@ -4837,9 +4862,9 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
   border:1px solid var(--line);
   color:var(--text);
   padding:10px 10px 10px 18px;
-  border-radius:10px;
-  font-family:'Space Mono', monospace;
-  font-size:12px;
+  border-radius:var(--r-sm);
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-sm);
   display:flex;
   align-items:center;
   gap:14px;
@@ -4865,10 +4890,10 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
   border:1px solid var(--violet);
   color:var(--violet);
   font-family:inherit;
-  font-size:12px;
+  font-size:var(--fs-sm);
   font-weight:700;
   padding:6px 12px;
-  border-radius:8px;
+  border-radius:var(--r-sm);
   cursor:pointer;
 }
 .undo-toast-btn:hover{background:var(--violet); color:var(--surface-2);}
@@ -4888,7 +4913,7 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
   transform:translateX(-50%);
   background:var(--surface-2);
   border:1px solid var(--line);
-  border-radius:12px;
+  border-radius:var(--r-md);
   padding:10px 16px;
   display:flex;
   align-items:center;
@@ -4908,8 +4933,8 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
    spécificité plus élevée (classe + attribut) et regagne la priorité. */
 .bulk-actions-bar[hidden]{display:none;}
 .bulk-actions-count{
-  font-family:'Space Mono', monospace;
-  font-size:12px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-sm);
   color:var(--text-muted);
   white-space:nowrap;
 }
@@ -4935,8 +4960,8 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
 }
 .happening-flash.show{opacity:1; transition:opacity .06s ease-out;}
 .happening-flash span{
-  font-family:'Space Mono', monospace;
-  font-size:28px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-xl);
   font-weight:700;
   letter-spacing:0.1em;
   color:var(--ink);
@@ -4948,7 +4973,7 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
 .oldboy-corridor{
   overflow:hidden;
   border:1px solid var(--line);
-  border-radius:10px;
+  border-radius:var(--r-sm);
   background:var(--surface-2);
   padding:24px 0;
   margin-top:8px;
@@ -4956,7 +4981,7 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
 .oldboy-corridor-track{
   display:flex;
   gap:56px;
-  font-size:32px;
+  font-size:var(--fs-xl);
   width:max-content;
   animation:oldboyWalk 3.2s linear;
 }
@@ -4967,7 +4992,7 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
 }
 .happening-caption{
   margin-top:16px;
-  font-size:13px;
+  font-size:var(--fs-sm);
   font-style:italic;
   color:var(--text-muted);
 }
@@ -4984,7 +5009,7 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
 .whiplash-metronome-arm{
   width:4px; height:90px;
   background:linear-gradient(to top, var(--gold), var(--bronze));
-  border-radius:2px;
+  border-radius:var(--r-sm);
   transform-origin:bottom center;
   animation:whiplashBeat 0.55s ease-in-out infinite;
 }
@@ -5000,7 +5025,7 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
 .paprika-parade{
   overflow:hidden;
   border:1px solid var(--line);
-  border-radius:10px;
+  border-radius:var(--r-sm);
   background:var(--surface-2);
   padding:20px 0;
   margin-top:8px;
@@ -5008,7 +5033,7 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
 .paprika-parade-track{
   display:flex;
   gap:40px;
-  font-size:30px;
+  font-size:var(--fs-xl);
   width:max-content;
   animation:paprikaMarch 4.5s linear;
 }
@@ -5030,7 +5055,7 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
 }
 
 /* The Dark Knight — la pièce, un seul tour au clic. */
-.dk-coin{font-size:56px; text-align:center; margin:16px 0;}
+.dk-coin{font-size:var(--fs-2xl); text-align:center; margin:16px 0;}
 .dk-coin.flipping{animation:dkFlip 0.9s ease-in-out;}
 @keyframes dkFlip{
   0%{transform:rotateY(0deg) scale(1);}
@@ -5044,7 +5069,7 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
    juste pour cette scène. */
 .truman-sky{
   height:90px;
-  border-radius:10px;
+  border-radius:var(--r-sm);
   margin-top:8px;
   background:linear-gradient(to bottom, var(--teal), var(--surface-2));
   transition:background 1s ease;
@@ -5057,7 +5082,7 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
    Boy plus haut (animation autonome lancée par le clic) : figée via la
    classe .static posée en JS, neutralisée ici en repli. */
 .inception-top{
-  font-size:60px;
+  font-size:var(--fs-2xl);
   text-align:center;
   margin:16px 0;
   animation:inceptionSpin 0.6s linear infinite;
@@ -5073,7 +5098,7 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
   position:fixed;
   top:38%;
   left:-70px;
-  font-size:46px;
+  font-size:var(--fs-2xl);
   z-index:300;
   pointer-events:none;
 }
@@ -5109,7 +5134,7 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
 .odyssey-track{
   margin-top:14px;
   height:10px;
-  border-radius:6px;
+  border-radius:var(--r-sm);
   background:var(--surface-2);
   border:1px solid var(--line);
   overflow:hidden;
@@ -5124,7 +5149,7 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
   width:100%;
   margin-top:16px;
   padding:16px;
-  font-size:15px;
+  font-size:var(--fs-md);
   letter-spacing:0.1em;
   user-select:none;
   touch-action:manipulation; /* pas de délai double-tap-zoom sur du mash rapide */
@@ -5139,7 +5164,7 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
   display:block;
   width:100%;
   height:auto;
-  border-radius:10px;
+  border-radius:var(--r-sm);
   border:1px solid var(--line);
   margin-top:12px;
   background:var(--surface-2);
@@ -5166,7 +5191,7 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
    retour), jamais résolu pour de bon comme la toupie d'Inception : le texte
    change, le caillou ne redevient jamais net. */
 .parasite-rock{
-  font-size:56px;
+  font-size:var(--fs-2xl);
   text-align:center;
   margin:16px 0;
   animation:parasiteDrift 2.4s ease-in-out infinite;
@@ -5246,7 +5271,7 @@ body[data-view-mode="grid"] #filmList .film-poster,
 body[data-view-mode="grid"] #filmList .film-poster-placeholder{
   grid-area:poster;
   width:100%; height:auto; aspect-ratio:2/3;
-  border-radius:8px;
+  border-radius:var(--r-sm);
 }
 body[data-view-mode="grid"] #filmList .film-main{grid-area:main;}
 /* Même correctif que .wl-title/.wl-note juste plus bas (v2.0.15, retour
@@ -5292,7 +5317,7 @@ body[data-view-mode="grid"] #wlList .film-poster-placeholder,
 body[data-view-mode="grid"] #seriesList .film-poster-placeholder,
 body[data-view-mode="grid"] #topList .film-poster-placeholder{
   width:100%; height:auto; aspect-ratio:2/3;
-  border-radius:8px;
+  border-radius:var(--r-sm);
 }
 /* Cartes de hauteur inégale en grille (v2.0.15) — retour utilisateur :
    "les carrés ne sont pas de la même taille". .wl-title/.wl-note (à la
@@ -5342,7 +5367,7 @@ body[data-view-mode="grid"] #topList .top-rank{
   background:rgba(15,14,22,0.82);
   border-radius:50%;
   display:flex; align-items:center; justify-content:center;
-  font-size:12px;
+  font-size:var(--fs-sm);
   z-index:1;
 }
 body[data-view-mode="grid"] #topList .top-row:nth-child(-n+3) .top-rank{background:rgba(232,163,61,0.22);}
@@ -5382,17 +5407,17 @@ body[data-view-mode="list"] #wlList .film-poster-placeholder,
 body[data-view-mode="list"] #seriesList .film-poster-placeholder,
 body[data-view-mode="list"] #topList .film-poster-placeholder{
   width:64px; height:96px; flex:none;
-  border-radius:8px;
+  border-radius:var(--r-sm);
 }
 body[data-view-mode="list"] #filmList .film-title,
 body[data-view-mode="list"] #wlList .wl-title,
 body[data-view-mode="list"] #seriesList .wl-title,
 body[data-view-mode="list"] #topList .wl-title{
-  font-size:17px;
+  font-size:var(--fs-md);
 }
 body[data-view-mode="list"] #wlList .wl-actions{flex:none;}
 body[data-view-mode="list"] #wlList .wl-actions .btn{flex:none;}
-body[data-view-mode="list"] #topList .top-rank{width:26px; font-size:16px;}
+body[data-view-mode="list"] #topList .top-rank{width:26px; font-size:var(--fs-md);}
 
 /* --- Détail d'une série (#/series/:id, js/series.js) et fiche film
    communautaire (#/film/:tmdbId, js/filmDetail.js, classe partagée) ---
@@ -5414,7 +5439,7 @@ body[data-view-mode="list"] #topList .top-rank{width:26px; font-size:16px;}
 .detail-backdrop{
   position:relative;
   height:340px;
-  border-radius:16px;
+  border-radius:var(--r-md);
   overflow:hidden;
   margin-bottom:28px;
   border:1px solid var(--line);
@@ -5441,15 +5466,13 @@ body[data-view-mode="list"] #topList .top-rank{width:26px; font-size:16px;}
   content:'';
   position:absolute; inset:0;
   background:
-    linear-gradient(0deg, rgba(15,14,22,0.65) 0%, rgba(15,14,22,0.1) 55%, transparent 78%),
-    linear-gradient(100deg, rgba(79,207,255,0.22) 0%, transparent 45%),
-    linear-gradient(260deg, rgba(232,163,61,0.16) 0%, transparent 40%);
+    linear-gradient(0deg, rgba(15,14,22,0.65) 0%, rgba(15,14,22,0.1) 55%, transparent 78%);
 }
 @media (prefers-reduced-motion:reduce){
   .detail-backdrop img{animation:none; opacity:1;}
 }
 @media (max-width:600px){
-  .detail-backdrop{height:200px; border-radius:12px; margin-bottom:20px;}
+  .detail-backdrop{height:200px; border-radius:var(--r-md); margin-bottom:20px;}
 }
 /* Repli (v3.2) : le panneau reste visible même sans photo de plateau —
    affiche en plein cadre si dispo, sinon un dégradé neutre plutôt qu'un
@@ -5470,15 +5493,15 @@ body[data-view-mode="list"] #topList .top-rank{width:26px; font-size:16px;}
   margin-top:18px;
 }
 .detail-title{
-  font-family:'Bricolage Grotesque', sans-serif;
+  font-family:var(--font-display);
   font-weight:800;
-  font-size:clamp(24px, 4vw, 32px);
+  font-size:var(--fs-xl);
   line-height:1.08;
   letter-spacing:-0.01em;
 }
 .detail-meta{
-  font-family:'Instrument Sans', sans-serif;
-  font-size:12px;
+  font-family:var(--font-text);
+  font-size:var(--fs-sm);
   letter-spacing:0.05em;
   text-transform:uppercase;
   color:var(--violet);
@@ -5490,20 +5513,20 @@ body[data-view-mode="list"] #topList .top-rank{width:26px; font-size:16px;}
 .fiche-row{display:flex; gap:16px; padding:11px 0; border-bottom:1px solid var(--line);}
 .fiche-label{
   width:110px; flex:none;
-  font-size:10.5px; letter-spacing:0.08em; text-transform:uppercase;
+  font-size:var(--fs-xs); letter-spacing:0.08em; text-transform:uppercase;
   color:var(--text-muted); padding-top:1px;
 }
-.fiche-value{font-size:13.5px; min-width:0;}
-.fiche-value.mono{font-family:'Space Mono', monospace;}
+.fiche-value{font-size:var(--fs-sm); min-width:0;}
+.fiche-value.mono{font-family:var(--font-text); font-variant-numeric:tabular-nums;}
 
 /* Voix éditoriale (serif italique, même registre que .auth-pitch-sub) —
    premier résumé de film/série à l'utiliser plutôt que le simple
    .auth-intro générique. */
 .synopsis{
-  font-family:'Source Serif 4', Georgia, serif;
-  font-style:italic;
+  font-family:var(--font-text);
+  font-style:normal;
   font-weight:500;
-  font-size:15.5px;
+  font-size:var(--fs-md);
   line-height:1.65;
   color:var(--text);
   margin-top:20px;
@@ -5529,9 +5552,9 @@ body[data-view-mode="list"] #topList .top-rank{width:26px; font-size:16px;}
   display:flex;
   align-items:center;
   gap:8px;
-  font-family:'Bricolage Grotesque', sans-serif;
+  font-family:var(--font-display);
   font-weight:700;
-  font-size:15px;
+  font-size:var(--fs-md);
   color:var(--text);
   cursor:pointer;
   text-align:left;
@@ -5542,9 +5565,9 @@ body[data-view-mode="list"] #topList .top-rank{width:26px; font-size:16px;}
 .btn-primary:disabled{opacity:0.5; cursor:default;}
 .btn-primary:disabled::after{color:var(--text-muted);}
 .btn-secondary{
-  font-family:'Instrument Sans', sans-serif;
+  font-family:var(--font-text);
   font-weight:600;
-  font-size:12.5px;
+  font-size:var(--fs-sm);
   letter-spacing:0.03em;
   text-transform:uppercase;
   color:var(--text-muted);
@@ -5561,11 +5584,11 @@ body[data-view-mode="list"] #topList .top-rank{width:26px; font-size:16px;}
 .detail-nav{display:flex; gap:4px; margin-left:auto; flex:none;}
 .detail-nav-arrow{
   width:40px; height:40px;
-  border-radius:999px;
+  border-radius:var(--r-full);
   border:none;
   background:none;
   color:var(--text-muted);
-  font-size:24px;
+  font-size:var(--fs-xl);
   line-height:1;
   display:flex; align-items:center; justify-content:center;
   cursor:pointer;
@@ -5589,10 +5612,10 @@ body[data-view-mode="list"] #topList .top-rank{width:26px; font-size:16px;}
   width:100%;
   aspect-ratio:2/3;
   height:auto;
-  border-radius:12px;
+  border-radius:var(--r-md);
   object-fit:cover;
   border:1px solid var(--line);
-  font-size:40px;
+  font-size:var(--fs-2xl);
 }
 /* Colonne flex plutôt qu'un simple bloc (retour utilisateur : un résumé
    court à côté d'une affiche haute laissait un grand vide) — la progression
@@ -5618,8 +5641,8 @@ body[data-view-mode="list"] #topList .top-rank{width:26px; font-size:16px;}
 .watch-providers{display:flex; flex-direction:column; gap:10px;}
 .watch-provider-row{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
 .watch-provider-row-label{
-  font-family:'Space Mono', monospace;
-  font-size:11px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-xs);
   color:var(--text-muted);
   flex:none;
   width:92px;
@@ -5627,7 +5650,7 @@ body[data-view-mode="list"] #topList .top-rank{width:26px; font-size:16px;}
 .watch-provider-chips{display:flex; flex-wrap:wrap; gap:6px;}
 .watch-provider-chip{
   width:32px; height:32px;
-  border-radius:8px;
+  border-radius:var(--r-sm);
   overflow:hidden;
   border:1px solid var(--line);
   flex:none;
@@ -5639,8 +5662,8 @@ body[data-view-mode="list"] #topList .top-rank{width:26px; font-size:16px;}
    aussi discrète que possible (retour utilisateur) : petite, grise, sans
    soulignement ni flèche, presque invisible tant qu'on ne la cherche pas. */
 .watch-provider-justwatch{
-  font-family:'Space Mono', monospace;
-  font-size:9.5px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-xs);
   color:var(--text-muted);
   opacity:0.6;
   align-self:flex-start;
@@ -5670,11 +5693,11 @@ body[data-view-mode="list"] #topList .top-rank{width:26px; font-size:16px;}
 .cast-photo-placeholder{display:flex; align-items:center; justify-content:center; color:var(--text-muted);}
 .cast-photo-placeholder svg{width:38%; height:38%;}
 .cast-name{
-  font-size:12px; font-weight:600; margin-top:6px; line-height:1.25;
+  font-size:var(--fs-sm); font-weight:600; margin-top:6px; line-height:1.25;
   display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
 }
 .cast-character{
-  font-size:11px; color:var(--text-muted); margin-top:2px;
+  font-size:var(--fs-xs); color:var(--text-muted); margin-top:2px;
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 }
 
@@ -5688,10 +5711,10 @@ body[data-view-mode="list"] #topList .top-rank{width:26px; font-size:16px;}
 .friend-rating-chip{flex:none; display:flex; flex-direction:column; align-items:center; gap:6px; width:64px; text-align:center;}
 .friend-rating-chip .friend-avatar, .friend-rating-chip .friend-avatar-placeholder{width:48px; height:48px;}
 .friend-rating-chip-name{
-  font-size:11px; font-weight:600; line-height:1.25;
+  font-size:var(--fs-xs); font-weight:600; line-height:1.25;
   display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
 }
-.friend-rating-chip .counter{width:32px; height:32px; font-size:11px; border-width:1.5px;}
+.friend-rating-chip .counter{width:32px; height:32px; font-size:var(--fs-xs); border-width:1.5px;}
 
 /* Films similaires sur la fiche film (retour utilisateur, étude
    comparative Letterboxd/Goodreads — "Readers also enjoyed") — voir
@@ -5702,7 +5725,7 @@ body[data-view-mode="list"] #topList .top-rank{width:26px; font-size:16px;}
 .similar-card{flex:none; width:104px; text-align:left; cursor:pointer;}
 .similar-card img, .similar-card .film-poster-placeholder{
   width:104px; height:156px;
-  border-radius:8px;
+  border-radius:var(--r-sm);
   object-fit:cover;
   border:1px solid var(--line);
   background:var(--surface-2);
@@ -5711,10 +5734,10 @@ body[data-view-mode="list"] #topList .top-rank{width:26px; font-size:16px;}
 }
 .similar-card:hover img, .similar-card:hover .film-poster-placeholder{border-color:var(--violet-dim);}
 .similar-card-title{
-  font-size:12px; font-weight:600; margin-top:6px; line-height:1.25;
+  font-size:var(--fs-sm); font-weight:600; margin-top:6px; line-height:1.25;
   display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
 }
-.similar-card-year{font-size:11px; color:var(--text-muted); margin-top:2px;}
+.similar-card-year{font-size:var(--fs-xs); color:var(--text-muted); margin-top:2px;}
 @media (prefers-reduced-motion:reduce){
   .similar-card img, .similar-card .film-poster-placeholder{transition:none;}
 }
@@ -5727,7 +5750,7 @@ body[data-view-mode="list"] #topList .top-rank{width:26px; font-size:16px;}
 .list-cover-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(160px, 1fr)); gap:14px;}
 .list-cover-card{
   border:1px solid var(--line);
-  border-radius:12px;
+  border-radius:var(--r-md);
   overflow:hidden;
   cursor:pointer;
   background:var(--surface-2);
@@ -5747,14 +5770,14 @@ body[data-view-mode="list"] #topList .top-rank{width:26px; font-size:16px;}
   aspect-ratio:2/1.2;
   display:flex; align-items:center; justify-content:center;
   color:var(--text-muted);
-  font-size:28px;
+  font-size:var(--fs-xl);
 }
 .list-cover-info{padding:10px 12px;}
 .list-cover-title{
-  font-weight:600; font-size:13px; line-height:1.3;
+  font-weight:600; font-size:var(--fs-sm); line-height:1.3;
   display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
 }
-.list-cover-meta{font-size:11px; color:var(--text-muted); margin-top:4px; font-family:'Space Mono', monospace;}
+.list-cover-meta{font-size:var(--fs-xs); color:var(--text-muted); margin-top:4px; font-family:var(--font-text); font-variant-numeric:tabular-nums;}
 @media (prefers-reduced-motion:reduce){
   .list-cover-card{transition:none;}
   .list-cover-card:hover{transform:none;}
@@ -5767,8 +5790,8 @@ body[data-view-mode="list"] #topList .top-rank{width:26px; font-size:16px;}
   margin-bottom:12px;
 }
 .series-hero-meta .wl-year{
-  font-family:'Space Mono', monospace;
-  font-size:13px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-sm);
   color:var(--text-muted);
 }
 /* Fiche film (v2.1) — voir js/filmDetail.js et #filmDetailNotes,
@@ -5793,12 +5816,12 @@ body[data-view-mode="list"] #topList .top-rank{width:26px; font-size:16px;}
    rouge (ça suggérerait un jugement de valeur qui n'a pas lieu d'être). */
 .status-badge{
   display:inline-block;
-  font-family:'Space Mono', monospace;
-  font-size:10.5px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-xs);
   font-weight:600;
   letter-spacing:0.04em;
   text-transform:uppercase;
-  border-radius:999px;
+  border-radius:var(--r-full);
   padding:4px 10px;
 }
 .status-badge.ongoing{color:var(--green); background:var(--green-wash); border:1px solid var(--green-dim);}
@@ -5810,12 +5833,12 @@ body[data-view-mode="list"] #topList .top-rank{width:26px; font-size:16px;}
    invite à l'action, à distinguer visuellement d'"En diffusion". */
 .new-episode-badge{
   display:inline-block;
-  font-family:'Space Mono', monospace;
-  font-size:10.5px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-xs);
   font-weight:600;
   letter-spacing:0.04em;
   text-transform:uppercase;
-  border-radius:999px;
+  border-radius:var(--r-full);
   padding:3px 9px;
   color:var(--gold);
   background:var(--gold-wash);
@@ -5863,17 +5886,18 @@ body[data-view-mode="grid"] #seriesList .new-episode-dot{display:block;}
   padding:0 0 4px;
   cursor:pointer;
   text-align:left;
-  font-family:'Instrument Sans', sans-serif;
+  font-family:var(--font-text);
 }
-.season-name{font-family:'Bricolage Grotesque', sans-serif; font-weight:700; font-size:16px;}
+.season-name{font-family:var(--font-display); font-weight:700; font-size:var(--fs-md);}
 .season-progress{
   margin-left:auto;
-  font-family:'Space Mono', monospace;
-  font-size:11px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-xs);
   color:var(--violet);
 }
 .season-caret{
   flex:none;
+  font-size:var(--fs-sm);
   color:var(--text-muted);
   transition:transform .15s;
 }
@@ -5923,7 +5947,7 @@ body[data-view-mode="grid"] #seriesList .new-episode-dot{display:block;}
   -webkit-appearance:none;
   margin-top:1px;
   width:22px; height:22px;
-  border-radius:6px;
+  border-radius:var(--r-sm);
   border:2px solid var(--line);
   background:var(--surface-2);
   flex:none;
@@ -5951,16 +5975,16 @@ body[data-view-mode="grid"] #seriesList .new-episode-dot{display:block;}
   .episode-row-main input[type="checkbox"].checkbox-pop{animation:none;}
 }
 .episode-num{
-  font-family:'Space Mono', monospace;
-  font-size:11.5px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-xs);
   color:var(--text-muted);
   flex:none;
   width:34px;
 }
-.episode-title{flex:1; min-width:0; font-size:13.5px;}
+.episode-title{flex:1; min-width:0; font-size:var(--fs-sm);}
 .episode-air{
-  font-family:'Space Mono', monospace;
-  font-size:11px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-xs);
   color:var(--text-muted);
   flex:none;
 }
@@ -5977,25 +6001,25 @@ body[data-view-mode="grid"] #seriesList .new-episode-dot{display:block;}
 .episode-note-input{
   width:52px;
   padding:4px 6px;
-  border-radius:6px;
+  border-radius:var(--r-sm);
   border:1px solid var(--line);
   background:var(--surface-2);
   color:var(--text);
-  font-family:'Space Mono', monospace;
-  font-size:12px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-sm);
   text-align:center;
 }
 .episode-watch-count{
   display:flex;
   align-items:center;
   gap:4px;
-  font-family:'Space Mono', monospace;
-  font-size:11.5px;
+  font-family:var(--font-text); font-variant-numeric:tabular-nums;
+  font-size:var(--fs-xs);
   color:var(--text-muted);
 }
 .episode-count-btn{
   width:20px; height:20px;
-  border-radius:5px;
+  border-radius:var(--r-sm);
   border:1px solid var(--line);
   background:var(--surface-2);
   color:var(--text);
@@ -6031,7 +6055,7 @@ body[data-view-mode="grid"] #seriesList .new-episode-dot{display:block;}
 @media (max-width:600px){
   header{padding:26px 18px 20px;}
   .container{padding:0 18px;}
-  h1{font-size:28px;}
+  h1{font-size:var(--fs-xl);}
   .stats-extremes{grid-template-columns:1fr;}
   /* v2.1.x, retour utilisateur : la rangée d'icônes + avatar/pseudo,
      repositionnée sous les onglets Films/Séries par l'ancienne règle ici
@@ -6061,7 +6085,7 @@ body[data-view-mode="grid"] #seriesList .new-episode-dot{display:block;}
       conséquence : .fab est décalé au-dessus d'elle plus bas dans ce même
       bloc, ils ne se chevauchent jamais spatialement. */
     height:56px;
-    border-radius:22px;
+    border-radius:var(--r-md);
     background:rgba(var(--glass-rgb),0.88);
     backdrop-filter:blur(20px) saturate(160%);
     -webkit-backdrop-filter:blur(20px) saturate(160%);
@@ -6173,7 +6197,7 @@ body[data-view-mode="grid"] #seriesList .new-episode-dot{display:block;}
     max-width:520px;
     background:var(--surface);
     border:1px solid var(--line);
-    border-radius:16px 16px 0 0;
+    border-radius:var(--r-md) var(--r-md) 0 0;
     padding:20px 20px calc(20px + env(safe-area-inset-bottom, 0px));
     animation:modalIn .18s cubic-bezier(.2,.8,.3,1);
   }
@@ -6181,9 +6205,9 @@ body[data-view-mode="grid"] #seriesList .new-episode-dot{display:block;}
     display:flex;
     align-items:center;
     justify-content:space-between;
-    font-family:'Bricolage Grotesque', sans-serif;
+    font-family:var(--font-display);
     font-weight:700;
-    font-size:16px;
+    font-size:var(--fs-md);
   }
   .toolbar-filters-sheet select{width:100%;}
   @media (prefers-reduced-motion:reduce){

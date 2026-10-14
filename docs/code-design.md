@@ -76,6 +76,19 @@ Chaque couleur a un rôle. On choisit la variable par son rôle, pas par sa tein
 
 Ces trois couleurs n'apparaissent **que** sur une note (le chiffre et son anneau). Exceptions système : `--danger` reprend `--note-low` pour une action destructive ou une erreur, `--success` reprend `--note-high` pour une confirmation.
 
+### Rareté des cartes (Cartes uniquement)
+
+| Variable | Valeur | Rôle |
+|---|---|---|
+| `--rarity-legendary` | #e8a33d | Carte légendaire |
+| `--rarity-rare` | #6fa39f | Carte rare |
+
+Même statut que la note : une donnée du jeu, jamais une décoration, et seulement dans Cartes.
+
+### Anciennes variables
+
+`--violet`, `--gold`, `--teal`, `--bronze`, `--plum`, `--coral`, `--green`, `--text`, `--text-muted` existent encore dans le CSS mais ne sont plus que des alias vers les variables ci-dessus (lot 2 de l'audit, v250). Tout nouveau code utilise les noms du code.
+
 ### Interdits
 
 - Toute autre teinte (teal, bronze, prune, violet, or décoratif).

@@ -238,8 +238,8 @@ async function renderRecapCanvas(recap){
   try{
     await Promise.all([
       document.fonts.load("700 64px 'Bricolage Grotesque'"),
-      document.fonts.load("400 28px 'Space Mono'"),
-      document.fonts.load("700 28px 'Space Mono'")
+      document.fonts.load("400 28px 'Instrument Sans'"),
+      document.fonts.load("700 28px 'Instrument Sans'")
     ]);
   }catch(e){ console.error(e); }
 
@@ -257,7 +257,7 @@ async function renderRecapCanvas(recap){
   let y = 100;
   ctx.textAlign = 'left';
   ctx.fillStyle = gold;
-  ctx.font = "700 26px 'Space Mono', monospace";
+  ctx.font = "700 26px 'Instrument Sans', sans-serif";
   ctx.fillText('KINET · BILAN ' + recap.year, 70, y);
 
   y += 70;
@@ -281,7 +281,7 @@ async function renderRecapCanvas(recap){
     ctx.textAlign = 'left';
     ctx.fillText(s.value, x, y);
     ctx.fillStyle = textMuted;
-    ctx.font = "400 20px 'Space Mono', monospace";
+    ctx.font = "400 20px 'Instrument Sans', sans-serif";
     ctx.fillText(s.label, x, y + 32);
   });
 
@@ -291,11 +291,11 @@ async function renderRecapCanvas(recap){
     drawRoundedRect(ctx, 70, y - 34, W - 140, 56, 14);
     ctx.fill();
     ctx.fillStyle = text;
-    ctx.font = "400 24px 'Space Mono', monospace";
+    ctx.font = "400 24px 'Instrument Sans', sans-serif";
     ctx.fillText('Genre préféré : ', 92, y);
     const labelWidth = ctx.measureText('Genre préféré : ').width;
     ctx.fillStyle = gold;
-    ctx.font = "700 24px 'Space Mono', monospace";
+    ctx.font = "700 24px 'Instrument Sans', sans-serif";
     ctx.fillText(recap.topGenreLabel, 92 + labelWidth, y);
   }
 
@@ -323,7 +323,7 @@ async function renderRecapCanvas(recap){
     ctx.lineWidth = 2;
     ctx.stroke();
     ctx.fillStyle = gold;
-    ctx.font = "700 18px 'Space Mono', monospace";
+    ctx.font = "700 18px 'Instrument Sans', sans-serif";
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(note.toFixed(1), x + posterW - badgeR - 8, y + posterH - badgeR - 8 + 1);
@@ -341,7 +341,7 @@ async function renderRecapCanvas(recap){
 
   // --- Pied de page ---
   ctx.fillStyle = textMuted;
-  ctx.font = "400 20px 'Space Mono', monospace";
+  ctx.font = "400 20px 'Instrument Sans', sans-serif";
   ctx.textAlign = 'center';
   ctx.fillText('kinet · fliiiiix.github.io/Kinet', W / 2, H - 50);
   ctx.textAlign = 'left';
@@ -458,7 +458,7 @@ async function openRecap(){
     ctx.fillStyle = cssVar('--ink') || '#0f0e16';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = cssVar('--text-muted') || '#9a93a8';
-    ctx.font = "400 32px 'Space Mono', monospace";
+    ctx.font = "400 32px 'Instrument Sans', sans-serif";
     ctx.textAlign = 'center';
     ctx.fillText('Rien à résumer pour l\'instant.', canvas.width / 2, canvas.height / 2);
     ctx.textAlign = 'left';
