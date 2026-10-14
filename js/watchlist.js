@@ -104,7 +104,7 @@ function renderWatchlist(){
   }
   const filtered = getFilteredWatchlist();
   if(filtered.length === 0){
-    list.innerHTML = `<div class="empty-state">Rien de ta watchlist n'est dispo là-dessus pour l'instant.</div>`;
+    list.innerHTML = `<div class="empty-state">Aucun film d'À voir n'est disponible sur cette plateforme pour l'instant.</div>`;
     return;
   }
   list.innerHTML = '';
@@ -127,17 +127,25 @@ function renderWatchlist(){
           <button class="btn secondary" type="button" data-action="quick-cancel" data-id="${item.id}">Annuler</button>
         </div>
       </div>
-      <div class="wl-actions">
-        <button class="btn secondary" data-action="quick" data-id="${item.id}" title="Note rapide : noter d'un coup, sans la grille complète">⚡ Rapide</button>
-        <button class="btn secondary" data-action="rate" data-id="${item.id}">✔ Noter</button>
-        <button class="btn danger" data-action="remove" data-id="${item.id}">Retirer</button>
-      </div>
+      <div class="wl-actions">${rowMoreButtonHtml(`Actions pour ${item.title}`)}</div>
     `;
     const quickForm = row.querySelector('[data-quick-form]');
     const quickInput = row.querySelector('.wl-quick-note-input');
-    row.querySelector('[data-action="quick"]').addEventListener('click', () => {
-      quickForm.style.display = quickForm.style.display === 'none' ? '' : 'none';
-      if(quickForm.style.display !== 'none') quickInput.focus();
+    // Audit M6 : trois boutons sous chaque affiche (Rapide, Noter, Retirer)
+    // remplacés par le menu « ⋯ » (openRowMenu(), js/ui.js) ; l'affiche,
+    // elle, ouvre la fiche.
+    const openQuickForm = () => {
+      quickForm.style.display = '';
+      quickInput.focus();
+    };
+    const moreBtn = row.querySelector('.row-more-btn');
+    moreBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openRowMenu(moreBtn, [
+        { label: 'Note rapide', onSelect: openQuickForm },
+        { label: 'Noter avec la grille', onSelect: () => startRatingFromWatchlist(item) },
+        { label: 'Retirer d\'À voir', danger: true, onSelect: () => handleRemoveFromWatchlist(item.id) }
+      ]);
     });
     row.querySelector('[data-action="quick-cancel"]').addEventListener('click', () => {
       quickForm.style.display = 'none';
@@ -148,8 +156,6 @@ function renderWatchlist(){
     quickInput.addEventListener('keydown', (e) => {
       if(e.key === 'Enter'){ e.preventDefault(); handleQuickRate(item, quickInput.value, quickConfirmBtn, quickInput); }
     });
-    row.querySelector('[data-action="rate"]').addEventListener('click', () => startRatingFromWatchlist(item));
-    row.querySelector('[data-action="remove"]').addEventListener('click', () => handleRemoveFromWatchlist(item.id));
     // Fiche film (retour utilisateur : "dans à voir je ne peux pas cliquer
     // sur le film pour arriver sur sa fiche de présentation comme dans le
     // top"). Même goToFilmDetail() que le Top films (js/top.js). Ignore
@@ -245,7 +251,7 @@ function renderWatchlistReminder(){
   });
   if(filmsDispo === 0){ el.style.display = 'none'; el.textContent = ''; return; }
   const meilleure = [...parPlateforme.values()].sort((a, b) => b.n - a.n)[0];
-  el.textContent = `${filmsDispo} film${filmsDispo > 1 ? 's' : ''} de ta watchlist disponible${filmsDispo > 1 ? 's' : ''} en streaming. Le plus sur ${meilleure.nom} (${meilleure.n}).`;
+  el.textContent = `${filmsDispo} film${filmsDispo > 1 ? 's' : ''} d'À voir disponible${filmsDispo > 1 ? 's' : ''} en streaming. Le plus sur ${meilleure.nom} (${meilleure.n}).`;
   el.style.display = '';
 }
 

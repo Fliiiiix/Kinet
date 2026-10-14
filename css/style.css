@@ -6238,3 +6238,127 @@ body[data-view-mode="grid"] #seriesList .new-episode-dot{display:block;}
 /* Admin : gestion des cartes (onglet Cartes) — voir js/admin.js. */
 .admin-override{color:var(--gold); font-weight:600;}
 .admin-card-row .wl-actions select{min-width:150px;}
+
+/* ==========================================================
+   LOT 3 DE L'AUDIT : grilles d'affiches nues (code de design,
+   composant « Affiche »). Films, séries, top et À voir partagent la même
+   carte : affiche 2:3 sans cadre, titre sur une ligne, une ligne d'info,
+   note en chiffre coloré dans le coin de l'affiche. Placé en fin de
+   feuille pour l'emporter sur les anciennes règles de cartes encadrées.
+   ========================================================== */
+body[data-view-mode="grid"] :is(#filmList, #seriesList, #topList, #wlList){
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(140px, 1fr));
+  gap:var(--sp-5) var(--sp-4);
+  align-items:start;
+}
+body[data-view-mode="grid"] :is(#filmList .film-row, #seriesList .wl-row, #topList .wl-row, #wlList .wl-row){
+  position:relative;
+  display:flex; flex-direction:column; align-items:stretch; gap:6px;
+  padding:0; margin:0; min-width:0; min-height:0;
+  background:none; border:none; border-radius:0; box-shadow:none;
+  transform:none; animation:none;
+}
+body[data-view-mode="grid"] :is(#filmList .film-row, #seriesList .wl-row, #topList .wl-row, #wlList .wl-row):hover{
+  background:none; border:none; box-shadow:none; transform:none;
+}
+body[data-view-mode="grid"] :is(#filmList, #seriesList, #topList, #wlList) :is(.film-poster, .film-poster-placeholder){
+  width:100%; height:auto; aspect-ratio:2/3;
+  border:none; border-radius:var(--r-sm);
+  margin-bottom:4px;
+  transition:transform var(--dur-fast) var(--ease-out);
+}
+body[data-view-mode="grid"] :is(#filmList .film-row, #seriesList .wl-row, #topList .wl-row, #wlList .wl-row-clickable):hover :is(.film-poster, .film-poster-placeholder){
+  transform:translateY(-2px);
+}
+body[data-view-mode="grid"] :is(#filmList .film-row, #seriesList .wl-row, #topList .wl-row, #wlList .wl-row):focus-visible{
+  outline:none;
+}
+body[data-view-mode="grid"] :is(#filmList .film-row, #seriesList .wl-row, #topList .wl-row, #wlList .wl-row):focus-visible :is(.film-poster, .film-poster-placeholder){
+  outline:2px solid var(--accent); outline-offset:2px;
+}
+/* Titre et ligne d'info */
+body[data-view-mode="grid"] :is(#filmList .film-title, #seriesList .wl-title, #topList .wl-title, #wlList .wl-title){
+  font-family:var(--font-text); font-size:var(--fs-sm); font-weight:500; line-height:1.35;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+body[data-view-mode="grid"] :is(#filmList .film-sub, #seriesList .wl-note, #topList .wl-note, #wlList .wl-note, #wlList .wl-friend-rating){
+  font-size:var(--fs-xs); color:var(--text-2); letter-spacing:0; margin-top:0;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  display:block; -webkit-line-clamp:unset;
+}
+body[data-view-mode="grid"] :is(#filmList .film-sub-genre){font-weight:400;}
+/* Ce que la grille ne montre pas (reste en vue liste et sur la fiche) */
+body[data-view-mode="grid"] :is(#seriesList, #topList, #wlList) .wl-year,
+body[data-view-mode="grid"] #filmList :is(.review-badge, .rewatch-badge),
+body[data-view-mode="grid"] #seriesList .new-episode-badge{display:none;}
+/* La note : chiffre coloré dans le coin de l'affiche, sans anneau */
+body[data-view-mode="grid"] :is(#filmList, #seriesList, #topList) .counter{
+  position:absolute; top:6px; right:6px; z-index:1;
+  width:auto; height:auto; min-width:0;
+  padding:4px 7px;
+  border:none; border-radius:var(--r-sm);
+  background:rgba(var(--glass-rgb),0.78);
+  backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+  font-size:var(--fs-sm); font-weight:600; line-height:1;
+}
+body[data-view-mode="grid"] :is(#filmList, #seriesList, #topList) .counter:not(.rate-low):not(.rate-mid):not(.rate-high){display:none;}
+/* Favori : étoile en surimpression, en haut à gauche. Visible quand le film
+   est favori ; sinon au survol (souris) ou discrète (écran tactile). */
+body[data-view-mode="grid"] #filmList .star-btn{
+  position:absolute; top:6px; left:6px; z-index:1;
+  width:30px; height:30px; padding:0;
+  display:flex; align-items:center; justify-content:center;
+  border-radius:var(--r-full);
+  background:rgba(var(--glass-rgb),0.78);
+  backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+  font-size:var(--fs-md); color:var(--text-2);
+}
+body[data-view-mode="grid"] #filmList .star-btn.active{color:var(--accent);}
+@media (hover:hover){
+  body[data-view-mode="grid"] #filmList .star-btn:not(.active){opacity:0; transition:opacity var(--dur-fast);}
+  body[data-view-mode="grid"] #filmList .film-row:hover .star-btn,
+  body[data-view-mode="grid"] #filmList .star-btn:focus-visible{opacity:1;}
+}
+@media (hover:none){
+  body[data-view-mode="grid"] #filmList .star-btn:not(.active){opacity:0.6;}
+}
+/* Rang du top et pastille « nouvel épisode » : même surimpression, couleur neutre */
+body[data-view-mode="grid"] #topList .top-rank{
+  position:absolute; top:6px; left:6px; z-index:1;
+  width:auto; min-width:26px; height:26px; padding:0 6px;
+  display:flex; align-items:center; justify-content:center;
+  border-radius:var(--r-full);
+  background:rgba(var(--glass-rgb),0.78);
+  backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+  font-size:var(--fs-sm); color:var(--text);
+}
+body[data-view-mode="grid"] #topList .top-row:nth-child(-n+3) .top-rank{background:rgba(var(--glass-rgb),0.78); color:var(--accent); font-size:var(--fs-sm);}
+body[data-view-mode="grid"] #seriesList .new-episode-dot{background:var(--accent); box-shadow:0 0 0 2px rgba(var(--glass-rgb),0.9);}
+/* À voir : le menu « ⋯ » en surimpression, en haut à droite de l'affiche */
+body[data-view-mode="grid"] #wlList .wl-actions{
+  position:absolute; top:4px; right:4px; z-index:1; margin:0; width:auto;
+}
+body[data-view-mode="grid"] #wlList .row-more-btn{
+  width:32px; height:32px;
+  background:rgba(var(--glass-rgb),0.78);
+  backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+  color:var(--text);
+}
+body[data-view-mode="grid"] #wlList .wl-quick-form{margin-top:6px;}
+/* Téléphone : 3 colonnes */
+@media (max-width:600px){
+  body[data-view-mode="grid"] :is(#filmList, #seriesList, #topList, #wlList){
+    grid-template-columns:repeat(3, minmax(0, 1fr));
+    gap:var(--sp-4) var(--sp-3);
+  }
+}
+/* « Afficher plus » du catalogue (défilement continu, js/app.js) */
+.load-more-btn{
+  display:block; margin:var(--sp-6) auto 0;
+  background:none; border:1px solid var(--line-strong); border-radius:var(--r-full);
+  height:40px; padding:0 20px;
+  color:var(--text-2); font-size:var(--fs-sm); font-weight:600; cursor:pointer;
+  transition:color var(--dur-fast), border-color var(--dur-fast);
+}
+.load-more-btn:hover{color:var(--text); border-color:var(--text-2);}

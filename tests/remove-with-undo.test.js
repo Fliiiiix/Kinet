@@ -53,6 +53,9 @@ function buildWatchlistContext(){
     // (remove-with-undo), juste présent pour que le rendu ne plante pas.
     makeRowClickable(){},
     goToFilmDetail(){},
+    // Menu « ⋯ » des lignes (js/ui.js), pas exercé ici non plus.
+    rowMoreButtonHtml(){ return ''; },
+    openRowMenu(){},
     showUndoToast,
     // currentUser/localStorage : nécessaires à offlineQueueKey()/
     // saveOfflineQueueToStorage() (js/offlineQueue.js, file d'attente hors

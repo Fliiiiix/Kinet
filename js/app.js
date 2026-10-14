@@ -316,9 +316,13 @@ function render(){
     return;
   }
 
+  // Défilement continu (audit M9, ex-pagination « Suivant ») : currentPage
+  // compte désormais les paquets de FILMS_PER_PAGE déjà affichés, et on
+  // montre tout jusque-là. Le paquet suivant arrive en approchant du bas
+  // (renderLoadMore()).
   const totalPages = Math.max(1, Math.ceil(filtered.length / FILMS_PER_PAGE));
   currentPage = Math.min(Math.max(1, currentPage), totalPages);
-  const pageItems = filtered.slice((currentPage - 1) * FILMS_PER_PAGE, currentPage * FILMS_PER_PAGE);
+  const pageItems = filtered.slice(0, currentPage * FILMS_PER_PAGE);
 
   list.innerHTML = '';
   // Fiche film plutôt que la modale de notation au clic (retour
@@ -406,30 +410,37 @@ function render(){
     list.appendChild(row);
   });
 
-  renderPagination(totalPages);
+  renderLoadMore(currentPage < totalPages);
 }
 
-function renderPagination(totalPages){
+// Paquet suivant du catalogue : chargé tout seul quand le bas de la liste
+// approche (IntersectionObserver), avec un vrai bouton en secours (clavier,
+// navigateur sans IntersectionObserver).
+let loadMoreObserver = null;
+function loadNextFilmChunk(){
+  currentPage++;
+  render();
+}
+function renderLoadMore(hasMore){
   const el = document.getElementById('pagination');
-  if(totalPages <= 1){
+  if(loadMoreObserver){ loadMoreObserver.disconnect(); loadMoreObserver = null; }
+  if(!hasMore){
     el.innerHTML = '';
     return;
   }
-  el.innerHTML = `
-    <button class="btn secondary" id="pagePrev" ${currentPage === 1 ? 'disabled' : ''}>← Précédent</button>
-    <span class="pagination-label">Page ${currentPage} / ${totalPages}</span>
-    <button class="btn secondary" id="pageNext" ${currentPage === totalPages ? 'disabled' : ''}>Suivant →</button>
-  `;
-  document.getElementById('pagePrev').addEventListener('click', () => {
-    currentPage--;
-    render();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  });
-  document.getElementById('pageNext').addEventListener('click', () => {
-    currentPage++;
-    render();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  });
+  el.innerHTML = `<button class="load-more-btn" id="loadMoreBtn" type="button">Afficher plus</button>`;
+  const btn = document.getElementById('loadMoreBtn');
+  btn.addEventListener('click', loadNextFilmChunk);
+  if(typeof IntersectionObserver === 'function'){
+    loadMoreObserver = new IntersectionObserver((entries) => {
+      if(entries.some(e => e.isIntersecting)){
+        loadMoreObserver.disconnect();
+        loadMoreObserver = null;
+        loadNextFilmChunk();
+      }
+    }, { rootMargin: '600px 0px' });
+    loadMoreObserver.observe(btn);
+  }
 }
 
 // --- Actions groupées sur le catalogue (retour utilisateur) --- Mode

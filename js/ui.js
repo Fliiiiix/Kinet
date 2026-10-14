@@ -650,38 +650,9 @@ document.querySelectorAll('.magnetic').forEach(btn => {
   });
 });
 
-// --- Affiches qui s'inclinent vers le curseur (v2.8) ---
-// Diversifie le mouvement au-delà des boutons magnétiques (retour
-// utilisateur) — une ligne de catalogue/watchlist/série s'incline
-// légèrement en 3D vers le pointeur, avec une lueur or au passage (même
-// retour : "où est la couleur ?"). Délégation sur document (un seul
-// listener plutôt qu'un par ligne — la liste est reconstruite à chaque
-// render(), pas besoin de rebrancher quoi que ce soit) + throttle rAF.
-// Même bug/correctif que les boutons magnétiques juste au-dessus
-// (motionReduced() lue à chaque mousemove, pas juste au chargement).
-let tiltRow = null;
-let tiltRaf = null;
-document.addEventListener('mousemove', (e) => {
-  const row = e.target.closest('.film-row, .wl-row');
-  if(!row || motionReduced()){
-    if(tiltRow){ tiltRow.classList.remove('tilting'); tiltRow.style.transform = ''; tiltRow = null; }
-    return;
-  }
-  if(row !== tiltRow){
-    if(tiltRow){ tiltRow.classList.remove('tilting'); tiltRow.style.transform = ''; }
-    tiltRow = row;
-    row.classList.add('tilting');
-  }
-  if(tiltRaf) return;
-  tiltRaf = requestAnimationFrame(() => {
-    tiltRaf = null;
-    if(!tiltRow) return;
-    const r = tiltRow.getBoundingClientRect();
-    const px = (e.clientX - r.left) / r.width - 0.5;
-    const py = (e.clientY - r.top) / r.height - 0.5;
-    tiltRow.style.transform = `perspective(700px) rotateX(${(py * -6).toFixed(2)}deg) rotateY(${(px * 6).toFixed(2)}deg) translateY(-2px)`;
-  });
-});
+// L'inclinaison 3D des cartes vers le curseur (v2.8, lueur or) a été
+// retirée au lot 3 de l'audit : sur des affiches sans cadre, le code de
+// design ne garde qu'un léger soulèvement de l'affiche au survol (CSS).
 
 // --- Listes repliées par défaut (v2.1.x, retour utilisateur : "on défile
 // beaucoup trop", l'activité récente et la liste d'amis pouvaient à elles
