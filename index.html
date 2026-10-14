@@ -31,8 +31,8 @@
      ?v=N sur index.html ne suffit pas à lui seul ici, les favicons sont
      mis en cache par le navigateur indépendamment du reste (parfois pour
      des jours), d'où un numéro de version dédié sur CES fichiers. -->
-<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png?v=1">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=1">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png?v=2">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=2">
 <!-- iOS/iPadOS Safari ne lit pas le manifest pour le mode standalone —
      ces 3 balises sont le seul moyen de s'assurer qu'un ajout à l'écran
      d'accueil s'ouvre sans barre d'adresse là-bas. -->
@@ -64,7 +64,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,500&family=Space+Mono:wght@400;700&family=Source+Serif+4:ital,opsz,wght@1,8..60,500;1,8..60,600&display=swap">
-<link rel="stylesheet" href="css/style.css?v=247">
+<link rel="stylesheet" href="css/style.css?v=248">
 </head>
 <body>
 
@@ -92,22 +92,13 @@
     <div class="header-top">
       <div class="title-row">
         <div class="brand-link" id="homeLink" role="link" tabindex="0" title="Retour à l'accueil">
-          <!-- Monogramme K (retour utilisateur — variante E de l'exploration
-               logo : https://claude.ai/artifact/Uh6Qn2yyAKCE92BdDxmYV6). Le K
-               entier (hampe comprise, pas seulement les deux bras comme la
-               toute première version v3.0) a son écho en transparence —
-               filé de mouvement, kínēma, la racine grecque de "cinéma".
-               currentColor suit la couleur du texte "Kinet" juste à côté
-               (donc le thème clair/sombre), seul l'écho reste en bleu glace
-               fixe (--violet). -->
-          <svg class="brand-mark" viewBox="0 0 32 32" width="30" height="30" aria-hidden="true">
-            <g stroke="var(--violet)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.4" transform="translate(2.6,2)">
-              <path d="M9 5 L9 27"></path><path d="M9 16 L23 5"></path><path d="M9 16 L23 27"></path>
-            </g>
-            <g stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" fill="none">
-              <path d="M9 5 L9 27"></path><path d="M9 16 L23 5"></path><path d="M9 16 L23 27"></path>
-            </g>
-          </svg>
+          <!-- Pas de monogramme ICI (retour utilisateur, reconfirmé : "on va
+               pas mettre les 2 à côté logo et nom entier de l'app") — le K
+               (variante E, voir icons/ ci-dessous et
+               https://claude.ai/artifact/Uh6Qn2yyAKCE92BdDxmYV6) vit sur
+               l'icône de l'app (favicon/écran d'accueil), jamais ici à côté
+               du mot "Kinet" en toutes lettres : les deux ensemble se lisent
+               comme une répétition, le K ouvrant déjà "Kinet". -->
           <h1>Kinet</h1>
         </div>
         <div class="version-tag">v<b id="versionTagValue">2.0</b></div>
@@ -2238,133 +2229,133 @@ Légende du 7e art (Légendaire) 2%</div>
 <!-- ?v=N sur chaque js/*.js ci-dessous (voir le commentaire dans <head>) —
      à incrémenter à chaque déploiement, même numéro pour tous les fichiers. -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/supabaseConfig.js?v=247"></script>
+<script src="js/supabaseConfig.js?v=248"></script>
 <!-- Juste après supabaseConfig.js (a besoin de supabaseClient) et avant
      tout le reste : capte les erreurs de chargement des scripts suivants,
      pas seulement celles de l'app une fois démarrée — voir js/logging.js. -->
-<script src="js/logging.js?v=247"></script>
-<script src="js/tmdbConfig.js?v=247"></script>
-<script src="js/data.js?v=247"></script>
-<script src="js/happenings.js?v=247"></script>
+<script src="js/logging.js?v=248"></script>
+<script src="js/tmdbConfig.js?v=248"></script>
+<script src="js/data.js?v=248"></script>
+<script src="js/happenings.js?v=248"></script>
 <!-- Ressort physique vanilla (audit design, apple-design) — avant ui.js,
      qui l'utilise pour le geste tirer-pour-rafraîchir. Aucune dépendance
      entre les deux au chargement (animateSpring() n'est appelée que dans
      des écouteurs tactiles, bien après le chargement complet), gardé
      avant par lisibilité : un utilitaire se charge avant ce qui s'en sert. -->
-<script src="js/spring.js?v=247"></script>
+<script src="js/spring.js?v=248"></script>
 <!-- Avant app.js et les 6 autres modules qui ouvrent/ferment une modale
      (openOverlay/closeOverlay) — l'ordre exact importe peu au runtime
      (rien n'y est appelé au chargement), gardé en premier des scripts
      "app" pour la lisibilité, comme un utilitaire partagé. -->
-<script src="js/ui.js?v=247"></script>
+<script src="js/ui.js?v=248"></script>
 <!-- Avant watchlist.js, qui appelle playRouletteTick()/playRouletteWin()
      (roulette "Surprends-moi") — l'ordre exact importe peu au runtime
      (rien n'y est appelé au chargement), gardé ici pour la lisibilité,
      comme ui.js juste au-dessus. -->
-<script src="js/sound.js?v=247"></script>
+<script src="js/sound.js?v=248"></script>
 <!-- Avant app.js/journal.js/watchlist.js, qui appellent saveOfflineCache()/
      loadOfflineCache()/blockIfOffline() (v1.6, mode hors ligne lecture
      seule) — l'ordre exact importe peu au runtime (rien n'y est appelé au
      chargement, seulement des listeners posés pour plus tard), gardé ici
      pour la lisibilité, comme ui.js juste au-dessus. -->
-<script src="js/offlineQueue.js?v=247"></script>
-<script src="js/offline.js?v=247"></script>
-<script src="js/app.js?v=247"></script>
-<script src="js/tmdb.js?v=247"></script>
-<script src="js/stats.js?v=247"></script>
-<script src="js/achievements.js?v=247"></script>
+<script src="js/offlineQueue.js?v=248"></script>
+<script src="js/offline.js?v=248"></script>
+<script src="js/app.js?v=248"></script>
+<script src="js/tmdb.js?v=248"></script>
+<script src="js/stats.js?v=248"></script>
+<script src="js/achievements.js?v=248"></script>
 <!-- Avant app.js/watchlist.js à l'exécution (pas au chargement — rien
      n'est appelé ici avant un vrai clic/ajout) : les deux appellent
      generateTcgCardsForFilm(), définie ici. -->
-<script src="js/tcg.js?v=247"></script>
-<script src="js/chatbot.js?v=247"></script>
-<script src="js/journal.js?v=247"></script>
+<script src="js/tcg.js?v=248"></script>
+<script src="js/chatbot.js?v=248"></script>
+<script src="js/journal.js?v=248"></script>
 <!-- Après app.js (showToast) — appelée par js/profile.js juste après. -->
-<script src="js/pwa.js?v=247"></script>
-<script src="js/profile.js?v=247"></script>
+<script src="js/pwa.js?v=248"></script>
+<script src="js/profile.js?v=248"></script>
 <!-- Paramètres — après profile.js (referme/rouvre "Ton profil") et pwa.js
      (updateInstallUI()), voir js/settings.js. -->
-<script src="js/settings.js?v=247"></script>
+<script src="js/settings.js?v=248"></script>
 <!-- Après profile.js (closeProfileModal/openProfileModal) et data.js
      (FEEDBACK_CATEGORIES) — même raisonnement que pwa.js juste au-dessus. -->
-<script src="js/feedback.js?v=247"></script>
+<script src="js/feedback.js?v=248"></script>
 <!-- Bilan cinéphile partageable (v2.43) — après journal.js (viewings) et
      profile.js (currentProfile), voir js/recap.js. -->
-<script src="js/recap.js?v=247"></script>
+<script src="js/recap.js?v=248"></script>
 <!-- N'a besoin que de ui.js (openOverlay/closeOverlay) et app.js
      (showToast), chargés bien avant — placé ici pour rester groupé avec
      les autres modales accessibles depuis le chrome plutôt que pour une
      vraie dépendance. -->
-<script src="js/share.js?v=247"></script>
+<script src="js/share.js?v=248"></script>
 <!-- Après happenings.js/achievements.js (définitions) et profile.js
      (closeProfileModal) : admin.js s'appuie sur les trois au clic, jamais au
      chargement — l'ordre exact importe peu, gardé groupé ici pour la
      lisibilité. -->
-<script src="js/admin.js?v=247"></script>
-<script src="js/router.js?v=247"></script>
-<script src="js/publicProfile.js?v=247"></script>
-<script src="js/top.js?v=247"></script>
-<script src="js/friends.js?v=247"></script>
+<script src="js/admin.js?v=248"></script>
+<script src="js/router.js?v=248"></script>
+<script src="js/publicProfile.js?v=248"></script>
+<script src="js/top.js?v=248"></script>
+<script src="js/friends.js?v=248"></script>
 <!-- Après friends.js (cacheProfile/friendDisplayName/friendAvatarHtml) et
      journal.js (formatViewingDate), avant groups.js qui l'appelle depuis
      openGroupDetail() — l'ordre exact importe peu au runtime (tout est en
      fonctions globales appelées après chargement complet), gardé groupé
      ici pour la lisibilité. -->
-<script src="js/activity.js?v=247"></script>
-<script src="js/watchlist.js?v=247"></script>
+<script src="js/activity.js?v=248"></script>
+<script src="js/watchlist.js?v=248"></script>
 <!-- Après watchlist.js (loadWatchlist/watchlist, réutilisés pour exclure
      ce qui y est déjà) et app.js (getDisplayNote, chargé plus haut) — voir
      js/suggestions.js. Avant auth.js, qui appelle loadSuggestions() depuis
      showApp(). -->
-<script src="js/suggestions.js?v=247"></script>
+<script src="js/suggestions.js?v=248"></script>
 <!-- Import externe (Letterboxd pour l'instant) — après watchlist.js/app.js/
      tmdb.js/journal.js dont il réutilise films/watchlist/searchTmdb()/
      addViewing(). Voir js/importExternal.js. -->
-<script src="js/importExternal.js?v=247"></script>
+<script src="js/importExternal.js?v=248"></script>
 <!-- Fiche film (v2.1) — voir js/filmDetail.js. Regroupée ici avec
      friends.js/watchlist.js dont elle réutilise les helpers (même
      remarque que suggestions.js juste au-dessus : l'ordre exact n'importe
      pas au runtime, tout est en fonctions appelées après chargement
      complet — router.js, plus haut, appelle déjà openFriends()/
      openWatchlist() en aval de leur propre script de la même façon). -->
-<script src="js/filmDetail.js?v=247"></script>
+<script src="js/filmDetail.js?v=248"></script>
 <!-- Après watchlist.js : js/upcoming.js réutilise le tableau watchlist déjà
      chargé (voir plus bas). -->
-<script src="js/series.js?v=247"></script>
+<script src="js/series.js?v=248"></script>
 <!-- Après watchlist.js ET series.js — a besoin des deux tableaux chargés
      (loadWatchlist()/loadTrackedShows()), voir js/upcoming.js. -->
-<script src="js/upcoming.js?v=247"></script>
-<script src="js/groups.js?v=247"></script>
-<script src="js/proposals.js?v=247"></script>
+<script src="js/upcoming.js?v=248"></script>
+<script src="js/groups.js?v=248"></script>
+<script src="js/proposals.js?v=248"></script>
 <!-- Après groups.js (renderInviteBox appelée depuis renderGroupDetail) et
      proposals.js (chosenProposal) — voir js/invites.js. -->
-<script src="js/invites.js?v=247"></script>
+<script src="js/invites.js?v=248"></script>
 <!-- Listes thématiques (retour utilisateur, étude comparative Letterboxd) —
      après friends.js (ensureProfilesCached vient de filmDetail.js, déjà
      chargé ; friendDisplayName/cacheProfile de friends.js) et filmDetail.js
      (goToFilmDetail réutilisé pour ouvrir un film d'une liste), voir
      js/lists.js. -->
-<script src="js/lists.js?v=247"></script>
+<script src="js/lists.js?v=248"></script>
 <!-- Après activity.js (rowToActivityEvent/renderActivityRowHtml) et
      friends.js (friendProfiles/cacheProfile) qu'elle réutilise pour le
      digest, avant auth.js qui appelle refreshActivityBadge()/
      maybeShowDigest() depuis showApp(). -->
-<script src="js/activityState.js?v=247"></script>
+<script src="js/activityState.js?v=248"></script>
 <!-- Après activityState.js (loadActivityState/activityState réutilisés
      pour son propre badge "vu") et avant auth.js qui appelle
      initChangelog() depuis showApp(). -->
-<script src="js/changelog.js?v=247"></script>
+<script src="js/changelog.js?v=248"></script>
 <!-- Recherche globale unifiée (v2.42) — après series.js/friends.js/
      groups.js dont elle réutilise les tableaux déjà chargés et les
      fonctions d'ouverture (openFriendProfile/goToSeriesDetail/goToGroup),
      et après app.js/data.js pour getSearchTerms()/normalizeSearch()/
      FILM_PLACEHOLDER_SVG. Voir js/globalSearch.js. -->
-<script src="js/globalSearch.js?v=247"></script>
+<script src="js/globalSearch.js?v=248"></script>
 <!-- Tuto d'accueil interactif — avant auth.js dont showApp() appelle
      maybeStartOnboarding() ; après ui.js/router.js/profile.js/logging.js
      dont il réutilise respectivement openOverlay-style/goHome/
      closeProfileModal/logEvent. -->
-<script src="js/onboarding.js?v=247"></script>
-<script src="js/auth.js?v=247"></script>
+<script src="js/onboarding.js?v=248"></script>
+<script src="js/auth.js?v=248"></script>
 </body>
 </html>
