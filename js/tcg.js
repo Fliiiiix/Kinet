@@ -254,6 +254,18 @@ function openBoosterReveal(cards){
   pack.innerHTML = cards.map((c, i) => `
     <div class="tcg-booster-card" id="tcgBoosterCard${i}" data-rarity="${c.rarity}">
       <div class="tcg-booster-card-face tcg-booster-card-back">
+        <!-- Même monogramme K que l'entête (variante E, voir index.html) —
+             mais échos en var(--text) plutôt que --violet : le fond de
+             cette face EST déjà un dégradé --violet -> --plum, un écho
+             --violet s'y fondrait et disparaîtrait côté bleu. -->
+        <svg class="brand-mark tcg-booster-mark" viewBox="0 0 32 32" width="26" height="26" aria-hidden="true">
+          <g stroke="var(--text)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.4" transform="translate(2.6,2)">
+            <path d="M9 5 L9 27"></path><path d="M9 16 L23 5"></path><path d="M9 16 L23 27"></path>
+          </g>
+          <g stroke="var(--text)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" fill="none">
+            <path d="M9 5 L9 27"></path><path d="M9 16 L23 5"></path><path d="M9 16 L23 27"></path>
+          </g>
+        </svg>
         <div class="tcg-booster-wordmark" aria-hidden="true">KINET</div>
       </div>
       <div class="tcg-booster-card-face tcg-booster-card-front rarity-${c.rarity}">

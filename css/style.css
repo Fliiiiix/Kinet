@@ -293,6 +293,7 @@ header{
   cursor:pointer;
   transition:opacity .15s;
 }
+.brand-mark{flex:none; color:var(--text);}
 .brand-link:hover{opacity:0.82;}
 .brand-link:focus-visible{outline:2px solid var(--violet-dim); outline-offset:4px; border-radius:2px;}
 /* Ligne du haut (v2.1.x, retour utilisateur — "l'organisation entre
@@ -2254,7 +2255,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   cursor:grabbing;
 }
 /* Pas d'animation autonome sous prefers-reduced-motion (même règle que
-   .reveal/.brand-mark-*) — le contour pointillé (déjà posé sur .dragging
+   .reveal) — le contour pointillé (déjà posé sur .dragging
    ci-dessus, et ici sur les icônes encore "au repos") prend seul le relais
    comme indicateur "sélectionnable" ; le ghost continue de suivre le
    pointeur (translate n'est pas une animation autonome, c'est le geste
@@ -3930,15 +3931,17 @@ input[type="range"]::-moz-range-thumb{
 }
 .tcg-booster-card-back{
   background:linear-gradient(160deg, var(--violet) 0%, var(--plum) 100%);
+  flex-direction:column;
+  gap:8px;
 }
-/* Dos de carte (v3.1) — même wordmark que l'entête plutôt qu'une icône :
-   après retour utilisateur sur le logo de l'entête ("répétition avec le
-   mot Kinet", mark peu lisible en petit), pas de raison de garder la
-   même icône ici alors qu'elle n'existe plus ailleurs dans l'appli. */
+/* Dos de carte (v3.1) — même wordmark que l'entête ; monogramme K remis
+   au-dessus (variante E, voir index.html/.brand-mark) depuis que l'entête
+   en a un à nouveau. */
 .tcg-booster-wordmark{
   font-family:'Bricolage Grotesque', sans-serif; font-weight:800; font-size:20px;
   letter-spacing:0.04em; color:var(--text);
 }
+.tcg-booster-mark{color:var(--text);}
 .tcg-booster-card-front{
   transform:rotateY(180deg);
   background:var(--surface-2);
