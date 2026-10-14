@@ -254,7 +254,7 @@ function openBoosterReveal(cards){
   pack.innerHTML = cards.map((c, i) => `
     <div class="tcg-booster-card" id="tcgBoosterCard${i}" data-rarity="${c.rarity}">
       <div class="tcg-booster-card-face tcg-booster-card-back">
-        <div class="brand-mark" aria-hidden="true"><svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><g style="stroke:var(--violet)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" opacity="0.45" transform="translate(2.6,2)" fill="none"><path d="M9 16 L23 5"/><path d="M9 16 L23 27"/></g><g style="stroke:var(--text)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M9 5 L9 27"/><path d="M9 16 L23 5"/><path d="M9 16 L23 27"/></g></svg></div>
+        <div class="tcg-booster-wordmark" aria-hidden="true">KINET</div>
       </div>
       <div class="tcg-booster-card-face tcg-booster-card-front rarity-${c.rarity}">
         ${tcgCardFaceHtml(c)}

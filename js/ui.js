@@ -597,23 +597,11 @@ function noteColorClass(note){
   return 'rate-high';
 }
 
-// --- Mark de l'entête : relai entrée → oscillation continue (v2.7) ---
-// L'entrée (brandMarkGold, voir css/style.css) tourne une fois puis
-// s'arrête (animation non infinite) ; une fois finie, .idle prend le
-// relai pour l'oscillation en boucle — deux animations jamais actives en
-// même temps sur le même élément (la cascade CSS choisit .idle une fois
-// la classe posée), pas de conflit de transform.
-// Écouteur toujours posé (motionReduced() lue à l'événement, pas à la
-// pose) : .idle elle-même est une animation CSS classique, déjà coupée
-// comme toutes les autres par html.reduce-motion (voir css/style.css) —
-// seul garde-fou nécessaire ici, ne jamais ajouter .idle après une
-// première rotation qui n'aurait jamais eu lieu (durée quasi nulle sous
-// html.reduce-motion, animationend part quand même).
-document.querySelectorAll('.brand-mark-gold').forEach(el => {
-  el.addEventListener('animationend', (e) => {
-    if(e.animationName === 'brandMarkGold') el.classList.add('idle');
-  });
-});
+// Mark de l'entête (.brand-mark-gold, oscillation v2.7) retiré en v3.1 —
+// plus de logo séparé, juste le wordmark "Kinet" en <h1>. Ce bloc ne
+// faisait plus rien depuis la refonte v3.0 (querySelectorAll sur une
+// classe qui n'existait déjà plus dans le DOM), supprimé pour de bon
+// plutôt que laissé mort.
 
 // --- Boutons magnétiques (v2.7, .magnetic) ---
 // Se laissent tirer légèrement vers le curseur qui approche, reviennent

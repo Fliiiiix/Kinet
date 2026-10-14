@@ -295,28 +295,6 @@ header{
 }
 .brand-link:hover{opacity:0.82;}
 .brand-link:focus-visible{outline:2px solid var(--violet-dim); outline-offset:4px; border-radius:2px;}
-/* Logo (v3.0) — monogramme K "filé cinétique" : les deux bras du K sont
-   redoublés en transparence (glace, 45%), légèrement décalés, comme un
-   filé de mouvement. Remplace le mark "double exposition" violet/or
-   (v2.7) — abandonné avec le reste de la palette violette. SVG, pas des
-   div : contrairement à l'essai v2.1 (rotation + transform-origin en
-   %, qui avait posé problème), ce mark n'a NI rotation NI
-   transform-origin en pourcentage — translate() fixe uniquement, donc
-   pas le même risque de rendu incohérent entre moteurs. */
-.brand-mark{flex:none; width:30px; height:30px; animation:brandMarkIn 0.4s cubic-bezier(.3,.9,.4,1) both;}
-.brand-mark svg{display:block; width:100%; height:100%;}
-@keyframes brandMarkIn{
-  from{opacity:0; transform:scale(0.8);}
-  to{opacity:1; transform:scale(1);}
-}
-@media (prefers-reduced-motion: reduce){
-  .brand-mark{animation:none;}
-}
-.brand-tag{
-  font-family:'Space Mono', monospace; font-size:10px; color:var(--gold);
-  letter-spacing:0.04em; padding-left:9px; margin-left:2px;
-  border-left:1px solid var(--line); align-self:center;
-}
 /* Ligne du haut (v2.1.x, retour utilisateur — "l'organisation entre
    icône, Kinet et série/film") : marque (.title-row) et rangée
    utilitaire (#userBar) COTE À COTE — la marque dit "qui/où", la rangée
@@ -3966,7 +3944,14 @@ input[type="range"]::-moz-range-thumb{
 .tcg-booster-card-back{
   background:linear-gradient(160deg, var(--violet) 0%, var(--plum) 100%);
 }
-.tcg-booster-card-back .brand-mark{width:48px; height:48px; animation:none;}
+/* Dos de carte (v3.1) — même wordmark que l'entête plutôt qu'une icône :
+   après retour utilisateur sur le logo de l'entête ("répétition avec le
+   mot Kinet", mark peu lisible en petit), pas de raison de garder la
+   même icône ici alors qu'elle n'existe plus ailleurs dans l'appli. */
+.tcg-booster-wordmark{
+  font-family:'Bricolage Grotesque', sans-serif; font-weight:800; font-size:20px;
+  letter-spacing:0.04em; color:var(--text);
+}
 .tcg-booster-card-front{
   transform:rotateY(180deg);
   background:var(--surface-2);
