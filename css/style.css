@@ -1635,24 +1635,9 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   position:relative;
   padding:48px 0 72px;
 }
-/* Texture plein écran (grille de points) + halo de couleur — position
-   fixed et non absolute : couvre tout le viewport quelle que soit la
-   hauteur réelle du contenu, sans dépendre d'un calcul de hauteur. Un
-   pur pattern CSS (pas de coordonnées à recalculer) : par construction
-   correct à n'importe quelle taille d'écran, y compris mobile — c'est
-   ce qui manquait le plus (mobile ressortait toujours vide, la vitrine
-   à coordonnées absolues d'avant y était masquée). */
-.auth-pattern{
-  position:fixed;
-  inset:0;
-  z-index:-2;
-  pointer-events:none;
-  opacity:0.5;
-  background-image:radial-gradient(var(--line) 1px, transparent 1px);
-  background-size:26px 26px;
-  -webkit-mask-image:radial-gradient(120% 70% at 50% 0%, black 0%, transparent 85%);
-  mask-image:radial-gradient(120% 70% at 50% 0%, black 0%, transparent 85%);
-}
+/* Ancienne texture de points de l'écran de connexion : retirée (code de
+   design, fond uni, audit D7). L'élément reste dans le HTML, masqué. */
+.auth-pattern{display:none;}
 #authContainer::before{
   content:'';
   position:fixed;
@@ -1776,16 +1761,12 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 
 /* États vides : une petite marque en couronne (dégradé violet/or de la marque)
    au-dessus du texte, pour qu'une liste vide ait une présence sans être criarde. */
+/* Repère discret d'un état vide : anneau neutre, immobile (code de design :
+   pas de couleur décorative, pas d'animation en boucle). */
 .empty-state::before{
   content:""; display:block; width:44px; height:44px; margin:0 auto 14px; border-radius:50%;
-  background:
-    radial-gradient(circle at 35% 35%, transparent 0 9px, var(--surface-2) 10px),
-    conic-gradient(from 200deg, var(--violet), var(--gold), var(--violet));
-  opacity:.55;
-  animation:emptyBreath 3.2s ease-in-out infinite;
+  border:2px solid var(--line-strong);
 }
-@keyframes emptyBreath{0%,100%{transform:scale(1); opacity:.5;} 50%{transform:scale(1.06); opacity:.75;}}
-@media (prefers-reduced-motion: reduce){ .empty-state::before{animation:none;} }
 .empty-state{
   text-align:center;
   padding:60px 20px;
