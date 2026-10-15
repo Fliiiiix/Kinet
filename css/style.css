@@ -6852,3 +6852,70 @@ html:has(#authContainer:not([style*="none"])) #versionTag{display:none !importan
   /* 3 colonnes, comme les autres grilles d'affiches */
   .fr-posters{grid-template-columns:repeat(3, minmax(0, 1fr)); gap:var(--sp-4) var(--sp-3);}
 }
+
+/* ==========================================================
+   TOP FILMS, piste A du 15/10 (draft Top films, choix de Flix).
+   Onglets en texte dans l'en-tête, podium des trois premiers, liste
+   avec ta note ou « + À voir », films à une seule note à part.
+   Voir renderTopFilms(), js/top.js.
+   ========================================================== */
+#topPage .view-toggle[hidden]{display:none;}
+#topPage .page-header{flex-wrap:wrap; row-gap:var(--sp-3); margin-bottom:var(--sp-4);}
+#topPage .top-tabs{display:flex; flex-wrap:nowrap; gap:var(--sp-5); margin:0;}
+.top-tab{background:none; border:0; border-bottom:2px solid transparent; border-radius:0; padding:0 0 var(--sp-1); cursor:pointer; font-family:var(--font-text); font-size:var(--fs-sm); font-weight:600; color:var(--text-2); white-space:nowrap; transition:color var(--dur-fast), border-color var(--dur-fast);}
+.top-tab:hover{color:var(--text-1);}
+.top-tab.is-active{color:var(--text-1); border-bottom-color:var(--accent);}
+.top-tab:focus-visible{outline:2px solid var(--accent); outline-offset:4px; border-radius:4px;}
+.top-how{margin:0 0 var(--sp-5); max-width:62ch; font-size:var(--fs-xs); color:var(--text-2);}
+.top-how[hidden]{display:none;}
+.top-board{max-width:860px;}
+/* Podium : trois affiches, la première un peu plus haut */
+.top-podium{display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:var(--sp-5); align-items:end; max-width:600px; margin:var(--sp-5) 0 var(--sp-4);}
+.top-pod{display:grid; gap:6px; min-width:0; cursor:pointer;}
+.top-pod-img{position:relative; aspect-ratio:2/3; border-radius:var(--r-sm); overflow:hidden; background:var(--surface-2); color:var(--text-3); display:grid; place-items:center;}
+.top-pod.is-first .top-pod-img{transform:translateY(calc(-1 * var(--sp-3)));}
+.top-pod-poster{width:100%; height:100%; object-fit:cover; display:block;}
+.top-pod-img .top-poster-empty svg{width:32px; height:32px;}
+.top-pod-rank{position:absolute; top:6px; left:6px; min-width:26px; height:26px; padding:0 6px; border-radius:var(--r-full); background:rgba(var(--glass-rgb),0.78); display:grid; place-items:center; font-size:var(--fs-xs); font-weight:600; font-variant-numeric:tabular-nums; color:var(--text-1);}
+.top-pod.is-first .top-pod-rank{background:var(--accent); color:var(--accent-ink);}
+.top-pod-note{position:absolute; top:6px; right:6px; padding:3px 6px; border-radius:var(--r-sm); background:rgba(var(--glass-rgb),0.78); font-size:var(--fs-xs); font-weight:600; font-variant-numeric:tabular-nums;}
+.top-pod-title{font-size:var(--fs-sm); font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; transition:color var(--dur-fast);}
+.top-pod-sub{font-size:var(--fs-xs); color:var(--text-2); margin-top:-4px;}
+.top-pod:hover .top-pod-title, .top-pod:focus-visible .top-pod-title{color:var(--accent);}
+.top-pod:focus-visible{outline:none;}
+.top-pod:focus-visible .top-pod-img{outline:2px solid var(--accent); outline-offset:2px;}
+/* Lignes */
+.top-line{display:flex; align-items:center; gap:var(--sp-3); min-height:72px; padding:var(--sp-1) 0; border-bottom:1px solid var(--line); cursor:pointer;}
+.top-line:hover .top-line-title, .top-line:focus-visible .top-line-title{color:var(--accent);}
+.top-line-rank{flex:none; width:28px; text-align:right; font-size:var(--fs-sm); font-weight:600; color:var(--text-2); font-variant-numeric:tabular-nums;}
+.top-line-poster{flex:none; width:40px; height:60px; border-radius:var(--r-sm); object-fit:cover; background:var(--surface-2); color:var(--text-3); display:grid; place-items:center;}
+.top-line-poster svg{width:18px; height:18px;}
+.top-line-main{flex:1; min-width:0;}
+.top-line-title{font-size:var(--fs-sm); font-weight:600; color:var(--text-1); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; transition:color var(--dur-fast);}
+.top-line-sub{font-size:var(--fs-xs); color:var(--text-2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.top-line-note{flex:none; width:40px; text-align:right; font-size:var(--fs-md); font-weight:600; font-variant-numeric:tabular-nums;}
+.top-me{flex:none; width:104px; text-align:right; font-size:var(--fs-xs); color:var(--text-2);}
+.top-me b{font-size:var(--fs-sm); font-weight:600;}
+.top-add{height:30px; padding:0 var(--sp-3); border:1px solid var(--line-strong); border-radius:var(--r-full); background:none; cursor:pointer; font-family:var(--font-text); font-size:var(--fs-xs); font-weight:600; color:var(--text-1); white-space:nowrap; transition:border-color var(--dur-fast), color var(--dur-fast);}
+.top-add:hover{border-color:var(--accent); color:var(--accent);}
+.top-add:disabled{opacity:0.5; cursor:default;}
+:is(.top-pod-note, .top-line-note, .top-me b).rate-low{color:var(--note-low);}
+:is(.top-pod-note, .top-line-note, .top-me b).rate-mid{color:var(--note-mid);}
+:is(.top-pod-note, .top-line-note, .top-me b).rate-high{color:var(--note-high);}
+/* Une seule note pour l'instant */
+.top-solo{margin-top:var(--sp-7);}
+.top-solo-label{display:flex; flex-wrap:wrap; align-items:baseline; gap:var(--sp-1) var(--sp-2); margin:0 0 var(--sp-1); font-family:var(--font-text); font-size:var(--fs-xs); font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:var(--text-2);}
+.top-solo-label span{font-weight:400; letter-spacing:0; text-transform:none; color:var(--text-3);}
+.top-more{margin-top:var(--sp-3); background:none; border:0; padding:0; cursor:pointer; font-family:var(--font-text); font-size:var(--fs-sm); font-weight:600; color:var(--accent);}
+@media (max-width:600px){
+  /* Onglets sur leur propre ligne, sous « Retour » et le titre */
+  #topPage .top-tabs{order:3; width:100%;}
+  .top-podium{gap:var(--sp-3); margin-top:var(--sp-4);}
+  .top-pod.is-first .top-pod-img{transform:translateY(calc(-1 * var(--sp-2)));}
+  .top-pod-title{font-size:var(--fs-xs);}
+  .top-line{gap:var(--sp-2);}
+  .top-line-rank{width:22px;}
+  .top-line-poster{width:36px; height:54px;}
+  .top-line-note{width:34px;}
+  .top-me{width:auto; min-width:58px;}
+}
