@@ -188,6 +188,7 @@ function goToSeriesDetail(showId, navList){
 // d'origine, retour par défaut (catalogue ou liste des séries). Le
 // catalogue, lui, repart toujours du haut (goHome(), voir resetHomeView()).
 let detailOrigin = null; // { hash, scrollY } ou null
+let lastRenderedHash = null; // dernière page affichée (remise en haut au changement)
 let pendingScrollRestore = null; // { hash, scrollY } ou null
 function isDetailRoute(name){
   return name === 'filmDetail' || name === 'seriesDetail';
@@ -285,6 +286,11 @@ async function renderRoute(){
   if(!isDetailRoute(route.name)) detailOrigin = null;
   const restoreScrollY = (pendingScrollRestore && pendingScrollRestore.hash === location.hash) ? pendingScrollRestore.scrollY : null;
   pendingScrollRestore = null;
+  // Nouvelle page : on repart du haut (vu le 15/10 : Paramètres, ouvert
+  // depuis le bas du Profil, s'ouvrait déjà descendu). Sauf retour depuis une
+  // fiche, où la hauteur d'avant est rétablie plus bas.
+  if(restoreScrollY === null && location.hash !== lastRenderedHash && typeof window.scrollTo === 'function') window.scrollTo(0, 0);
+  lastRenderedHash = location.hash;
   // États actifs (onglets Films/Séries, barre mobile, entête) mis à jour
   // AVANT les pages à part ci-dessous : sinon le profil public gardait
   // l'onglet de la page précédente allumé (audit C6).

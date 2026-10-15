@@ -1,7 +1,8 @@
 // --- Cartes : l'album sans hasard (draft Profil du 15/10, piste A) ---
 // Plus de boosters, de poussière, de fabrication ni d'échanges : l'album se
 // calcule depuis ton catalogue, sur un seul écran.
-// - Chaque film noté donne sa carte, son rang suit ta note.
+// - Chaque film de ton catalogue donne sa carte, son rang suit ta note
+//   (Figurant tant qu'il n'est pas noté : un film vu, importé sans note).
 // - Un réalisateur ou un acteur arrive avec ton premier film avec lui, puis
 //   monte de rang avec les suivants (2, 4, 7 films).
 // - « Bientôt dans ta collection » : les cartes près de monter, reliées à ce
@@ -22,8 +23,10 @@ let albumTab = 'films';
 let albumShown = ALBUM_PAGE;
 let albumUpdating = false;
 
-// Rang d'une carte film : ta note. 5 Légende, 4.5 Tête d'affiche, 4 Second rôle.
+// Rang d'une carte film : ta note. 5 Légende, 4.5 Tête d'affiche, 4 Second
+// rôle, en dessous (ou pas encore noté) Figurant.
 function albumFilmRank(note){
+  if(note == null) return 1;
   if(note >= 5) return 4;
   if(note >= 4.5) return 3;
   if(note >= 4) return 2;
@@ -67,7 +70,7 @@ function buildAlbum(ratedFilms, watchlistItems, filmCards, links, persons){
 
   const filmsCards = ratedFilms
     .map(f => ({ kind: 'film', film: f, note: f.note, rank: albumFilmRank(f.note) }))
-    .sort((a, b) => b.note - a.note || a.film.title.localeCompare(b.film.title, 'fr'));
+    .sort((a, b) => (b.note != null ? b.note : -1) - (a.note != null ? a.note : -1) || a.film.title.localeCompare(b.film.title, 'fr'));
 
   const people = new Map(); // person card id -> { person, seen: [titles], wl: [titles] }
   links.forEach(l => {
@@ -103,13 +106,15 @@ function buildAlbum(ratedFilms, watchlistItems, filmCards, links, persons){
   };
 }
 
+// Les films du catalogue (avec fiche TMDB), une fois chacun, avec ta note
+// si tu en as donné une.
 function albumRatedFilms(){
   const byTmdb = new Map();
   films.forEach(f => {
+    if(!f.tmdbId) return;
     const note = getDisplayNote(f);
-    if(!f.tmdbId || note == null) return;
     const prev = byTmdb.get(f.tmdbId);
-    if(!prev || note > prev.note) byTmdb.set(f.tmdbId, { tmdbId: f.tmdbId, title: f.title, posterUrl: f.posterUrl, note, id: f.id });
+    if(!prev || (note != null && (prev.note == null || note > prev.note))) byTmdb.set(f.tmdbId, { tmdbId: f.tmdbId, title: f.title, posterUrl: f.posterUrl, note, id: f.id });
   });
   return Array.from(byTmdb.values());
 }
@@ -150,7 +155,9 @@ function albumNextSub(x){
 function albumCardHtml(c, index){
   const img = c.kind === 'film' ? c.film.posterUrl : c.person.image_url;
   const name = c.kind === 'film' ? c.film.title : c.person.name;
-  const extra = c.kind === 'film' ? `ta note ${Number(c.note).toFixed(1)}` : `${c.count} film${c.count > 1 ? 's' : ''}`;
+  const extra = c.kind === 'film'
+    ? (c.note != null ? `ta note ${Number(c.note).toFixed(1)}` : 'pas encore noté')
+    : `${c.count} film${c.count > 1 ? 's' : ''}`;
   return `
     <button type="button" class="al-card al-r${c.rank}" data-album-index="${index}">
       <span class="al-face">${img ? `<img src="${img}" alt="" loading="lazy" decoding="async">` : (c.kind === 'film' ? FILM_PLACEHOLDER_SVG : uiIcon('user'))}</span>
@@ -177,7 +184,7 @@ function renderAlbum(){
   const total = albumTotal(a);
   el.innerHTML = `
     <div class="al-sum"><b>${total} carte${total > 1 ? 's' : ''}</b><span>${albumSummaryText(a)}</span></div>
-    <p class="al-rule">Chaque film noté donne sa carte, son rang suit ta note (5 : Légende, 4.5 : Tête d’affiche, 4 : Second rôle). Un réalisateur ou un acteur arrive dès ton premier film avec lui, puis monte : 2 films Second rôle, 4 Tête d’affiche, 7 Légende.</p>
+    <p class="al-rule">Chaque film de ton catalogue donne sa carte, son rang suit ta note (5 : Légende, 4.5 : Tête d’affiche, 4 : Second rôle, sinon Figurant). Un réalisateur ou un acteur arrive dès ton premier film avec lui, puis monte : 2 films Second rôle, 4 Tête d’affiche, 7 Légende.</p>
     <p class="al-status" id="albumStatus" aria-live="polite"></p>
     ${a.next.length ? `
       <div class="pp-label">Bientôt dans ta collection</div>

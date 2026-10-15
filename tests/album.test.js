@@ -69,4 +69,17 @@ test('les films notés sans cartes générées sont signalés pour le rattrapage
   assert.strictEqual(a.films.length, 1, 'la carte du film existe quand même');
 });
 
+test('un film vu sans note donne une carte Figurant et compte pour ses acteurs', () => {
+  const ctx = buildContext();
+  const a = ctx.buildAlbum(
+    [{ tmdbId: 1, title: 'Heat', note: null }, { tmdbId: 2, title: 'Collateral', note: 4 }],
+    [], [{ id: 11, tmdb_id: 1 }, { id: 12, tmdb_id: 2 }],
+    [{ film_card_id: 11, person_card_id: 101 }, { film_card_id: 12, person_card_id: 101 }],
+    [{ id: 101, card_type: 'director', name: 'Michael Mann' }]
+  );
+  assert.deepStrictEqual(plain(a.films.map(f => [f.film.title, f.rank])), [['Collateral', 2], ['Heat', 1]]);
+  assert.strictEqual(a.directors[0].count, 2);
+  assert.ok(ctx.albumCardHtml(a.films[1], 1).includes('pas encore noté'));
+});
+
 module.exports = run('album.test.js');
