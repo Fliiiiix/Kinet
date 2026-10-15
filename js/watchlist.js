@@ -203,7 +203,56 @@ function toggleMyStreamingService(key){
   const mine = getMyStreamingServices();
   if(mine.has(key)) mine.delete(key); else mine.add(key);
   try{ localStorage.setItem(MY_SERVICES_KEY, JSON.stringify(Array.from(mine))); }catch(e){}
+  saveMyStreamingServicesRemote(Array.from(mine));
   return mine;
+}
+
+// Les mêmes abonnements sur PC et téléphone (draft Profil du 15/10) : la
+// table user_prefs (migration 062, lisible par son seul propriétaire) fait
+// foi quand elle existe ; le localStorage reste la copie locale, et le seul
+// endroit tant que la migration n'est pas lancée.
+let myServicesRemoteReady = false;
+
+async function saveMyStreamingServicesRemote(list){
+  if(!myServicesRemoteReady || !currentUser) return;
+  const { error } = await supabaseClient.from('user_prefs')
+    .upsert({ user_id: currentUser.id, streaming_services: list, updated_at: new Date().toISOString() });
+  if(error) console.error(error);
+}
+
+// Appelée après la connexion (js/auth.js), sans être attendue. Premier
+// appareil après la migration : rien en base, on y range ce qui est déjà
+// coché ici.
+async function syncMyStreamingServices(){
+  if(!currentUser) return;
+  const { data, error } = await supabaseClient.from('user_prefs')
+    .select('streaming_services').eq('user_id', currentUser.id).maybeSingle();
+  if(error){ myServicesRemoteReady = false; return; } // migration 062 pas encore lancée
+  myServicesRemoteReady = true;
+  if(data && Array.isArray(data.streaming_services)){
+    try{ localStorage.setItem(MY_SERVICES_KEY, JSON.stringify(data.streaming_services)); }catch(e){}
+    if(typeof parseRoute === 'function' && parseRoute().name === 'watchlist') renderWatchlist();
+    return;
+  }
+  const local = Array.from(getMyStreamingServices());
+  if(local.length) saveMyStreamingServicesRemote(local);
+}
+
+// Depuis Paramètres → Mes abonnements : le panneau s'ouvre dès que le bouton
+// « Mes abonnements » d'À voir apparaît (il attend les plateformes).
+function openMyServicesPanelWhenReady(){
+  const started = Date.now();
+  const tick = () => {
+    const toggle = document.getElementById('wlSubsToggle');
+    const panel = document.getElementById('wlSubsPanel');
+    if(toggle && panel && toggle.style.display !== 'none' && parseRoute().name === 'watchlist'){
+      if(panel.style.display === 'none') toggleMyServicesPanel();
+      toggle.scrollIntoView({ block: 'center', behavior: motionReduced() ? 'auto' : 'smooth' });
+      return;
+    }
+    if(Date.now() - started < 8000) setTimeout(tick, 150);
+  };
+  setTimeout(tick, 150);
 }
 
 // Logos dans le coin bas de l'affiche : deux au plus, puis « +n ». Avec des

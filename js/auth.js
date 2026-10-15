@@ -67,6 +67,9 @@ async function showApp(){
     isAdmin() ? loadAdminConfig() : Promise.resolve()
   ]);
   buildGenreFilterOptions(); // js/app.js — avant render(), pour que le select soit déjà rempli au 1er affichage
+  // Mes abonnements partagés entre appareils (js/watchlist.js) : pas
+  // attendu, À voir se recale tout seul si la base en sait plus.
+  if(typeof syncMyStreamingServices === 'function') syncMyStreamingServices().catch(e => console.error(e));
   render();
   await renderRoute(); // gère un lien direct vers une page Groupes (F5, etc.)
   // Après renderRoute() : un lien d'invitation ouvert sans session (voir
@@ -203,15 +206,25 @@ document.getElementById('authChangeEmailBtn').addEventListener('click', showAuth
 document.getElementById('logoutBtn').addEventListener('click', handleLogout);
 
 // Suppression de compte (décision validée, migration 053). Irréversible : on
-// exige la saisie exacte de SUPPRIMER. Sans la migration appliquée, la fonction
-// n'existe pas et on le dit, au lieu de faire comme si ça avait marché.
-async function handleDeleteAccount(){
+// exige la saisie exacte de SUPPRIMER, dans une fenêtre de Kinet (draft
+// Profil du 15/10 : plus de boîte du navigateur). Sans la migration
+// appliquée, la fonction n'existe pas et on le dit, au lieu de faire comme si
+// ça avait marché.
+function handleDeleteAccount(){
   if(blockIfOffline()) return;
-  const saisie = prompt('Pour supprimer ton compte et toutes tes données, tape SUPPRIMER (en majuscules).');
-  if(saisie !== 'SUPPRIMER'){
-    if(saisie !== null) showToast("Suppression annulée : le mot exact n'a pas été tapé.");
-    return;
-  }
+  const input = document.getElementById('deleteAccountInput');
+  input.value = '';
+  document.getElementById('deleteAccountConfirmBtn').disabled = true;
+  openOverlay('deleteAccountOverlay');
+  input.focus();
+}
+function closeDeleteAccountDialog(){
+  closeOverlay('deleteAccountOverlay');
+}
+async function confirmDeleteAccount(){
+  if(document.getElementById('deleteAccountInput').value.trim() !== 'SUPPRIMER') return;
+  if(blockIfOffline()) return;
+  closeDeleteAccountDialog();
   const { error } = await supabaseClient.rpc('delete_my_account');
   if(error){
     showToast(/function .* does not exist|Could not find/i.test(error.message)
@@ -226,6 +239,18 @@ async function handleDeleteAccount(){
   showToast('Compte supprimé.');
 }
 document.getElementById('deleteAccountBtn').addEventListener('click', handleDeleteAccount);
+document.getElementById('deleteAccountInput').addEventListener('input', (e) => {
+  document.getElementById('deleteAccountConfirmBtn').disabled = e.target.value.trim() !== 'SUPPRIMER';
+});
+document.getElementById('deleteAccountInput').addEventListener('keydown', (e) => {
+  if(e.key === 'Enter') confirmDeleteAccount();
+});
+document.getElementById('deleteAccountConfirmBtn').addEventListener('click', confirmDeleteAccount);
+document.getElementById('deleteAccountCancelBtn').addEventListener('click', closeDeleteAccountDialog);
+document.getElementById('deleteAccountCloseBtn').addEventListener('click', closeDeleteAccountDialog);
+document.getElementById('deleteAccountOverlay').addEventListener('click', (e) => {
+  if(e.target.id === 'deleteAccountOverlay') closeDeleteAccountDialog();
+});
 
 // --- Mur d'affiches de la page de connexion (piste A du 15/10) ---
 // Une sélection fixe de films connus (affiches françaises de TMDB), pas le

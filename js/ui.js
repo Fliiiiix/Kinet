@@ -139,6 +139,7 @@ document.addEventListener('keydown', (e) => {
     // jamais rejoint cette table au moment de son ajout.
     recapOverlay: () => closeRecap(),
     settingsOverlay: () => closeSettingsModal(),
+    deleteAccountOverlay: () => closeDeleteAccountDialog(),
     tcgOverlay: () => closeTcgModal(),
     // Même garde que le clic sur le fond (js/tcg.js) : Échap ne doit pas
     // couper la révélation en cours, seulement refermer une fois les 5
@@ -366,9 +367,24 @@ document.addEventListener('click', (e) => {
 // haut, un choix plus ancien non repris ici) : un thème qui ne persiste
 // pas d'une session à l'autre en navigation privée est un inconvénient
 // mineur, une exception qui empêcherait l'app de démarrer ne le serait pas.
+// Choix enregistré : 'dark', 'light' ou 'auto' (draft Profil du 15/10 :
+// « Auto suit le réglage de ton appareil »). getTheme() renvoie toujours le
+// thème réellement appliqué, clair ou sombre.
+function getThemeChoice(){
+  try{
+    const v = localStorage.getItem('kinetTheme');
+    return v === 'light' || v === 'auto' ? v : 'dark';
+  }catch(e){ return 'dark'; }
+}
+function systemPrefersLight(){
+  return !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches);
+}
+function resolveTheme(choice){
+  if(choice === 'auto') return systemPrefersLight() ? 'light' : 'dark';
+  return choice === 'light' ? 'light' : 'dark';
+}
 function getTheme(){
-  try{ return localStorage.getItem('kinetTheme') === 'light' ? 'light' : 'dark'; }
-  catch(e){ return 'dark'; }
+  return resolveTheme(getThemeChoice());
 }
 
 // Couleurs de <meta name="theme-color"> (barre de statut/chrome du
@@ -380,16 +396,27 @@ function getTheme(){
 // sur le sombre même une fois passé en thème clair.
 const THEME_COLOR = { dark: '#0f0e16', light: '#fbfaff' };
 
+// theme : 'dark', 'light' ou 'auto' (le choix est gardé tel quel, le thème
+// appliqué en découle).
 function setTheme(theme){
-  document.documentElement.dataset.theme = theme;
-  try{ localStorage.setItem('kinetTheme', theme); }catch(e){}
+  const choice = theme === 'light' || theme === 'auto' ? theme : 'dark';
+  const applied = resolveTheme(choice);
+  document.documentElement.dataset.theme = applied;
+  try{ localStorage.setItem('kinetTheme', choice); }catch(e){}
   const toggle = document.getElementById('lightThemeToggle');
-  if(toggle) toggle.checked = theme === 'light';
+  if(toggle) toggle.checked = applied === 'light';
   const themeColorMeta = document.querySelector('meta[name="theme-color"]');
-  if(themeColorMeta) themeColorMeta.setAttribute('content', THEME_COLOR[theme] || THEME_COLOR.dark);
+  if(themeColorMeta) themeColorMeta.setAttribute('content', THEME_COLOR[applied] || THEME_COLOR.dark);
 }
 
-setTheme(getTheme());
+setTheme(getThemeChoice());
+// En Auto, suit l'appareil quand il bascule (le soir, par exemple).
+if(window.matchMedia){
+  const themeQuery = window.matchMedia('(prefers-color-scheme: light)');
+  const onSystemThemeChange = () => { if(getThemeChoice() === 'auto') setTheme('auto'); };
+  if(themeQuery.addEventListener) themeQuery.addEventListener('change', onSystemThemeChange);
+  else if(themeQuery.addListener) themeQuery.addListener(onSystemThemeChange);
+}
 
 // --- Réduire les animations (retour utilisateur, Paramètres, proposition
 // validée sur draft) --- Même principe que getTheme()/setTheme()

@@ -1,34 +1,104 @@
-// --- Paramètres (retour utilisateur : "commencer une vraie section
-// paramètre" plutôt que des réglages perdus au milieu de "Ton profil") ---
-// Écran séparé, ouvert depuis "Ton profil" → Compte → Paramètres
-// (#openSettingsBtn) — regroupe tout ce qui règle le COMPORTEMENT de
-// l'app pour ce compte/cet appareil (thème, entête, accessibilité, aide,
-// installation, déconnexion), par opposition à l'identité (pseudo,
-// avatar, profil public) qui reste dans "Ton profil". Même pattern que
-// Statistiques/Succès/Journal (js/stats.js, js/achievements.js,
-// js/journal.js) : referme le profil à l'ouverture, le rouvre à la
-// fermeture — sauf que celui-ci, ouvert DEPUIS le profil plutôt que
-// depuis l'entête, mérite une flèche retour plutôt qu'un simple ✕
-// (#closeSettings, voir index.html) : revenir à "Ton profil" est le
-// vrai comportement attendu, pas juste "fermer".
+// --- Paramètres (#/parametres) ---
+// Draft Profil du 15/10 (choix de Flix) : une vraie page aux rangées du
+// Profil, rangée par thème (Apparence, Sons, À voir, Confidentialité,
+// Données, Aide, Compte), à la place de la fenêtre aux pictos colorés. Les
+// commandes d'origine y vivent avec leurs ids : sound.js (#soundToggle,
+// #soundVolume), ui.js (#reduceMotionToggle), onboarding.js
+// (#replayOnboardingBtn), pwa.js (#installSectionContent) et auth.js
+// (#logoutBtn, #deleteAccountBtn) restent branchés dessus. Ce fichier ne
+// fait que remplir la page et brancher ce qui est nouveau (thème en trois
+// choix, abonnements, profil partagé, données).
+//
+// #openSettingsBtn (dans #profileOverlay, masqué) reste le point d'entrée
+// relayé par la rangée « Paramètres » du Profil : il mène désormais ici.
 
-function openSettingsModal(){
-  closeProfileModal();
-  document.getElementById('lightThemeToggle').checked = getTheme() === 'light';
+function goToSettings(){ location.hash = '#/parametres'; }
+
+function renderSettingsThemeChoice(){
+  const choice = getThemeChoice();
+  document.querySelectorAll('#settingsPage [data-theme-choice]').forEach(btn => {
+    btn.setAttribute('aria-checked', String(btn.dataset.themeChoice === choice));
+  });
+}
+
+function renderSettingsVolumeRow(){
+  document.getElementById('settingsVolumeRow').hidden = !getSoundEnabled();
+}
+
+// « Netflix, Canal+, Prime Video » : les clés sont en minuscules (voir
+// groupStreamingServices(), js/watchlist.js), on remet les majuscules.
+function settingsServiceLabel(key){
+  return String(key).replace(/(^|[\s-])(\S)/g, (m, sep, c) => sep + c.toUpperCase());
+}
+
+function renderSettingsSubs(){
+  const mine = Array.from(getMyStreamingServices()).sort((a, b) => a.localeCompare(b, 'fr'));
+  document.getElementById('settingsSubsSub').textContent = mine.length
+    ? mine.map(settingsServiceLabel).join(', ')
+    : 'Aucun : toutes les plateformes s’affichent sur tes affiches';
+}
+
+function renderSettingsPublic(){
+  const on = !!(currentProfile && currentProfile.public_profile);
+  document.getElementById('settingsPublicToggle').checked = on;
+  document.getElementById('settingsPublicSub').textContent = on
+    ? 'Visible avec ton lien, sans tes films privés ni tes commentaires'
+    : 'Personne ne peut le voir';
+}
+
+// Appelée par renderRoute() (js/router.js).
+function openSettingsPage(){
+  renderSettingsThemeChoice();
   document.getElementById('reduceMotionToggle').checked = getReduceMotion();
   document.getElementById('soundToggle').checked = getSoundEnabled();
-  // Installation en app (js/pwa.js) : reconstruite à chaque ouverture — le
+  renderSettingsVolumeRow();
+  renderSettingsSubs();
+  renderSettingsPublic();
+  // Installation en app (js/pwa.js) : reconstruite à chaque ouverture, le
   // prompt natif peut être devenu disponible depuis la dernière fois.
   updateInstallUI();
-  openOverlay('settingsOverlay');
 }
 
-function closeSettingsModal(){
-  closeOverlay('settingsOverlay', () => returnToProfile());
-}
+// Ancienne fenêtre, plus jamais ouverte : gardée pour ses ids
+// (#lightThemeToggle, #openHeaderOrderBtn) lus au chargement par js/ui.js.
+function openSettingsModal(){ goToSettings(); }
+function closeSettingsModal(){ closeOverlay('settingsOverlay'); }
 
-document.getElementById('openSettingsBtn').addEventListener('click', openSettingsModal);
+document.getElementById('openSettingsBtn').addEventListener('click', () => {
+  closeProfileModal();
+  goToSettings();
+});
 document.getElementById('closeSettings').addEventListener('click', closeSettingsModal);
-document.getElementById('settingsOverlay').addEventListener('click', (e) => {
-  if(e.target.id === 'settingsOverlay') closeSettingsModal();
+document.getElementById('settingsPageBack').addEventListener('click', () => returnToProfile());
+
+document.querySelectorAll('#settingsPage [data-theme-choice]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    setTheme(btn.dataset.themeChoice);
+    renderSettingsThemeChoice();
+  });
+});
+// sound.js enregistre le choix ; ici, seulement montrer ou cacher le volume.
+document.getElementById('soundToggle').addEventListener('change', renderSettingsVolumeRow);
+
+// « Mes abonnements » : le choix se fait là où sont les plateformes, sur À
+// voir, dans le panneau déjà en place. On y va et on l'ouvre.
+document.getElementById('settingsSubsBtn').addEventListener('click', () => {
+  goToWatchlist();
+  if(typeof openMyServicesPanelWhenReady === 'function') openMyServicesPanelWhenReady();
+});
+
+document.getElementById('settingsPublicToggle').addEventListener('change', async (e) => {
+  const on = e.target.checked;
+  const ok = await savePublicProfile(on);
+  if(!ok) e.target.checked = !on;
+  renderSettingsPublic();
+});
+
+// Rangées relais (Letterboxd) : un clic = un clic sur le bouton d'origine,
+// comme sur la page Profil.
+document.getElementById('settingsPage').addEventListener('click', (e) => {
+  const row = e.target.closest('[data-proxy]');
+  if(!row) return;
+  const target = document.getElementById(row.dataset.proxy);
+  if(target) target.click();
 });

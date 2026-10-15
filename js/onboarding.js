@@ -31,42 +31,45 @@
 // suffit à tout superposer correctement sans le moindre z-index à gérer
 // entre eux, voir css/style.css pour le détail.
 
+// Visite réécrite (draft Profil du 15/10, « le tuto n'est plus à jour ») :
+// les cinq endroits de l'appli d'aujourd'hui. L'ancienne étape Séries visait
+// l'onglet de l'entête, masqué depuis que Films · Séries est dans le titre.
 const ONBOARDING_STEPS = [
   {
-    key:'add',
+    key:'search',
     // Ajouter passe par la recherche du catalogue (audit M2).
     target:{ desktop:'search', mobile:'search' },
     place:{ desktop:'bottom', mobile:'bottom' },
-    title:'Note un film',
-    body:'Tape son titre ici : s\'il n\'est pas dans ton catalogue, ajoute-le et note-le sur 7 critères, ou donne une note directe si tu es pressé. Tes séries, amis et groupes s\'y retrouvent aussi.'
+    title:'Cherche, ajoute, note',
+    body:'Tape un titre : Kinet te propose tes films, tes séries, tes amis, et ce qui reste à ajouter. Un film vu ? Note-le sur 7 critères. Films · Séries, juste au-dessus, bascule entre les deux.'
   },
   {
     key:'watchlist',
     target:{ desktop:'watchlistBtn', mobile:'mobileTabWatchlist' },
     place:{ desktop:'bottom', mobile:'top' },
-    title:'Ta liste à voir',
-    body:"Garde une trace de ce que tu comptes regarder, avec sa date de sortie si le film n'est pas encore là."
+    title:'À voir',
+    body:'Ta liste de films à voir, avec les plateformes où ils sont disponibles. Coche tes abonnements pour ne garder que les tiens.'
   },
   {
-    key:'series',
-    target:{ desktop:'primaryTabSeries', mobile:'primaryTabSeries' },
-    place:{ desktop:'bottom', mobile:'bottom' },
-    title:'Suivi des séries',
-    body:'Coche les épisodes vus, saison par saison — un suivi séparé du catalogue films.'
+    key:'upcoming',
+    target:{ desktop:'upcomingBtn', mobile:'mobileTabUpcoming' },
+    place:{ desktop:'bottom', mobile:'top' },
+    title:'Bientôt',
+    body:'Les prochains épisodes de tes séries, les sorties de tes films à voir, et ce qui arrive au cinéma.'
   },
   {
     key:'friends',
     target:{ desktop:'friendsBtn', mobile:'mobileTabFriends' },
     place:{ desktop:'bottom', mobile:'top' },
-    title:'Amis & groupes',
-    body:'Ajoute des amis, comparez vos goûts, votez ensemble pour la prochaine séance.'
+    title:'Amis',
+    body:'Vois avec qui tu es en phase, ce que tes amis regardent, et choisissez votre prochaine séance en groupe.'
   },
   {
     key:'profile',
     target:{ desktop:'userAvatarBtn', mobile:'mobileTabProfile' },
     place:{ desktop:'bottom', mobile:'top' },
-    title:'Ton profil',
-    body:'Thème, ordre des icônes, bilan cinéphile — et ce tuto, à revoir quand tu veux dans Paramètres.'
+    title:'Profil',
+    body:'Tes statistiques, ton bilan de l\'année, tes cartes, et les Paramètres, où tu peux revoir cette visite.'
   }
 ];
 
@@ -120,7 +123,6 @@ function startOnboarding({ replay }){
   // connexion, lui, ne passe par aucune des deux).
   closeProfileModal();
   closeOverlay('settingsOverlay');
-  goHome();
   onboardingState = { phase: replay ? 'spot' : 'welcome', stepIndex: 0, replay: !!replay };
   const layer = document.getElementById('onboardingLayer');
   layer.classList.remove('closing');
@@ -131,7 +133,18 @@ function startOnboarding({ replay }){
   // aussi immobile que derrière une vraie modale — retour utilisateur : "je
   // peux quand même scroll vers le bas, ça n'a pas de sens".
   lockBodyScroll();
-  renderOnboardingStep();
+  // Depuis Paramètres (une page, pas une fenêtre sur le catalogue) : la
+  // recherche visée par la première étape n'est visible qu'une fois le
+  // catalogue affiché.
+  showHomeThen(renderOnboardingStep);
+}
+
+function showHomeThen(fn){
+  const homeShown = typeof parseRoute !== 'function'
+    || (parseRoute().name === 'home' && document.getElementById('appContainer').style.display !== 'none');
+  if(!homeShown) window.addEventListener('hashchange', () => setTimeout(fn, 80), { once:true });
+  goHome();
+  if(homeShown) fn();
 }
 
 function renderOnboardingStep(){

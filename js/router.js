@@ -17,6 +17,7 @@
 //   #/groupes/:groupId/propositions/:propId -> détail d'une proposition
 //   #/invite/:token                         -> invitation à rejoindre un groupe
 //   #/profil                                -> page Profil (draft navigation, option B)
+//   #/parametres                            -> Paramètres (draft Profil du 15/10)
 // La page Profil remplace l'ancienne grande fenêtre « Ton profil » (audit
 // M1) : voir js/profilePage.js. Statistiques/Succès/Cartes/Journal restent
 // des .overlay mais s'affichent comme des pages (.overlay.as-page).
@@ -34,7 +35,7 @@
 // le reste, et js/auth.js → initAuth() qui la laisse passer avant même de
 // vérifier la session Supabase.
 
-const PAGE_IDS = ['appContainer', 'groupsListPage', 'groupDetailPage', 'proposalDetailPage', 'watchlistPage', 'seriesPage', 'seriesDetailPage', 'upcomingPage', 'amisPage', 'topPage', 'publicProfilePage', 'invitePage', 'filmDetailPage', 'listsPage', 'listDetailPage', 'profilePage'];
+const PAGE_IDS = ['appContainer', 'groupsListPage', 'groupDetailPage', 'proposalDetailPage', 'watchlistPage', 'seriesPage', 'seriesDetailPage', 'upcomingPage', 'amisPage', 'topPage', 'publicProfilePage', 'invitePage', 'filmDetailPage', 'listsPage', 'listDetailPage', 'profilePage', 'settingsPage'];
 
 // null cache tout (utile pour l'écran de connexion / maintenance, qui gère
 // sa propre visibilité par ailleurs).
@@ -92,6 +93,11 @@ document.querySelectorAll('.catalog-switch-btn[data-catalog]').forEach(btn => {
 // active à chaque rendu. "Catalogue" couvre films ET séries (l'interrupteur
 // Films / Séries est dans le titre de la page, draft navigation option B).
 // "Profil" est une vraie page depuis l'option B (#/profil).
+// Pages rangées sous le Profil : son onglet reste allumé (barre du bas,
+// photo de l'entête).
+function isProfileRoute(routeName){
+  return routeName === 'profil' || routeName === 'settings';
+}
 function updateMobileTabbar(routeName){
   const homeActive = routeName === 'home' || routeName === 'seriesList' || routeName === 'seriesDetail' || routeName === 'filmDetail';
   const map = {
@@ -99,7 +105,7 @@ function updateMobileTabbar(routeName){
     mobileTabWatchlist: routeName === 'watchlist',
     mobileTabUpcoming: routeName === 'upcoming',
     mobileTabFriends: routeName === 'amis' || routeName === 'groupsList' || routeName === 'groupDetail' || routeName === 'proposalDetail' || routeName === 'listsList' || routeName === 'listDetail',
-    mobileTabProfile: routeName === 'profil'
+    mobileTabProfile: isProfileRoute(routeName)
   };
   Object.keys(map).forEach(id => {
     document.getElementById(id).classList.toggle('active', map[id]);
@@ -119,7 +125,7 @@ function updateHeaderNav(routeName){
     upcomingBtn: routeName === 'upcoming',
     friendsBtn: routeName === 'amis' || routeName === 'groupsList' || routeName === 'groupDetail' || routeName === 'proposalDetail' || routeName === 'listsList' || routeName === 'listDetail',
     topBtn: routeName === 'top',
-    userAvatarBtn: routeName === 'profil'
+    userAvatarBtn: isProfileRoute(routeName)
   };
   Object.keys(map).forEach(id => {
     document.getElementById(id).classList.toggle('active', map[id]);
@@ -243,6 +249,7 @@ function parseRoute(){
   if(parts[0] === 'amis' && parts.length === 1) return { name: 'amis' };
   if(parts[0] === 'top' && parts.length === 1) return { name: 'top' };
   if(parts[0] === 'profil' && parts.length === 1) return { name: 'profil' };
+  if(parts[0] === 'parametres' && parts.length === 1) return { name: 'settings' };
   if(parts[0] === 'u' && parts.length === 2) return { name: 'publicProfile', userId: parts[1] };
   if(parts[0] === 'invite' && parts.length === 2) return { name: 'invite', token: parts[1] };
   if(parts[0] === 'listes'){
@@ -345,6 +352,9 @@ async function renderRoute(){
   }else if(route.name === 'profil'){
     showOnlyPage('profilePage');
     await openProfilePage();
+  }else if(route.name === 'settings'){
+    showOnlyPage('settingsPage');
+    openSettingsPage();
   }else if(route.name === 'groupsList'){
     showOnlyPage('groupsListPage');
     await openGroups();

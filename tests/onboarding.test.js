@@ -41,9 +41,11 @@ function makeRealTarget(){
   });
 }
 
+// Cibles de la visite réécrite (draft Profil du 15/10) : recherche, À voir,
+// Bientôt, Amis, Profil.
 const ALL_TARGET_IDS = [
-  'search', 'openAddBtn', 'fabAddBtn', 'watchlistBtn', 'mobileTabWatchlist',
-  'primaryTabSeries', 'friendsBtn', 'mobileTabFriends',
+  'search', 'watchlistBtn', 'mobileTabWatchlist',
+  'upcomingBtn', 'mobileTabUpcoming', 'friendsBtn', 'mobileTabFriends',
   'userAvatarBtn', 'mobileTabProfile'
 ];
 

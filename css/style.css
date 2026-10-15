@@ -6919,3 +6919,29 @@ html:has(#authContainer:not([style*="none"])) #versionTag{display:none !importan
   .top-line-note{width:34px;}
   .top-me{width:auto; min-width:58px;}
 }
+
+/* ==========================================================
+   PARAMÈTRES en page (#settingsPage, draft Profil du 15/10).
+   Mêmes rangées que la page Profil (.pp-label, .pp-rows, .pp-row) :
+   plus de fenêtre, plus de pictos colorés. Voir js/settings.js.
+   ========================================================== */
+#settingsPage .page-header{margin-bottom:var(--sp-5);}
+#settingsPage .pp-rows{max-width:720px;}
+#settingsPage .pp-label{max-width:720px;}
+.st-row-static{cursor:default;}
+.st-seg{display:inline-flex; flex:none; gap:2px; padding:3px; border:1px solid var(--line); border-radius:var(--r-full);}
+.st-seg button{padding:5px 12px; border:0; border-radius:var(--r-full); background:none; cursor:pointer; font-family:var(--font-text); font-size:var(--fs-xs); font-weight:600; color:var(--text-2); transition:background-color var(--dur-fast), color var(--dur-fast);}
+.st-seg button:hover{color:var(--text-1);}
+.st-seg button[aria-checked="true"]{background:var(--accent); color:var(--accent-ink);}
+.st-range{flex:none; width:180px; accent-color:var(--accent);}
+.st-row-danger .pp-row-title{color:var(--note-low);}
+.st-install-body{font-size:var(--fs-sm); color:var(--text-2);}
+.st-install-body .wl-note{margin:2px 0 0; font-size:var(--fs-sm); color:var(--text-2);}
+.st-install-body .btn{margin-top:var(--sp-2);}
+.st-confirm{max-width:440px;}
+.st-confirm-text{margin:0 0 var(--sp-4); font-size:var(--fs-sm); color:var(--text-2);}
+.st-confirm .btn.danger:disabled{opacity:0.45; cursor:default;}
+@media (max-width:600px){
+  .st-range{width:120px;}
+  .st-seg button{padding:5px 10px;}
+}

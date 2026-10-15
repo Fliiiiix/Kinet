@@ -178,9 +178,10 @@ document.getElementById('ppRecapBtn').addEventListener('click', openYearRecap);
 // Profil public : enregistré tout de suite (plus de bouton « Enregistrer »
 // ici, contrairement à l'ancienne fenêtre). La case de #profileOverlay est
 // recalée sur currentProfile à sa prochaine ouverture (openProfileModal()).
-document.getElementById('ppPublicToggle').addEventListener('change', async (e) => {
-  const on = e.target.checked;
-  if(blockIfOffline()){ e.target.checked = !on; return; }
+// Partagée avec Paramètres → Confidentialité (js/settings.js). Vrai si
+// c'est enregistré.
+async function savePublicProfile(on){
+  if(blockIfOffline()) return false;
   const { data, error } = await supabaseClient
     .from('profiles')
     .update({ public_profile: on })
@@ -188,14 +189,20 @@ document.getElementById('ppPublicToggle').addEventListener('change', async (e) =
     .select()
     .single();
   if(error){
-    e.target.checked = !on;
     showToast('Erreur de sauvegarde, réessaie');
     console.error(error);
-    return;
+    return false;
   }
   currentProfile = data;
+  document.getElementById('ppPublicToggle').checked = on;
   document.getElementById('ppCopyLinkBtn').hidden = !on;
-  showToast(on ? 'Profil public activé' : 'Profil public désactivé');
+  showToast(on ? 'Profil partagé' : 'Profil plus partagé');
+  return true;
+}
+
+document.getElementById('ppPublicToggle').addEventListener('change', async (e) => {
+  const on = e.target.checked;
+  if(!(await savePublicProfile(on))) e.target.checked = !on;
 });
 
 document.getElementById('ppCopyLinkBtn').addEventListener('click', () => {
