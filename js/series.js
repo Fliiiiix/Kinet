@@ -141,6 +141,35 @@ function hasNewEpisode(show){
   return watchedCount < show.numberOfEpisodes;
 }
 
+// Une ligne simple par série terminée, cliquable en entière, dans la section
+// repliée « Séries terminées » sous la liste (venue de la page Bientôt).
+function renderEndedShows(ended){
+  const box = document.getElementById('seriesEndedDisclosure');
+  const list = document.getElementById('seriesEndedList');
+  if(!box || !list) return;
+  box.hidden = ended.length === 0;
+  const count = document.getElementById('seriesEndedCount');
+  if(count) count.textContent = ended.length ? `(${ended.length})` : '';
+  list.innerHTML = ended.map(show => {
+    const watchedCount = watchedEpisodeCounts[show.id] || 0;
+    const progress = show.numberOfEpisodes ? `${watchedCount}/${show.numberOfEpisodes} épisodes vus · ` : '';
+    return `
+      <div class="wl-row ended-row" data-id="${show.id}">
+        ${show.posterUrl
+          ? `<img class="film-poster" src="${show.posterUrl}" alt="" loading="lazy">`
+          : `<div class="film-poster film-poster-placeholder">${TV_PLACEHOLDER_SVG}</div>`}
+        <div class="wl-main">
+          <div class="wl-title">${escapeHtml(show.title)}</div>
+          <div class="wl-note">${progress}${escapeHtml(showStatusLabel(show.status))}</div>
+        </div>
+      </div>`;
+  }).join('');
+  const navList = ended.map(s => ({ id: s.id, title: s.title }));
+  list.querySelectorAll('.ended-row[data-id]').forEach(row => {
+    makeRowClickable(row, () => goToSeriesDetail(parseInt(row.dataset.id, 10), navList));
+  });
+}
+
 function renderTrackedShows(){
   const list = document.getElementById('seriesList');
   // Compteur à droite de la ligne recherche (draft option B), comme le
@@ -155,12 +184,20 @@ function renderTrackedShows(){
   if(countEl) countEl.textContent = !trackedShows.length ? ''
     : q ? `${shown.length} sur ${trackedShows.length}`
     : `${trackedShows.length} série${trackedShows.length > 1 ? 's' : ''}`;
+  // Séries terminées repliées sous les séries en cours (audit Bientôt du
+  // 15/10, B5 : elles vivaient sur la page Bientôt).
+  const active = shown.filter(show => !isShowEnded(show.status));
+  renderEndedShows(shown.filter(show => isShowEnded(show.status)));
   if(trackedShows.length === 0){
     list.innerHTML = `<div class="empty-state">Rien pour l'instant. Cherche une série ci-dessus pour commencer à suivre ses épisodes.</div>`;
     return;
   }
   if(shown.length === 0){
     list.innerHTML = `<div class="empty-state">Aucune de tes séries ne correspond. Choisis-la dans les résultats pour la suivre.</div>`;
+    return;
+  }
+  if(active.length === 0){
+    list.innerHTML = `<div class="empty-state">Aucune série en cours ici. Tes séries terminées sont juste en dessous.</div>`;
     return;
   }
   // v2.3, retour utilisateur : la tuile grille (poster + titre + progression
@@ -172,7 +209,7 @@ function renderTrackedShows(){
   // rejoint "Retirer cette série" déjà présent sur la fiche détail plutôt
   // que de vivre en double ici — le même principe que la suppression d'un
   // film, qui vit dans sa fiche/modale, jamais sur la carte du catalogue.
-  list.innerHTML = shown.map(show => {
+  list.innerHTML = active.map(show => {
     const watchedCount = watchedEpisodeCounts[show.id] || 0;
     const progress = show.numberOfEpisodes
       ? `${watchedCount}/${show.numberOfEpisodes} épisode${show.numberOfEpisodes > 1 ? 's' : ''} vus`
@@ -200,7 +237,7 @@ function renderTrackedShows(){
       </div>
     `;
   }).join('');
-  const navList = shown.map(s => ({ id: s.id, title: s.title }));
+  const navList = active.map(s => ({ id: s.id, title: s.title }));
   list.querySelectorAll('.wl-row[data-id]').forEach(row => {
     makeRowClickable(row, () => goToSeriesDetail(parseInt(row.dataset.id, 10), navList));
   });

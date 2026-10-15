@@ -25,6 +25,39 @@ let watchlistFriendRatings = {};
 // disponibilité change sans prévenir.
 let watchlistProviders = {};
 
+// Ajoute un film TMDB brut (résultat de /search, /upcoming, /similar...) à
+// À voir et le place en tête de `watchlist`. Renvoie l'élément ajouté, ou
+// null (hors ligne, erreur déjà signalée). Partagée par les suggestions
+// (js/suggestions.js) et « Au cinéma » (js/upcoming.js).
+async function addTmdbMovieToWatchlist(r){
+  if(blockIfOffline()) return null; // js/offline.js : lecture seule hors ligne
+  const payload = {
+    title: r.title,
+    note: null,
+    added: Date.now(),
+    tmdb_id: r.id,
+    poster_url: r.poster_path ? TMDB_IMG_BASE + r.poster_path : null,
+    overview: r.overview || null,
+    release_year: r.release_date ? parseInt(r.release_date.slice(0, 4), 10) : null,
+    release_date: r.release_date || null,
+    original_title: r.original_title && r.original_title !== r.title ? r.original_title : null
+  };
+  const { data, error } = await supabaseClient.from('watchlist').insert(payload).select().single();
+  if(error){
+    showToast('Erreur, réessaie');
+    console.error(error);
+    return null;
+  }
+  const item = {
+    id: data.id, title: payload.title, note: null,
+    tmdbId: payload.tmdb_id, posterUrl: payload.poster_url, overview: payload.overview,
+    releaseYear: payload.release_year, releaseDate: payload.release_date,
+    originalTitle: payload.original_title, added: data.added
+  };
+  watchlist.unshift(item);
+  return item;
+}
+
 async function loadWatchlist(){
   const { data, error } = await supabaseClient
     .from('watchlist')

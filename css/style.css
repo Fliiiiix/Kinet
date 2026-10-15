@@ -6718,3 +6718,60 @@ html:has(#authContainer:not([style*="none"])) #versionTag{display:none !importan
   html:has(#authContainer:not([style*="none"])) header{background:linear-gradient(to bottom, rgba(var(--glass-rgb),0.85), rgba(var(--glass-rgb),0));}
   #authContainer .auth-hero{padding-top:150px; gap:var(--sp-4);}
 }
+
+/* ==========================================================
+   BIENTÔT : fil par échéance (piste A, audit et draft du 15/10).
+   Lignes simples sans boîte, la date à droite, « Au cinéma » en dernier
+   (renderUpcoming(), js/upcoming.js). Calendrier en option, sans cases
+   encadrées : un filet par semaine, aujourd'hui en bleu.
+   ========================================================== */
+#upcomingPage .page-header{align-items:center;}
+.up-view-toggle{margin-left:auto;}
+.up-summary{margin:0 0 var(--sp-5); font-size:var(--fs-sm); color:var(--text-2);}
+.up-summary b{color:var(--text-1); font-weight:600;}
+.up-summary:empty{display:none;}
+.up-section{margin-top:var(--sp-6);}
+.up-section:first-child{margin-top:0;}
+.up-label{display:flex; align-items:baseline; gap:var(--sp-2); margin:0 0 var(--sp-1); font-family:var(--font-text); font-size:var(--fs-xs); font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:var(--text-2);}
+.up-label span{font-weight:400; letter-spacing:0; text-transform:none; color:var(--text-3);}
+.up-row{display:flex; align-items:center; gap:var(--sp-4); min-height:72px; padding:var(--sp-1) 0; border-bottom:1px solid var(--line); cursor:pointer;}
+.up-row:hover .up-title, .up-row:focus-visible .up-title{color:var(--accent);}
+.up-thumb{width:40px; height:60px; flex:none; border-radius:var(--r-sm); object-fit:cover; background:var(--surface-2); color:var(--text-3); display:grid; place-items:center;}
+.up-thumb svg{width:18px; height:18px;}
+.up-main{flex:1; min-width:0;}
+.up-title{font-size:var(--fs-sm); font-weight:600; color:var(--text-1); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; transition:color var(--dur-fast);}
+.up-sub{display:flex; align-items:center; gap:var(--sp-2); font-size:var(--fs-xs); color:var(--text-2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.up-logo{width:16px; height:16px; flex:none; border-radius:var(--r-sm);}
+.up-when{flex:none; display:flex; flex-direction:column; text-align:right;}
+.up-when b{font-size:var(--fs-sm); font-weight:600; font-variant-numeric:tabular-nums; color:var(--text-1);}
+.up-when span{font-size:var(--fs-xs); color:var(--text-2);}
+.up-when.is-now b{color:var(--accent);}
+.up-section.is-compact .up-row{min-height:56px;}
+.up-section.is-compact .up-thumb{width:32px; height:48px;}
+.up-add{
+  flex:none; height:32px; padding:0 var(--sp-3);
+  border:1px solid var(--line-strong); border-radius:var(--r-full); background:none; cursor:pointer;
+  font-family:var(--font-text); font-size:var(--fs-xs); font-weight:600; color:var(--text-1);
+  transition:border-color var(--dur-fast), color var(--dur-fast);
+}
+.up-add:hover{border-color:var(--accent); color:var(--accent);}
+.up-add.is-added{border-color:var(--accent); color:var(--accent); cursor:default;}
+@media (max-width:600px){
+  .up-row{gap:var(--sp-3);}
+  .up-when b{font-size:var(--fs-xs);}
+}
+/* Calendrier (option) */
+.upcoming-cal-nav{justify-content:flex-start; gap:var(--sp-2); margin-bottom:var(--sp-2);}
+.upcoming-cal-arrow{width:32px; height:32px; border:none; border-radius:var(--r-full); background:none; cursor:pointer; color:var(--text-2); font-size:var(--fs-lg); line-height:1;}
+.upcoming-cal-arrow:hover:not(:disabled){background:var(--surface-2); color:var(--text-1);}
+.upcoming-cal-arrow:disabled{opacity:0.3; cursor:default;}
+.upcoming-cal-label{font-size:var(--fs-md); min-width:9em; text-align:center;}
+.upcoming-cal-grid{gap:0;}
+.upcoming-cal-day{min-height:84px; padding:var(--sp-2) var(--sp-1); background:none; border:none; border-top:1px solid var(--line); border-radius:0;}
+.upcoming-cal-day.is-today{box-shadow:none;}
+.upcoming-cal-day.is-today .upcoming-cal-daynum{color:var(--accent); font-weight:600;}
+.upcoming-cal-poster{width:28px; height:42px;}
+@media (max-width:600px){
+  .upcoming-cal-day{min-height:56px;}
+  .upcoming-cal-poster{width:20px; height:30px;}
+}

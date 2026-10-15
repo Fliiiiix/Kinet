@@ -97,34 +97,12 @@ async function loadSuggestions(){
 }
 
 async function addSuggestionToWatchlist(tmdbId){
-  if(blockIfOffline()) return; // js/offline.js — lecture seule hors ligne
   const r = suggestedFilms.find(x => x.id === tmdbId);
   if(!r) return;
-  const payload = {
-    title: r.title,
-    note: null,
-    added: Date.now(),
-    tmdb_id: r.id,
-    poster_url: r.poster_path ? TMDB_IMG_BASE + r.poster_path : null,
-    overview: r.overview || null,
-    release_year: r.release_date ? parseInt(r.release_date.slice(0, 4), 10) : null,
-    release_date: r.release_date || null,
-    original_title: r.original_title && r.original_title !== r.title ? r.original_title : null
-  };
-  const { data, error } = await supabaseClient.from('watchlist').insert(payload).select().single();
-  if(error){
-    showToast('Erreur, réessaie');
-    console.error(error);
-    return;
-  }
-  watchlist.unshift({
-    id: data.id, title: payload.title, note: null,
-    tmdbId: payload.tmdb_id, posterUrl: payload.poster_url, overview: payload.overview,
-    releaseYear: payload.release_year, releaseDate: payload.release_date,
-    originalTitle: payload.original_title, added: data.added
-  });
+  const item = await addTmdbMovieToWatchlist(r); // js/watchlist.js
+  if(!item) return;
   suggestedFilms = suggestedFilms.filter(x => x.id !== tmdbId);
   if(suggestedFilms.length === 0) document.getElementById('suggestionsSection').style.display = 'none';
   else renderSuggestionsList();
-  showToast('Ajouté à la watchlist');
+  showToast('Ajouté à À voir');
 }
