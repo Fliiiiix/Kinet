@@ -6654,6 +6654,8 @@ body[data-view-mode="grid"] #wlList .wl-row-clickable:hover .wl-services{transfo
   body[data-view-mode="grid"] #wlList .wl-services img{width:20px; height:20px;}
   body[data-view-mode="grid"] #wlList .wl-services-more{height:20px; min-width:20px; padding:0 5px;}
 }
+/* Le filtre et « Mes abonnements » ensemble à droite, « Surprends-moi » à gauche. */
+#wlProviderFilter{margin-left:auto;}
 .wl-subs-toggle{
   height:36px; padding:0 var(--sp-2);
   background:none; border:none; cursor:pointer;
