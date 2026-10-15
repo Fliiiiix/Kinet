@@ -10,7 +10,7 @@
 //
 // Écran à part entière (#/listes, #/listes/:id), pas une modal — même
 // principe que Groupes (js/groups.js). Accès depuis la page Amis
-// (#amisListsLink, js/friends.js), pas d'icône dédiée dans l'entête : une
+// (interrupteur Amis · Groupes · Listes, js/friends.js), pas d'icône dédiée dans l'entête : une
 // liste se partage avec des amis, comme un groupe.
 
 let myLists = [];              // mes propres listes (lists.user_id = moi)

@@ -6775,3 +6775,71 @@ html:has(#authContainer:not([style*="none"])) #versionTag{display:none !importan
   .upcoming-cal-day{min-height:56px;}
   .upcoming-cal-poster{width:20px; height:30px;}
 }
+
+/* ==========================================================
+   AMIS : fil d'affiches (piste A) avec les lignes d'amis de la piste B
+   (audit et draft du 15/10). Titre interrupteur Amis · Groupes · Listes,
+   lignes simples sans boîte, la compatibilité « en phase » à droite.
+   ========================================================== */
+.social-switch{flex-wrap:wrap; row-gap:var(--sp-1);}
+#amisPage .wl-row{background:none; border:none; border-bottom:1px solid var(--line); border-radius:0; padding:var(--sp-2) 0; margin:0; box-shadow:none; transform:none;}
+#amisPage .wl-row:hover{background:none; border-color:var(--line); box-shadow:none; transform:none;}
+.fr-section{margin-top:var(--sp-6);}
+.fr-section:first-of-type{margin-top:var(--sp-2);}
+.fr-label{display:flex; align-items:baseline; gap:var(--sp-2); margin:0 0 var(--sp-1); font-family:var(--font-text); font-size:var(--fs-xs); font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:var(--text-2);}
+.fr-label span{font-weight:400; letter-spacing:0; text-transform:none; color:var(--text-3);}
+.fr-main{flex:1; min-width:0;}
+.fr-name{font-size:var(--fs-sm); font-weight:600; color:var(--text-1);}
+.fr-sub{font-size:var(--fs-xs); color:var(--text-2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.fr-note{flex:none; font-size:var(--fs-sm); font-weight:600; font-variant-numeric:tabular-nums;}
+.fr-note.rate-low, .fr-poster-note.rate-low{color:var(--note-low);}
+.fr-note.rate-mid, .fr-poster-note.rate-mid{color:var(--note-mid);}
+.fr-note.rate-high, .fr-poster-note.rate-high{color:var(--note-high);}
+/* Lignes d'amis */
+.fr-row, .fr-feed{display:flex; align-items:center; gap:var(--sp-3); min-height:72px; padding:var(--sp-1) 0; border-bottom:1px solid var(--line); cursor:pointer;}
+.fr-row .friend-avatar{width:44px; height:44px;}
+.fr-row:hover .fr-name, .fr-row:focus-visible .fr-name{color:var(--accent);}
+.fr-last{display:flex; align-items:center; gap:var(--sp-2); flex:none;}
+.fr-last img{width:28px; height:42px; border-radius:var(--r-sm); object-fit:cover; display:block;}
+.fr-compat{flex:none; min-width:72px; text-align:right; display:flex; flex-direction:column;}
+.fr-compat b{font-size:var(--fs-sm); font-weight:600; font-variant-numeric:tabular-nums; color:var(--text-1);}
+.fr-compat span{font-size:var(--fs-xs); color:var(--text-2);}
+.fr-compat.is-low span{color:var(--text-3);}
+/* Fil « Ce qu'ils regardent » */
+.fr-feed .friend-avatar{width:32px; height:32px;}
+.fr-feed-text{font-size:var(--fs-sm); line-height:1.4; color:var(--text-1);}
+.fr-feed-text b{font-weight:600;}
+.fr-feed .fr-film{transition:color var(--dur-fast);}
+.fr-feed:hover .fr-film, .fr-feed:focus-visible .fr-film{color:var(--accent);}
+.fr-feed-poster{width:36px; height:54px; border-radius:var(--r-sm); object-fit:cover; flex:none;}
+/* Recommandé par tes amis : en affiches */
+.fr-posters{display:grid; grid-template-columns:repeat(auto-fill, minmax(120px, 1fr)); gap:var(--sp-5) var(--sp-4);}
+.fr-poster{display:grid; gap:6px; min-width:0; cursor:pointer;}
+.fr-poster-img{position:relative; aspect-ratio:2/3; border-radius:var(--r-sm); overflow:hidden; background:var(--surface-2); color:var(--text-3); display:grid; place-items:center;}
+.fr-poster-img img{width:100%; height:100%; object-fit:cover; display:block;}
+.fr-poster-img > svg{width:32px; height:32px;}
+.fr-poster-note{position:absolute; top:6px; right:6px; padding:4px 7px; border-radius:var(--r-sm); background:rgba(var(--glass-rgb),0.78); font-size:var(--fs-xs); font-weight:600; font-variant-numeric:tabular-nums;}
+.fr-poster-title{font-size:var(--fs-sm); font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.fr-poster-sub{font-size:var(--fs-xs); color:var(--text-2); margin-top:-4px;}
+.fr-poster:hover .fr-poster-title{color:var(--accent);}
+/* Demande reçue : en tête, mise en avant */
+.fr-requests{margin-top:var(--sp-2);}
+#amisPage .fr-request{border:1px solid var(--accent); border-radius:var(--r-md); background:var(--accent-wash); padding:var(--sp-3) var(--sp-4); margin-bottom:var(--sp-2);}
+#amisPage .fr-request:hover{border-color:var(--accent);}
+.fr-request .wl-title{font-weight:400; font-size:var(--fs-sm);}
+.fr-request .wl-title b{font-weight:600;}
+.fr-text-btn{background:none; border:none; padding:0 var(--sp-2); cursor:pointer; font-family:var(--font-text); font-size:var(--fs-xs); font-weight:600; color:var(--text-2);}
+.fr-text-btn:hover{color:var(--text-1);}
+.fr-line-btn{height:32px; padding:0 var(--sp-3); border:1px solid var(--line-strong); border-radius:var(--r-full); background:none; cursor:pointer; font-family:var(--font-text); font-size:var(--fs-xs); font-weight:600; color:var(--text-1); transition:border-color var(--dur-fast), color var(--dur-fast); flex:none;}
+.fr-line-btn:hover{border-color:var(--accent); color:var(--accent);}
+/* « + Ajouter un ami » replié */
+.fr-add{margin-top:var(--sp-6);}
+.fr-add-field{margin-bottom:var(--sp-4);}
+#friendSearchInput{height:40px; width:100%; max-width:420px; padding:0 var(--sp-4); border:1px solid var(--line); border-radius:var(--r-full); background:var(--surface); font-family:var(--font-text); font-size:var(--fs-sm); color:var(--text-1);}
+#friendSearchInput:focus{outline:none; border-color:var(--accent);}
+.fr-add .fr-label{margin-top:var(--sp-4);}
+#amisPage .list-toggle-btn{width:auto; margin:var(--sp-2) 0 0; background:none; border:none; padding:0; color:var(--accent); font-size:var(--fs-sm); font-weight:600;}
+@media (max-width:600px){
+  .fr-last{display:none;}
+  .fr-compat{min-width:64px;}
+}

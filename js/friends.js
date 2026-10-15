@@ -7,9 +7,9 @@
 // RLS côté base — ce module ne fait que lire/écrire `friendships`+`profiles`.
 //
 // Écran à part entière (#/amis), pas une modal — voir js/router.js, même
-// principe que Groupes/Watchlist. Un groupe se fait avec des amis, donc
-// l'accès à Groupes vit en bas de cette page plutôt que d'avoir sa propre
-// icône dans l'entête (#amisGroupsLink, tout en bas de ce fichier).
+// principe que Groupes/Watchlist. Un groupe se fait avec des amis : le
+// titre de la page sert d'interrupteur Amis · Groupes · Listes (draft Amis
+// du 15/10, [data-social] tout en bas de ce fichier).
 
 let friendships = [];
 let friendProfiles = {}; // user_id -> { displayName, avatarUrl }
@@ -141,7 +141,7 @@ async function compareWithFriend(friendId, rowEl){
     ${communs.length === 0
       ? `<div class="empty-state">Vous n'avez encore aucun film noté en commun.</div>`
       : `<div class="wl-note">${communs.length} film${communs.length > 1 ? 's' : ''} noté${communs.length > 1 ? 's' : ''} en commun, les plus grands écarts d'abord.</div>
-         ${communs.map(c => `<div class="wl-row"><div class="wl-main"><div class="wl-title">${escapeHtml(c.titre)}</div><div class="wl-note">Toi ${c.maNote != null ? c.maNote.toFixed(2) : '—'} · ${escapeHtml(ami)} ${c.sienne != null ? c.sienne.toFixed(2) : '—'}${c.ecart != null ? ` · écart ${c.ecart > 0 ? '+' : ''}${c.ecart.toFixed(2)}` : ''}</div></div></div>`).join('')}`}`;
+         ${communs.map(c => `<div class="wl-row"><div class="wl-main"><div class="wl-title">${escapeHtml(c.titre)}</div><div class="wl-note">Toi ${c.maNote != null ? c.maNote.toFixed(1) : '—'} · ${escapeHtml(ami)} ${c.sienne != null ? c.sienne.toFixed(1) : '—'}${c.ecart != null ? ` · écart ${c.ecart > 0 ? '+' : ''}${c.ecart.toFixed(1)}` : ''}</div></div></div>`).join('')}`}`;
   rowEl.insertAdjacentElement('afterend', panel);
 }
 
@@ -164,6 +164,108 @@ function wireRequestActions(el){
   wireFriendRowClicks(el);
 }
 
+// --- Lignes d'amis : en phase ou pas (draft Amis du 15/10, lignes de la
+// piste B) --- friendStats : userId -> { compat, common, last }, chargé à
+// l'ouverture de la page : compatibilité (get_friend_compatibility,
+// migrations/022, films notés en commun) et dernier film noté, lu dans son
+// catalogue (accessible tant que l'amitié est acceptée, migrations/009).
+// Le pourcentage ne s'affiche qu'à partir de 5 films en commun.
+let friendStats = {};
+const FRIEND_COMPAT_MIN_COMMON = 5;
+
+function friendFilmNote(row){
+  const n = getDisplayNote({ manualNote: row.manual_note != null ? parseFloat(row.manual_note) : null, crit: row.crit || {} });
+  return Number.isFinite(n) ? n : null;
+}
+
+async function loadFriendStats(userIds){
+  const entries = await Promise.all(userIds.map(async id => {
+    const [compatRes, lastRes] = await Promise.all([
+      supabaseClient.rpc('get_friend_compatibility', { p_friend_id: id }),
+      supabaseClient.from('films').select('title, tmdb_id, poster_url, manual_note, crit')
+        .eq('user_id', id).order('added', { ascending: false }).limit(1)
+    ]);
+    if(compatRes.error) console.error(compatRes.error);
+    if(lastRes.error) console.error(lastRes.error);
+    const row = compatRes.data && compatRes.data[0];
+    const lastFilm = lastRes.data && lastRes.data[0];
+    return [id, {
+      compat: row && row.compatibility != null ? Number(row.compatibility) : null,
+      common: row ? (row.common_count || 0) : 0,
+      last: lastFilm ? { title: lastFilm.title, tmdbId: lastFilm.tmdb_id, posterUrl: lastFilm.poster_url, note: friendFilmNote(lastFilm) } : null
+    }];
+  }));
+  friendStats = Object.fromEntries(entries);
+}
+
+function friendCompatHtml(stats){
+  if(!stats) return '<div class="fr-compat"></div>';
+  if(stats.compat != null && stats.common >= FRIEND_COMPAT_MIN_COMMON){
+    return `<div class="fr-compat"><b>${Math.round(stats.compat)} %</b><span>en phase</span></div>`;
+  }
+  return '<div class="fr-compat is-low"><span>pas assez en commun</span></div>';
+}
+
+function friendRichRowHtml(f){
+  const userId = otherUserId(f);
+  const name = friendDisplayName(userId);
+  const stats = friendStats[userId];
+  const sub = !stats ? '' : [
+    stats.common ? `${stats.common} film${stats.common > 1 ? 's' : ''} en commun` : 'Aucun film en commun',
+    stats.last ? `dernier : ${escapeHtml(stats.last.title)}` : ''
+  ].filter(Boolean).join(' · ');
+  const last = stats && stats.last && stats.last.posterUrl
+    ? `<div class="fr-last"><img src="${stats.last.posterUrl}" alt="" loading="lazy">${stats.last.note != null ? `<span class="fr-note ${noteColorClass(stats.last.note)}">${stats.last.note.toFixed(1)}</span>` : ''}</div>`
+    : '';
+  return `
+    <div class="fr-row" data-user-id="${userId}">
+      ${friendAvatarHtml(userId, name)}
+      <div class="fr-main">
+        <div class="fr-name">${escapeHtml(name)}</div>
+        ${sub ? `<div class="fr-sub">${sub}</div>` : ''}
+      </div>
+      ${last}
+      ${friendCompatHtml(stats)}
+      <div class="wl-actions">${rowMoreButtonHtml(`Actions pour ${name}`)}</div>
+    </div>
+  `;
+}
+
+// Les plus en phase d'abord, puis ceux sans pourcentage, par pseudo.
+function sortFriendsByCompat(accepted){
+  const score = (f) => {
+    const st = friendStats[otherUserId(f)];
+    return st && st.compat != null && st.common >= FRIEND_COMPAT_MIN_COMMON ? st.compat : -1;
+  };
+  return accepted.slice().sort((a, b) => (score(b) - score(a))
+    || friendDisplayName(otherUserId(a)).localeCompare(friendDisplayName(otherUserId(b)), 'fr'));
+}
+
+// La ligne ouvre le vrai profil en lecture seule ; le menu « ⋯ » garde
+// comparer, échanger des cartes, retirer (audit C1).
+function wireFriendRows(el, accepted){
+  el.querySelectorAll('.fr-row[data-user-id]').forEach(row => {
+    const friendId = row.dataset.userId;
+    const friendship = accepted.find(f => otherUserId(f) === friendId);
+    makeRowClickable(row, (e) => {
+      if(e.target.closest('.wl-actions')) return;
+      openFriendProfile(friendId);
+    });
+    const moreBtn = row.querySelector('.row-more-btn');
+    if(!moreBtn || !friendship) return;
+    moreBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openRowMenu(moreBtn, [
+        { label: 'Comparer nos notes', onSelect: () => compareWithFriend(friendId, row) },
+        // Ouvre directement la fenêtre cartes sur l'onglet échange, avec
+        // cet ami déjà sélectionné (voir openTcgTradeWith()).
+        { label: 'Échanger des cartes', onSelect: () => openTcgTradeWith(friendId) },
+        { label: 'Retirer de mes amis', danger: true, onSelect: () => handleFriendAction('remove', friendship.id) }
+      ]);
+    });
+  });
+}
+
 // Son de notification : une demande d'ami entrante de plus depuis le dernier
 // affichage joue un tintement (même réglage Son que le reste de l'app).
 // Premier affichage silencieux : on ne sonne pas pour ce qui était déjà là.
@@ -176,63 +278,41 @@ function renderFriendsPage(){
   const outgoing = friendships.filter(f => f.status === 'pending' && f.requesterId === currentUser.id);
   const accepted = friendships.filter(f => f.status === 'accepted');
 
-  // Sections "Demandes" masquées entièrement quand vides (v2.1.x, retour
-  // utilisateur : "on défile beaucoup trop") plutôt qu'un "Aucune demande
-  // en attente." qui prenait de la place en permanence même sans rien à
-  // signaler.
+  // Demandes reçues : en tête de page, la chose la plus urgente (audit A7),
+  // masquées quand il n'y en a pas.
   document.getElementById('friendRequestsInSection').style.display = incoming.length === 0 ? 'none' : '';
+  const inEl = document.getElementById('friendRequestsIn');
+  inEl.innerHTML = incoming.map(f => {
+    const id = otherUserId(f);
+    const name = friendDisplayName(id);
+    return `
+      <div class="wl-row fr-request" data-user-id="${id}">
+        ${friendAvatarHtml(id, name)}
+        <div class="wl-main"><div class="wl-title"><b>${escapeHtml(name)}</b> veut t’ajouter en ami</div></div>
+        <div class="wl-actions">
+          <button class="fr-text-btn" data-action="decline" data-id="${f.id}" type="button">Refuser</button>
+          <button class="btn" data-action="accept" data-id="${f.id}" type="button">Accepter</button>
+        </div>
+      </div>`;
+  }).join('');
+  wireRequestActions(inEl);
+
+  // Demandes envoyées : dans « + Ajouter un ami », plus en pleine page.
   document.getElementById('friendRequestsOutSection').style.display = outgoing.length === 0 ? 'none' : '';
-
-  renderCollapsible(
-    document.getElementById('friendRequestsIn'), incoming,
-    f => friendRowHtml(otherUserId(f), `
-      <button class="btn" data-action="accept" data-id="${f.id}" type="button">Accepter</button>
-      <button class="btn secondary" data-action="decline" data-id="${f.id}" type="button">Refuser</button>
-    `),
-    { previewCount: 4, wire: wireRequestActions }
-  );
-
   renderCollapsible(
     document.getElementById('friendRequestsOut'), outgoing,
-    f => friendRowHtml(otherUserId(f), `
-      <button class="btn secondary" data-action="cancel" data-id="${f.id}" type="button">Annuler</button>
-    `, 'En attente'),
+    f => friendRowHtml(otherUserId(f), `<button class="fr-line-btn" data-action="cancel" data-id="${f.id}" type="button">Annuler</button>`, 'En attente'),
     { previewCount: 4, wire: wireRequestActions }
   );
 
-  // "Mes amis" (v2.1.x) : repliée au-delà de 6, même retour utilisateur —
-  // une grande liste d'amis ne doit plus, à elle seule, repousser
-  // Suggestions/Recommandé hors champ. La ligne ouvre le vrai profil en
-  // lecture seule, pas l'aperçu public — voir le commentaire de
-  // wireFriendRowClicks().
-  // Audit C1 : quatre boutons par ami débordaient sur le pseudo. La ligne
-  // ouvre déjà le profil (ex-bouton « Voir ») ; le reste passe dans le menu
-  // « ⋯ » (openRowMenu(), js/ui.js).
+  // Tes amis : les plus en phase d'abord, 4 visibles (audit A4).
+  document.getElementById('friendsCount').textContent = accepted.length ? String(accepted.length) : '';
   renderCollapsible(
-    document.getElementById('friendsList'), accepted,
-    f => friendRowHtml(otherUserId(f), rowMoreButtonHtml(`Actions pour ${friendDisplayName(otherUserId(f))}`)),
+    document.getElementById('friendsList'), sortFriendsByCompat(accepted), friendRichRowHtml,
     {
-      previewCount: 6,
-      emptyHtml: `<div class="tmdb-empty">Pas encore d'amis. Cherche un pseudo ou un email ci-dessus.</div>`,
-      wire: (el) => {
-        el.querySelectorAll('.wl-row[data-user-id]').forEach(row => {
-          const friendId = row.dataset.userId;
-          const friendship = accepted.find(f => otherUserId(f) === friendId);
-          const moreBtn = row.querySelector('.row-more-btn');
-          if(!moreBtn || !friendship) return;
-          moreBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            openRowMenu(moreBtn, [
-              { label: 'Comparer nos notes', onSelect: () => compareWithFriend(friendId, row) },
-              // Ouvre directement la fenêtre cartes sur l'onglet échange, avec
-              // cet ami déjà sélectionné (voir openTcgTradeWith()).
-              { label: 'Échanger des cartes', onSelect: () => openTcgTradeWith(friendId) },
-              { label: 'Retirer de mes amis', danger: true, onSelect: () => handleFriendAction('remove', friendship.id) }
-            ]);
-          });
-        });
-        wireFriendRowClicks(el, openFriendProfile);
-      }
+      previewCount: 4,
+      emptyHtml: '<div class="empty-state">Pas encore d’amis. Ouvre « + Ajouter un ami » plus bas.</div>',
+      wire: (el) => wireFriendRows(el, accepted)
     }
   );
 }
@@ -313,7 +393,7 @@ function renderFriendSearchResults(){
     let action;
     if(existing && existing.status === 'accepted') action = `<span class="wl-note">Déjà ami</span>`;
     else if(existing && existing.status === 'pending') action = `<span class="wl-note">En attente</span>`;
-    else action = `<button class="btn" data-add="${p.user_id}" type="button">Ajouter</button>`;
+    else action = `<button class="fr-line-btn" data-add="${p.user_id}" type="button">Ajouter</button>`;
     return friendRowHtml(p.user_id, action);
   }).join('');
   wrap.querySelectorAll('button[data-add]').forEach(btn => {
@@ -423,12 +503,12 @@ async function loadFriendSuggestions(){
 function renderFriendSuggestions(suggestions){
   const wrap = document.getElementById('friendSuggestionsList');
   if(suggestions.length === 0){
-    wrap.innerHTML = `<div class="tmdb-empty">Pas de suggestion pour l'instant.</div>`;
+    wrap.innerHTML = `<div class="empty-state">Pas de suggestion pour l'instant.</div>`;
     return;
   }
   wrap.innerHTML = suggestions.map(s => friendRowHtml(
     s.user_id,
-    `<button class="btn" data-add="${s.user_id}" type="button">Ajouter</button>`,
+    `<button class="fr-line-btn" data-add="${s.user_id}" type="button">Ajouter</button>`,
     s.mutual_count > 0 ? `${s.mutual_count} ami${s.mutual_count > 1 ? 's' : ''} en commun` : null
   )).join('');
   wrap.querySelectorAll('button[data-add]').forEach(btn => {
@@ -441,28 +521,27 @@ function renderFriendSuggestions(suggestions){
 }
 
 async function loadFriendRecommendations(){
-  const { data, error } = await supabaseClient.rpc('get_friend_recommendations', { p_limit: 15 });
+  const { data, error } = await supabaseClient.rpc('get_friend_recommendations', { p_limit: 12 });
   if(error){ console.error(error); return []; }
   return data || [];
 }
 
 function renderFriendRecommendations(films){
   const wrap = document.getElementById('friendRecommendationsList');
+  // En affiches, la moyenne de ton cercle dans le coin (audit A5).
   wrap.innerHTML = films.length === 0
-    ? `<div class="tmdb-empty">Rien à recommander pour l'instant. Note plus de films en commun avec tes amis.</div>`
+    ? '<div class="empty-state">Rien à recommander pour l’instant. Note plus de films en commun avec tes amis.</div>'
     : films.map(f => `
-        <div class="wl-row" data-tmdb-id="${f.tmdb_id}">
-          ${f.poster_url
-            ? `<img class="film-poster" src="${f.poster_url}" alt="" loading="lazy">`
-            : `<div class="film-poster film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
-          <div class="wl-main">
-            <div class="wl-title">${escapeHtml(f.title)}${f.release_year ? ` <span class="wl-year">(${f.release_year})</span>` : ''}</div>
-            <div class="wl-note">${f.rating_count} note${f.rating_count > 1 ? 's' : ''} dans ton cercle</div>
+        <div class="fr-poster" data-tmdb-id="${f.tmdb_id}">
+          <div class="fr-poster-img">
+            ${f.poster_url ? `<img src="${f.poster_url}" alt="" loading="lazy">` : FILM_PLACEHOLDER_SVG}
+            <span class="fr-poster-note ${noteColorClass(Number(f.avg_note))}">${Number(f.avg_note).toFixed(1)}</span>
           </div>
-          <div class="counter ${noteColorClass(Number(f.avg_note))}">${Number(f.avg_note).toFixed(1)}</div>
+          <div class="fr-poster-title">${escapeHtml(f.title)}</div>
+          <div class="fr-poster-sub">${f.rating_count} note${f.rating_count > 1 ? 's' : ''} de tes amis</div>
         </div>
       `).join('');
-  // Fiche film (retour utilisateur, audit) — voir le même commentaire dans
+  // Fiche film (retour utilisateur, audit) : voir le même commentaire dans
   // renderGroupTopFilms(), js/groups.js.
   const navList = films.map(f => ({ tmdbId: f.tmdb_id, title: f.title }));
   wrap.querySelectorAll('[data-tmdb-id]').forEach(row => {
@@ -481,6 +560,83 @@ async function loadFriendCompatibility(userId){
   return (row && row.common_count > 0) ? row : null;
 }
 
+// --- « Ce qu'ils regardent » (audit A3) --- Le fil d'activité des amis,
+// avec l'affiche et la note en couleur. Une note ouvre la fiche du film :
+// l'événement n'a pas d'identifiant TMDB, on le retrouve dans le catalogue de
+// l'ami (lisible tant que l'amitié est acceptée). Le reste ouvre son profil.
+const FRIEND_FEED_VERBS = {
+  film_rated: 'a noté',
+  watchlist_added: 'a ajouté à À voir',
+  list_created: 'a créé la liste'
+};
+
+function friendFeedWhen(iso, now = Date.now()){
+  const d = new Date(iso);
+  const minutes = Math.round((now - d.getTime()) / 60000);
+  if(minutes < 60) return minutes <= 1 ? 'à l’instant' : `il y a ${minutes} min`;
+  const hours = Math.round(minutes / 60);
+  if(hours < 24) return `il y a ${hours} h`;
+  const days = Math.round(hours / 24);
+  if(days === 1) return 'hier';
+  if(days < 7) return `il y a ${days} jours`;
+  return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+}
+
+function friendFeedRowHtml(e){
+  const name = friendDisplayName(e.actorId);
+  const verb = FRIEND_FEED_VERBS[e.eventType];
+  const text = verb
+    ? `<b>${escapeHtml(name)}</b> ${verb} <b class="fr-film">${escapeHtml(e.targetLabel || '')}</b>`
+    : escapeHtml(activityEventLabel(e));
+  const note = e.eventType === 'film_rated' && e.targetNote != null && Number.isFinite(Number(e.targetNote))
+    ? `<span class="fr-note ${noteColorClass(Number(e.targetNote))}">${Number(e.targetNote).toFixed(1)}</span>` : '';
+  return `
+    <div class="fr-feed" data-feed-id="${e.id}">
+      ${friendAvatarHtml(e.actorId, name)}
+      <div class="fr-main">
+        <div class="fr-feed-text">${text}</div>
+        <div class="fr-sub">${friendFeedWhen(e.createdAt)}</div>
+      </div>
+      ${note}
+      ${e.targetPosterUrl ? `<img class="fr-feed-poster" src="${e.targetPosterUrl}" alt="" loading="lazy">` : ''}
+    </div>
+  `;
+}
+
+// (ami, titre) -> tmdb_id, pour ouvrir la fiche du film noté.
+async function lookupFeedFilms(events){
+  const rated = events.filter(e => e.eventType === 'film_rated' && e.targetLabel);
+  if(rated.length === 0) return {};
+  const { data, error } = await supabaseClient
+    .from('films')
+    .select('user_id, title, tmdb_id')
+    .in('user_id', [...new Set(rated.map(e => e.actorId))])
+    .in('title', [...new Set(rated.map(e => e.targetLabel))]);
+  if(error){ console.error(error); return {}; }
+  const map = {};
+  (data || []).forEach(r => { if(r.tmdb_id) map[`${r.user_id}|${r.title}`] = r.tmdb_id; });
+  return map;
+}
+
+function renderFriendFeed(events, tmdbByFilm){
+  const el = document.getElementById('friendActivityList');
+  renderCollapsible(el, events, friendFeedRowHtml, {
+    previewCount: 5,
+    emptyHtml: '<div class="empty-state">Rien à signaler pour l’instant.</div>',
+    wire: (container) => {
+      container.querySelectorAll('.fr-feed[data-feed-id]').forEach(row => {
+        const e = events.find(x => String(x.id) === row.dataset.feedId);
+        if(!e) return;
+        const tmdbId = tmdbByFilm[`${e.actorId}|${e.targetLabel}`];
+        makeRowClickable(row, () => {
+          if(tmdbId) goToFilmDetail(tmdbId);
+          else openFriendProfile(e.actorId);
+        });
+      });
+    }
+  });
+}
+
 // Rechargées après un ajout d'ami depuis les suggestions (le compteur
 // d'amis en commun / la liste elle-même doivent refléter le changement),
 // sans redemander la liste des demandes en cours.
@@ -490,7 +646,7 @@ async function openFriendsSideSections(){
     loadFriendSuggestions(),
     loadFriendRecommendations()
   ]);
-  renderActivityListInto(document.getElementById('friendActivityList'), activity);
+  renderFriendFeed(activity, await lookupFeedFilms(activity));
   renderFriendSuggestions(suggestions);
   renderFriendRecommendations(recommendations);
 }
@@ -498,24 +654,42 @@ async function openFriendsSideSections(){
 // --- Page amis (liste + demandes) — appelée par le routeur (#/amis). ---
 
 async function openFriends(){
-  document.getElementById('friendRequestsIn').innerHTML = skeletonRows(2);
+  document.getElementById('friendRequestsIn').innerHTML = '';
   document.getElementById('friendRequestsOut').innerHTML = '';
-  document.getElementById('friendsList').innerHTML = skeletonRows();
+  document.getElementById('friendsList').innerHTML = skeletonRows(4);
   document.getElementById('friendSearchInput').value = '';
   document.getElementById('friendSearchResults').innerHTML = '';
   document.getElementById('friendActivityList').innerHTML = skeletonRows(3);
   document.getElementById('friendSuggestionsList').innerHTML = skeletonRows(3);
-  document.getElementById('friendRecommendationsList').innerHTML = skeletonRows(3);
+  document.getElementById('friendRecommendationsList').innerHTML = '';
   await loadFriendships();
   renderFriendsPage();
+  // En phase ou pas : les lignes d'amis se complètent une fois chargé.
+  const accepted = friendships.filter(f => f.status === 'accepted').map(otherUserId);
+  loadFriendStats(accepted).then(renderFriendsPage).catch(e => console.error(e));
   await openFriendsSideSections();
   markSeen('amis'); // pas attendu : n'a pas à retarder l'affichage de la page
 }
 
 document.getElementById('friendsBtn').addEventListener('click', goToAmis);
 document.getElementById('amisPageBack').addEventListener('click', goHome);
-document.getElementById('amisGroupsLink').addEventListener('click', goToGroups);
-document.getElementById('amisListsLink').addEventListener('click', goToLists);
+// Interrupteur Amis · Groupes · Listes dans le titre des trois pages (draft
+// Amis du 15/10), comme Films · Séries dans le catalogue. Flèches gauche et
+// droite comme un vrai groupe d'onglets.
+const SOCIAL_ROUTES = { amis: goToAmis, groupes: goToGroups, listes: goToLists };
+const SOCIAL_ORDER = ['amis', 'groupes', 'listes'];
+document.querySelectorAll('.catalog-switch-btn[data-social]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if(!btn.classList.contains('is-active')) SOCIAL_ROUTES[btn.dataset.social]();
+  });
+  btn.addEventListener('keydown', (e) => {
+    if(e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    e.preventDefault();
+    const i = SOCIAL_ORDER.indexOf(btn.dataset.social);
+    const next = SOCIAL_ORDER[(i + (e.key === 'ArrowRight' ? 1 : SOCIAL_ORDER.length - 1)) % SOCIAL_ORDER.length];
+    SOCIAL_ROUTES[next]();
+  });
+});
 
 // --- Profil d'un ami (lecture seule : catalogue + stats) ---
 // Les films sont lus directement depuis Supabase (pas depuis `films`, qui
