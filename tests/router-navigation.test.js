@@ -20,7 +20,7 @@ function buildContext(initialHash){
     currentUser: { id: 'u1' }, // renderRoute() n'est pas appelée ici, mais garde une valeur réaliste
     currentPage: state.currentPage,
     render: () => { state.renderCalls++; },
-    openProfileModal: () => {}, // référencé par router.js comme handler du bouton mobile "Profil", jamais appelé ici
+    openProfileModal: () => {},
   });
   loadFiles(ctx, ['js/router.js']);
   return { ctx, state };
@@ -40,6 +40,8 @@ function buildContext(initialHash){
     ['#/film/abc', 'home'],         // id non numérique -> repli home
     ['#/amis', 'amis'],
     ['#/top', 'top'],
+    ['#/profil', 'profil'],    // page Profil (draft navigation, option B)
+    ['#/profil/x', 'home'],    // segment en trop -> repli home
     ['#/groupes', 'groupsList'],
     ['#/groupes/12', 'groupDetail'],
     ['#/groupes/12/propositions/3', 'proposalDetail'],
@@ -88,6 +90,30 @@ function buildContext(initialHash){
     ctx.resetHomeView();
     assert.strictEqual(ctx.currentPage, 1);
     assert.strictEqual(state.renderCalls, 1);
+  });
+}
+
+// --- Page Profil (draft navigation, option B) ---
+{
+  test('goToProfile() depuis le catalogue : va sur #/profil', () => {
+    const { ctx } = buildContext('');
+    ctx.goToProfile();
+    assert.strictEqual(ctx.location.hash, '#/profil');
+  });
+  test('goToProfile() déjà sur #/profil : referme les rubriques affichées en page, hash inchangé', () => {
+    const { ctx } = buildContext('#/profil');
+    let closed = 0;
+    ctx.closeAsPageOverlays = () => { closed++; };
+    ctx.goToProfile();
+    assert.strictEqual(closed, 1);
+    assert.strictEqual(ctx.location.hash, '#/profil');
+  });
+  test('returnToProfile() : ramène sur #/profil depuis une autre page, ne touche à rien si on y est déjà', () => {
+    const { ctx } = buildContext('#/watchlist');
+    ctx.returnToProfile();
+    assert.strictEqual(ctx.location.hash, '#/profil');
+    ctx.returnToProfile();
+    assert.strictEqual(ctx.location.hash, '#/profil');
   });
 }
 

@@ -743,7 +743,7 @@ async function openAdminModal(){
 // index.html) — en ressortir doit ramener là où on était, pas sortir
 // entièrement du profil.
 function closeAdminModal(){
-  closeOverlay('adminOverlay', () => openProfileModal());
+  closeOverlay('adminOverlay', () => returnToProfile());
 }
 
 document.querySelectorAll('#adminTabs .avatar-source-tab').forEach(btn => {

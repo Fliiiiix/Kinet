@@ -73,7 +73,7 @@ function friendAvatarHtml(userId, displayName){
   const url = friendAvatarUrl(userId);
   return url
     ? `<img loading="lazy" decoding="async" class="friend-avatar" src="${url}" alt="${escapeHtml(displayName)}">`
-    : `<div class="friend-avatar friend-avatar-placeholder">👤</div>`;
+    : `<div class="friend-avatar friend-avatar-placeholder">${uiIcon('user')}</div>`;
 }
 
 function friendRowHtml(userId, actionsHtml, subLabel){

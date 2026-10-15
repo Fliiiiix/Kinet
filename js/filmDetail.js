@@ -202,7 +202,7 @@ function updateLikeButtonUI(){
   const btn = document.getElementById('filmDetailLikeBtn');
   const liked = filmDetailLikes.some(l => l.userId === currentUser.id);
   btn.classList.toggle('active', liked);
-  btn.textContent = liked ? '♥ Aimé' : '♡ Aimer';
+  btn.innerHTML = `${uiIcon('heart', liked)} ${liked ? 'Aimé' : 'Aimer'}`;
 }
 
 // Notes des amis sur CE film précis (retour utilisateur, étude comparative
@@ -428,7 +428,7 @@ function updateFilmDetailActionButtons(){
   if(favBtn){
     favBtn.style.display = myFilm ? '' : 'none';
     const isFav = !!(myFilm && myFilm.fav);
-    favBtn.textContent = isFav ? '★ Favori' : '☆ Ajouter aux favoris';
+    favBtn.innerHTML = `${uiIcon('star', isFav)} ${isFav ? 'Favori' : 'Ajouter aux favoris'}`;
     favBtn.setAttribute('aria-pressed', String(isFav));
     favBtn.classList.toggle('active', isFav);
   }

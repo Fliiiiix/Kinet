@@ -45,7 +45,7 @@ window.addEventListener('appinstalled', () => {
   deferredInstallPrompt = null;
   updateInstallUI();
   updateInstallHeaderBtn();
-  showToast('Kinet installé 🎉');
+  showToast('Kinet est installé');
   logEvent('pwa_install'); // voir js/logging.js, section "Croissance" de l'onglet admin
 });
 
@@ -76,7 +76,7 @@ function updateInstallUI(){
   if(deferredInstallPrompt){
     el.innerHTML = `
       <div class="wl-note">Ajoute Kinet à ton écran d'accueil ou ton bureau. Ça s'ouvre comme une vraie app, plein écran, sans passer par le navigateur.</div>
-      <button class="btn secondary" id="installNowBtn" type="button">📲 Installer l'app</button>
+      <button class="btn secondary" id="installNowBtn" type="button">Installer l'app</button>
     `;
     document.getElementById('installNowBtn').addEventListener('click', handleInstallClick);
     return;

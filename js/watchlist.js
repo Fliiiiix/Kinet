@@ -74,10 +74,10 @@ function friendRatingsLabel(watchlistId){
   const ratings = watchlistFriendRatings[watchlistId];
   if(!ratings || ratings.length === 0) return null;
   if(ratings.length === 1){
-    return `👋 ${friendDisplayName(ratings[0].friendId)} a mis ${ratings[0].note.toFixed(1)}`;
+    return `${friendDisplayName(ratings[0].friendId)} a mis ${ratings[0].note.toFixed(1)}`;
   }
   const avg = ratings.reduce((a, r) => a + r.note, 0) / ratings.length;
-  return `👋 ${ratings.length} amis l'ont noté (moy. ${avg.toFixed(1)})`;
+  return `${ratings.length} amis l'ont noté (moy. ${avg.toFixed(1)})`;
 }
 
 // Filtre plateforme (retour utilisateur) — select masqué tant qu'il n'a pas

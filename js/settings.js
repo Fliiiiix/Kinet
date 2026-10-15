@@ -24,7 +24,7 @@ function openSettingsModal(){
 }
 
 function closeSettingsModal(){
-  closeOverlay('settingsOverlay', () => openProfileModal());
+  closeOverlay('settingsOverlay', () => returnToProfile());
 }
 
 document.getElementById('openSettingsBtn').addEventListener('click', openSettingsModal);

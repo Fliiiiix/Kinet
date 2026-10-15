@@ -51,6 +51,30 @@ const FEEDBACK_CATEGORIES = [
   { key:'autre', label:'Autre' }
 ];
 const TV_PLACEHOLDER_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="12" rx="2"></rect><path d="M8 21h8"></path><path d="M12 17v4"></path></svg>';
+// Pictos au trait de l'interface (audit D6 : un seul jeu d'icônes, même
+// tracé que FILM_PLACEHOLDER_SVG ci-dessus). Les émojis restent permis dans
+// ce que les gens écrivent (commentaires, réactions) et dans les jeux
+// (succès, cartes, happenings). uiIcon(nom, plein) : plein = étoile ou
+// cœur remplis (favori, « Aimé »).
+const UI_ICON_PATHS = {
+  user: '<circle cx="12" cy="8.5" r="3.8"></circle><path d="M4.5 20c0-4.1 3.4-6.8 7.5-6.8s7.5 2.7 7.5 6.8"></path>',
+  group: '<circle cx="9.3" cy="8" r="3.3"></circle><path d="M16 3.8c1.5.7 2.5 2.2 2.5 4S17.5 11.1 16 11.8"></path><path d="M14.5 20.3c0-3-2.3-5-5.2-5s-5.2 2-5.2 5"></path><path d="M19 20c0-2.5-1.7-4.3-4-4.8"></path>',
+  list: '<path d="M9 6h11M9 12h11M9 18h11"></path><circle cx="4.5" cy="6" r="1"></circle><circle cx="4.5" cy="12" r="1"></circle><circle cx="4.5" cy="18" r="1"></circle>',
+  clock: '<circle cx="12" cy="12" r="8.5"></circle><path d="M12 7.5V12l3 2"></path>',
+  chat: '<path d="M4 5h16v11H8l-4 4V5z"></path>',
+  ticket: '<path d="M3.5 7.5h17v3a1.5 1.5 0 000 3v3h-17v-3a1.5 1.5 0 000-3z"></path><path d="M14.5 7.5v9"></path>',
+  film: '<rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M3 9h18M3 15h18M8.5 4v16M15.5 4v16"></path>',
+  star: '<path d="M12 3.5l2.6 5.4 5.9.7-4.3 4.1 1 5.9L12 16.6l-5.2 2.9 1-5.9-4.3-4.1 5.9-.7L12 3.5z"></path>',
+  heart: '<path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0112 7a4.3 4.3 0 017.5 2.8C19.5 15.4 12 20 12 20z"></path>',
+  bookmark: '<path d="M6 3.5h12v17l-6-4.5-6 4.5z"></path>',
+  repeat: '<path d="M17 2.5l3 3-3 3"></path><path d="M4 11v-1.5a4 4 0 014-4h12"></path><path d="M7 21.5l-3-3 3-3"></path><path d="M20 13v1.5a4 4 0 01-4 4H4"></path>',
+  join: '<circle cx="9.3" cy="8" r="3.3"></circle><path d="M14.5 20.3c0-3-2.3-5-5.2-5s-5.2 2-5.2 5"></path><path d="M18.5 8v6M15.5 11h6"></path>'
+};
+function uiIcon(name, filled){
+  const paths = UI_ICON_PATHS[name];
+  if(!paths) return '';
+  return `<svg class="ui-icon${filled ? ' ui-icon-filled' : ''}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths}</svg>`;
+}
 // Casting (fiche film, js/filmDetail.js) : TMDB n'a pas toujours de photo
 // pour chaque acteur/actrice — même raisonnement que les deux placeholders
 // ci-dessus, jamais une case vide à la place.

@@ -2393,10 +2393,10 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   border-top:1px solid var(--line);
   padding:14px 0;
 }
-@media (max-width:900px){
+@media (max-width:860px){
   #criteriaWrap{grid-template-columns:1fr;}
 }
-@media (max-width:760px){
+@media (max-width:860px){
   .film-modal-layout{grid-template-columns:1fr;}
   .film-modal-poster-col{width:140px; margin:0 auto;}
 }
@@ -3445,7 +3445,7 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
    (même convention que .film-modal-layout/.detail-card ailleurs dans
    l'app) : petite affiche à gauche, radar réduit à côté plutôt que deux
    blocs centrés l'un sous l'autre en pleine largeur. */
-@media (max-width:640px){
+@media (max-width:600px){
   .film-review-layout{grid-template-columns:1fr;}
   .film-review-poster-col{flex-direction:row; align-items:flex-start;}
   .film-review-poster-col .film-poster{width:110px; flex:none;}
@@ -3925,7 +3925,7 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
 .tcg-booster-card.revealed{transform:rotateY(180deg);}
 /* Téléphone : 5 cartes côte à côte ne tiennent pas, on garde le même ratio
    2:3 en plus petit pour que l'ouverture tienne dans l'écran. */
-@media (max-width: 520px){
+@media (max-width:600px){
   .tcg-booster-pack{gap:10px;}
   .tcg-booster-card{width:108px; height:162px;}
 }
@@ -5651,7 +5651,7 @@ body[data-view-mode="list"] #topList .top-rank{width:26px; font-size:var(--fs-md
   margin-top:2px;
 }
 .watch-provider-justwatch:hover{opacity:1;}
-@media (max-width:480px){
+@media (max-width:600px){
   .watch-provider-row{flex-direction:column; align-items:flex-start; gap:6px;}
   .watch-provider-row-label{width:auto;}
 }
@@ -6019,7 +6019,7 @@ body[data-view-mode="grid"] #seriesList .new-episode-dot{display:block;}
    100% de la largeur, laissant la rangée grille/liste tenir juste à côté
    tant qu'il reste la place ; ne bascule sur sa propre ligne qu'en
    dernier recours, comme n'importe quel flex-wrap normal. */
-@media (max-width:760px){
+@media (max-width:860px){
   .toolbar-search{min-width:0; flex:1 1 200px;}
 
   /* Vitrine de connexion : la grille 2 colonnes ne tient plus côte à côte
@@ -6197,7 +6197,10 @@ body[data-view-mode="grid"] #seriesList .new-episode-dot{display:block;}
 
   .overlay{padding:20px 12px;}
   .modal{padding:24px;}
-  .ach-tier-grid, .ach-hidden-grid{grid-template-columns:1fr 1fr;}
+  /* 2 colonnes, une seule sur les très petits écrans, sans seuil de plus
+     (audit D5 : deux seuils, 600 et 860 px). */
+  .ach-tier-grid, .ach-hidden-grid{grid-template-columns:repeat(auto-fill, minmax(140px, 1fr));}
+  .stat-tiles{grid-template-columns:repeat(auto-fill, minmax(130px, 1fr));}
   body[data-view-mode="grid"] #wlList .wl-actions{width:100%;}
   .journal-row{flex-wrap:wrap;}
   .journal-date{margin-left:auto;}
@@ -6211,29 +6214,7 @@ body[data-view-mode="grid"] #seriesList .new-episode-dot{display:block;}
   .modal-footer .right{flex:1 1 100%; flex-wrap:wrap; justify-content:flex-end;}
 }
 
-@media (max-width:380px){
-  .ach-tier-grid, .ach-hidden-grid{grid-template-columns:1fr;}
-  .stat-tiles{grid-template-columns:1fr 1fr;}
-}
 
-/* Bug retour utilisateur (S25, "à voir" en grille : "les affiches sont
-   disproportionnées par rapport au reste") : le seuil précédent (380px)
-   faisait basculer la grille à 1 SEULE colonne, où l'affiche (width:100%,
-   aspect-ratio:2/3) s'étirait bord à bord — énorme à côté d'un titre/note
-   de taille normale en dessous. Or beaucoup de téléphones courants,
-   S25 compris, ont une largeur CSS ~360-390px (voir le commentaire sur
-   .toolbar-search plus haut, déjà mesuré sur cet appareil) : largement
-   assez pour 2 colonnes propres (2× minmax(158px) + le gap:12px du bloc
-   ≤600px tiennent déjà sous 360px), le seuil de repli à 380px les faisait
-   basculer en 1 colonne pour rien. Repli à 1 colonne repoussé à une
-   largeur vraiment étroite (ex. iPhone SE 1re/2e génération, ~320-374px)
-   où 2 colonnes deviendraient vraiment trop serrées. */
-@media (max-width:340px){
-  body[data-view-mode="grid"] #filmList,
-  body[data-view-mode="grid"] #wlList,
-  body[data-view-mode="grid"] #seriesList,
-  body[data-view-mode="grid"] #topList{grid-template-columns:1fr;}
-}
 
 /* Admin : gestion des cartes (onglet Cartes) — voir js/admin.js. */
 .admin-override{color:var(--gold); font-weight:600;}
@@ -6434,3 +6415,220 @@ button.btn-secondary{background:none; border:none; border-bottom:1px solid var(-
 .mm-icon.ic-violet, .mm-icon.ic-gold, .mm-icon.ic-teal, .mm-icon.ic-bronze{
   background:rgba(var(--text-rgb),0.06); color:var(--text-2);
 }
+
+/* ==========================================================
+   OPTION B (draft navigation du 15/10, validée) : Films / Séries en
+   interrupteur dans le titre, objectif annuel à droite, recherche + filtre
+   + affichage sur une ligne, page Profil, Statistiques/Succès/Cartes/
+   Journal affichés comme des pages. Draft :
+   https://claude.ai/artifact/MeK2Q8Ydg7AufobkFsSVDU
+   ========================================================== */
+/* Les petits onglets sous le logo laissent la place à l'interrupteur.
+   #primaryTabs reste dans le DOM : js/auth.js et js/router.js le lisent. */
+#primaryTabs{display:none !important;}
+/* Entête : le mot, les pages, l'avatar. Le pseudo vit sur la page Profil. */
+#userDisplayName{display:none;}
+.user-avatar-btn.active{outline:2px solid var(--accent); outline-offset:2px;}
+
+/* Titre interrupteur + objectif annuel */
+.catalog-head{
+  display:flex; align-items:baseline; flex-wrap:wrap;
+  gap:var(--sp-4);
+  margin-bottom:var(--sp-5);
+}
+.catalog-switch{display:flex; align-items:baseline; gap:var(--sp-4);}
+.catalog-switch-btn{
+  background:none; border:0; padding:0; cursor:pointer;
+  font-family:var(--font-display); font-weight:800; font-size:var(--fs-xl);
+  letter-spacing:-0.02em; line-height:1.1;
+  color:var(--text-3);
+  transition:color var(--dur-fast);
+}
+.catalog-switch-btn:hover{color:var(--text-2);}
+.catalog-switch-btn.is-active{color:var(--text-1); cursor:default;}
+.catalog-switch-btn:focus-visible{outline:2px solid var(--accent); outline-offset:4px; border-radius:4px;}
+.catalog-head #annualGoalWidget{margin-left:auto; min-width:180px;}
+.catalog-head #annualGoalWidget:empty{display:none;}
+.catalog-head .annual-goal-widget{gap:6px; margin:0; padding:0; border:0;}
+.catalog-head .annual-goal-head{gap:var(--sp-2);}
+.catalog-head .annual-goal-count{margin-left:0; flex:1; color:var(--text-2);}
+.catalog-head .annual-goal-bar{height:4px;}
+.catalog-head .annual-goal-fill,
+.catalog-head .annual-goal-widget.is-complete .annual-goal-fill{background:var(--accent);}
+.catalog-head .annual-goal-widget.is-complete .annual-goal-count{color:var(--text-1);}
+.catalog-head .annual-goal-done-msg{font-size:var(--fs-xs); color:var(--accent);}
+.annual-goal-edit{display:flex; color:var(--text-3);}
+.annual-goal-edit svg{width:14px; height:14px; display:block;}
+.annual-goal-edit:hover{color:var(--text-1);}
+.catalog-head .annual-goal-form{flex-wrap:nowrap; gap:var(--sp-2);}
+.catalog-head .annual-goal-label{font-size:var(--fs-sm); font-weight:600; color:var(--text-2); white-space:nowrap;}
+.catalog-head .annual-goal-form input[type="number"]{width:76px; padding:6px 10px; border-radius:var(--r-full);}
+.catalog-head .annual-goal-form .btn{padding:7px 14px; border-radius:var(--r-full);}
+
+/* Recherche, filtre et affichage dans une seule pilule */
+#appContainer .toolbar, #seriesPage .toolbar{flex-wrap:nowrap; gap:var(--sp-2); margin:0 0 var(--sp-5);}
+.toolbar-search{
+  flex:1; min-width:0;
+  height:42px; padding:0 6px 0 16px; gap:10px;
+  border:1px solid var(--line); border-radius:var(--r-full);
+  background:var(--surface);
+  transition:border-color var(--dur-fast);
+}
+.toolbar-search:focus-within{border-color:var(--violet-dim);}
+.toolbar-search-icon{width:18px; height:18px; flex:none; color:var(--text-2);}
+.toolbar-search > input[type="text"]{
+  flex:1; min-width:0; height:100%;
+  padding:0; border:0; border-radius:0; background:none; box-shadow:none;
+}
+.toolbar-search > input[type="text"]:focus{border:0; box-shadow:none;}
+.toolbar-search > input[type="text"]::placeholder{color:var(--text-3);}
+.toolbar-search #filtersToggleBtn,
+.toolbar-search .view-toggle-btn{
+  width:34px; height:34px; padding:0; flex:none;
+  display:grid; place-items:center;
+  border:0; border-radius:var(--r-full);
+  background:none; box-shadow:none;
+  color:var(--text-2);
+  transition:background-color var(--dur-fast), color var(--dur-fast);
+}
+.toolbar-search #filtersToggleBtn:hover,
+.toolbar-search .view-toggle-btn:hover{background:var(--surface-2); color:var(--text-1);}
+.toolbar-search #filtersToggleBtn svg,
+.toolbar-search .view-toggle-btn svg{width:18px; height:18px; display:block;}
+.toolbar-search #filtersToggleBtn.has-active-filter::after{top:5px; right:5px;}
+/* Une seule icône d'affichage : celle du mode en cours, un clic bascule
+   (gestionnaire dans js/ui.js). */
+.toolbar-search .view-toggle{border:0; padding:0; background:none; gap:0;}
+.toolbar-search .view-toggle-btn:not(.is-active){display:none;}
+.toolbar-search .view-toggle-btn.is-active{background:none; color:var(--text-2);}
+.toolbar-search .view-toggle-btn.is-active:hover{background:var(--surface-2); color:var(--text-1);}
+/* Ailleurs (À voir, Top films, Bientôt), la bascule garde ses deux
+   icônes, sans cadre : icône active en blanc, l'autre en gris. */
+.view-toggle{border:0; background:none; padding:0;}
+.view-toggle-btn{width:34px; height:34px; border-radius:var(--r-full); color:var(--text-3);}
+.view-toggle-btn svg{width:18px; height:18px; display:block;}
+.view-toggle-btn.is-active{background:none; color:var(--text-1);}
+/* Compteur à droite de la pilule, masqué sur téléphone (draft) */
+.toolbar-actions{flex-wrap:nowrap;}
+.toolbar .count-line{margin:0; white-space:nowrap; color:var(--text-2);}
+#seriesAddBtn{border-radius:var(--r-full);}
+
+/* Barre du bas : l'onglet Profil s'allume sur sa page */
+.mobile-tab.active :is(.mobile-tab-avatar, .mobile-tab-avatar-fallback){outline:2px solid var(--accent); outline-offset:1px; border-radius:50%;}
+
+/* Page Profil (#profilePage, js/profilePage.js) */
+.pp-head{display:flex; align-items:center; gap:var(--sp-4); margin-top:var(--sp-2);}
+.pp-avatar{
+  width:68px; height:68px; flex:none; overflow:hidden;
+  border-radius:50%; border:1px solid var(--line-strong); background:var(--surface-2);
+  display:grid; place-items:center;
+}
+.pp-avatar img{width:100%; height:100%; object-fit:cover;}
+.pp-avatar .user-avatar-fallback svg{width:28px; height:28px;}
+.pp-id{flex:1; min-width:0;}
+.pp-name{
+  margin:0; font-family:var(--font-display); font-weight:800; font-size:var(--fs-xl);
+  letter-spacing:-0.02em; line-height:1.1; overflow-wrap:anywhere;
+}
+.pp-sub{margin-top:2px; font-size:var(--fs-sm); color:var(--text-2); font-variant-numeric:tabular-nums;}
+.pp-edit{
+  flex:none; background:none; border:0; padding:var(--sp-2) 0; cursor:pointer;
+  font-family:var(--font-text); font-size:var(--fs-sm); font-weight:600; color:var(--accent);
+}
+.pp-edit:hover{color:var(--text-1);}
+.pp-figures{display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:var(--sp-4); margin:28px 0 var(--sp-6);}
+.pp-figure{display:grid; gap:2px; padding-top:10px; border-top:1px solid var(--line-strong);}
+.pp-figure b{font-family:var(--font-display); font-weight:800; font-size:var(--fs-xl); line-height:1.1; font-variant-numeric:tabular-nums;}
+.pp-figure span{font-size:var(--fs-xs); font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:var(--text-2);}
+.pp-label{margin:0 0 10px; font-size:var(--fs-xs); font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:var(--text-2);}
+.pp-favs{display:grid; grid-template-columns:repeat(4, minmax(0, 120px)); gap:var(--sp-3); margin-bottom:var(--sp-6);}
+.pp-fav{display:grid; gap:6px; min-width:0; padding:0; border:0; background:none; color:inherit; text-align:left; cursor:pointer;}
+.pp-fav-poster{display:block; width:100%; aspect-ratio:2/3; object-fit:cover; border-radius:var(--r-sm); transition:transform var(--dur-fast) var(--ease-out);}
+.pp-fav:hover .pp-fav-poster{transform:translateY(-2px);}
+.pp-fav:focus-visible{outline:none;}
+.pp-fav:focus-visible .pp-fav-poster{outline:2px solid var(--accent); outline-offset:2px;}
+.pp-fav-title{font-size:var(--fs-sm); font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.pp-favs-empty{
+  grid-column:1 / -1; justify-self:start;
+  padding:var(--sp-4) var(--sp-5); border:1.5px dashed var(--line-strong); border-radius:var(--r-sm);
+  background:none; color:var(--text-2); font-family:var(--font-text); font-size:var(--fs-sm); cursor:pointer;
+  transition:border-color var(--dur-fast), color var(--dur-fast);
+}
+.pp-favs-empty:hover{border-color:var(--accent); color:var(--accent);}
+.pp-rows{margin-bottom:var(--sp-6); border-top:1px solid var(--line);}
+.pp-row{
+  display:flex; align-items:center; gap:var(--sp-3);
+  width:100%; padding:14px 0;
+  border:0; border-bottom:1px solid var(--line); background:none;
+  color:var(--text-1); font-family:var(--font-text); font-size:var(--fs-md); text-align:left;
+  cursor:pointer;
+}
+.pp-row[hidden], .pp-row[data-mobile-only]{display:none;}
+.pp-row:focus-visible{outline:2px solid var(--accent); outline-offset:-2px; border-radius:4px;}
+.pp-row-main{flex:1; min-width:0; display:flex; flex-direction:column; gap:2px;}
+.pp-row-title{display:flex; align-items:center; gap:var(--sp-2);}
+.pp-row-sub{font-size:var(--fs-sm); color:var(--text-2);}
+.pp-val{font-size:var(--fs-sm); color:var(--text-2); font-variant-numeric:tabular-nums; white-space:nowrap;}
+.pp-chev{display:flex; color:var(--text-3); transition:transform var(--dur-fast), color var(--dur-fast);}
+.pp-chev svg{width:16px; height:16px;}
+.pp-row:hover .pp-chev{color:var(--text-2);}
+.pp-row-link .pp-row-title{font-size:var(--fs-sm); font-weight:600; color:var(--accent);}
+.pp-disclosure > summary{list-style:none;}
+.pp-disclosure > summary::-webkit-details-marker{display:none;}
+.pp-disclosure[open] > summary .pp-chev{transform:rotate(90deg);}
+.pp-sub-rows{display:flex; flex-direction:column; padding:var(--sp-1) 0 var(--sp-2) var(--sp-4); border-bottom:1px solid var(--line);}
+.pp-sub-row{
+  padding:10px 0; border:0; background:none; text-align:left; cursor:pointer;
+  color:var(--text-2); font-family:var(--font-text); font-size:var(--fs-sm);
+}
+.pp-sub-row:hover{color:var(--text-1);}
+/* « Modifier le profil » : la fenêtre ne garde que photo, pseudo et films */
+.pf-hub{display:none !important;}
+
+/* Statistiques, Succès, Cartes, Journal : affichés comme des pages, sous
+   l'entête (z-index 50) et la barre du bas (30). --app-header-h est posé
+   par js/profilePage.js. */
+.overlay.as-page{
+  z-index:25;
+  padding:var(--app-header-h, 96px) 0 0;
+  background:var(--ink);
+  backdrop-filter:none; -webkit-backdrop-filter:none;
+}
+.overlay.as-page .modal{
+  width:100%; max-width:none; min-height:100%; margin:0;
+  padding:var(--sp-2) max(32px, calc((100% - 1080px) / 2 + 32px)) var(--sp-8);
+  background:none; backdrop-filter:none; -webkit-backdrop-filter:none;
+  border:0; border-radius:0; box-shadow:none;
+  animation:pageIn .18s cubic-bezier(.2,.8,.3,1);
+}
+.overlay.as-page.closing .modal{animation:none;}
+@media (prefers-reduced-motion:reduce){ .overlay.as-page .modal{animation:none;} }
+
+@media (max-width:600px){
+  .catalog-head #annualGoalWidget{margin-left:0; width:100%; min-width:0;}
+  .toolbar .count-line{display:none;}
+  .pp-head{flex-wrap:wrap;}
+  .pp-figures{grid-template-columns:repeat(2, minmax(0, 1fr));}
+  .pp-favs{grid-template-columns:repeat(4, minmax(0, 1fr)); gap:var(--sp-2);}
+  .pp-row[data-mobile-only]:not([hidden]){display:flex;}
+  .overlay.as-page .modal{padding:var(--sp-2) 18px calc(60px + var(--mobile-tabbar-h) + env(safe-area-inset-bottom, 0px));}
+}
+
+
+/* ==========================================================
+   AUDIT D6 : un seul jeu de pictos au trait (uiIcon(), js/data.js) à la
+   place des émojis et des glyphes de l'interface. Les émojis restent
+   dans les commentaires, les réactions et les jeux (succès, cartes).
+   ========================================================== */
+.ui-icon{display:inline-block; width:1em; height:1em; vertical-align:-0.14em; flex:none; pointer-events:none;}
+.ui-icon-filled{fill:currentColor;}
+.friend-avatar-placeholder{opacity:1; color:var(--text-2);}
+.friend-avatar-placeholder .ui-icon{width:18px; height:18px;}
+.star-btn .ui-icon{display:block;}
+.star-btn.active .ui-icon, #filmDetailFavBtn.active .ui-icon{fill:currentColor;}
+body[data-view-mode="grid"] #filmList .star-btn .ui-icon{width:16px; height:16px;}
+.review-badge .ui-icon{width:13px; height:13px;}
+.rewatch-badge .ui-icon{width:11px; height:11px;}
+.poster-wall-fav .ui-icon{filter:drop-shadow(0 1px 2px rgba(0,0,0,0.6));}
+.global-search-recent-item .ui-icon{color:var(--text-3); margin-right:2px;}
+.wl-title > .ui-icon:first-child{color:var(--text-2); margin-right:2px;}

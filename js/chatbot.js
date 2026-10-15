@@ -314,7 +314,7 @@ function openChatbotModal(){
 }
 
 function closeChatbotModal(){
-  closeOverlay('chatbotOverlay', () => openProfileModal());
+  closeOverlay('chatbotOverlay', () => returnToProfile());
 }
 
 document.getElementById('chatbotBtn').addEventListener('click', openChatbotModal);

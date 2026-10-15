@@ -64,7 +64,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,500&display=swap">
-<link rel="stylesheet" href="css/style.css?v=256">
+<link rel="stylesheet" href="css/style.css?v=257">
 </head>
 <body>
 
@@ -205,7 +205,7 @@
      sortie explicite (en plus du tremblement des icônes, sert lui-même
      d'indicateur qu'un mode spécial est actif). -->
 <div class="container header-edit-banner" id="headerEditBanner" style="display:none;">
-  <span>↕ Maintiens une icône puis glisse-la pour changer l'ordre de l'entête.</span>
+  <span>Maintiens une icône puis glisse-la pour changer l'ordre de l'entête.</span>
   <button class="btn secondary" id="exitHeaderEditBtn" type="button">Terminé</button>
 </div>
 
@@ -282,7 +282,7 @@
 <nav class="mobile-tabbar" id="mobileTabbar" aria-label="Navigation principale" style="display:none;">
   <button class="mobile-tab" id="mobileTabHome" type="button">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11.5 12 4l8 7.5"></path><path d="M6 10v9.5a1 1 0 001 1h3.5v-6h3v6H17a1 1 0 001-1V10"></path></svg>
-    <span>Accueil</span>
+    <span>Catalogue</span>
   </button>
   <button class="mobile-tab" id="mobileTabWatchlist" type="button">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3.5h12a.5.5 0 01.5.5v16.2a.5.5 0 01-.77.42L12 16.2l-5.73 4.42a.5.5 0 01-.77-.42V4a.5.5 0 01.5-.5z"></path></svg>
@@ -402,13 +402,20 @@
 <div class="pull-refresh-indicator" id="pullRefreshIndicator" aria-hidden="true">↓</div>
 
 <div class="container" id="appContainer" role="main" tabindex="-1" style="display:none;">
-  <!-- Objectif annuel chiffré + barre de progression (retour utilisateur,
-       étude comparative "Reading Challenge" de Goodreads) — voir
-       renderAnnualGoalWidget(), js/recap.js. Rempli au premier render(),
-       vide tant que rien n'est encore chargé. -->
-  <div id="annualGoalWidget"></div>
+  <!-- Navigation option B (draft du 15/10, validée) : Films / Séries sont le
+       titre de la page, en grand, mot actif en blanc ; l'objectif annuel
+       (renderAnnualGoalWidget(), js/recap.js) tient à droite, en une ligne.
+       Remplace les petits onglets sous le logo (#primaryTabs, masqué). -->
+  <div class="catalog-head">
+    <div class="catalog-switch" role="tablist" aria-label="Films ou séries">
+      <button type="button" role="tab" class="catalog-switch-btn is-active" aria-selected="true" data-catalog="films">Films</button>
+      <button type="button" role="tab" class="catalog-switch-btn" aria-selected="false" data-catalog="series">Séries</button>
+    </div>
+    <div id="annualGoalWidget"></div>
+  </div>
   <div class="toolbar">
     <div class="toolbar-search">
+      <svg class="toolbar-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
       <input type="text" id="search" placeholder="Rechercher ou ajouter un film…" aria-label="Rechercher dans ton catalogue ou ajouter un film" autocomplete="off">
       <!-- Filtres (tri + genre) — v2.1.x, retour utilisateur mobile :
            recherche+tri+genre tous les 3 sur une ligne devenaient
@@ -479,19 +486,16 @@
           </div>
         </div>
       </div>
+      <!-- Grille / liste dans la même pilule que la recherche et le filtre
+           (draft navigation, option B) : une seule ligne d'outils. -->
+      <div class="view-toggle" role="group" aria-label="Mode d'affichage">
+        <button class="view-toggle-btn is-active" type="button" data-view-btn="grid" title="Grille ou liste" aria-label="Affichage en grille, passer en liste" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1.5"></rect><rect x="13" y="4" width="7" height="7" rx="1.5"></rect><rect x="4" y="13" width="7" height="7" rx="1.5"></rect><rect x="13" y="13" width="7" height="7" rx="1.5"></rect></svg></button>
+        <button class="view-toggle-btn" type="button" data-view-btn="list" title="Grille ou liste" aria-label="Affichage en liste, passer en grille" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"></path><circle cx="4.5" cy="6" r="1"></circle><circle cx="4.5" cy="12" r="1"></circle><circle cx="4.5" cy="18" r="1"></circle></svg></button>
+      </div>
     </div>
     <div class="toolbar-actions">
-      <!-- v3.2, retour utilisateur ("trop de choses... la sélection
-           générale ne sert à rien ça c'est à enlever, l'import export à
-           garder mais peut-être pas ici") — la barre ne garde que ce qui
-           sert à CHAQUE visite (affichage, filtre, ajouter). Sélection
-           groupée retirée (bouton masqué juste en dessous, logique
-           intacte) ; export/import déplacés dans la modale profil,
-           section "Données" (voir #moreMenuWrap là-bas). -->
-      <div class="view-toggle" role="group" aria-label="Mode d'affichage">
-        <button class="view-toggle-btn is-active" type="button" data-view-btn="grid" title="Grille" aria-label="Vue en grille" aria-pressed="true">▦</button>
-        <button class="view-toggle-btn" type="button" data-view-btn="list" title="Liste" aria-label="Vue en liste" aria-pressed="false">☰</button>
-      </div>
+      <!-- Nombre de films, à droite de la recherche (draft option B). -->
+      <div class="count-line" id="countLine"></div>
       <!-- #bulkSelectBtn masqué, pas supprimé : toggleBulkSelectMode()
            (js/app.js) lit/écrit encore ses classes, et #bulkActionsBar
            (fin de body) dépend du mode qu'il bascule. -->
@@ -521,7 +525,6 @@
     <label for="critFilterMin">Seuil minimum : <b id="critFilterMinVal">0.00</b></label>
     <input type="range" id="critFilterMin" min="0" max="1" step="0.05" value="0">
   </div>
-  <div class="count-line" id="countLine"></div>
   <!-- État de chargement (v1.6) : le premier vrai render() fait déjà
        list.innerHTML = '' avant d'afficher les films (js/app.js) — ces 5
        lignes ne sont donc là que le temps du 1er chargement (session +
@@ -567,8 +570,8 @@
     <button class="btn secondary" id="watchlistPageBack">← Retour</button>
     <h2>À voir</h2>
     <div class="view-toggle" role="group" aria-label="Mode d'affichage">
-      <button class="view-toggle-btn is-active" type="button" data-view-btn="grid" title="Grille" aria-label="Vue en grille" aria-pressed="true">▦</button>
-      <button class="view-toggle-btn" type="button" data-view-btn="list" title="Liste" aria-label="Vue en liste" aria-pressed="false">☰</button>
+      <button class="view-toggle-btn is-active" type="button" data-view-btn="grid" title="Grille" aria-label="Vue en grille" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1.5"></rect><rect x="13" y="4" width="7" height="7" rx="1.5"></rect><rect x="4" y="13" width="7" height="7" rx="1.5"></rect><rect x="13" y="13" width="7" height="7" rx="1.5"></rect></svg></button>
+      <button class="view-toggle-btn" type="button" data-view-btn="list" title="Liste" aria-label="Vue en liste" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"></path><circle cx="4.5" cy="6" r="1"></circle><circle cx="4.5" cy="12" r="1"></circle><circle cx="4.5" cy="18" r="1"></circle></svg></button>
     </div>
   </div>
 
@@ -695,16 +698,28 @@
        pleine largeur, plutôt que dans la rangée : évite qu'une liste de
        résultats qui s'ouvre pousse le bouton "Suivre" et la bascule
        grille/liste au milieu de la ligne. -->
+  <!-- Navigation option B (draft du 15/10) : même titre-interrupteur que le
+       catalogue films, « Séries » actif. -->
+  <div class="catalog-head">
+    <div class="catalog-switch" role="tablist" aria-label="Films ou séries">
+      <button type="button" role="tab" class="catalog-switch-btn" aria-selected="false" data-catalog="films">Films</button>
+      <button type="button" role="tab" class="catalog-switch-btn is-active" aria-selected="true" data-catalog="series">Séries</button>
+    </div>
+  </div>
   <div class="toolbar">
     <div class="toolbar-search">
-      <input type="text" id="seriesTitleInput" placeholder="Chercher une série à suivre…" autocomplete="off">
+      <svg class="toolbar-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+      <input type="text" id="seriesTitleInput" placeholder="Rechercher ou suivre une série…" aria-label="Rechercher une série à suivre" autocomplete="off">
+      <div class="view-toggle" role="group" aria-label="Mode d'affichage">
+        <button class="view-toggle-btn is-active" type="button" data-view-btn="grid" title="Grille ou liste" aria-label="Affichage en grille, passer en liste" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1.5"></rect><rect x="13" y="4" width="7" height="7" rx="1.5"></rect><rect x="4" y="13" width="7" height="7" rx="1.5"></rect><rect x="13" y="13" width="7" height="7" rx="1.5"></rect></svg></button>
+        <button class="view-toggle-btn" type="button" data-view-btn="list" title="Grille ou liste" aria-label="Affichage en liste, passer en grille" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"></path><circle cx="4.5" cy="6" r="1"></circle><circle cx="4.5" cy="12" r="1"></circle><circle cx="4.5" cy="18" r="1"></circle></svg></button>
+      </div>
     </div>
     <div class="toolbar-actions">
-      <div class="view-toggle" role="group" aria-label="Mode d'affichage">
-        <button class="view-toggle-btn is-active" type="button" data-view-btn="grid" title="Grille" aria-label="Vue en grille" aria-pressed="true">▦</button>
-        <button class="view-toggle-btn" type="button" data-view-btn="list" title="Liste" aria-label="Vue en liste" aria-pressed="false">☰</button>
-      </div>
-      <button class="btn" id="seriesAddBtn" type="button">+ Suivre</button>
+      <div class="count-line" id="seriesCountLine"></div>
+      <!-- « + Suivre » n'apparaît qu'une fois une série choisie dans les
+           résultats (voir updateSeriesTmdbSelectedUI(), js/series.js). -->
+      <button class="btn" id="seriesAddBtn" type="button" style="display:none;">+ Suivre</button>
     </div>
   </div>
   <div id="seriesTmdbResults" class="tmdb-results"></div>
@@ -868,7 +883,7 @@
     <button class="btn-primary" id="filmDetailRateBtn" type="button">Noter ce film</button>
     <button class="btn-secondary" id="filmDetailWatchlistBtn" type="button">Ajouter à À voir</button>
     <button class="btn-secondary" id="filmDetailFavBtn" type="button" style="display:none;" aria-pressed="false">Favori</button>
-    <button class="btn-secondary" id="filmDetailLikeBtn" type="button">♡ Aimer</button>
+    <button class="btn-secondary" id="filmDetailLikeBtn" type="button"><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0112 7a4.3 4.3 0 017.5 2.8C19.5 15.4 12 20 12 20z"></path></svg> Aimer</button>
     <!-- Vraie vidéo TMDB (pas de lien mort), masqué tant qu'aucune n'est
          trouvée, voir updateFilmDetailTrailerBtn(), js/filmDetail.js. -->
     <a class="btn-secondary" id="filmDetailTrailerBtn" href="#" target="_blank" rel="noopener noreferrer" style="display:none;">Bande-annonce</a>
@@ -926,8 +941,8 @@
            plutôt qu'une simple liste triée par date) — préférence propre à
            cette section, voir js/upcoming.js. -->
       <div class="view-toggle" role="group" aria-label="Affichage de Bientôt">
-        <button class="view-toggle-btn is-active" type="button" data-upcoming-view-btn="list" title="Liste" aria-label="Vue en liste" aria-pressed="true">☰</button>
-        <button class="view-toggle-btn" type="button" data-upcoming-view-btn="calendar" title="Calendrier" aria-label="Vue calendrier" aria-pressed="false">🗓</button>
+        <button class="view-toggle-btn is-active" type="button" data-upcoming-view-btn="list" title="Liste" aria-label="Vue en liste" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"></path><circle cx="4.5" cy="6" r="1"></circle><circle cx="4.5" cy="12" r="1"></circle><circle cx="4.5" cy="18" r="1"></circle></svg></button>
+        <button class="view-toggle-btn" type="button" data-upcoming-view-btn="calendar" title="Calendrier" aria-label="Vue calendrier" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5.5" width="17" height="15" rx="2"></rect><path d="M3.5 10h17M8 3.5v4M16 3.5v4"></path></svg></button>
       </div>
     </div>
     <div class="wl-list" id="upcomingSoonList"></div>
@@ -967,7 +982,7 @@
   <div class="stats-section">
     <div class="stats-section-title">Groupes</div>
     <div class="wl-row">
-      <div class="friend-avatar friend-avatar-placeholder">🎭</div>
+      <div class="friend-avatar friend-avatar-placeholder"><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9.3" cy="8" r="3.3"></circle><path d="M16 3.8c1.5.7 2.5 2.2 2.5 4S17.5 11.1 16 11.8"></path><path d="M14.5 20.3c0-3-2.3-5-5.2-5s-5.2 2-5.2 5"></path><path d="M19 20c0-2.5-1.7-4.3-4-4.8"></path></svg></div>
       <div class="wl-main">
         <div class="wl-title">Groupes</div>
         <div class="wl-note">Créer un groupe avec tes amis, proposer des films, voter</div>
@@ -985,7 +1000,7 @@
   <div class="stats-section">
     <div class="stats-section-title">Listes</div>
     <div class="wl-row">
-      <div class="friend-avatar friend-avatar-placeholder">📋</div>
+      <div class="friend-avatar friend-avatar-placeholder"><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"></path><circle cx="4.5" cy="6" r="1"></circle><circle cx="4.5" cy="12" r="1"></circle><circle cx="4.5" cy="18" r="1"></circle></svg></div>
       <div class="wl-main">
         <div class="wl-title">Listes</div>
         <div class="wl-note">Des collections de films à composer et partager entre amis</div>
@@ -1230,7 +1245,7 @@
   <p class="auth-intro" id="listDetailDesc" style="display:none;"></p>
 
   <div class="season-episodes-actions">
-    <button class="btn secondary" id="listLikeBtn" type="button">♡ Aimer</button>
+    <button class="btn secondary" id="listLikeBtn" type="button"><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0112 7a4.3 4.3 0 017.5 2.8C19.5 15.4 12 20 12 20z"></path></svg> Aimer</button>
     <!-- Propriétaire seulement (voir renderListDetail(), js/lists.js). -->
     <button class="btn danger" id="listDeleteBtn" type="button" style="display:none;">Supprimer la liste</button>
   </div>
@@ -1261,8 +1276,8 @@
     <button class="btn secondary" id="topPageBack">← Retour</button>
     <h2>Top films</h2>
     <div class="view-toggle" role="group" aria-label="Mode d'affichage">
-      <button class="view-toggle-btn is-active" type="button" data-view-btn="grid" title="Grille" aria-label="Vue en grille" aria-pressed="true">▦</button>
-      <button class="view-toggle-btn" type="button" data-view-btn="list" title="Liste" aria-label="Vue en liste" aria-pressed="false">☰</button>
+      <button class="view-toggle-btn is-active" type="button" data-view-btn="grid" title="Grille" aria-label="Vue en grille" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1.5"></rect><rect x="13" y="4" width="7" height="7" rx="1.5"></rect><rect x="4" y="13" width="7" height="7" rx="1.5"></rect><rect x="13" y="13" width="7" height="7" rx="1.5"></rect></svg></button>
+      <button class="view-toggle-btn" type="button" data-view-btn="list" title="Liste" aria-label="Vue en liste" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"></path><circle cx="4.5" cy="6" r="1"></circle><circle cx="4.5" cy="12" r="1"></circle><circle cx="4.5" cy="18" r="1"></circle></svg></button>
     </div>
   </div>
 
@@ -1272,6 +1287,68 @@
   </div>
 
   <div class="wl-list" id="topList"></div>
+</div>
+
+<!-- Page Profil (#/profil) — draft navigation option B, validée le 15/10
+     (audit M1) : remplace la grande fenêtre « Ton profil » qui mélangeait un
+     formulaire et une douzaine de liens. En haut : toi, tes 4 chiffres, tes
+     films préférés ; « Modifier le profil » ouvre la petite fenêtre
+     #profileOverlay (photo, pseudo, films). Chaque rangée data-proxy relaie
+     le clic au bouton d'origine, gardé caché dans #profileOverlay : tout le
+     JS existant (stats, succès, cartes, journal, export...) reste branché
+     sur les mêmes ids. Voir js/profilePage.js. -->
+<div class="container page" id="profilePage" role="main" tabindex="-1" style="display:none;">
+  <div class="pp-head">
+    <div class="pp-avatar" aria-hidden="true">
+      <img id="ppAvatarImg" alt="" style="display:none;">
+      <span class="user-avatar-fallback" id="ppAvatarFallback"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.5" r="3.8"></circle><path d="M4.5 20c0-4.1 3.4-6.8 7.5-6.8s7.5 2.7 7.5 6.8"></path></svg></span>
+    </div>
+    <div class="pp-id">
+      <h2 class="pp-name" id="ppName"></h2>
+      <div class="pp-sub" id="ppSub"></div>
+    </div>
+    <button class="pp-edit" type="button" id="ppEditBtn">Modifier le profil</button>
+  </div>
+
+  <div class="pp-figures" id="ppFigures"></div>
+
+  <div class="pp-label" id="ppFavsLabel">Tes films préférés</div>
+  <div class="pp-favs" id="ppFavs"></div>
+
+  <div class="pp-label">Ton parcours</div>
+  <div class="pp-rows">
+    <button class="pp-row" type="button" data-proxy="statsBtn"><span class="pp-row-main"><span class="pp-row-title">Statistiques</span><span class="pp-row-sub">Répartition de tes notes, genres, année par année</span></span><span class="pp-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg></span></button>
+    <button class="pp-row" type="button" id="ppRecapBtn"><span class="pp-row-main"><span class="pp-row-title"><span id="ppRecapLabel">Bilan</span></span></span><span class="pp-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg></span></button>
+    <button class="pp-row" type="button" data-proxy="achievementsBtn"><span class="pp-row-main"><span class="pp-row-title">Succès</span></span><span class="pp-val" id="ppAchVal"></span><span class="pp-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg></span></button>
+    <button class="pp-row" type="button" data-proxy="tcgBtn"><span class="pp-row-main"><span class="pp-row-title">Cartes <span class="tcg-trade-badge" id="ppTcgBadge" hidden aria-label="Échanges reçus en attente"></span></span></span><span class="pp-val" id="ppTcgVal"></span><span class="pp-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg></span></button>
+    <button class="pp-row" type="button" data-proxy="journalBtn"><span class="pp-row-main"><span class="pp-row-title">Journal</span></span><span class="pp-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg></span></button>
+    <button class="pp-row" type="button" data-proxy="profileTopFilmsLinkBtn" data-mobile-only><span class="pp-row-main"><span class="pp-row-title">Top films</span><span class="pp-row-sub">Le classement de tout le monde et de tes amis</span></span><span class="pp-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg></span></button>
+  </div>
+
+  <div class="pp-label">Réglages</div>
+  <div class="pp-rows">
+    <label class="pp-row" for="ppPublicToggle">
+      <span class="pp-row-main"><span class="pp-row-title">Profil public</span><span class="pp-row-sub">Pseudo, photo et films notés visibles avec le lien</span></span>
+      <input type="checkbox" id="ppPublicToggle" class="mm-switch-input">
+      <span class="mm-switch" aria-hidden="true"></span>
+    </label>
+    <button class="pp-row pp-row-link" type="button" id="ppCopyLinkBtn" hidden><span class="pp-row-main"><span class="pp-row-title">Copier le lien de ton profil</span></span></button>
+    <button class="pp-row" type="button" data-proxy="globalSearchBtn"><span class="pp-row-main"><span class="pp-row-title">Rechercher partout</span><span class="pp-row-sub">Films, séries, amis, groupes</span></span><span class="pp-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg></span></button>
+    <button class="pp-row" type="button" data-proxy="openSettingsBtn"><span class="pp-row-main"><span class="pp-row-title">Paramètres</span><span class="pp-row-sub">Thème, entête, accessibilité, aide, déconnexion</span></span><span class="pp-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg></span></button>
+    <details class="pp-disclosure">
+      <summary class="pp-row"><span class="pp-row-main"><span class="pp-row-title">Exporter ou importer</span><span class="pp-row-sub">JSON, ou CSV Letterboxd</span></span><span class="pp-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg></span></summary>
+      <div class="pp-sub-rows">
+        <button class="pp-sub-row" type="button" data-proxy="exportBtn">Exporter (JSON)</button>
+        <button class="pp-sub-row" type="button" data-proxy="importBtn">Importer (JSON)</button>
+        <button class="pp-sub-row" type="button" data-proxy="exportLetterboxdBtn">Exporter vers Letterboxd (CSV)</button>
+        <button class="pp-sub-row" type="button" data-proxy="importLetterboxdBtn">Importer depuis Letterboxd (CSV)</button>
+      </div>
+    </details>
+    <button class="pp-row" type="button" data-proxy="chatbotBtn"><span class="pp-row-main"><span class="pp-row-title">Assistant</span><span class="pp-row-sub">Conseils ciné, aide dans l'app</span></span><span class="pp-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg></span></button>
+    <button class="pp-row" type="button" data-proxy="profileFeedbackLinkBtn"><span class="pp-row-main"><span class="pp-row-title">Donner un avis</span></span><span class="pp-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg></span></button>
+    <button class="pp-row" type="button" data-proxy="profileChangelogLinkBtn" id="ppChangelogRow" hidden><span class="pp-row-main"><span class="pp-row-title">Nouveautés</span></span><span class="pp-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg></span></button>
+    <button class="pp-row" type="button" data-proxy="adminBtn" id="ppAdminRow" hidden><span class="pp-row-main"><span class="pp-row-title">Admin</span><span class="pp-row-sub">Succès, happenings, avis, statistiques du site</span></span><span class="pp-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg></span></button>
+  </div>
 </div>
 
 <button class="fab magnetic" id="fabAddBtn" title="Ajouter un film" aria-label="Ajouter un film">+</button>
@@ -1411,7 +1488,7 @@
 <div class="overlay" id="profileOverlay">
   <div class="modal">
     <div class="modal-head">
-      <h2>Ton profil</h2>
+      <h2>Modifier le profil</h2>
       <button class="close-x" id="closeProfile" aria-label="Fermer">✕</button>
     </div>
 
@@ -1477,7 +1554,9 @@
       </div>
     </div>
 
-    <div class="mm-section">
+    <!-- .pf-hub : rubriques passées sur la page Profil (#profilePage,
+         option B). Masquées ici, gardées pour leurs ids et leurs écouteurs. -->
+    <div class="mm-section pf-hub">
       <div class="mm-section-title">Mon activité</div>
       <div class="mm-card">
         <button class="mm-row" id="statsBtn" type="button">
@@ -1556,7 +1635,7 @@
          milieu à l'ouverture. .menu-wrap porte donc son propre cadre ici
          (voir .mm-section .menu-wrap, css/style.css) plutôt que d'hériter
          de celui d'une carte qui le couperait. -->
-    <div class="mm-section">
+    <div class="mm-section pf-hub">
       <div class="mm-section-title">Données</div>
       <div class="menu-wrap" id="moreMenuWrap">
         <button class="mm-row" id="moreMenuBtn" type="button" aria-haspopup="true" aria-expanded="false">
@@ -1589,7 +1668,7 @@
          pour la copier. Opt-in, false par défaut côté base
          (supabase/migrations/016) — seule donnée de l'app lisible sans
          connexion une fois activée, voir js/publicProfile.js. -->
-    <div class="mm-section">
+    <div class="mm-section pf-hub">
       <div class="mm-card">
         <label class="mm-row" for="publicProfileToggle">
           <span class="mm-icon ic-violet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18M12 3c2.5 2.7 3.8 6 3.8 9s-1.3 6.3-3.8 9c-2.5-2.7-3.8-6-3.8-9s1.3-6.3 3.8-9z"></path></svg></span>
@@ -1610,7 +1689,7 @@
       </div>
     </div>
 
-    <div class="mm-section">
+    <div class="mm-section pf-hub">
       <div class="mm-section-title">Compte</div>
       <div class="mm-card">
         <!-- Réservé au compte admin (ADMIN_EMAIL, js/admin.js) — masqué par
@@ -1775,11 +1854,11 @@
 </div>
 
 <!-- Modal statistiques -->
-<div class="overlay" id="statsOverlay">
+<div class="overlay as-page" id="statsOverlay">
   <div class="modal stats-modal">
-    <div class="modal-head">
+    <div class="page-header">
+      <button class="btn secondary" id="closeStats" type="button">← Retour</button>
       <h2>Statistiques</h2>
-      <button class="close-x" id="closeStats" aria-label="Fermer">✕</button>
     </div>
     <!-- Bilan cinéphile partageable (v2.43, retour utilisateur) — image
          exportable résumant l'année en cours, voir js/recap.js. -->
@@ -1820,11 +1899,11 @@
 </div>
 
 <!-- Modal succès -->
-<div class="overlay" id="achievementsOverlay">
+<div class="overlay as-page" id="achievementsOverlay">
   <div class="modal stats-modal achievements-modal">
-    <div class="modal-head">
+    <div class="page-header">
+      <button class="btn secondary" id="closeAchievements" type="button">← Retour</button>
       <h2>Succès</h2>
-      <button class="close-x" id="closeAchievements" aria-label="Fermer">✕</button>
     </div>
     <div id="achievementsContent"></div>
   </div>
@@ -1835,11 +1914,11 @@
      Collection (déjà là), Fabriquer et Échanger ajoutés après coup —
      schéma/fonctions déjà prêts côté base depuis migrations/041, il ne
      manquait que l'écran. -->
-<div class="overlay" id="tcgOverlay">
+<div class="overlay as-page" id="tcgOverlay">
   <div class="modal stats-modal tcg-modal">
-    <div class="modal-head">
+    <div class="page-header">
+      <button class="btn secondary" id="closeTcg" type="button">← Retour</button>
       <h2>Cartes</h2>
-      <button class="close-x" id="closeTcg" aria-label="Fermer">✕</button>
     </div>
     <div class="avatar-source-tabs" role="tablist" id="tcgTabs">
       <button type="button" class="avatar-source-tab active" data-tcg-tab="collection" role="tab" aria-selected="true">Collection</button>
@@ -2129,11 +2208,11 @@ Légende du 7e art (Légendaire) 2%</div>
 </div>
 
 <!-- Modal journal -->
-<div class="overlay" id="journalOverlay">
+<div class="overlay as-page" id="journalOverlay">
   <div class="modal journal-modal">
-    <div class="modal-head">
+    <div class="page-header">
+      <button class="btn secondary" id="closeJournal" type="button">← Retour</button>
       <h2>Journal</h2>
-      <button class="close-x" id="closeJournal" aria-label="Fermer">✕</button>
     </div>
     <div id="journalContent"></div>
   </div>
@@ -2223,8 +2302,8 @@ Légende du 7e art (Légendaire) 2%</div>
 <div class="bulk-actions-bar" id="bulkActionsBar" hidden>
   <span class="bulk-actions-count" id="bulkActionsCount"></span>
   <div class="bulk-actions-buttons">
-    <button type="button" class="btn secondary" id="bulkFavBtn">★ Favoris</button>
-    <button type="button" class="btn secondary" id="bulkUnfavBtn">☆ Retirer</button>
+    <button type="button" class="btn secondary" id="bulkFavBtn"><svg class="ui-icon ui-icon-filled" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5l2.6 5.4 5.9.7-4.3 4.1 1 5.9L12 16.6l-5.2 2.9 1-5.9-4.3-4.1 5.9-.7L12 3.5z"></path></svg> Favoris</button>
+    <button type="button" class="btn secondary" id="bulkUnfavBtn"><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5l2.6 5.4 5.9.7-4.3 4.1 1 5.9L12 16.6l-5.2 2.9 1-5.9-4.3-4.1 5.9-.7L12 3.5z"></path></svg> Retirer</button>
     <button type="button" class="btn secondary" id="bulkExportBtn">Exporter</button>
     <button type="button" class="btn danger" id="bulkDeleteBtn">Supprimer</button>
   </div>
@@ -2233,133 +2312,137 @@ Légende du 7e art (Légendaire) 2%</div>
 <!-- ?v=N sur chaque js/*.js ci-dessous (voir le commentaire dans <head>) —
      à incrémenter à chaque déploiement, même numéro pour tous les fichiers. -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/supabaseConfig.js?v=256"></script>
+<script src="js/supabaseConfig.js?v=257"></script>
 <!-- Juste après supabaseConfig.js (a besoin de supabaseClient) et avant
      tout le reste : capte les erreurs de chargement des scripts suivants,
      pas seulement celles de l'app une fois démarrée — voir js/logging.js. -->
-<script src="js/logging.js?v=256"></script>
-<script src="js/tmdbConfig.js?v=256"></script>
-<script src="js/data.js?v=256"></script>
-<script src="js/happenings.js?v=256"></script>
+<script src="js/logging.js?v=257"></script>
+<script src="js/tmdbConfig.js?v=257"></script>
+<script src="js/data.js?v=257"></script>
+<script src="js/happenings.js?v=257"></script>
 <!-- Ressort physique vanilla (audit design, apple-design) — avant ui.js,
      qui l'utilise pour le geste tirer-pour-rafraîchir. Aucune dépendance
      entre les deux au chargement (animateSpring() n'est appelée que dans
      des écouteurs tactiles, bien après le chargement complet), gardé
      avant par lisibilité : un utilitaire se charge avant ce qui s'en sert. -->
-<script src="js/spring.js?v=256"></script>
+<script src="js/spring.js?v=257"></script>
 <!-- Avant app.js et les 6 autres modules qui ouvrent/ferment une modale
      (openOverlay/closeOverlay) — l'ordre exact importe peu au runtime
      (rien n'y est appelé au chargement), gardé en premier des scripts
      "app" pour la lisibilité, comme un utilitaire partagé. -->
-<script src="js/ui.js?v=256"></script>
+<script src="js/ui.js?v=257"></script>
 <!-- Avant watchlist.js, qui appelle playRouletteTick()/playRouletteWin()
      (roulette "Surprends-moi") — l'ordre exact importe peu au runtime
      (rien n'y est appelé au chargement), gardé ici pour la lisibilité,
      comme ui.js juste au-dessus. -->
-<script src="js/sound.js?v=256"></script>
+<script src="js/sound.js?v=257"></script>
 <!-- Avant app.js/journal.js/watchlist.js, qui appellent saveOfflineCache()/
      loadOfflineCache()/blockIfOffline() (v1.6, mode hors ligne lecture
      seule) — l'ordre exact importe peu au runtime (rien n'y est appelé au
      chargement, seulement des listeners posés pour plus tard), gardé ici
      pour la lisibilité, comme ui.js juste au-dessus. -->
-<script src="js/offlineQueue.js?v=256"></script>
-<script src="js/offline.js?v=256"></script>
-<script src="js/app.js?v=256"></script>
-<script src="js/tmdb.js?v=256"></script>
-<script src="js/stats.js?v=256"></script>
-<script src="js/achievements.js?v=256"></script>
+<script src="js/offlineQueue.js?v=257"></script>
+<script src="js/offline.js?v=257"></script>
+<script src="js/app.js?v=257"></script>
+<script src="js/tmdb.js?v=257"></script>
+<script src="js/stats.js?v=257"></script>
+<script src="js/achievements.js?v=257"></script>
 <!-- Avant app.js/watchlist.js à l'exécution (pas au chargement — rien
      n'est appelé ici avant un vrai clic/ajout) : les deux appellent
      generateTcgCardsForFilm(), définie ici. -->
-<script src="js/tcg.js?v=256"></script>
-<script src="js/chatbot.js?v=256"></script>
-<script src="js/journal.js?v=256"></script>
+<script src="js/tcg.js?v=257"></script>
+<script src="js/chatbot.js?v=257"></script>
+<script src="js/journal.js?v=257"></script>
 <!-- Après app.js (showToast) — appelée par js/profile.js juste après. -->
-<script src="js/pwa.js?v=256"></script>
-<script src="js/profile.js?v=256"></script>
+<script src="js/pwa.js?v=257"></script>
+<script src="js/profile.js?v=257"></script>
 <!-- Paramètres — après profile.js (referme/rouvre "Ton profil") et pwa.js
      (updateInstallUI()), voir js/settings.js. -->
-<script src="js/settings.js?v=256"></script>
+<script src="js/settings.js?v=257"></script>
 <!-- Après profile.js (closeProfileModal/openProfileModal) et data.js
      (FEEDBACK_CATEGORIES) — même raisonnement que pwa.js juste au-dessus. -->
-<script src="js/feedback.js?v=256"></script>
+<script src="js/feedback.js?v=257"></script>
 <!-- Bilan cinéphile partageable (v2.43) — après journal.js (viewings) et
      profile.js (currentProfile), voir js/recap.js. -->
-<script src="js/recap.js?v=256"></script>
+<script src="js/recap.js?v=257"></script>
 <!-- N'a besoin que de ui.js (openOverlay/closeOverlay) et app.js
      (showToast), chargés bien avant — placé ici pour rester groupé avec
      les autres modales accessibles depuis le chrome plutôt que pour une
      vraie dépendance. -->
-<script src="js/share.js?v=256"></script>
+<script src="js/share.js?v=257"></script>
 <!-- Après happenings.js/achievements.js (définitions) et profile.js
      (closeProfileModal) : admin.js s'appuie sur les trois au clic, jamais au
      chargement — l'ordre exact importe peu, gardé groupé ici pour la
      lisibilité. -->
-<script src="js/admin.js?v=256"></script>
-<script src="js/router.js?v=256"></script>
-<script src="js/publicProfile.js?v=256"></script>
-<script src="js/top.js?v=256"></script>
-<script src="js/friends.js?v=256"></script>
+<script src="js/admin.js?v=257"></script>
+<script src="js/router.js?v=257"></script>
+<script src="js/publicProfile.js?v=257"></script>
+<script src="js/top.js?v=257"></script>
+<script src="js/friends.js?v=257"></script>
 <!-- Après friends.js (cacheProfile/friendDisplayName/friendAvatarHtml) et
      journal.js (formatViewingDate), avant groups.js qui l'appelle depuis
      openGroupDetail() — l'ordre exact importe peu au runtime (tout est en
      fonctions globales appelées après chargement complet), gardé groupé
      ici pour la lisibilité. -->
-<script src="js/activity.js?v=256"></script>
-<script src="js/watchlist.js?v=256"></script>
+<script src="js/activity.js?v=257"></script>
+<script src="js/watchlist.js?v=257"></script>
 <!-- Après watchlist.js (loadWatchlist/watchlist, réutilisés pour exclure
      ce qui y est déjà) et app.js (getDisplayNote, chargé plus haut) — voir
      js/suggestions.js. Avant auth.js, qui appelle loadSuggestions() depuis
      showApp(). -->
-<script src="js/suggestions.js?v=256"></script>
+<script src="js/suggestions.js?v=257"></script>
 <!-- Import externe (Letterboxd pour l'instant) — après watchlist.js/app.js/
      tmdb.js/journal.js dont il réutilise films/watchlist/searchTmdb()/
      addViewing(). Voir js/importExternal.js. -->
-<script src="js/importExternal.js?v=256"></script>
+<script src="js/importExternal.js?v=257"></script>
 <!-- Fiche film (v2.1) — voir js/filmDetail.js. Regroupée ici avec
      friends.js/watchlist.js dont elle réutilise les helpers (même
      remarque que suggestions.js juste au-dessus : l'ordre exact n'importe
      pas au runtime, tout est en fonctions appelées après chargement
      complet — router.js, plus haut, appelle déjà openFriends()/
      openWatchlist() en aval de leur propre script de la même façon). -->
-<script src="js/filmDetail.js?v=256"></script>
+<script src="js/filmDetail.js?v=257"></script>
 <!-- Après watchlist.js : js/upcoming.js réutilise le tableau watchlist déjà
      chargé (voir plus bas). -->
-<script src="js/series.js?v=256"></script>
+<script src="js/series.js?v=257"></script>
 <!-- Après watchlist.js ET series.js — a besoin des deux tableaux chargés
      (loadWatchlist()/loadTrackedShows()), voir js/upcoming.js. -->
-<script src="js/upcoming.js?v=256"></script>
-<script src="js/groups.js?v=256"></script>
-<script src="js/proposals.js?v=256"></script>
+<script src="js/upcoming.js?v=257"></script>
+<script src="js/groups.js?v=257"></script>
+<script src="js/proposals.js?v=257"></script>
 <!-- Après groups.js (renderInviteBox appelée depuis renderGroupDetail) et
      proposals.js (chosenProposal) — voir js/invites.js. -->
-<script src="js/invites.js?v=256"></script>
+<script src="js/invites.js?v=257"></script>
 <!-- Listes thématiques (retour utilisateur, étude comparative Letterboxd) —
      après friends.js (ensureProfilesCached vient de filmDetail.js, déjà
      chargé ; friendDisplayName/cacheProfile de friends.js) et filmDetail.js
      (goToFilmDetail réutilisé pour ouvrir un film d'une liste), voir
      js/lists.js. -->
-<script src="js/lists.js?v=256"></script>
+<script src="js/lists.js?v=257"></script>
 <!-- Après activity.js (rowToActivityEvent/renderActivityRowHtml) et
      friends.js (friendProfiles/cacheProfile) qu'elle réutilise pour le
      digest, avant auth.js qui appelle refreshActivityBadge()/
      maybeShowDigest() depuis showApp(). -->
-<script src="js/activityState.js?v=256"></script>
+<script src="js/activityState.js?v=257"></script>
 <!-- Après activityState.js (loadActivityState/activityState réutilisés
      pour son propre badge "vu") et avant auth.js qui appelle
      initChangelog() depuis showApp(). -->
-<script src="js/changelog.js?v=256"></script>
+<script src="js/changelog.js?v=257"></script>
 <!-- Recherche globale unifiée (v2.42) — après series.js/friends.js/
      groups.js dont elle réutilise les tableaux déjà chargés et les
      fonctions d'ouverture (openFriendProfile/goToSeriesDetail/goToGroup),
      et après app.js/data.js pour getSearchTerms()/normalizeSearch()/
      FILM_PLACEHOLDER_SVG. Voir js/globalSearch.js. -->
-<script src="js/globalSearch.js?v=256"></script>
+<script src="js/globalSearch.js?v=257"></script>
+<!-- Page Profil (option B) — après profile.js, stats.js, achievements.js,
+     tcg.js, changelog.js et router.js dont elle lit l'état ; appelée par
+     renderRoute() seulement après connexion. -->
+<script src="js/profilePage.js?v=257"></script>
 <!-- Tuto d'accueil interactif — avant auth.js dont showApp() appelle
      maybeStartOnboarding() ; après ui.js/router.js/profile.js/logging.js
      dont il réutilise respectivement openOverlay-style/goHome/
      closeProfileModal/logEvent. -->
-<script src="js/onboarding.js?v=256"></script>
-<script src="js/auth.js?v=256"></script>
+<script src="js/onboarding.js?v=257"></script>
+<script src="js/auth.js?v=257"></script>
 </body>
 </html>

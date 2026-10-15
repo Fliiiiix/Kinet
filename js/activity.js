@@ -8,16 +8,17 @@
 // dupliquer un — les amis/membres de groupe y sont déjà chargés la plupart
 // du temps, ceci ne complète que ce qui manque.
 
+// Noms des pictos au trait (uiIcon(), js/data.js, audit D6).
 const ACTIVITY_ICON = {
-  proposal_created: '🎬',
-  proposal_commented: '💬',
-  proposal_chosen: '🎟️',
-  group_joined: '👋',
-  film_rated: '⭐',
+  proposal_created: 'film',
+  proposal_commented: 'chat',
+  proposal_chosen: 'ticket',
+  group_joined: 'join',
+  film_rated: 'star',
   // Flux amis élargi (retour utilisateur, étude comparative Strava/Goodreads
   // — un flux social mélange plusieurs types d'événements), migrations/060.
-  watchlist_added: '🔖',
-  list_created: '📋'
+  watchlist_added: 'bookmark',
+  list_created: 'list'
 };
 
 function rowToActivityEvent(row){
@@ -91,7 +92,7 @@ function renderActivityRowHtml(e){
     <div class="wl-row">
       ${friendAvatarHtml(e.actorId, friendDisplayName(e.actorId))}
       <div class="wl-main">
-        <div class="wl-title">${ACTIVITY_ICON[e.eventType] || '•'} ${escapeHtml(activityEventLabel(e))}</div>
+        <div class="wl-title">${ACTIVITY_ICON[e.eventType] ? uiIcon(ACTIVITY_ICON[e.eventType]) : ''} ${escapeHtml(activityEventLabel(e))}</div>
         <div class="wl-note">${formatViewingDate(e.createdAt)}</div>
       </div>
     </div>

@@ -2,8 +2,9 @@
 // Retour utilisateur : "illisible et beaucoup trop confus... commencer une
 // vraie section paramètre" — Paramètres devient un écran séparé de "Ton
 // profil", ouvert/fermé selon le même principe que Statistiques/Succès/
-// Journal (referme le déclencheur, rouvre "Ton profil" à la sortie) mais
-// avec une flèche retour plutôt qu'un ✕, voir index.html.
+// Journal (referme le déclencheur, ramène sur la page Profil à la sortie,
+// returnToProfile() depuis l'option B) mais avec une flèche retour plutôt
+// qu'un ✕, voir index.html.
 const { createSuite, assert } = require('./helpers/tiny-test');
 const { createContext, loadFiles, stubDocument, stubElement, stubEventTarget } = require('./helpers/vm-harness');
 const { test, run } = createSuite();
@@ -30,6 +31,7 @@ function buildContext(){
     document: doc,
     closeProfileModal(){ closeProfileModalCalls.push(true); },
     openProfileModal(){},
+    returnToProfile(){},
     getTheme(){ return 'light'; },
     getReduceMotion(){ return true; },
     getSoundEnabled(){ return true; }, // js/sound.js, pas chargé ici — même principe que getTheme()/getReduceMotion() juste au-dessus
@@ -52,13 +54,16 @@ test('openSettingsModal() : referme "Ton profil", synchronise les interrupteurs,
   assert.deepStrictEqual(openOverlayCalls, ['settingsOverlay']);
 });
 
-test('closeSettingsModal() : ferme Paramètres ET rouvre "Ton profil" (même convention que Statistiques/Succès/Journal)', () => {
+test('closeSettingsModal() : ferme Paramètres ET ramène sur la page Profil (même convention que Statistiques/Succès/Journal)', () => {
   const { ctx, closeOverlayCalls } = buildContext();
-  let reopenedProfile = false;
-  ctx.openProfileModal = () => { reopenedProfile = true; };
+  let backToProfile = false;
+  let reopenedModal = false;
+  ctx.returnToProfile = () => { backToProfile = true; };
+  ctx.openProfileModal = () => { reopenedModal = true; };
   ctx.closeSettingsModal();
   assert.deepStrictEqual(closeOverlayCalls, ['settingsOverlay']);
-  assert.ok(reopenedProfile, 'closeOverlay() doit être appelée avec un callback qui rouvre "Ton profil"');
+  assert.ok(backToProfile, 'closeOverlay() doit être appelée avec un callback qui ramène sur #/profil');
+  assert.ok(!reopenedModal, 'la fenêtre « Modifier le profil » ne se rouvre plus toute seule');
 });
 
 test('le bouton "Paramètres" (#openSettingsBtn) ouvre bien Paramètres au clic', () => {
@@ -67,7 +72,7 @@ test('le bouton "Paramètres" (#openSettingsBtn) ouvre bien Paramètres au clic'
   assert.deepStrictEqual(openOverlayCalls, ['settingsOverlay']);
 });
 
-test('la flèche retour (#closeSettings) referme Paramètres et rouvre "Ton profil"', () => {
+test('la flèche retour (#closeSettings) referme Paramètres et ramène sur la page Profil', () => {
   const { closeBtn, closeOverlayCalls } = buildContext();
   closeBtn.dispatch('click', {});
   assert.deepStrictEqual(closeOverlayCalls, ['settingsOverlay']);

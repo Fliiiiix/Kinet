@@ -324,9 +324,21 @@ setViewMode(getViewMode());
 // avec le même markup `[data-view-btn]="grid|list"` — un seul gestionnaire
 // couvre les boutons déjà présents au chargement ET ceux qu'une page ajoute
 // plus tard à son propre rythme.
+// Dans la pilule de recherche (catalogue, séries : draft navigation option
+// B), la bascule n'est plus qu'UNE icône, celle du mode affiché (l'autre
+// bouton est masqué en CSS) : un clic dessus passe à l'autre mode.
 document.addEventListener('click', (e) => {
   const btn = e.target.closest('[data-view-btn]');
-  if(btn) setViewMode(btn.dataset.viewBtn);
+  if(!btn) return;
+  const single = btn.closest('.toolbar-search');
+  if(single && btn.classList.contains('is-active')){
+    setViewMode(btn.dataset.viewBtn === 'grid' ? 'list' : 'grid');
+    // Le bouton cliqué vient d'être masqué : le focus passe à son jumeau.
+    const twin = single.querySelector('.view-toggle-btn.is-active');
+    if(twin && document.activeElement === btn) twin.focus();
+    return;
+  }
+  setViewMode(btn.dataset.viewBtn);
 });
 
 // --- Thème clair en option (retour utilisateur) --- Sombre par défaut

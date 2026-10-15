@@ -16,10 +16,10 @@
 //   #/groupes/:groupId                      -> détail d'un groupe
 //   #/groupes/:groupId/propositions/:propId -> détail d'une proposition
 //   #/invite/:token                         -> invitation à rejoindre un groupe
-// Stats/Succès/Journal (vues sur mon activité passée, pas des actions) et le
-// profil (identité + déconnexion) restent des modals classiques, ouvertes
-// depuis l'entête ou la page Amis — voir js/profile.js, js/stats.js,
-// js/achievements.js, js/journal.js.
+//   #/profil                                -> page Profil (draft navigation, option B)
+// La page Profil remplace l'ancienne grande fenêtre « Ton profil » (audit
+// M1) : voir js/profilePage.js. Statistiques/Succès/Cartes/Journal restent
+// des .overlay mais s'affichent comme des pages (.overlay.as-page).
 //
 // Pas de framework : hashchange + un switch sur les segments suffisent pour
 // ces écrans. Les fonctions de chargement/rendu (loadGroups, openGroupDetail,
@@ -34,7 +34,7 @@
 // le reste, et js/auth.js → initAuth() qui la laisse passer avant même de
 // vérifier la session Supabase.
 
-const PAGE_IDS = ['appContainer', 'groupsListPage', 'groupDetailPage', 'proposalDetailPage', 'watchlistPage', 'seriesPage', 'seriesDetailPage', 'upcomingPage', 'amisPage', 'topPage', 'publicProfilePage', 'invitePage', 'filmDetailPage', 'listsPage', 'listDetailPage'];
+const PAGE_IDS = ['appContainer', 'groupsListPage', 'groupDetailPage', 'proposalDetailPage', 'watchlistPage', 'seriesPage', 'seriesDetailPage', 'upcomingPage', 'amisPage', 'topPage', 'publicProfilePage', 'invitePage', 'filmDetailPage', 'listsPage', 'listDetailPage', 'profilePage'];
 
 // null cache tout (utile pour l'écran de connexion / maintenance, qui gère
 // sa propre visibilité par ailleurs).
@@ -70,20 +70,36 @@ function updatePrimaryTabs(routeName){
 document.getElementById('primaryTabFilms').addEventListener('click', goHome);
 document.getElementById('primaryTabSeries').addEventListener('click', goToSeries);
 
+// Interrupteur Films / Séries dans le titre (draft navigation, option B) :
+// chaque page porte le sien, déjà dans le bon état dans le HTML. Flèches
+// gauche/droite comme un vrai groupe d'onglets.
+function goToCatalog(kind){
+  if(kind === 'series') goToSeries(); else goHome();
+}
+document.querySelectorAll('.catalog-switch-btn[data-catalog]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if(!btn.classList.contains('is-active')) goToCatalog(btn.dataset.catalog);
+  });
+  btn.addEventListener('keydown', (e) => {
+    if(e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    e.preventDefault();
+    goToCatalog(btn.dataset.catalog === 'films' ? 'series' : 'films');
+  });
+});
+
 // Barre de navigation mobile (v2.1.x, #mobileTabbar dans index.html) —
 // même principe qu'updatePrimaryTabs() ci-dessus : reflète la route
-// active à chaque rendu. "Accueil" couvre catalogue films ET séries (leur
-// bascule Films/Séries, #primaryTabs, reste affichée EN HAUT de la page
-// une fois sur "Accueil" — pas la peine d'un 2e onglet Séries ici, voir le
-// commentaire complet sur #mobileTabbar). "Profil" n'a pas d'état actif :
-// c'est une modale, pas une route.
+// active à chaque rendu. "Catalogue" couvre films ET séries (l'interrupteur
+// Films / Séries est dans le titre de la page, draft navigation option B).
+// "Profil" est une vraie page depuis l'option B (#/profil).
 function updateMobileTabbar(routeName){
   const homeActive = routeName === 'home' || routeName === 'seriesList' || routeName === 'seriesDetail' || routeName === 'filmDetail';
   const map = {
     mobileTabHome: homeActive,
     mobileTabWatchlist: routeName === 'watchlist',
     mobileTabUpcoming: routeName === 'upcoming',
-    mobileTabFriends: routeName === 'amis' || routeName === 'groupsList' || routeName === 'groupDetail' || routeName === 'proposalDetail' || routeName === 'listsList' || routeName === 'listDetail'
+    mobileTabFriends: routeName === 'amis' || routeName === 'groupsList' || routeName === 'groupDetail' || routeName === 'proposalDetail' || routeName === 'listsList' || routeName === 'listDetail',
+    mobileTabProfile: routeName === 'profil'
   };
   Object.keys(map).forEach(id => {
     document.getElementById(id).classList.toggle('active', map[id]);
@@ -102,7 +118,8 @@ function updateHeaderNav(routeName){
     watchlistBtn: routeName === 'watchlist',
     upcomingBtn: routeName === 'upcoming',
     friendsBtn: routeName === 'amis' || routeName === 'groupsList' || routeName === 'groupDetail' || routeName === 'proposalDetail' || routeName === 'listsList' || routeName === 'listDetail',
-    topBtn: routeName === 'top'
+    topBtn: routeName === 'top',
+    userAvatarBtn: routeName === 'profil'
   };
   Object.keys(map).forEach(id => {
     document.getElementById(id).classList.toggle('active', map[id]);
@@ -112,7 +129,7 @@ document.getElementById('mobileTabHome').addEventListener('click', goHome);
 document.getElementById('mobileTabWatchlist').addEventListener('click', goToWatchlist);
 document.getElementById('mobileTabUpcoming').addEventListener('click', goToUpcoming);
 document.getElementById('mobileTabFriends').addEventListener('click', goToAmis);
-document.getElementById('mobileTabProfile').addEventListener('click', openProfileModal);
+document.getElementById('mobileTabProfile').addEventListener('click', () => goToProfile());
 
 // Retour utilisateur : cliquer sur le logo/l'onglet Films en pleine
 // pagination (page 3, 4...) alors qu'on est DÉJÀ sur le catalogue ne
@@ -154,6 +171,19 @@ function goToSeriesDetail(showId, navList){
 function goToUpcoming(){ location.hash = '#/prochainement'; }
 function goToAmis(){ location.hash = '#/amis'; }
 function goToTop(){ location.hash = '#/top'; }
+// Page Profil (draft navigation, option B). Referme d'abord une rubrique
+// affichée en page (Statistiques, Succès...) : déjà sur #/profil, le hash ne
+// change pas et rien d'autre ne la fermerait.
+function goToProfile(){
+  if(typeof closeAsPageOverlays === 'function') closeAsPageOverlays();
+  if(parseRoute().name !== 'profil') location.hash = '#/profil';
+}
+// Retour depuis une rubrique ouverte depuis la page Profil (Statistiques,
+// Succès, Cartes, Journal, Paramètres...) : remplace l'ancien
+// « rouvrir la modale Ton profil ».
+function returnToProfile(){
+  if(parseRoute().name !== 'profil') location.hash = '#/profil';
+}
 function goToPublicProfile(userId){ location.hash = `#/u/${userId}`; }
 // Fiche film (v2.1) — voir js/filmDetail.js. Un changement de hash ne
 // ferme jamais tout seul une modale déjà ouverte (profil d'ami...) : à
@@ -185,6 +215,7 @@ function parseRoute(){
   if(parts[0] === 'prochainement' && parts.length === 1) return { name: 'upcoming' };
   if(parts[0] === 'amis' && parts.length === 1) return { name: 'amis' };
   if(parts[0] === 'top' && parts.length === 1) return { name: 'top' };
+  if(parts[0] === 'profil' && parts.length === 1) return { name: 'profil' };
   if(parts[0] === 'u' && parts.length === 2) return { name: 'publicProfile', userId: parts[1] };
   if(parts[0] === 'invite' && parts.length === 2) return { name: 'invite', token: parts[1] };
   if(parts[0] === 'listes'){
@@ -279,6 +310,9 @@ async function renderRoute(){
   }else if(route.name === 'top'){
     showOnlyPage('topPage');
     await openTop();
+  }else if(route.name === 'profil'){
+    showOnlyPage('profilePage');
+    await openProfilePage();
   }else if(route.name === 'groupsList'){
     showOnlyPage('groupsListPage');
     await openGroups();

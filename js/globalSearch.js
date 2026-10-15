@@ -65,7 +65,7 @@ function renderEmptySearchState(){
     <div class="global-search-group">
       <div class="global-search-group-title">Recherches récentes</div>
       <div class="global-search-recent-list">
-        ${recent.map(q => `<button type="button" class="global-search-recent-item" data-query="${escapeHtml(q)}">🕐 ${escapeHtml(q)}</button>`).join('')}
+        ${recent.map(q => `<button type="button" class="global-search-recent-item" data-query="${escapeHtml(q)}">${uiIcon('clock')} ${escapeHtml(q)}</button>`).join('')}
       </div>
     </div>
   `;
@@ -170,12 +170,12 @@ function performGlobalSearch(rawQuery){
       showStatusLabel(s.status)
     ))),
     renderGlobalSearchGroup('Amis', friendMatches.map(userId => globalSearchRowHtml(
-      friendAvatarUrl(userId) ? `<img class="film-poster" src="${friendAvatarUrl(userId)}" alt="" loading="lazy">` : `<div class="film-poster film-poster-placeholder">👤</div>`,
+      friendAvatarUrl(userId) ? `<img class="film-poster" src="${friendAvatarUrl(userId)}" alt="" loading="lazy">` : `<div class="film-poster film-poster-placeholder">${uiIcon('user')}</div>`,
       friendDisplayName(userId),
       'Ami'
     ))),
     renderGlobalSearchGroup('Groupes', groupMatches.map(g => globalSearchRowHtml(
-      `<div class="film-poster film-poster-placeholder">👥</div>`,
+      `<div class="film-poster film-poster-placeholder">${uiIcon('group')}</div>`,
       g.name,
       'Groupe'
     )))

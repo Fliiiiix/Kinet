@@ -143,8 +143,24 @@ function hasNewEpisode(show){
 
 function renderTrackedShows(){
   const list = document.getElementById('seriesList');
+  // Compteur à droite de la ligne recherche (draft option B), comme le
+  // « 412 films » du catalogue.
+  // « Rechercher ou suivre » : le champ filtre aussi les séries déjà
+  // suivies, comme la recherche du catalogue films.
+  const input = document.getElementById('seriesTitleInput');
+  const norm = (txt) => (typeof normalizeSearch === 'function') ? normalizeSearch(txt) : String(txt).toLowerCase();
+  const q = input ? norm(input.value.trim()) : '';
+  const shown = q ? trackedShows.filter(show => norm(show.title).includes(q)) : trackedShows;
+  const countEl = document.getElementById('seriesCountLine');
+  if(countEl) countEl.textContent = !trackedShows.length ? ''
+    : q ? `${shown.length} sur ${trackedShows.length}`
+    : `${trackedShows.length} série${trackedShows.length > 1 ? 's' : ''}`;
   if(trackedShows.length === 0){
     list.innerHTML = `<div class="empty-state">Rien pour l'instant. Cherche une série ci-dessus pour commencer à suivre ses épisodes.</div>`;
+    return;
+  }
+  if(shown.length === 0){
+    list.innerHTML = `<div class="empty-state">Aucune de tes séries ne correspond. Choisis-la dans les résultats pour la suivre.</div>`;
     return;
   }
   // v2.3, retour utilisateur : la tuile grille (poster + titre + progression
@@ -156,7 +172,7 @@ function renderTrackedShows(){
   // rejoint "Retirer cette série" déjà présent sur la fiche détail plutôt
   // que de vivre en double ici — le même principe que la suppression d'un
   // film, qui vit dans sa fiche/modale, jamais sur la carte du catalogue.
-  list.innerHTML = trackedShows.map(show => {
+  list.innerHTML = shown.map(show => {
     const watchedCount = watchedEpisodeCounts[show.id] || 0;
     const progress = show.numberOfEpisodes
       ? `${watchedCount}/${show.numberOfEpisodes} épisode${show.numberOfEpisodes > 1 ? 's' : ''} vus`
@@ -184,7 +200,7 @@ function renderTrackedShows(){
       </div>
     `;
   }).join('');
-  const navList = trackedShows.map(s => ({ id: s.id, title: s.title }));
+  const navList = shown.map(s => ({ id: s.id, title: s.title }));
   list.querySelectorAll('.wl-row[data-id]').forEach(row => {
     makeRowClickable(row, () => goToSeriesDetail(parseInt(row.dataset.id, 10), navList));
   });
@@ -269,6 +285,10 @@ function clearSeriesTmdbSelection(){
 function updateSeriesTmdbSelectedUI(){
   const box = document.getElementById('seriesTmdbSelected');
   const img = document.getElementById('seriesTmdbSelectedPoster');
+  // « + Suivre » n'a de sens qu'avec une série choisie (draft option B :
+  // une seule ligne recherche + affichage, pas de bouton qui traîne).
+  const addBtn = document.getElementById('seriesAddBtn');
+  if(addBtn) addBtn.style.display = seriesTmdbSelected ? '' : 'none';
   if(!seriesTmdbSelected){
     box.style.display = 'none';
     return;
@@ -358,6 +378,7 @@ async function handleAddShow(){
 }
 document.getElementById('seriesTitleInput').addEventListener('input', () => {
   clearTimeout(seriesTmdbSearchTimer);
+  renderTrackedShows();
   const query = document.getElementById('seriesTitleInput').value.trim();
   if(query.length < 2){
     document.getElementById('seriesTmdbResults').innerHTML = '';

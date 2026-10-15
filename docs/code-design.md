@@ -116,6 +116,23 @@ Même statut que la note : une donnée du jeu, jamais une décoration, et seulem
 - Grille d'affiches : ratio 2:3, `repeat(auto-fill, minmax(140px, 1fr))` sur PC, 3 colonnes sur mobile, espacement `--sp-4` (PC) et `--sp-3` (mobile). Toutes les cases ont exactement la même taille.
 - Fiche d'œuvre : une seule colonne de lecture (max 760px) sous le bandeau, comme la fiche série.
 
+### Points de rupture (2)
+
+| Seuil | Ce qui change |
+|---|---|
+| `max-width:600px` | Téléphone : barre du bas, grilles d'affiches à 3 colonnes, marges `--sp-4`, compteur de la recherche masqué, objectif annuel sous le titre, chiffres du profil sur 2 colonnes |
+| `max-width:860px` | Tablette : les mises en page à deux colonnes (notation, fenêtre film, page de connexion) passent sur une colonne |
+
+Rien d'autre. Pour les très petits écrans, les grilles utilisent `repeat(auto-fill, minmax(…))` plutôt qu'un troisième seuil.
+
+### Navigation (option B, validée le 15/10)
+
+- Entête : le mot Kinet, les pages (À voir, Bientôt, Amis, Top films) en pilule, la photo qui mène à la page Profil. Pas de pseudo dans l'entête.
+- Films / Séries : le titre de la page sert d'interrupteur, Bricolage 800 en `--fs-xl`, mot actif en `--text-1`, l'autre en `--text-3`.
+- Une seule ligne d'outils : recherche en pilule de 42px (fond `--surface`, filet `--line`), le filtre et l'affichage en icônes de 34px dedans, le compteur à droite (masqué sur téléphone).
+- Téléphone : Catalogue, À voir, Bientôt, Amis, Profil.
+- Statistiques, Succès, Cartes et Journal s'affichent en page (`.overlay.as-page`), sous l'entête, avec « ← Retour ».
+
 ## 5. Formes
 
 | Variable | Valeur | Usage |

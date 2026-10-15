@@ -19,7 +19,7 @@ function publicProfilePosterHtml(f){
         ? `<img src="${f.poster_url}" alt="" loading="lazy">`
         : `<div class="film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
       <div class="poster-wall-note ${noteColorClass(f.note)}">${f.note !== null && f.note !== undefined ? Number(f.note).toFixed(1) : '—'}</div>
-      ${f.fav ? `<div class="poster-wall-fav" title="Favori">★</div>` : ''}
+      ${f.fav ? `<div class="poster-wall-fav" title="Favori">${uiIcon('star', true)}</div>` : ''}
       <div class="poster-wall-caption">${escapeHtml(f.title)}${f.release_year && !String(f.title).includes(`(${f.release_year})`) ? ` <span class="wl-year">(${f.release_year})</span>` : ''}</div>
     </div>
   `;
@@ -77,7 +77,7 @@ async function renderPublicProfilePage(userId){
     <div class="public-profile-header">
       ${row.avatar_url
         ? `<img loading="lazy" decoding="async" src="${row.avatar_url}" alt="">`
-        : `<div class="avatar-fallback">👤</div>`}
+        : `<div class="avatar-fallback">${uiIcon('user')}</div>`}
       <h3>${escapeHtml(name)}</h3>
     </div>
     <div class="stat-tiles">

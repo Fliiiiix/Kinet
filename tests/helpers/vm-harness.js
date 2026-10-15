@@ -115,6 +115,12 @@ function createContext(overrides = {}){
     // bouton) passe sa propre implémentation via overrides plutôt que
     // celle-ci, qui se contente de dérouler le handler tel quel.
     withSubmitGuard: (btn, handler) => handler,
+    // uiIcon (js/data.js, pictos au trait de l'interface) : appelée dans
+    // les gabarits HTML de nombreux fichiers ; un test qui ne charge pas
+    // js/data.js reçoit une chaîne vide plutôt qu'un ReferenceError. Un
+    // test qui charge data.js récupère la vraie fonction (elle remplace
+    // celle-ci au chargement).
+    uiIcon: () => '',
     // isOfflineMode (js/offline.js) : lu directement (pas via une fonction)
     // par plusieurs fichiers depuis la file d'attente hors ligne (retour
     // utilisateur, js/offlineQueue.js — toggle favori/épisode, retirer un

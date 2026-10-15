@@ -901,7 +901,7 @@ async function openTcgModal(){
 }
 
 function closeTcgModal(){
-  closeOverlay('tcgOverlay', () => openProfileModal());
+  closeOverlay('tcgOverlay', () => returnToProfile());
 }
 
 document.getElementById('tcgOddsToggle').addEventListener('click', () => {

@@ -110,7 +110,7 @@ function renderViewingsSection(filmId){
   list.innerHTML = items.map((v, idx) => `
     <div class="viewing-row">
       <span class="viewing-date">${formatViewingDate(v.watchedAt)}</span>
-      ${idx === 0 ? '<span class="viewing-first">1er visionnage</span>' : '<span class="rewatch-badge" title="Revisionnage">↻ revu</span>'}
+      ${idx === 0 ? '<span class="viewing-first">1er visionnage</span>' : `<span class="rewatch-badge" title="Revisionnage">${uiIcon('repeat')} revu</span>`}
       ${v.note ? `<span class="viewing-note">${escapeHtml(v.note)}</span>` : ''}
       <button class="viewing-remove" data-id="${v.id}" title="Retirer ce visionnage" aria-label="Retirer ce visionnage" type="button">✕</button>
     </div>
@@ -179,7 +179,7 @@ function renderJournalRow(e){
         ? `<img class="film-poster" src="${e.film.posterUrl}" alt="" loading="lazy">`
         : `<div class="film-poster film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
       <div class="journal-main">
-        <div class="journal-title">${escapeHtml(e.film.title)}${e.isRewatch ? '<span class="rewatch-badge" title="Revisionnage">↻</span>' : ''}</div>
+        <div class="journal-title">${escapeHtml(e.film.title)}${e.isRewatch ? `<span class="rewatch-badge" title="Revisionnage">${uiIcon('repeat')}</span>` : ''}</div>
         ${e.note ? `<div class="journal-note">${escapeHtml(e.note)}</div>` : ''}
       </div>
       <div class="journal-date">${d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}</div>
@@ -221,7 +221,7 @@ function openJournal(){
 // index.html) — en ressortir doit ramener là où on était, pas sortir
 // entièrement du profil.
 function closeJournal(){
-  closeOverlay('journalOverlay', () => openProfileModal());
+  closeOverlay('journalOverlay', () => returnToProfile());
 }
 
 document.getElementById('journalBtn').addEventListener('click', openJournal);

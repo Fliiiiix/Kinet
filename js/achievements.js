@@ -353,12 +353,10 @@ async function openAchievements(){
   observeReveal(document.getElementById('achievementsContent'));
 }
 
-// Rouvre la modale profil (pas juste closeOverlay simple) : Succès n'est
-// accessible QUE depuis "Mon activité" dans le profil (voir
-// #achievementsBtn, index.html) — en ressortir doit ramener là où on
-// était, pas sortir entièrement du profil.
+// Ramène sur la page Profil (returnToProfile(), js/router.js), d'où Succès
+// s'ouvre (rangée « Succès », js/profilePage.js).
 function closeAchievements(){
-  closeOverlay('achievementsOverlay', () => openProfileModal());
+  closeOverlay('achievementsOverlay', () => returnToProfile());
 }
 
 document.getElementById('achievementsBtn').addEventListener('click', openAchievements);

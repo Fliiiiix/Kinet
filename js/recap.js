@@ -76,11 +76,10 @@ function renderAnnualGoalWidget(){
 
   if(!hasGoalThisYear){
     el.innerHTML = `
-      <div class="annual-goal-widget">
-        <div class="annual-goal-head"><span class="annual-goal-label">Objectif ${year}</span></div>
+      <div class="annual-goal-widget is-unset">
         <form class="annual-goal-form" id="annualGoalForm">
-          <span>Combien de films veux-tu voir cette année ?</span>
-          <input type="number" id="annualGoalInput" min="1" max="999" placeholder="Ex. 50" required>
+          <label class="annual-goal-label" for="annualGoalInput">Objectif ${year}</label>
+          <input type="number" id="annualGoalInput" min="1" max="999" placeholder="Ex. 50" required title="Combien de films veux-tu voir cette année ?">
           <button type="submit" class="btn secondary">Définir</button>
         </form>
       </div>
@@ -103,12 +102,11 @@ function renderAnnualGoalWidget(){
   el.innerHTML = `
     <div class="annual-goal-widget ${done ? 'is-complete' : ''}">
       <div class="annual-goal-head">
-        <span class="annual-goal-label">Objectif ${year}</span>
-        <span class="annual-goal-count">${watched} / ${goal} film${goal > 1 ? 's' : ''}</span>
-        <button type="button" class="annual-goal-edit" id="annualGoalEditBtn" title="Modifier l'objectif" aria-label="Modifier l'objectif">✎</button>
+        <span class="annual-goal-count">${watched} / ${goal} film${goal > 1 ? 's' : ''} en ${year}</span>
+        <button type="button" class="annual-goal-edit" id="annualGoalEditBtn" title="Modifier l'objectif" aria-label="Modifier l'objectif ${year}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15.5 4.5l4 4L8 20l-4.5 1L4.5 16.5 15.5 4.5z"></path></svg></button>
       </div>
       <div class="annual-goal-bar"><div class="annual-goal-fill" style="--pct:${pct / 100}"></div></div>
-      ${done ? `<div class="annual-goal-done-msg">🎉 Objectif ${year} atteint !</div>` : ''}
+      ${done ? `<div class="annual-goal-done-msg">Objectif ${year} atteint</div>` : ''}
     </div>
   `;
   const editBtn = document.getElementById('annualGoalEditBtn');

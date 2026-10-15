@@ -524,10 +524,13 @@ async function handleSaveProfile(){
   currentProfile = data;
   renderUserBar();
   closeProfileModal();
+  // La page Profil (js/profilePage.js) reflète tout de suite le nouveau
+  // pseudo, la photo et les films préférés.
+  if(typeof renderProfilePage === 'function' && parseRoute().name === 'profil') renderProfilePage();
   showToast('Profil mis à jour');
 }
 
-document.getElementById('userAvatarBtn').addEventListener('click', openProfileModal);
+document.getElementById('userAvatarBtn').addEventListener('click', () => goToProfile());
 document.getElementById('closeProfile').addEventListener('click', closeProfileModal);
 document.getElementById('cancelProfileBtn').addEventListener('click', closeProfileModal);
 document.getElementById('saveProfileBtn').addEventListener('click', handleSaveProfile);

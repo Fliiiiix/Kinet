@@ -58,7 +58,7 @@ function renderMyLists(){
   }
   list.innerHTML = myLists.map(l => `
     <div class="wl-row" data-id="${l.id}">
-      <div class="friend-avatar friend-avatar-placeholder">📋</div>
+      <div class="friend-avatar friend-avatar-placeholder">${uiIcon('list')}</div>
       <div class="wl-main">
         <div class="wl-title">${escapeHtml(l.title)}</div>
         ${l.description ? `<div class="wl-note">${escapeHtml(l.description)}</div>` : ''}
@@ -81,13 +81,13 @@ function friendListCardHtml(l){
   const posters = l.poster_urls || [];
   const postersHtml = posters.length > 0
     ? `<div class="list-cover-posters">${posters.slice(0, 4).map(url => `<img src="${url}" alt="" loading="lazy">`).join('')}</div>`
-    : `<div class="list-cover-posters-empty">📋</div>`;
+    : `<div class="list-cover-posters-empty">${uiIcon('list')}</div>`;
   return `
     <div class="list-cover-card" data-id="${l.id}">
       ${postersHtml}
       <div class="list-cover-info">
         <div class="list-cover-title">${escapeHtml(l.title)}</div>
-        <div class="list-cover-meta">${friendDisplayName(l.user_id)} · ${l.item_count} film${l.item_count > 1 ? 's' : ''}${l.like_count > 0 ? ` · ${l.like_count} ♥` : ''}</div>
+        <div class="list-cover-meta">${friendDisplayName(l.user_id)} · ${l.item_count} film${l.item_count > 1 ? 's' : ''}${l.like_count > 0 ? ` · ${l.like_count} j'aime` : ''}</div>
       </div>
     </div>
   `;
@@ -166,7 +166,7 @@ function updateListLikeButtonUI(){
   const btn = document.getElementById('listLikeBtn');
   const liked = currentListLikes.some(l => l.userId === currentUser.id);
   btn.classList.toggle('active', liked);
-  btn.textContent = liked ? '♥ Aimé' : '♡ Aimer';
+  btn.innerHTML = `${uiIcon('heart', liked)} ${liked ? 'Aimé' : 'Aimer'}`;
 }
 
 function renderListLikesSummary(){

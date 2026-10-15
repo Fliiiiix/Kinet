@@ -133,7 +133,7 @@ function renderGroupProposals(){
     const my = myVoteOn(p.id);
     const commentCount = proposalCommentCounts[p.id] || 0;
     const proposer = friendDisplayName(p.proposedBy);
-    const chosenBadge = p.chosen ? ` <span class="review-badge" title="Séance élue">🎟️</span>` : '';
+    const chosenBadge = p.chosen ? ` <span class="review-badge" title="Séance élue">${uiIcon('ticket')}</span>` : '';
     let chosenAction = '';
     if(isOwner){
       chosenAction = p.chosen
@@ -156,7 +156,7 @@ function renderGroupProposals(){
       </div>
       <div class="wl-actions">
         ${chosenAction}
-        <button class="btn secondary" data-open="${p.id}" type="button">💬 ${commentCount}</button>
+        <button class="btn secondary" data-open="${p.id}" type="button">${uiIcon('chat')} ${commentCount}</button>
       </div>
     </div>`;
   }).join('');

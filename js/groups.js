@@ -47,7 +47,7 @@ function renderGroupsList(){
   }
   list.innerHTML = groups.map(g => `
     <div class="wl-row">
-      <div class="friend-avatar friend-avatar-placeholder">🎭</div>
+      <div class="friend-avatar friend-avatar-placeholder">${uiIcon('group')}</div>
       <div class="wl-main">
         <div class="wl-title">${escapeHtml(g.name)}</div>
         ${g.description ? `<div class="wl-note">${escapeHtml(g.description)}</div>` : ''}
@@ -149,7 +149,7 @@ function renderChosenBanner(groupId){
     : null;
   el.style.display = '';
   el.innerHTML = `
-    🎟️ <b>Séance élue :</b> ${escapeHtml(p.title)}${dateLabel ? ` (${dateLabel})` : ''}
+    ${uiIcon('ticket')} <b>Séance élue :</b> ${escapeHtml(p.title)}${dateLabel ? ` (${dateLabel})` : ''}
   `;
 }
 
@@ -201,7 +201,7 @@ function renderGroupDetail(group, members){
       .map(otherUserId)
       .filter(uid => !memberIds.includes(uid));
     addList.innerHTML = candidates.length === 0
-      ? `<div class="tmdb-empty">Tous tes amis sont déjà dans ce groupe (ou tu n'as pas encore d'ami, voir 👥 Amis).</div>`
+      ? `<div class="tmdb-empty">Tous tes amis sont déjà dans ce groupe (ou tu n'as pas encore d'ami, voir la page Amis).</div>`
       : candidates.map(uid => friendRowHtml(uid, `<button class="btn" data-add="${uid}" type="button">Ajouter</button>`)).join('');
     addList.querySelectorAll('button[data-add]').forEach(btn => {
       btn.addEventListener('click', withSubmitGuard(btn, () => addMemberToGroup(group.id, btn.dataset.add)));

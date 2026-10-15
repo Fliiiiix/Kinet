@@ -151,7 +151,7 @@ function buildGenreFilterOptions(){
   // N'apparaît que s'il y a effectivement quelque chose à rattraper —
   // sinon une option qui ne mène jamais nulle part n'a rien à faire là.
   const unratedOption = unratedCount > 0
-    ? `<option value="${UNRATED_FILTER_VALUE}">⚠ Sans note (${unratedCount})</option>`
+    ? `<option value="${UNRATED_FILTER_VALUE}">Sans note (${unratedCount})</option>`
     : '';
   sel.innerHTML = `<option value="">Tous les genres</option>${unratedOption}${options}`;
   if(current === UNRATED_FILTER_VALUE && unratedCount > 0) sel.value = current;
@@ -308,7 +308,11 @@ function render(){
   const filtered = getFilteredSortedFilms();
 
   const isFiltered = !!search || !!genreFilter || !!yearFilter || (isAdvanced && critFilterMin > 0);
-  countLine.textContent = `${filtered.length} film${filtered.length>1?'s':''} ${isFiltered ? '(filtré)' : 'au catalogue'}`;
+  // Compteur à droite de la recherche (draft option B) : « 334 films », ou
+  // « 12 sur 334 » quand un filtre ou une recherche réduit la liste.
+  countLine.textContent = isFiltered
+    ? `${filtered.length} sur ${films.length}`
+    : `${filtered.length} film${filtered.length>1?'s':''}`;
 
   // Ajouter un film passe par la recherche (audit M2, retour du 14/10 :
   // « l'ajout de film devrait se faire par la recherche et non un
@@ -381,10 +385,10 @@ function render(){
         ? `<img class="film-poster" src="${f.posterUrl}" alt="" loading="lazy">`
         : `<div class="film-poster film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
       <div class="film-main">
-        <div class="film-title">${escapeHtml(f.title)}${f.review ? '<span class="review-badge" title="Commentaire enregistré">💬</span>' : ''}${rewatches > 1 ? `<span class="rewatch-badge" title="Revu ${rewatches} fois">↻ ×${rewatches}</span>` : ''}${happening ? `<button class="happening-badge" type="button" title="Un petit quelque chose à découvrir..." aria-label="Un petit quelque chose à découvrir...">${happening.icon}</button>` : ''}</div>
+        <div class="film-title">${escapeHtml(f.title)}${f.review ? `<span class="review-badge" title="Commentaire enregistré">${uiIcon('chat')}</span>` : ''}${rewatches > 1 ? `<span class="rewatch-badge" title="Revu ${rewatches} fois">${uiIcon('repeat')} ×${rewatches}</span>` : ''}${happening ? `<button class="happening-badge" type="button" title="Un petit quelque chose à découvrir..." aria-label="Un petit quelque chose à découvrir...">${happening.icon}</button>` : ''}</div>
         <div class="film-sub">${sub}</div>
       </div>
-      <button class="star-btn ${f.fav ? 'active' : ''}" data-id="${f.id}" type="button" title="Favori" aria-label="${f.fav ? 'Retirer des favoris' : 'Ajouter aux favoris'}" aria-pressed="${f.fav}">${f.fav ? '★' : '☆'}</button>
+      <button class="star-btn ${f.fav ? 'active' : ''}" data-id="${f.id}" type="button" title="Favori" aria-label="${f.fav ? 'Retirer des favoris' : 'Ajouter aux favoris'}" aria-pressed="${f.fav}">${uiIcon('star', f.fav)}</button>
       <div class="counter ${noteColorClass(note)}">${note !== null ? note.toFixed(1) : '—'}</div>
     `;
     makeRowClickable(row, (e) => {

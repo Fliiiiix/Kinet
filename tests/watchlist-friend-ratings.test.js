@@ -33,13 +33,13 @@ test('friendRatingsLabel() : rien noté pour cet item -> null (pas d\'alerte)', 
 test('friendRatingsLabel() : un seul ami -> son nom et sa note', () => {
   const ctx = buildContext();
   setState(ctx, { watchlistFriendRatings: { 1: [{ friendId: 'alice', note: 4 }] } });
-  assert.strictEqual(ctx.friendRatingsLabel(1), '👋 Alice a mis 4.0');
+  assert.strictEqual(ctx.friendRatingsLabel(1), 'Alice a mis 4.0');
 });
 
 test('friendRatingsLabel() : plusieurs amis -> décompte + moyenne, pas une liste de noms', () => {
   const ctx = buildContext();
   setState(ctx, { watchlistFriendRatings: { 1: [{ friendId: 'alice', note: 5 }, { friendId: 'bob', note: 3 }] } });
-  assert.strictEqual(ctx.friendRatingsLabel(1), '👋 2 amis l\'ont noté (moy. 4.0)');
+  assert.strictEqual(ctx.friendRatingsLabel(1), '2 amis l\'ont noté (moy. 4.0)');
 });
 
 test('loadWatchlistFriendRatings() : groupe les lignes par watchlist_id', async () => {

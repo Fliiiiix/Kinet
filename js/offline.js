@@ -70,7 +70,7 @@ function enterOfflineMode(savedAt){
   // premier saveOfflineQueueToStorage().
   loadOfflineQueue();
   const banner = document.getElementById('offlineBanner');
-  banner.textContent = `📴 Hors ligne, dernières données synchronisées le ${formatOfflineTimestamp(savedAt)}. Tu peux quand même cocher/décocher, marquer favori, retirer un item — ce sera synchronisé au retour du réseau. Le reste (ajouter, commenter…) attend la reconnexion.`;
+  banner.textContent = `Hors ligne, dernières données synchronisées le ${formatOfflineTimestamp(savedAt)}. Tu peux quand même cocher/décocher, marquer favori, retirer un item — ce sera synchronisé au retour du réseau. Le reste (ajouter, commenter…) attend la reconnexion.`;
   banner.style.display = '';
 }
 

@@ -131,11 +131,11 @@ test('friendListCardHtml() : affiches connues -> mosaïque ; aucune -> pictogram
   assert.ok(withPosters.includes('list-cover-posters"'), withPosters);
   assert.ok(withPosters.includes('a.jpg') && withPosters.includes('b.jpg'));
   assert.ok(withPosters.includes('Sam'));
-  assert.ok(withPosters.includes('2 ♥'));
+  assert.ok(withPosters.includes("2 j'aime"));
 
   const noPosters = ctx.friendListCardHtml({ id: 2, user_id: 'ami1', title: 'Liste B', item_count: 0, like_count: 0, poster_urls: null });
   assert.ok(noPosters.includes('list-cover-posters-empty'), noPosters);
-  assert.ok(!noPosters.includes('♥'), 'pas de compteur de likes à zéro');
+  assert.ok(!noPosters.includes("j'aime"), 'pas de compteur de likes à zéro');
 });
 
 // --- isOwnList() / renderListDetailHeader() ---
@@ -170,7 +170,7 @@ test('toggleListLike() : pas encore aimée -> insère et bascule le texte du bou
   });
   setState(ctx, { currentListId: 1, currentListLikes: [] });
   await ctx.toggleListLike();
-  assert.ok(elements.listLikeBtn.textContent.includes('Aimé'));
+  assert.ok(elements.listLikeBtn.innerHTML.includes('Aimé'));
   assert.strictEqual(getState(ctx, 'currentListLikes').length, 1);
 });
 
@@ -187,7 +187,7 @@ test('toggleListLike() : déjà aimée -> supprime (toggle off)', async () => {
   setState(ctx, { currentListId: 1, currentListLikes: [{ id: 77, userId: 'me' }] });
   await ctx.toggleListLike();
   assert.deepStrictEqual(deleteCalls, [77]);
-  assert.ok(elements.listLikeBtn.textContent.includes('Aimer'));
+  assert.ok(elements.listLikeBtn.innerHTML.includes('Aimer'));
   assert.strictEqual(getState(ctx, 'currentListLikes').length, 0);
 });
 
