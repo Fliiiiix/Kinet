@@ -1,105 +1,48 @@
-// --- Recherche globale unifiée (v2.42, retour utilisateur) ---
-// Une seule barre, ouvrable depuis n'importe où (icône dans le header —
-// voir js/ui.js pour la règle "header seulement, jamais dupliqué"), qui
-// cherche à la fois dans le catalogue de films, les séries suivies, les
-// amis et les groupes déjà chargés en mémoire — pas de nouvel appel réseau
-// dédié, ces quatre tableaux existent déjà (films chargé dès la connexion,
-// voir js/auth.js ; trackedShows/friendships/groups chargés à la volée ici
-// s'ils ne le sont pas encore, même stratégie que openAchievements()/
-// openAdminModal() dans js/achievements.js et js/admin.js).
+// --- Recherche unique (audit M2, draft option A validée le 15/10) ---
+// La recherche du catalogue est la seule recherche de Kinet. Elle filtre
+// tes films (render(), js/app.js) ou tes séries (renderTrackedShows(),
+// js/series.js) ; ce fichier montre dessous, dès 2 lettres, ce qui
+// correspond ailleurs : séries suivies, films, amis, groupes, 5 au plus
+// par rubrique. Remplace la fenêtre « Rechercher » (ex-#globalSearchOverlay)
+// et la rangée « Rechercher partout » de la page Profil.
 //
-// Résultat cliqué -> ferme cette recherche puis ouvre la fiche concernée,
-// jamais une deuxième couche de recherche par catégorie : un raccourci
-// vers un écran qui existe déjà (fiche film, détail série, profil ami,
-// détail groupe), pas un nouvel écran de résultats à lui seul.
+// Données déjà en mémoire (films chargé dès la connexion, voir js/auth.js) ;
+// trackedShows/friendships/groups chargés à la première recherche s'ils ne
+// le sont pas encore, puis la rubrique se redessine toute seule.
 
-let globalSearchTimer = null;
-let globalSearchDataReady = false;
+let searchExtrasDataReady = false;
+let searchExtrasDataLoad = null;
 
-// --- Historique des recherches récentes (retour utilisateur) ---
-// localStorage plutôt que Supabase : une préférence propre à CET appareil
-// (même principe que kinetViewMode/getViewMode(), js/ui.js), pas une
-// donnée à synchroniser entre appareils — quelqu'un qui cherche "chern"
-// sur son téléphone n'a pas forcément envie de revoir cette recherche
-// ressurgir sur son PC.
-const RECENT_SEARCHES_KEY = 'kinetRecentSearches';
-const RECENT_SEARCHES_MAX = 5;
-
-function getRecentSearches(){
-  try{
-    const raw = localStorage.getItem(RECENT_SEARCHES_KEY);
-    const parsed = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed) ? parsed : [];
-  }catch(e){
-    return []; // localStorage indisponible/corrompu (navigation privée...) : dégrade en gracieux, pas d'historique plutôt qu'une exception
-  }
-}
-
-function addRecentSearch(query){
-  const trimmed = query.trim();
-  if(!trimmed) return;
-  // Insensible à la casse pour la déduplication ("Chernobyl" puis "chernobyl"
-  // ne doivent pas compter comme deux entrées distinctes) mais garde la
-  // CASSE de la recherche la plus récente pour l'affichage.
-  const existing = getRecentSearches().filter(q => q.toLowerCase() !== trimmed.toLowerCase());
-  const next = [trimmed, ...existing].slice(0, RECENT_SEARCHES_MAX);
-  try{
-    localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(next));
-  }catch(e){
-    // Quota dépassé ou stockage bloqué : tant pis pour l'historique, jamais
-    // une raison de faire échouer la recherche elle-même.
-  }
-}
-
-// Affiché tant qu'on n'a pas encore tapé 2 caractères — remplace le simple
-// message "Tape au moins 2 caractères…" par l'historique s'il y en a un,
-// pour retrouver une recherche récente sans avoir à la retaper.
-function renderEmptySearchState(){
-  const resultsEl = document.getElementById('globalSearchResults');
-  const recent = getRecentSearches();
-  if(recent.length === 0){
-    resultsEl.innerHTML = `<div class="empty-state">Tape au moins 2 caractères…</div>`;
-    return;
-  }
-  resultsEl.innerHTML = `
-    <div class="global-search-group">
-      <div class="global-search-group-title">Recherches récentes</div>
-      <div class="global-search-recent-list">
-        ${recent.map(q => `<button type="button" class="global-search-recent-item" data-query="${escapeHtml(q)}">${uiIcon('clock')} ${escapeHtml(q)}</button>`).join('')}
-      </div>
-    </div>
-  `;
-  resultsEl.querySelectorAll('.global-search-recent-item').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const query = btn.dataset.query;
-      document.getElementById('globalSearchInput').value = query;
-      performGlobalSearch(query);
+function ensureSearchExtrasData(){
+  if(searchExtrasDataReady) return Promise.resolve();
+  if(!searchExtrasDataLoad){
+    searchExtrasDataLoad = Promise.all([
+      trackedShows.length === 0 ? loadTrackedShows() : Promise.resolve(),
+      friendships.length === 0 ? loadFriendships() : Promise.resolve(),
+      groups.length === 0 ? loadGroups() : Promise.resolve()
+    ]).then(() => {
+      searchExtrasDataReady = true;
+    }).catch(err => {
+      // Réseau coupé : on réessaiera à la prochaine frappe.
+      searchExtrasDataLoad = null;
+      console.error(err);
     });
-  });
+  }
+  return searchExtrasDataLoad;
 }
 
-async function ensureGlobalSearchData(){
-  if(globalSearchDataReady) return;
-  await Promise.all([
-    trackedShows.length === 0 ? loadTrackedShows() : Promise.resolve(),
-    friendships.length === 0 ? loadFriendships() : Promise.resolve(),
-    groups.length === 0 ? loadGroups() : Promise.resolve()
-  ]);
-  globalSearchDataReady = true;
-}
-
-const GLOBAL_SEARCH_MAX_PER_GROUP = 5;
+const SEARCH_EXTRAS_MAX = 5;
 
 function searchFilms(normalizedQuery){
   return films
     .filter(f => getSearchTerms(f).some(t => t.includes(normalizedQuery)))
-    .slice(0, GLOBAL_SEARCH_MAX_PER_GROUP);
+    .slice(0, SEARCH_EXTRAS_MAX);
 }
 
 function searchShows(normalizedQuery){
   return trackedShows
     .filter(s => normalizeSearch(s.title).includes(normalizedQuery))
-    .slice(0, GLOBAL_SEARCH_MAX_PER_GROUP);
+    .slice(0, SEARCH_EXTRAS_MAX);
 }
 
 function searchFriends(normalizedQuery){
@@ -107,141 +50,140 @@ function searchFriends(normalizedQuery){
     .filter(f => f.status === 'accepted')
     .map(f => otherUserId(f))
     .filter(userId => normalizeSearch(friendDisplayName(userId)).includes(normalizedQuery))
-    .slice(0, GLOBAL_SEARCH_MAX_PER_GROUP);
+    .slice(0, SEARCH_EXTRAS_MAX);
 }
 
 function searchGroups(normalizedQuery){
   return groups
     .filter(g => normalizeSearch(g.name).includes(normalizedQuery))
-    .slice(0, GLOBAL_SEARCH_MAX_PER_GROUP);
+    .slice(0, SEARCH_EXTRAS_MAX);
 }
 
-function globalSearchRowHtml(posterOrIcon, title, sub){
+function searchExtraNoteHtml(note){
+  if(note === null || note === undefined) return '';
+  return `<span class="sx-note ${noteColorClass(note)}">${note.toFixed(1)}</span>`;
+}
+
+function searchExtraRowHtml(visualHtml, title, sub, noteHtml){
   return `
-    <div class="wl-row global-search-row">
-      ${posterOrIcon}
-      <div class="wl-main">
-        <div class="wl-title">${escapeHtml(title)}</div>
-        ${sub ? `<div class="wl-note">${escapeHtml(sub)}</div>` : ''}
+    <div class="sx-row">
+      ${visualHtml}
+      <div class="sx-main">
+        <div class="sx-title">${escapeHtml(title)}</div>
+        ${sub ? `<div class="sx-sub">${escapeHtml(String(sub))}</div>` : ''}
       </div>
+      ${noteHtml || ''}
     </div>
   `;
 }
 
-function renderGlobalSearchGroup(titleLabel, itemsHtml){
-  if(itemsHtml.length === 0) return '';
-  return `
-    <div class="global-search-group">
-      <div class="global-search-group-title">${escapeHtml(titleLabel)}</div>
-      ${itemsHtml.join('')}
+function showProgressLabel(show){
+  if(!show.numberOfEpisodes) return showStatusLabel(show.status);
+  const watched = (typeof watchedEpisodeCounts !== 'undefined' && watchedEpisodeCounts[show.id]) || 0;
+  return `${watched}/${show.numberOfEpisodes} épisode${show.numberOfEpisodes > 1 ? 's' : ''} vus`;
+}
+
+// Rubriques sous la grille, dans l'ordre affiché. Celle de la page en cours
+// est exclue : sur Films, tes films sont déjà dans la grille ; sur Séries,
+// tes séries sont déjà dans la liste. Chaque ligne porte son action de clic.
+function buildSearchExtras(kind, rawQuery){
+  const query = (rawQuery || '').trim();
+  if(query.length < 2) return [];
+  const q = normalizeSearch(query);
+  const sections = [];
+
+  if(kind === 'films'){
+    const shows = searchShows(q);
+    const showNav = shows.map(s => ({ id: s.id, title: s.title }));
+    sections.push({ label: 'Séries', items: shows.map(s => ({
+      html: searchExtraRowHtml(
+        s.posterUrl ? `<img class="sx-thumb" src="${s.posterUrl}" alt="" loading="lazy">` : `<div class="sx-thumb">${TV_PLACEHOLDER_SVG}</div>`,
+        s.title, showProgressLabel(s), searchExtraNoteHtml(s.manualNote)),
+      open: () => goToSeriesDetail(s.id, showNav)
+    })) });
+  }else{
+    const matches = searchFilms(q);
+    const filmNav = matches.filter(f => f.tmdbId).map(f => ({ tmdbId: f.tmdbId, title: f.title }));
+    sections.push({ label: 'Films', items: matches.map(f => ({
+      html: searchExtraRowHtml(
+        f.posterUrl ? `<img class="sx-thumb" src="${f.posterUrl}" alt="" loading="lazy">` : `<div class="sx-thumb">${FILM_PLACEHOLDER_SVG}</div>`,
+        f.title, f.releaseYear, searchExtraNoteHtml(getDisplayNote(f))),
+      open: () => { if(f.tmdbId) goToFilmDetail(f.tmdbId, filmNav); else openModal(f.id); }
+    })) });
+  }
+
+  sections.push({ label: 'Amis', items: searchFriends(q).map(userId => ({
+    html: searchExtraRowHtml(
+      friendAvatarUrl(userId) ? `<img class="sx-face" src="${friendAvatarUrl(userId)}" alt="" loading="lazy">` : `<div class="sx-face">${uiIcon('user')}</div>`,
+      friendDisplayName(userId), '', ''),
+    open: () => openFriendProfile(userId)
+  })) });
+
+  sections.push({ label: 'Groupes', items: searchGroups(q).map(g => ({
+    html: searchExtraRowHtml(`<div class="sx-glyph">${uiIcon('group')}</div>`, g.name, '', ''),
+    open: () => goToGroup(g.id)
+  })) });
+
+  return sections.filter(s => s.items.length > 0);
+}
+
+const SEARCH_EXTRAS_TARGETS = {
+  films: { container: 'searchExtras', input: 'search' },
+  series: { container: 'seriesSearchExtras', input: 'seriesTitleInput' }
+};
+
+function renderSearchExtras(kind, rawQuery){
+  const target = SEARCH_EXTRAS_TARGETS[kind];
+  const el = target && document.getElementById(target.container);
+  if(!el) return;
+  const sections = buildSearchExtras(kind, rawQuery);
+  el.innerHTML = sections.map(s => `
+    <div class="sx-group">
+      <div class="sx-label">${s.label}</div>
+      ${s.items.map(i => i.html).join('')}
     </div>
-  `;
+  `).join('');
+  // Même ordre que le HTML généré ci-dessus : une action par ligne.
+  const opens = sections.flatMap(s => s.items.map(i => i.open));
+  Array.from(el.querySelectorAll('.sx-row')).forEach((row, i) => makeRowClickable(row, opens[i]));
+
+  if(!searchExtrasDataReady && (rawQuery || '').trim().length >= 2){
+    ensureSearchExtrasData().then(() => {
+      if(!searchExtrasDataReady) return;
+      const input = document.getElementById(target.input);
+      if(input && input.value.trim().length >= 2) renderSearchExtras(kind, input.value);
+    });
+  }
 }
 
-function performGlobalSearch(rawQuery){
-  const query = rawQuery.trim();
-  const resultsEl = document.getElementById('globalSearchResults');
-  if(query.length < 2){
-    renderEmptySearchState();
+// --- Raccourci clavier « / » (retour utilisateur) --- Place le curseur
+// dans la recherche, depuis n'importe quelle page : celle des séries sur
+// la page Séries, celle du catalogue partout ailleurs (on y revient
+// d'abord). Ignoré pendant une saisie (le « / » doit atteindre le champ)
+// ou si une fenêtre est ouverte.
+function focusMainSearch(){
+  const route = parseRoute().name;
+  if(route === 'seriesList'){
+    document.getElementById('seriesTitleInput').focus();
     return;
   }
-  addRecentSearch(query);
-  const normalizedQuery = normalizeSearch(query);
-
-  const filmMatches = searchFilms(normalizedQuery);
-  const showMatches = searchShows(normalizedQuery);
-  const friendMatches = searchFriends(normalizedQuery);
-  const groupMatches = searchGroups(normalizedQuery);
-
-  if(filmMatches.length + showMatches.length + friendMatches.length + groupMatches.length === 0){
-    resultsEl.innerHTML = `<div class="empty-state">Rien ne correspond à "${escapeHtml(query)}".</div>`;
+  if(route !== 'home'){
+    // Le catalogue s'affiche au hashchange (renderRoute(), js/router.js) :
+    // le champ n'est visible, donc focalisable, qu'après.
+    window.addEventListener('hashchange', () => {
+      setTimeout(() => document.getElementById('search').focus(), 0);
+    }, { once: true });
+    goHome();
     return;
   }
-
-  resultsEl.innerHTML = [
-    renderGlobalSearchGroup('Films', filmMatches.map(f => globalSearchRowHtml(
-      f.posterUrl ? `<img class="film-poster" src="${f.posterUrl}" alt="" loading="lazy">` : `<div class="film-poster film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`,
-      f.title,
-      getDisplayNote(f) != null ? `Ta note : ${getDisplayNote(f)}/5` : 'Pas encore noté'
-    ))),
-    renderGlobalSearchGroup('Séries suivies', showMatches.map(s => globalSearchRowHtml(
-      s.posterUrl ? `<img class="film-poster" src="${s.posterUrl}" alt="" loading="lazy">` : `<div class="film-poster film-poster-placeholder">${TV_PLACEHOLDER_SVG}</div>`,
-      s.title,
-      showStatusLabel(s.status)
-    ))),
-    renderGlobalSearchGroup('Amis', friendMatches.map(userId => globalSearchRowHtml(
-      friendAvatarUrl(userId) ? `<img class="film-poster" src="${friendAvatarUrl(userId)}" alt="" loading="lazy">` : `<div class="film-poster film-poster-placeholder">${uiIcon('user')}</div>`,
-      friendDisplayName(userId),
-      'Ami'
-    ))),
-    renderGlobalSearchGroup('Groupes', groupMatches.map(g => globalSearchRowHtml(
-      `<div class="film-poster film-poster-placeholder">${uiIcon('group')}</div>`,
-      g.name,
-      'Groupe'
-    )))
-  ].join('');
-
-  // Reclique-able après ré-écriture du HTML : ré-attache un handler par
-  // ligne dans l'ordre exact où chaque catégorie a été construite
-  // ci-dessus (même ordre que le DOM généré) plutôt que d'essayer de
-  // retrouver l'item correspondant à un clic après coup.
-  const rows = Array.from(resultsEl.querySelectorAll('.global-search-row'));
-  const filmNavList = filmMatches.filter(f => f.tmdbId).map(f => ({ tmdbId: f.tmdbId, title: f.title }));
-  const showNavListSearch = showMatches.map(s => ({ id: s.id, title: s.title }));
-  const clickTargets = [
-    ...filmMatches.map(f => () => {
-      closeOverlay('globalSearchOverlay', () => {
-        if(f.tmdbId) goToFilmDetail(f.tmdbId, filmNavList);
-        else openModal(f.id);
-      });
-    }),
-    ...showMatches.map(s => () => closeOverlay('globalSearchOverlay', () => goToSeriesDetail(s.id, showNavListSearch))),
-    ...friendMatches.map(userId => () => closeOverlay('globalSearchOverlay', () => openFriendProfile(userId))),
-    ...groupMatches.map(g => () => closeOverlay('globalSearchOverlay', () => goToGroup(g.id)))
-  ];
-  rows.forEach((row, i) => makeRowClickable(row, clickTargets[i]));
+  document.getElementById('search').focus();
 }
 
-async function openGlobalSearch(){
-  document.getElementById('globalSearchInput').value = '';
-  renderEmptySearchState();
-  openOverlay('globalSearchOverlay');
-  document.getElementById('globalSearchInput').focus();
-  await ensureGlobalSearchData(); // n'empêche pas de taper pendant le chargement
-}
-
-// Déplacé dans la modale profil (v3.2, retour utilisateur — voir le
-// commentaire sur #globalSearchBtn, index.html) : referme d'abord la
-// modale profil, comme #profileFeedbackLinkBtn/#profileChangelogLinkBtn
-// juste à côté de lui désormais (sinon la recherche s'ouvrirait par-dessus
-// un profil resté ouvert en arrière-plan).
-document.getElementById('globalSearchBtn').addEventListener('click', () => {
-  closeProfileModal();
-  openGlobalSearch();
-});
-document.getElementById('closeGlobalSearch').addEventListener('click', () => closeOverlay('globalSearchOverlay'));
-document.getElementById('globalSearchOverlay').addEventListener('click', (e) => {
-  if(e.target.id === 'globalSearchOverlay') closeOverlay('globalSearchOverlay');
-});
-document.getElementById('globalSearchInput').addEventListener('input', () => {
-  clearTimeout(globalSearchTimer);
-  const query = document.getElementById('globalSearchInput').value;
-  globalSearchTimer = setTimeout(() => performGlobalSearch(query), 200);
-});
-
-// --- Raccourci clavier "/" (retour utilisateur) --- Habitude des sites
-// qu'on utilise beaucoup (GitHub, Slack...) : ouvrir la recherche sans
-// avoir à viser l'icône. Ignoré si on est déjà en train de taper quelque
-// part (le "/" doit atteindre le champ, pas ouvrir une recherche
-// par-dessus — vaut aussi pour #globalSearchInput lui-même, un <input>
-// comme un autre) ou si une modale est déjà ouverte (les modales ne
-// s'empilent jamais dans cette app, voir le closeur Échap centralisé,
-// js/ui.js).
 document.addEventListener('keydown', (e) => {
   if(e.key !== '/') return;
   const tag = (e.target.tagName || '').toLowerCase();
   if(tag === 'input' || tag === 'textarea' || tag === 'select' || e.target.isContentEditable) return;
   if(document.querySelector('.overlay.open')) return;
   e.preventDefault();
-  openGlobalSearch();
+  focusMainSearch();
 });

@@ -132,6 +132,7 @@ Rien d'autre. Pour les très petits écrans, les grilles utilisent `repeat(auto-
 - Une seule ligne d'outils : recherche en pilule de 42px (fond `--surface`, filet `--line`), le filtre et l'affichage en icônes de 34px dedans, le compteur à droite (masqué sur téléphone).
 - Téléphone : Catalogue, À voir, Bientôt, Amis, Profil.
 - Statistiques, Succès, Cartes et Journal s'affichent en page (`.overlay.as-page`), sous l'entête, avec « ← Retour ».
+- Une seule recherche (audit M2, option A validée le 15/10) : la pilule filtre les films (ou les séries) et, dès 2 lettres, montre dessous les séries, films, amis et groupes qui correspondent, 5 au plus par rubrique, en lignes de liste (`.search-extras`, `js/globalSearch.js`). Pas de fenêtre de recherche à part. La touche « / » place le curseur dans la recherche.
 
 ## 5. Formes
 

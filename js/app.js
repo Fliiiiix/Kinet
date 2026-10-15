@@ -304,6 +304,9 @@ function render(){
   // feuille repliée, tri "note-desc" étant la valeur par défaut de #sortBy.
   document.getElementById('filtersToggleBtn').classList.toggle('has-active-filter', sortBy !== 'note-desc' || !!genreFilter || !!yearFilter);
   renderBulkActionsBar();
+  // Recherche unique (audit M2) : séries, amis et groupes qui correspondent,
+  // sous la grille (renderSearchExtras(), js/globalSearch.js).
+  if(typeof renderSearchExtras === 'function') renderSearchExtras('films', document.getElementById('search').value);
 
   const filtered = getFilteredSortedFilms();
 

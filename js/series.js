@@ -151,6 +151,9 @@ function renderTrackedShows(){
   const norm = (txt) => (typeof normalizeSearch === 'function') ? normalizeSearch(txt) : String(txt).toLowerCase();
   const q = input ? norm(input.value.trim()) : '';
   const shown = q ? trackedShows.filter(show => norm(show.title).includes(q)) : trackedShows;
+  // Recherche unique (audit M2) : films, amis et groupes qui correspondent,
+  // sous la liste (renderSearchExtras(), js/globalSearch.js).
+  if(typeof renderSearchExtras === 'function') renderSearchExtras('series', input ? input.value : '');
   const countEl = document.getElementById('seriesCountLine');
   if(countEl) countEl.textContent = !trackedShows.length ? ''
     : q ? `${shown.length} sur ${trackedShows.length}`

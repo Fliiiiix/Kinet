@@ -38,7 +38,7 @@ const ONBOARDING_STEPS = [
     target:{ desktop:'search', mobile:'search' },
     place:{ desktop:'bottom', mobile:'bottom' },
     title:'Note un film',
-    body:'Tape son titre ici : s\'il n\'est pas dans ton catalogue, ajoute-le et note-le sur 7 critères, ou donne une note directe si tu es pressé.'
+    body:'Tape son titre ici : s\'il n\'est pas dans ton catalogue, ajoute-le et note-le sur 7 critères, ou donne une note directe si tu es pressé. Tes séries, amis et groupes s\'y retrouvent aussi.'
   },
   {
     key:'watchlist',

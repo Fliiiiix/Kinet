@@ -4499,47 +4499,6 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
 }
 .wl-quick-form .btn{padding:6px 10px; font-size:var(--fs-xs);}
 
-/* Recherche globale unifiée (v2.42, retour utilisateur) — voir
-   js/globalSearch.js. Résultats en .wl-row réutilisées telles quelles
-   (déjà le gabarit "affiche + titre + sous-texte" partout ailleurs). */
-.global-search-input{width:100%; margin-bottom:16px;}
-.global-search-group + .global-search-group{margin-top:18px;}
-.global-search-group-title{
-  font-family:var(--font-text); font-variant-numeric:tabular-nums;
-  font-size:var(--fs-xs);
-  text-transform:uppercase;
-  letter-spacing:.05em;
-  color:var(--text-muted);
-  margin-bottom:8px;
-}
-.global-search-row{cursor:pointer; transition:border-color .15s, transform .15s;}
-.global-search-row:hover{border-color:var(--violet-dim); transform:translateY(-1px);}
-/* .film-poster-placeholder centre déjà son contenu (voir plus haut) —
-   juste la taille pour les emoji bruts (👤/👥, amis/groupes) ci-dessous,
-   qui n'ont pas la règle svg{width:42%} des icônes film/série. */
-.global-search-row .film-poster-placeholder{font-size:var(--fs-lg);}
-
-/* Historique des recherches récentes (retour utilisateur) — voir
-   getRecentSearches()/renderEmptySearchState() (js/globalSearch.js).
-   Boutons en ligne plutôt qu'en .wl-row : ce ne sont que des libellés
-   texte, une ligne complète avec affiche serait disproportionnée. */
-.global-search-recent-list{display:flex; flex-direction:column; gap:4px;}
-.global-search-recent-item{
-  display:block;
-  width:100%;
-  text-align:left;
-  padding:9px 12px;
-  border-radius:var(--r-sm);
-  border:1px solid transparent;
-  background:none;
-  color:var(--text);
-  font-size:var(--fs-sm);
-  font-family:inherit;
-  cursor:pointer;
-  transition:background .15s, border-color .15s;
-}
-.global-search-recent-item:hover{background:var(--surface-2); border-color:var(--line);}
-
 /* Propositions de groupe : votes + discussion */
 .proposal-row .wl-actions{margin-left:0;}
 .vote-controls-inline{
@@ -6636,5 +6595,33 @@ body[data-view-mode="grid"] #filmList .star-btn .ui-icon{width:16px; height:16px
 .review-badge .ui-icon{width:13px; height:13px;}
 .rewatch-badge .ui-icon{width:11px; height:11px;}
 .poster-wall-fav .ui-icon{filter:drop-shadow(0 1px 2px rgba(0,0,0,0.6));}
-.global-search-recent-item .ui-icon{color:var(--text-3); margin-right:2px;}
 .wl-title > .ui-icon:first-child{color:var(--text-2); margin-right:2px;}
+
+
+/* ==========================================================
+   AUDIT M2 : recherche unique (draft option A, validée le 15/10). Sous
+   les films (ou sous les séries), ce qui correspond ailleurs : séries,
+   films, amis, groupes (renderSearchExtras(), js/globalSearch.js).
+   Lignes de liste du code de design : pas de fond, un filet.
+   ========================================================== */
+.search-extras{display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:var(--sp-6); margin-top:var(--sp-7);}
+.search-extras:empty{display:none;}
+.sx-group{min-width:0;}
+.sx-label{font-size:var(--fs-xs); font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:var(--text-2); margin-bottom:var(--sp-1);}
+.sx-row{display:flex; align-items:center; gap:var(--sp-3); min-height:60px; padding:var(--sp-2) 0; border-bottom:1px solid var(--line); cursor:pointer;}
+.sx-row:hover .sx-title, .sx-row:focus-visible .sx-title{color:var(--accent);}
+.sx-main{flex:1; min-width:0;}
+.sx-title{font-size:var(--fs-sm); font-weight:600; color:var(--text-1); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; transition:color var(--dur-fast);}
+.sx-sub{font-size:var(--fs-xs); color:var(--text-2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.sx-thumb{width:32px; height:48px; flex:none; border-radius:var(--r-sm); object-fit:cover; background:var(--surface-2); color:var(--text-3); display:grid; place-items:center;}
+.sx-thumb svg{width:16px; height:16px;}
+.sx-face{width:40px; height:40px; flex:none; border-radius:var(--r-full); object-fit:cover; background:var(--surface-2); color:var(--text-2); display:grid; place-items:center;}
+.sx-glyph{width:40px; height:40px; flex:none; border-radius:var(--r-sm); background:var(--surface-2); color:var(--text-2); display:grid; place-items:center;}
+.sx-face .ui-icon, .sx-glyph .ui-icon{width:20px; height:20px;}
+.sx-note{flex:none; font-size:var(--fs-sm); font-weight:600; font-variant-numeric:tabular-nums;}
+.sx-note.rate-low{color:var(--note-low);}
+.sx-note.rate-mid{color:var(--note-mid);}
+.sx-note.rate-high{color:var(--note-high);}
+@media (max-width:600px){
+  .search-extras{grid-template-columns:minmax(0, 1fr); gap:var(--sp-5); margin-top:var(--sp-6);}
+}

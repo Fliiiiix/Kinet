@@ -135,10 +135,8 @@ document.addEventListener('keydown', (e) => {
     shareOverlay: () => closeShareModal(),
     importLetterboxdTutoOverlay: () => closeOverlay('importLetterboxdTutoOverlay'),
     surpriseOverlay: () => closeOverlay('surpriseOverlay'),
-    // Ajoutées après coup (audit clavier) — recherche globale et bilan
-    // cinéphile n'avaient jamais rejoint cette table au moment de leur
-    // ajout, contrairement à toutes les autres modales de l'app.
-    globalSearchOverlay: () => closeOverlay('globalSearchOverlay'),
+    // Ajoutée après coup (audit clavier) : le bilan cinéphile n'avait
+    // jamais rejoint cette table au moment de son ajout.
     recapOverlay: () => closeRecap(),
     settingsOverlay: () => closeSettingsModal(),
     tcgOverlay: () => closeTcgModal(),
@@ -429,10 +427,11 @@ document.getElementById('lightThemeToggle').addEventListener('change', (e) => {
 // v3.2 (retour utilisateur : "dans l'entête droite je veux me débarasser
 // de la loupe, de l'avis et de l'annonce" — trop d'icônes, l'entête ne
 // respire pas) — Rechercher/Avis/Nouveautés retirés de cette liste ET du
-// DOM de .header-nav (voir index.html, #globalSearchBtn/#feedbackBtn/
-// #changelogBtn déplacés ou masqués) : seuls les 4 vrais liens de page
-// restent réordonnables ici. Rechercher/Avis/Nouveautés vivent désormais
-// dans la modale profil (.mm-row), déjà le seul chemin sur mobile pour
+// DOM de .header-nav (voir index.html, #feedbackBtn/#changelogBtn
+// masqués ; Rechercher est devenu la recherche du catalogue, audit M2) :
+// seuls les 4 vrais liens de page restent réordonnables ici.
+// Avis/Nouveautés vivent désormais dans la modale profil (.mm-row), déjà
+// le seul chemin sur mobile pour
 // Avis/Nouveautés avant ce changement — juste rendu permanent aussi sur
 // desktop plutôt que réservé au seuil mobile.
 const HEADER_NAV_DEFAULT_ORDER = ['watchlistBtn', 'upcomingBtn', 'friendsBtn', 'topBtn'];
@@ -452,8 +451,8 @@ function getHeaderNavOrder(){
 
 // appendChild() DÉPLACE un élément déjà dans le DOM (ne le clone pas) —
 // réordonne donc les boutons existants sans perdre leurs listeners déjà
-// posés par chaque fichier propriétaire (js/globalSearch.js,
-// js/watchlist.js, etc.), aucun n'a besoin de savoir que cet ordre existe.
+// posés par chaque fichier propriétaire (js/watchlist.js, js/friends.js,
+// etc.), aucun n'a besoin de savoir que cet ordre existe.
 function applyHeaderNavOrder(){
   const nav = document.querySelector('.header-nav');
   if(!nav) return;
