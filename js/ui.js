@@ -178,6 +178,25 @@ document.addEventListener('keydown', (e) => {
   if(happeningOverlay) happeningOverlay.remove();
 });
 
+// --- Toucher un curseur ferme le clavier (retour de Flix, 15/10) ---
+// Sur iPhone, un curseur (input type="range") ne prend pas le focus quand on
+// le touche : le champ texte d'avant (titre, note...) le garde, et le
+// clavier reste ouvert ou revient à chaque curseur bougé. On retire donc le
+// focus du champ de saisie dès qu'un doigt (ou la souris) se pose sur un
+// curseur.
+function isTextEntry(el){
+  if(!el) return false;
+  if(el.isContentEditable || el.tagName === 'TEXTAREA') return true;
+  return el.tagName === 'INPUT' && !/^(range|checkbox|radio|button|submit|reset|file|color)$/i.test(el.type || 'text');
+}
+function blurTextEntryForSlider(e){
+  const slider = e.target && e.target.closest && e.target.closest('input[type="range"]');
+  if(!slider) return;
+  const active = document.activeElement;
+  if(active && active !== slider && isTextEntry(active)) active.blur();
+}
+document.addEventListener('pointerdown', blurTextEntryForSlider, true);
+
 // --- Molette pour affiner un curseur de note ---
 // Retour utilisateur : le drag à la souris manque de précision pour poser
 // une valeur exacte, et sur tactile un scroll de page dont le doigt

@@ -345,7 +345,7 @@ function renderUpcoming(){
     return upcomingRowHtml({
       type: 'cinema', title: movie.title,
       posterUrl: movie.poster_path ? TMDB_IMG_BASE + movie.poster_path : null,
-      sub: movie.why || `En salle le ${upcomingPastLabel(d, today)}`,
+      sub: movie.why || 'Sortie en salle',
       when: upcomingFutureLabel(d, today)
     }, index, { add: `<button type="button" class="up-add${added ? ' is-added' : ''}" data-cinema-add="${movie.id}"${added ? ' disabled' : ''}>${added ? 'Dans À voir' : '+ À voir'}</button>` });
   }).join(''));

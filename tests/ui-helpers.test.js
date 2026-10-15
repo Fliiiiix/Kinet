@@ -148,4 +148,36 @@ test('openOverlay()/closeOverlay() : verrouillent/déverrouillent le fond en plu
   assert.ok(!documentElement.classList.contains('scroll-locked'));
 });
 
+// --- Toucher un curseur ferme le clavier (retour de Flix, 15/10) --- Sur
+// iPhone, un curseur ne prend pas le focus : le champ texte d'avant le
+// gardait et le clavier revenait à chaque curseur bougé.
+function sliderBlurContext(active){
+  const doc = Object.assign(stubDocument(), { activeElement: active });
+  const ctx = createContext({ document: doc });
+  loadFiles(ctx, ['js/ui.js']);
+  return ctx;
+}
+const sliderTarget = { closest: (sel) => (sel === 'input[type="range"]' ? { tagName: 'INPUT', type: 'range' } : null) };
+
+test('toucher un curseur retire le focus du champ texte (le clavier se ferme)', () => {
+  let blurred = 0;
+  const ctx = sliderBlurContext({ tagName: 'INPUT', type: 'text', blur(){ blurred++; } });
+  ctx.blurTextEntryForSlider({ target: sliderTarget });
+  assert.strictEqual(blurred, 1);
+});
+
+test('toucher autre chose qu’un curseur ne touche pas au focus', () => {
+  let blurred = 0;
+  const ctx = sliderBlurContext({ tagName: 'INPUT', type: 'number', blur(){ blurred++; } });
+  ctx.blurTextEntryForSlider({ target: { closest: () => null } });
+  assert.strictEqual(blurred, 0);
+});
+
+test('un curseur ou une case à cocher déjà focalisés ne sont pas « fermés »', () => {
+  let blurred = 0;
+  const ctx = sliderBlurContext({ tagName: 'INPUT', type: 'checkbox', blur(){ blurred++; } });
+  ctx.blurTextEntryForSlider({ target: sliderTarget });
+  assert.strictEqual(blurred, 0);
+});
+
 module.exports = run('ui-helpers.test.js');

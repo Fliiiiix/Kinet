@@ -769,7 +769,9 @@ function openModal(id, prefillTmdb){
   }
 
   openOverlay('overlay');
-  document.getElementById('titleInput').focus();
+  // Sur écran tactile, pas de clavier d'office (retour de Flix, 15/10) : on
+  // vient souvent régler les curseurs, pas taper le titre.
+  if(!window.matchMedia('(pointer: coarse)').matches) document.getElementById('titleInput').focus();
   // Happenings "dwell" (ex. The Whale) : se déclenchent en restant un
   // moment sur la fiche d'un film précis — voir js/happenings.js.
   startDwellWatch(film);
