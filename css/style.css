@@ -6386,6 +6386,10 @@ button.btn-secondary{background:none; border:none; border-bottom:1px solid var(-
   padding:0; border:0; border-radius:0; background:none; box-shadow:none;
 }
 .toolbar-search > input[type="text"]:focus{border:0; box-shadow:none;}
+/* Retour de Flix (15/10, téléphone) : le contour de focus générique
+   dessinait un carré autour du champ, sans bord, au milieu de la pilule.
+   La pilule montre déjà le focus (:focus-within ci-dessus). */
+.toolbar-search > input[type="text"]:focus-visible{outline:none;}
 .toolbar-search > input[type="text"]::placeholder{color:var(--text-3);}
 .toolbar-search #filtersToggleBtn,
 .toolbar-search .view-toggle-btn{
