@@ -90,6 +90,13 @@ function suggestHighlight(text, nq){
   return `${escapeHtml(raw.slice(0, start))}<b>${escapeHtml(raw.slice(start, end))}</b>${escapeHtml(raw.slice(end))}`;
 }
 
+// Sous-titre : l'année, précédée du titre d'origine quand c'est lui qui
+// correspond (« sil » trouve Affaires non classées par Silent Witness).
+function matchedSub(title, originalTitle, year, nq){
+  const viaOriginal = originalTitle && suggestScore(originalTitle, nq) > suggestScore(title, nq);
+  return [viaOriginal ? originalTitle : '', year ? String(year) : ''].filter(Boolean).join(' · ');
+}
+
 function showProgressLabel(show){
   if(!show.numberOfEpisodes) return showStatusLabel(show.status);
   const watched = (typeof watchedEpisodeCounts !== 'undefined' && watchedEpisodeCounts[show.id]) || 0;
@@ -113,7 +120,7 @@ function collectOwnSuggestions(nq){
   watchlist.forEach(w => {
     if(w.tmdbId && ratedTmdb.has(w.tmdbId)) return;
     const s = suggestItemScore(w.title, w.originalTitle, nq);
-    if(s) items.push({ type: 'avoir', s, title: w.title, posterUrl: w.posterUrl, sub: w.releaseYear ? String(w.releaseYear) : '', ref: { tmdbId: w.tmdbId || null } });
+    if(s) items.push({ type: 'avoir', s, title: w.title, posterUrl: w.posterUrl, sub: matchedSub(w.title, w.originalTitle, w.releaseYear, nq), ref: { tmdbId: w.tmdbId || null } });
   });
   trackedShows.forEach(show => {
     const s = suggestScore(show.title, nq);
@@ -148,7 +155,7 @@ function tmdbSuggestions(kind, results, nq){
       type: kind === 'films' ? 'tmdb' : 'tmdbtv',
       title: r.title,
       posterUrl: r.poster_path ? TMDB_IMG_BASE + r.poster_path : null,
-      sub: r.release_year ? String(r.release_year) : '',
+      sub: matchedSub(r.title, r.original_title, r.release_year, nq),
       ref: { tmdb: r }
     }));
 }

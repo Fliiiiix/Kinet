@@ -147,6 +147,15 @@ test('TMDB côté Séries : « À suivre », jamais une série déjà suivie', (
   assert.strictEqual(section.items[0].type, 'tmdbtv');
 });
 
+test('TMDB : un résultat trouvé par son titre d\'origine le montre en sous-titre', () => {
+  const { ctx } = buildContext();
+  const built = ctx.buildSuggestions('series', 'sil', [
+    { id: 7, title: 'Affaires non classées', original_title: 'Silent Witness', release_year: 1996 },
+  ]);
+  const section = built.sections.find(s => s.tmdb);
+  assert.strictEqual(section.items[0].sub, 'Silent Witness · 1996');
+});
+
 test('suggestHighlight() : les lettres tapées en gras, accents ignorés', () => {
   const { ctx } = buildContext();
   assert.strictEqual(ctx.suggestHighlight('Amélie', 'mel'), 'A<b>mél</b>ie');
