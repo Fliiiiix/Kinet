@@ -6660,8 +6660,8 @@ body[data-view-mode="grid"] #wlList .wl-row-clickable:hover .wl-services{transfo
   width:64vw; height:max(100vh, 760px); overflow:hidden; pointer-events:none;
   display:grid; grid-template-columns:repeat(6, minmax(0, 1fr)); gap:var(--sp-3); padding:var(--sp-3);
   align-content:start; opacity:0.62;
-  -webkit-mask-image:linear-gradient(to right, transparent 0%, #000 38%);
-  mask-image:linear-gradient(to right, transparent 0%, #000 38%);
+  -webkit-mask-image:linear-gradient(to right, transparent 0%, transparent 18%, #000 55%);
+  mask-image:linear-gradient(to right, transparent 0%, transparent 18%, #000 55%);
 }
 .auth-wall img{width:100%; aspect-ratio:2/3; object-fit:cover; border-radius:var(--r-sm); display:block; background:var(--surface-2);}
 .auth-wall img:nth-child(6n+2), .auth-wall img:nth-child(6n+4), .auth-wall img:nth-child(6n+6){transform:translateY(-40%);}
@@ -6710,8 +6710,8 @@ html:has(#authContainer:not([style*="none"])) #versionTag{display:none !importan
     left:0; right:0; width:auto; height:300px;
     grid-template-columns:repeat(4, minmax(0, 1fr)); gap:var(--sp-2); padding:var(--sp-2);
     opacity:0.7;
-    -webkit-mask-image:linear-gradient(to bottom, #000 35%, transparent 100%);
-    mask-image:linear-gradient(to bottom, #000 35%, transparent 100%);
+    -webkit-mask-image:linear-gradient(to bottom, #000 25%, transparent 80%);
+    mask-image:linear-gradient(to bottom, #000 25%, transparent 80%);
   }
   .auth-wall img:nth-child(n+13){display:none;}
   .auth-wall img{transform:none !important;}
