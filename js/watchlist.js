@@ -230,7 +230,7 @@ function renderWatchlist(){
   const filtered = getFilteredWatchlist();
   if(filtered.length === 0){
     const onMine = document.getElementById('wlProviderFilter').value === MY_SERVICES_FILTER;
-    list.innerHTML = `<div class="empty-state">Aucun film d'À voir n'est disponible sur ${onMine ? 'tes abonnements' : 'cette plateforme'} pour l'instant.</div>`;
+    list.innerHTML = `<div class="empty-state">Aucun film à voir n'est disponible sur ${onMine ? 'tes abonnements' : 'cette plateforme'} pour l'instant.</div>`;
     return;
   }
   list.innerHTML = '';
@@ -369,8 +369,8 @@ function renderWatchlistReminder(){
     // Avec « Mes abonnements » : ce que tu peux voir ce soir.
     const n = watchlist.filter(item => watchlistServices(item).some(s => mine.has(s.key))).length;
     el.textContent = n > 0
-      ? `${n} film${n > 1 ? 's' : ''} d'À voir disponible${n > 1 ? 's' : ''} sur tes abonnements.`
-      : 'Aucun film d\'À voir sur tes abonnements pour l\'instant.';
+      ? `${n} film${n > 1 ? 's' : ''} à voir disponible${n > 1 ? 's' : ''} sur tes abonnements.`
+      : 'Aucun film à voir sur tes abonnements pour l\'instant.';
     el.style.display = '';
     return;
   }
@@ -387,7 +387,7 @@ function renderWatchlistReminder(){
   });
   if(filmsDispo === 0){ el.style.display = 'none'; el.textContent = ''; return; }
   const meilleure = [...parPlateforme.values()].sort((a, b) => b.n - a.n)[0];
-  el.textContent = `${filmsDispo} film${filmsDispo > 1 ? 's' : ''} d'À voir disponible${filmsDispo > 1 ? 's' : ''} en streaming. Le plus sur ${meilleure.nom} (${meilleure.n}).`;
+  el.textContent = `${filmsDispo} film${filmsDispo > 1 ? 's' : ''} à voir disponible${filmsDispo > 1 ? 's' : ''} en streaming. Le plus sur ${meilleure.nom} (${meilleure.n}).`;
   el.style.display = '';
 }
 

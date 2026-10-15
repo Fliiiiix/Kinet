@@ -148,9 +148,9 @@ async function loadUpcoming(){
     const diff = upcomingDaysBetween(today, d);
     const base = { title: item.title, posterUrl: item.posterUrl, tmdbId: item.tmdbId || null, dateObj: d };
     if(diff >= 0){
-      soon.push(Object.assign({ type: 'movie', key: `movie-${item.id}`, date: item.releaseDate, sub: 'Film d’À voir' }, base));
+      soon.push(Object.assign({ type: 'movie', key: `movie-${item.id}`, date: item.releaseDate, sub: 'Film à voir' }, base));
     }else if(-diff <= UPCOMING_RECENT_DAYS){
-      now.push(Object.assign({ type: 'movie', key: `now-movie-${item.id}`, sub: 'Film d’À voir',
+      now.push(Object.assign({ type: 'movie', key: `now-movie-${item.id}`, sub: 'Film à voir',
         when: `Sorti le ${upcomingPastLabel(d, today)}`, rel: upcomingRelPast(-diff) }, base));
     }
   });
@@ -256,7 +256,7 @@ async function addCinemaToWatchlist(tmdbId, btn){
   // Il arrive aussi dans « Cette semaine » ou « Plus tard ».
   const d = upcomingParseDay(movie.release_date);
   upcomingSoon.push({ type: 'movie', key: `movie-${item.id}`, title: item.title, posterUrl: item.posterUrl, tmdbId,
-    date: movie.release_date, dateObj: d, sub: 'Film d’À voir' });
+    date: movie.release_date, dateObj: d, sub: 'Film à voir' });
   upcomingSoon.sort((a, b) => a.dateObj - b.dateObj);
   showToast('Ajouté à À voir');
   renderUpcoming();
