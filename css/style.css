@@ -2960,19 +2960,19 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
    beaucoup de vide au milieu plutôt que d'utiliser la largeur. Grille
    plutôt qu'une pile, .wl-row garde exactement le même style (juste plus
    de marge-bas à retirer, le gap de la grille la remplace). */
-#friendRequestsIn, #friendRequestsOut, #friendsList,
-#friendSuggestionsList, #friendRecommendationsList, #groupsList{
+/* Page Amis : plus concernée depuis le fil d'affiches (draft Amis du
+   15/10), ses listes sont en une colonne et les recommandations ont leur
+   propre grille d'affiches (.fr-posters). */
+#groupsList{
   display:grid;
   grid-template-columns:repeat(auto-fill, minmax(280px, 1fr));
   gap:10px;
 }
-#friendRequestsIn > .wl-row, #friendRequestsOut > .wl-row, #friendsList > .wl-row,
-#friendSuggestionsList > .wl-row, #friendRecommendationsList > .wl-row, #groupsList > .wl-row{
+#groupsList > .wl-row{
   margin-bottom:0;
 }
 @media (max-width:600px){
-  #friendRequestsIn, #friendRequestsOut, #friendsList,
-  #friendSuggestionsList, #friendRecommendationsList, #groupsList{
+  #groupsList{
     grid-template-columns:1fr;
   }
 }
