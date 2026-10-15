@@ -889,7 +889,13 @@ document.getElementById('tcgIntroClose').addEventListener('click', () => {
   renderTcgIntro();
 });
 
+// Album sans hasard (draft Profil du 15/10, js/album.js) : la rangée Cartes
+// ouvre l'album. L'ancienne collection (boosters, fabrication, échanges)
+// reste ci-dessous, plus ouverte.
 async function openTcgModal(){
+  return openTcgAlbum();
+}
+async function openTcgLegacyCollection(){
   closeProfileModal();
   renderTcgIntro();
   setTcgTab('collection');
@@ -923,6 +929,7 @@ document.getElementById('tcgDecadeFilter').addEventListener('change', renderTcgC
 // partagée : aucune donnée du compte (ni quantité, ni collection) n'y figure.
 function showCardDetail(card){
   const body = document.getElementById('tcgCardDetailBody');
+  document.getElementById('tcgCardCopyLink').hidden = false; // masqué par la fiche d'album
   body.innerHTML = `
     <div class="tcg-card-detail rarity-${card.rarity}">
       ${card.imageUrl || card.image_url

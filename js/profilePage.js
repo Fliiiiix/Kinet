@@ -107,12 +107,10 @@ function renderProfilePageRows(){
   document.getElementById('ppAchVal').textContent =
     `${a.tiersUnlocked + a.hiddenUnlocked} / ${a.tiersTotal + a.hiddenTotal}`;
 
-  // Reflets des boutons d'origine (badge d'échanges, Nouveautés, Admin) :
-  // leur JS reste seul juge de ce qui doit apparaître.
-  const tradeBadge = document.getElementById('tcgTradeBadge');
-  const ppBadge = document.getElementById('ppTcgBadge');
-  ppBadge.hidden = !tradeBadge || tradeBadge.hidden;
-  ppBadge.textContent = tradeBadge ? tradeBadge.textContent : '';
+  // Reflets des boutons d'origine (Nouveautés, Admin) : leur JS reste seul
+  // juge de ce qui doit apparaître. Plus de badge d'échanges : l'album sans
+  // hasard (js/album.js) n'a plus d'échanges.
+  document.getElementById('ppTcgBadge').hidden = true;
   const changelogLink = document.getElementById('profileChangelogLinkBtn');
   document.getElementById('ppChangelogRow').hidden = !changelogLink || changelogLink.style.display === 'none';
   document.getElementById('ppAdminRow').hidden = !(typeof isAdmin === 'function' && isAdmin());
@@ -130,20 +128,9 @@ function renderProfilePage(){
   renderProfilePageRows();
 }
 
-// Cartes possédées / cartes du catalogue, comme l'en-tête de la collection
-// (js/tcg.js) : deux comptages légers, sans charger la collection entière.
-async function refreshProfilePageCards(){
-  const el = document.getElementById('ppTcgVal');
-  try{
-    const [{ count, error }] = await Promise.all([
-      supabaseClient.from('tcg_user_cards').select('card_id', { count: 'exact', head: true }).eq('user_id', currentUser.id),
-      (typeof refreshCatalogTotal === 'function') ? refreshCatalogTotal() : Promise.resolve()
-    ]);
-    if(error || typeof tcgCatalogTotal === 'undefined' || !tcgCatalogTotal){ el.textContent = ''; return; }
-    el.textContent = `${count || 0} / ${tcgCatalogTotal}`;
-  }catch(e){
-    el.textContent = '';
-  }
+// Nombre de cartes de l'album (js/album.js), calculé depuis le catalogue.
+function refreshProfilePageCards(){
+  if(typeof refreshAlbumCount === 'function') refreshAlbumCount();
 }
 
 // Appelée par renderRoute() (js/router.js). Affiche tout de suite avec ce
@@ -154,8 +141,7 @@ async function openProfilePage(){
   renderProfilePage();
   await Promise.all([
     (typeof loadTrackedShows === 'function') ? loadTrackedShows() : Promise.resolve(),
-    (typeof loadFriendships === 'function') ? loadFriendships() : Promise.resolve(),
-    (typeof refreshTradeBadge === 'function') ? refreshTradeBadge() : Promise.resolve()
+    (typeof loadFriendships === 'function') ? loadFriendships() : Promise.resolve()
   ]).catch(e => console.error(e));
   if(parseRoute().name !== 'profil') return;
   renderProfilePage();

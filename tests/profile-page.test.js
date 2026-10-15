@@ -81,8 +81,8 @@ test('renderProfilePage() : films préférés dans l\'ordre choisi, ceux retiré
 test('renderProfilePage() : reflète le badge d\'échanges, Nouveautés masqué sans contenu, profil public', () => {
   const { ctx, els } = buildContext({ profile: { display_name: 'A', top_films: [], public_profile: true }, filmsList: FILMS });
   ctx.renderProfilePage();
-  assert.strictEqual(els.ppTcgBadge.hidden, false);
-  assert.strictEqual(els.ppTcgBadge.textContent, '2');
+  // Album sans hasard (draft Profil du 15/10) : plus d'échanges, plus de badge.
+  assert.strictEqual(els.ppTcgBadge.hidden, true);
   assert.strictEqual(els.ppChangelogRow.hidden, true);
   assert.strictEqual(els.ppPublicToggle.checked, true);
   // Piste A du 15/10 : plus de rangée « Copier le lien », c'est « Partager »

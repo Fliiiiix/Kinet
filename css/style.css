@@ -7083,3 +7083,56 @@ html:has(#authContainer:not([style*="none"])) #versionTag{display:none !importan
   .fj-poster{width:36px; height:54px;}
   .fj-date{width:52px;}
 }
+
+/* ==========================================================
+   CARTES : l'album sans hasard (draft Profil du 15/10, piste A).
+   Un seul écran : le total, la règle, « Bientôt dans ta collection », puis
+   la grille en trois onglets. Bord de la carte selon son rang (couleurs de
+   rareté de Kinet). Voir js/album.js.
+   ========================================================== */
+.tcg-legacy[hidden]{display:none;}
+#tcgOverlay .page-header{flex-wrap:wrap; row-gap:var(--sp-3);}
+.al-album{max-width:900px;}
+.al-sum{display:flex; flex-wrap:wrap; align-items:baseline; gap:var(--sp-1) var(--sp-4);}
+.al-sum b{font-family:var(--font-display); font-size:var(--fs-xl); font-weight:800; font-variant-numeric:tabular-nums;}
+.al-sum span{font-size:var(--fs-sm); color:var(--text-2);}
+.al-rule{max-width:64ch; margin:var(--sp-2) 0 0; font-size:var(--fs-xs); color:var(--text-2);}
+.al-status{min-height:1em; margin:var(--sp-2) 0 var(--sp-4); font-size:var(--fs-xs); color:var(--accent);}
+.al-status:empty{margin-bottom:var(--sp-2);}
+.al-next{border-top:1px solid var(--line); margin-bottom:var(--sp-6); max-width:560px;}
+.al-next-row{display:flex; align-items:center; gap:var(--sp-3); padding:var(--sp-3) 0; border-bottom:1px solid var(--line);}
+.al-next-row img, .al-next-empty{width:44px; height:44px; flex:none; border-radius:50%; object-fit:cover; background:var(--surface-2); color:var(--text-3); display:grid; place-items:center;}
+.al-next-empty svg{width:20px; height:20px;}
+.al-next-main{flex:1; min-width:0;}
+.al-next-title{font-size:var(--fs-sm); font-weight:600;}
+.al-next-sub{font-size:var(--fs-xs); color:var(--text-2);}
+.al-prog{height:6px; max-width:240px; margin-top:6px; border-radius:var(--r-full); background:var(--line); overflow:hidden;}
+.al-prog i{display:block; height:100%; border-radius:inherit; background:var(--accent);}
+.al-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(118px, 1fr)); gap:var(--sp-5) var(--sp-3);}
+.al-card{display:grid; gap:5px; min-width:0; padding:0; border:0; background:none; color:inherit; text-align:left; cursor:pointer; font-family:var(--font-text);}
+.al-face{position:relative; display:grid; place-items:center; aspect-ratio:2/3; border-radius:var(--r-sm); overflow:hidden; border:2px solid var(--line-strong); background:var(--surface-2); color:var(--text-3);}
+.al-face img{width:100%; height:100%; object-fit:cover; display:block;}
+.al-face > svg{width:32px; height:32px;}
+.al-r2 .al-face{border-color:var(--rarity-rare);}
+.al-r3 .al-face{border-color:var(--accent);}
+.al-r4 .al-face{border-color:var(--rarity-legendary); box-shadow:0 0 16px rgba(232,163,61,0.35);}
+.al-card:hover .al-name, .al-card:focus-visible .al-name{color:var(--accent);}
+.al-card:focus-visible{outline:none;}
+.al-card:focus-visible .al-face{outline:2px solid var(--accent); outline-offset:2px;}
+.al-name{font-size:var(--fs-sm); font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; transition:color var(--dur-fast);}
+.al-rank{font-size:var(--fs-xs); color:var(--text-2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.al-rank b{font-weight:600;}
+.al-r2 .al-rank b{color:var(--rarity-rare);}
+.al-r3 .al-rank b{color:var(--accent);}
+.al-r4 .al-rank b{color:var(--rarity-legendary);}
+.al-more{margin-top:var(--sp-5); background:none; border:0; padding:0; cursor:pointer; font-family:var(--font-text); font-size:var(--fs-sm); font-weight:600; color:var(--accent);}
+.al-detail{display:grid; justify-items:center; gap:var(--sp-2); text-align:center;}
+.al-detail .al-face{width:160px;}
+.al-detail-name{font-family:var(--font-display); font-size:var(--fs-lg); font-weight:800;}
+.al-detail-films{margin:var(--sp-2) 0 0; font-size:var(--fs-sm); color:var(--text-2);}
+#tcgCardCopyLink[hidden]{display:none;}
+@media (max-width:600px){
+  #tcgOverlay .al-tabs{order:3; width:100%;}
+  .al-grid{grid-template-columns:repeat(3, minmax(0, 1fr)); gap:var(--sp-4) var(--sp-2);}
+  .al-name{font-size:var(--fs-xs);}
+}
