@@ -140,6 +140,7 @@ function closeChangelogModal(){
 // catalogue : une Nouveauté peut attendre une fraction de seconde de plus,
 // le chemin critique du chargement non.
 async function initChangelog(){
+  changelogCheckedAt = Date.now();
   await loadChangelogEntries();
   updateVersionTag();
   const unread = await hasUnreadChangelog();
@@ -156,6 +157,35 @@ async function initChangelog(){
   // prochain login une fois le tuto vu/passé (onboarding_seen alors true).
   if(unread && !(currentProfile && currentProfile.onboarding_seen === false)) openChangelogModal();
 }
+
+// Une note publiée pendant que l'appli est ouverte (retour de Flix, 15/10 :
+// l'entête affichait encore v3.4 après la publication de la v4.0, l'appli
+// ne se recharge plus au retour sur l'onglet depuis la v212). Au retour sur
+// l'appli, on relit la dernière version publiée, au plus toutes les 5
+// minutes ; si elle a changé, tout se passe comme à une connexion (entête,
+// badge, note ouverte).
+const CHANGELOG_RECHECK_MS = 5 * 60 * 1000;
+let changelogCheckedAt = 0;
+
+async function recheckChangelogIfStale(now = Date.now()){
+  if(typeof currentUser === 'undefined' || !currentUser) return false;
+  if(now - changelogCheckedAt < CHANGELOG_RECHECK_MS) return false;
+  changelogCheckedAt = now;
+  const { data, error } = await supabaseClient
+    .from('changelog_entries')
+    .select('version')
+    .eq('published', true)
+    .order('published_at', { ascending: false })
+    .limit(1);
+  if(error || !data || data.length === 0) return false;
+  if(data[0].version === latestPublishedVersion) return false;
+  await initChangelog();
+  return true;
+}
+
+document.addEventListener('visibilitychange', () => {
+  if(document.visibilityState === 'visible') recheckChangelogIfStale().catch(e => console.error(e));
+});
 
 document.getElementById('changelogBtn').addEventListener('click', openChangelogModal);
 // Lien de secours dans la modale profil (v2.1.x, mobile — voir le
