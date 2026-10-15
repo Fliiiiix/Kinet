@@ -7136,3 +7136,10 @@ html:has(#authContainer:not([style*="none"])) #versionTag{display:none !importan
   .al-grid{grid-template-columns:repeat(3, minmax(0, 1fr)); gap:var(--sp-4) var(--sp-2);}
   .al-name{font-size:var(--fs-xs);}
 }
+
+/* Profil réorganisé (draft Profil du 15/10) : la rangée Admin en tête, sur
+   téléphone et pour le compte admin seulement (sur PC, bouton de l'entête). */
+.pp-admin-rows{display:none;}
+@media (max-width:600px){
+  .pp-admin-rows:has(> .pp-row:not([hidden])){display:block; margin-bottom:var(--sp-4);}
+}

@@ -132,6 +132,10 @@ Rien d'autre. Pour les très petits écrans, les grilles utilisent `repeat(auto-
 - Une seule ligne d'outils : recherche en pilule de 42px (fond `--surface`, filet `--line`), le filtre et l'affichage en icônes de 34px dedans, le compteur à droite (masqué sur téléphone).
 - Téléphone : Catalogue, À voir, Bientôt, Amis, Profil.
 - Statistiques, Succès, Cartes et Journal s'affichent en page (`.overlay.as-page`), sous l'entête, avec « ← Retour ».
+- Onglets d'une page (Top films, Admin, Cartes, Grille · Liste · Journal) : du texte en `--fs-sm` 600, l'actif en `--text-1` souligné de 2px `--accent` (`.top-tab`), jamais des boutons encadrés. À droite du titre sur PC, sur leur propre ligne sur téléphone.
+- Paramètres, Donner un avis et Admin sont des pages (`#/parametres`, `#/avis`, `#/admin`), avec les rangées de la page Profil (`.pp-label`, `.pp-rows`, `.pp-row`) : pas de pictos colorés. Admin : dans l'entête pour le compte admin (avec le nombre de choses à traiter), en tête du Profil sur téléphone.
+- Pastille de compte (`.pp-count`, `.nav-count`) : fond `--accent`, texte `--accent-ink`, `--fs-xs` 600.
+- Cartes (album sans hasard, draft du 15/10) : bord de la carte selon son rang (Figurant `--line-strong`, Second rôle `--rarity-rare`, Tête d'affiche `--accent`, Légende `--rarity-legendary` avec un halo).
 - Une seule recherche (audit M2) avec suggestions (draft du 15/10, option A) : la pilule filtre les films (ou les séries) et ouvre dessous, dès 2 lettres, une liste flottante (niveau 2, `.search-suggest`, `js/globalSearch.js`) : le meilleur résultat en tête, puis tes films, À voir, séries, amis, groupes (3 lignes chacun), puis les films ou séries à ajouter depuis TMDB à partir de 3 lettres. Lettres tapées en gras. Barre vide : les 3 derniers résultats ouverts. Flèches, Entrée, Échap sur PC. La touche « / » place le curseur dans la recherche.
 
 ## 5. Formes
