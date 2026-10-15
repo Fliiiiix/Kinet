@@ -141,8 +141,17 @@ function hasNewEpisode(show){
   return watchedCount < show.numberOfEpisodes;
 }
 
-// Une ligne simple par série terminée, cliquable en entière, dans la section
-// repliée « Séries terminées » sous la liste (venue de la page Bientôt).
+// Descend dans « Séries terminées » seulement une série qui ne sortira plus
+// rien ET que tu as vue en entier (retour de Flix, 15/10) : une série
+// terminée pas encore rattrapée reste dans la liste, avec sa progression.
+// Nombre d'épisodes inconnu : elle reste en haut, faute de pouvoir le dire.
+function isShowDone(show){
+  if(!isShowEnded(show.status) || !show.numberOfEpisodes) return false;
+  return (watchedEpisodeCounts[show.id] || 0) >= show.numberOfEpisodes;
+}
+
+// Une ligne simple par série terminée et vue, cliquable en entière, dans la
+// section repliée « Séries terminées » sous la liste (venue de la page Bientôt).
 function renderEndedShows(ended){
   const box = document.getElementById('seriesEndedDisclosure');
   const list = document.getElementById('seriesEndedList');
@@ -184,10 +193,10 @@ function renderTrackedShows(){
   if(countEl) countEl.textContent = !trackedShows.length ? ''
     : q ? `${shown.length} sur ${trackedShows.length}`
     : `${trackedShows.length} série${trackedShows.length > 1 ? 's' : ''}`;
-  // Séries terminées repliées sous les séries en cours (audit Bientôt du
-  // 15/10, B5 : elles vivaient sur la page Bientôt).
-  const active = shown.filter(show => !isShowEnded(show.status));
-  renderEndedShows(shown.filter(show => isShowEnded(show.status)));
+  // Séries terminées et vues repliées sous les autres (audit Bientôt du
+  // 15/10, B5 : elles vivaient sur la page Bientôt). Voir isShowDone().
+  const active = shown.filter(show => !isShowDone(show));
+  renderEndedShows(shown.filter(isShowDone));
   if(trackedShows.length === 0){
     list.innerHTML = `<div class="empty-state">Rien pour l'instant. Cherche une série ci-dessus pour commencer à suivre ses épisodes.</div>`;
     return;
