@@ -237,7 +237,7 @@ test('rappel : avec des abonnements cochés, compte les films disponibles dessus
     watchlistProviders: { 1: [{ provider_name: 'Netflix' }], 2: [{ provider_name: 'Netflix Standard with Ads' }], 3: [{ provider_name: 'Canal+' }] },
   });
   ctx.renderWatchlistReminder();
-  assert.strictEqual(reminder.textContent, '2 films d\'À voir disponibles sur tes abonnements.');
+  assert.strictEqual(reminder.textContent, '2 films à voir disponibles sur tes abonnements.');
 });
 
 module.exports = run('watchlist-providers.test.js');
