@@ -229,3 +229,112 @@ document.getElementById('closeJournal').addEventListener('click', closeJournal);
 document.getElementById('journalOverlay').addEventListener('click', (e) => {
   if(e.target.id === 'journalOverlay') closeJournal();
 });
+
+// --- Journal dans le catalogue (draft Profil du 15/10, piste A) ---
+// Troisième vue de tes films, à côté de Grille et Liste : tes visionnages
+// par mois, avec ta note et chaque revisionnage sur sa ligne (« revu »). La
+// recherche du catalogue y marche aussi. La rangée Journal du Profil est
+// retirée ; la fenêtre ci-dessus reste pour ses ids.
+const FILMS_JOURNAL_KEY = 'kinetFilmsJournal';
+
+function isFilmsJournal(){
+  try{ return localStorage.getItem(FILMS_JOURNAL_KEY) === '1'; }catch(e){ return false; }
+}
+function setFilmsJournal(on){
+  try{ localStorage.setItem(FILMS_JOURNAL_KEY, on ? '1' : '0'); }catch(e){}
+}
+
+function renderFilmsViewTabs(){
+  const current = isFilmsJournal() ? 'journal' : getViewMode();
+  document.querySelectorAll('[data-films-view]').forEach(btn => {
+    const on = btn.dataset.filmsView === current;
+    btn.classList.toggle('is-active', on);
+    btn.setAttribute('aria-selected', String(on));
+  });
+}
+
+function filmsJournalShortDate(ts){
+  return new Date(ts).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+}
+
+function filmsJournalRowHtml(e){
+  const note = getDisplayNote(e.film);
+  return `
+    <div class="fj-row" data-film-id="${e.film.id}">
+      ${e.film.posterUrl
+        ? `<img class="fj-poster" src="${e.film.posterUrl}" alt="" loading="lazy" decoding="async">`
+        : `<span class="fj-poster film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</span>`}
+      <div class="fj-main">
+        <div class="fj-title">${escapeHtml(e.film.title)}${e.isRewatch ? '<span class="fj-again">revu</span>' : ''}</div>
+        ${e.note ? `<div class="fj-sub">${escapeHtml(e.note)}</div>` : ''}
+      </div>
+      <span class="fj-note ${noteColorClass(note)}">${note != null ? Number(note).toFixed(1) : ''}</span>
+      <span class="fj-date">${filmsJournalShortDate(e.watchedAt)}</span>
+    </div>`;
+}
+
+// Appelée par render() (js/app.js) quand la vue Journal est choisie.
+function renderFilmsJournal(){
+  const el = document.getElementById('filmJournal');
+  const countLine = document.getElementById('countLine');
+  const rawQuery = document.getElementById('search').value.trim();
+  const query = normalizeSearch(rawQuery);
+  const all = computeJournalEntries();
+  const entries = query
+    ? all.filter(e => normalizeSearch(`${e.film.title} ${e.film.originalTitle || ''}`).includes(query))
+    : all;
+  countLine.textContent = query
+    ? `${entries.length} sur ${all.length}`
+    : `${all.length} visionnage${all.length > 1 ? 's' : ''}`;
+  if(entries.length === 0){
+    el.innerHTML = `<div class="empty-state">${all.length === 0
+      ? 'Aucun visionnage pour l’instant : chaque film que tu notes arrive ici, à sa date.'
+      : `Aucun visionnage ne correspond à « ${escapeHtml(rawQuery)} ».`}</div>`;
+    return;
+  }
+  let html = '';
+  let lastMonth = null;
+  let monthCount = 0;
+  let monthHtml = '';
+  const flush = () => {
+    if(lastMonth === null) return;
+    html += `<div class="fj-month">${lastMonth.label} <span>· ${monthCount} film${monthCount > 1 ? 's' : ''}</span></div>${monthHtml}`;
+  };
+  entries.forEach(e => {
+    const d = new Date(e.watchedAt);
+    const key = `${d.getFullYear()}-${d.getMonth()}`;
+    if(!lastMonth || lastMonth.key !== key){
+      flush();
+      lastMonth = { key, label: journalMonthLabel(d) };
+      monthCount = 0;
+      monthHtml = '';
+    }
+    monthCount++;
+    monthHtml += filmsJournalRowHtml(e);
+  });
+  flush();
+  el.innerHTML = html;
+
+  const navList = entries.filter(e => e.film.tmdbId).map(e => ({ tmdbId: e.film.tmdbId, title: e.film.title }));
+  el.querySelectorAll('.fj-row[data-film-id]').forEach(row => {
+    const film = films.find(f => String(f.id) === row.dataset.filmId);
+    if(!film) return;
+    makeRowClickable(row, () => {
+      if(film.tmdbId) goToFilmDetail(film.tmdbId, navList);
+      else openModal(film.id);
+    });
+  });
+}
+
+document.querySelectorAll('[data-films-view]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const view = btn.dataset.filmsView;
+    if(view === 'journal'){
+      setFilmsJournal(true);
+    }else{
+      setFilmsJournal(false);
+      setViewMode(view);
+    }
+    render();
+  });
+});

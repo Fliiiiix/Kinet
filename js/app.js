@@ -292,6 +292,19 @@ function render(){
   if(typeof renderAnnualGoalWidget === 'function') renderAnnualGoalWidget();
   const list = document.getElementById('filmList');
   const countLine = document.getElementById('countLine');
+  // Vue Journal (draft Profil du 15/10) : tes visionnages par mois, à la
+  // place de la grille ou de la liste. Voir renderFilmsJournal(), js/journal.js.
+  const journalOn = typeof isFilmsJournal === 'function' && isFilmsJournal();
+  if(typeof renderFilmsViewTabs === 'function') renderFilmsViewTabs();
+  const journalEl = document.getElementById('filmJournal');
+  if(journalEl) journalEl.style.display = journalOn ? '' : 'none';
+  list.style.display = journalOn ? 'none' : '';
+  if(journalOn){
+    renderBulkActionsBar();
+    renderFilmsJournal();
+    renderLoadMore(false);
+    return;
+  }
   const search = normalizeSearch(document.getElementById('search').value.trim());
   const sortBy = document.getElementById('sortBy').value;
   const isAdvanced = sortBy === 'advanced';

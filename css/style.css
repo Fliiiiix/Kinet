@@ -7050,3 +7050,36 @@ html:has(#authContainer:not([style*="none"])) #versionTag{display:none !importan
 @media (max-width:600px){
   .pub-invite{bottom:calc(var(--sp-3) + env(safe-area-inset-bottom, 0px));}
 }
+
+/* ==========================================================
+   JOURNAL DANS LE CATALOGUE (draft Profil du 15/10, piste A).
+   « Grille · Liste · Journal » à côté de la recherche des films (l'icône
+   grille/liste de la pilule est masquée ici), et le Journal : tes
+   visionnages par mois. Voir js/journal.js.
+   ========================================================== */
+#appContainer .toolbar-search .view-toggle{display:none;}
+.films-views{display:flex; flex:none; gap:var(--sp-4);}
+.fj-month{display:flex; align-items:baseline; gap:var(--sp-2); margin:var(--sp-6) 0 var(--sp-1); font-size:var(--fs-xs); font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:var(--text-2);}
+.fj-month:first-child{margin-top:0;}
+.fj-month span{font-weight:400; letter-spacing:0; text-transform:none; color:var(--text-3);}
+.film-journal{max-width:860px;}
+.fj-row{display:flex; align-items:center; gap:var(--sp-3); min-height:72px; padding:var(--sp-1) 0; border-bottom:1px solid var(--line); cursor:pointer;}
+.fj-row:hover .fj-title, .fj-row:focus-visible .fj-title{color:var(--accent);}
+.fj-poster{flex:none; width:40px; height:60px; border-radius:var(--r-sm); object-fit:cover; background:var(--surface-2); color:var(--text-3); display:grid; place-items:center;}
+.fj-poster svg{width:18px; height:18px;}
+.fj-main{flex:1; min-width:0;}
+.fj-title{font-size:var(--fs-sm); font-weight:600; color:var(--text-1); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; transition:color var(--dur-fast);}
+.fj-again{margin-left:var(--sp-2); font-size:var(--fs-xs); font-weight:600; color:var(--accent);}
+.fj-sub{font-size:var(--fs-xs); color:var(--text-2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.fj-note{flex:none; width:36px; text-align:right; font-size:var(--fs-md); font-weight:600; font-variant-numeric:tabular-nums;}
+.fj-note.rate-low{color:var(--note-low);} .fj-note.rate-mid{color:var(--note-mid);} .fj-note.rate-high{color:var(--note-high);}
+.fj-date{flex:none; width:64px; text-align:right; font-size:var(--fs-xs); color:var(--text-2); font-variant-numeric:tabular-nums;}
+@media (max-width:600px){
+  /* Sur sa propre ligne, sous la recherche */
+  #appContainer .toolbar{flex-wrap:wrap; row-gap:var(--sp-3);}
+  #appContainer .toolbar-actions{width:100%;}
+  .films-views{gap:var(--sp-5);}
+  .fj-row{gap:var(--sp-2);}
+  .fj-poster{width:36px; height:54px;}
+  .fj-date{width:52px;}
+}
