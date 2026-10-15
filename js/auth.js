@@ -77,6 +77,9 @@ async function showApp(){
   // avant la connexion — on le consomme ici, une fois l'app pleinement
   // chargée, pour rejoindre le groupe et y rediriger.
   await consumePendingInviteIfAny();
+  // Lien d'un profil partagé ouvert sans compte (« Rejoindre Kinet ») : le
+  // propriétaire du profil devient un ami (js/publicProfile.js).
+  if(typeof consumePendingProfileInvite === 'function') await consumePendingProfileInvite().catch(e => console.error(e));
   // Lien de carte (?carte=ID) : ouvre la carte demandée une fois l'app chargée.
   if(typeof openCardFromLinkIfAny === 'function') await openCardFromLinkIfAny();
   // Badge 👥 + digest de retour + rappel d'inactivité (js/activityState.js)

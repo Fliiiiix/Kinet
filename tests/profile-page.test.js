@@ -14,7 +14,7 @@ function buildContext({ profile, filmsList, shows = [], friends = [] } = {}){
     ppAvatarImg: stubElement(), ppAvatarFallback: stubElement(),
     ppRecapLabel: stubElement(), ppAchVal: stubElement(), ppTcgBadge: stubElement({ hidden: true }),
     ppChangelogRow: stubElement({ hidden: true }), ppAdminRow: stubElement({ hidden: true }),
-    ppPublicToggle: stubElement(), ppCopyLinkBtn: stubElement({ hidden: true }),
+    ppPublicToggle: stubElement(), ppCopyLinkBtn: stubElement({ hidden: true }), ppShareNote: stubElement(),
     tcgTradeBadge: stubElement({ hidden: false, textContent: '2' }),
     profileChangelogLinkBtn: stubElement({ style: { display: 'none' } }),
   };
@@ -85,7 +85,10 @@ test('renderProfilePage() : reflète le badge d\'échanges, Nouveautés masqué 
   assert.strictEqual(els.ppTcgBadge.textContent, '2');
   assert.strictEqual(els.ppChangelogRow.hidden, true);
   assert.strictEqual(els.ppPublicToggle.checked, true);
-  assert.strictEqual(els.ppCopyLinkBtn.hidden, false);
+  // Piste A du 15/10 : plus de rangée « Copier le lien », c'est « Partager »
+  // qui dit si le profil est partagé.
+  assert.strictEqual(els.ppCopyLinkBtn.hidden, true);
+  assert.ok(els.ppShareNote.textContent.startsWith('Ton profil est partagé'));
 });
 
 test('une rangée data-proxy relaie le clic au bouton d\'origine', () => {

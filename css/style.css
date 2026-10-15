@@ -7012,3 +7012,41 @@ html:has(#authContainer:not([style*="none"])) #versionTag{display:none !importan
   .adm-fig{padding:var(--sp-3);}
   .adm-fig b{font-size:var(--fs-lg);}
 }
+
+/* ==========================================================
+   PROFIL PARTAGÉ, piste A du 15/10 (« Partager et inviter »).
+   Page Profil : « Modifier le profil » et « Partager » en pilules, le
+   panneau de partage. Page publique (#/u/:id) : chiffres sans couleur,
+   invitation « Rejoindre Kinet ». Voir js/profilePage.js, js/publicProfile.js.
+   ========================================================== */
+.pp-actions{display:flex; flex-wrap:wrap; gap:var(--sp-2);}
+.pp-edit{
+  height:34px; padding:0 var(--sp-4);
+  border:1px solid var(--line-strong); border-radius:var(--r-full);
+  color:var(--text-1);
+  transition:border-color var(--dur-fast), color var(--dur-fast);
+}
+.pp-edit:hover, .pp-edit[aria-expanded="true"]{border-color:var(--accent); color:var(--accent);}
+.pp-share{max-width:560px; margin:var(--sp-4) 0 0; padding:var(--sp-4); border:1px solid var(--line-strong); border-radius:var(--r-md); display:grid; gap:var(--sp-2);}
+.pp-share[hidden]{display:none;}
+.pp-share-title{font-size:var(--fs-md); font-weight:600;}
+.pp-share-text{margin:0; font-size:var(--fs-sm); color:var(--text-2);}
+.pp-share-acts{display:flex; flex-wrap:wrap; gap:var(--sp-2); margin-top:var(--sp-1);}
+.pp-share-note{margin:0; font-size:var(--fs-xs); color:var(--text-3);}
+/* Page publique */
+.pub-hero{display:flex; align-items:center; gap:var(--sp-4); margin:var(--sp-2) 0 var(--sp-6);}
+.pub-hero img, .pub-hero .avatar-fallback{width:64px; height:64px; flex:none; border-radius:50%; object-fit:cover; border:1px solid var(--line-strong); background:var(--surface-2); display:flex; align-items:center; justify-content:center; color:var(--text-3);}
+.pub-hero .avatar-fallback svg{width:28px; height:28px;}
+.pub-hero h3{margin:0; font-family:var(--font-display); font-size:var(--fs-xl); font-weight:800; line-height:1.1;}
+.pub-sub{margin-top:2px; font-size:var(--fs-sm); color:var(--text-2); font-variant-numeric:tabular-nums;}
+.pub-favs{max-width:520px; margin-bottom:var(--sp-6);}
+.pub-invite{position:sticky; bottom:var(--sp-3); z-index:5; margin-top:var(--sp-6); padding:var(--sp-4); border:1px solid var(--line-strong); border-radius:var(--r-md); background:rgba(var(--glass-rgb),0.94); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); display:flex; flex-wrap:wrap; align-items:center; gap:var(--sp-3) var(--sp-4);}
+.pub-invite p{flex:1; min-width:200px; margin:0; font-size:var(--fs-sm); color:var(--text-2);}
+.pub-invite p b{display:block; font-size:var(--fs-md); color:var(--text-1);}
+.pub-self-note{margin-top:var(--sp-5); font-size:var(--fs-xs); color:var(--text-3);}
+.pub-gone{min-height:40vh; display:grid; place-content:center; justify-items:center; gap:var(--sp-2); text-align:center;}
+.pub-gone h3{margin:0; font-family:var(--font-display); font-size:var(--fs-lg); font-weight:800;}
+.pub-gone p{margin:0 0 var(--sp-2); color:var(--text-2); font-size:var(--fs-sm);}
+@media (max-width:600px){
+  .pub-invite{bottom:calc(var(--sp-3) + env(safe-area-inset-bottom, 0px));}
+}

@@ -119,7 +119,7 @@ function renderProfilePageRows(){
 
   const isPublic = !!(currentProfile && currentProfile.public_profile);
   document.getElementById('ppPublicToggle').checked = isPublic;
-  document.getElementById('ppCopyLinkBtn').hidden = !isPublic;
+  renderProfileShareNote();
 }
 
 function renderProfilePage(){
@@ -198,7 +198,7 @@ async function savePublicProfile(on){
   }
   currentProfile = data;
   document.getElementById('ppPublicToggle').checked = on;
-  document.getElementById('ppCopyLinkBtn').hidden = !on;
+  renderProfileShareNote();
   showToast(on ? 'Profil partagé' : 'Profil plus partagé');
   return true;
 }
@@ -211,3 +211,42 @@ document.getElementById('ppPublicToggle').addEventListener('change', async (e) =
 document.getElementById('ppCopyLinkBtn').addEventListener('click', () => {
   document.getElementById('copyPublicProfileLink').click();
 });
+
+// --- « Partager » (piste A du 15/10, profil partagé) ---
+// Le panneau dit ce que montre le lien. « Copier le lien » partage le profil
+// s'il ne l'était pas encore ; on arrête dans Paramètres → Confidentialité.
+function renderProfileShareNote(){
+  const note = document.getElementById('ppShareNote');
+  if(!note) return;
+  const on = !!(currentProfile && currentProfile.public_profile);
+  note.textContent = on
+    ? 'Ton profil est partagé. Pour arrêter : Paramètres, Confidentialité.'
+    : 'Ton profil sera partagé dès que tu copies le lien.';
+}
+
+function toggleProfileShareSheet(open){
+  const sheet = document.getElementById('ppShareSheet');
+  const show = typeof open === 'boolean' ? open : sheet.hidden;
+  sheet.hidden = !show;
+  document.getElementById('ppShareBtn').setAttribute('aria-expanded', String(show));
+  if(show) renderProfileShareNote();
+}
+
+async function copyProfileShareLink(){
+  if(!(currentProfile && currentProfile.public_profile)){
+    const ok = await savePublicProfile(true);
+    if(!ok) return;
+  }
+  try{
+    await navigator.clipboard.writeText(publicProfileUrl());
+    showToast('Lien copié');
+  }catch(e){
+    showToast('Impossible de copier : ' + publicProfileUrl());
+    console.error(e);
+  }
+  renderProfileShareNote();
+}
+
+document.getElementById('ppShareBtn').addEventListener('click', () => toggleProfileShareSheet());
+document.getElementById('ppShareCloseBtn').addEventListener('click', () => toggleProfileShareSheet(false));
+document.getElementById('ppShareCopyBtn').addEventListener('click', copyProfileShareLink);
