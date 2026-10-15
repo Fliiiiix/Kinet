@@ -6842,4 +6842,9 @@ html:has(#authContainer:not([style*="none"])) #versionTag{display:none !importan
 @media (max-width:600px){
   .fr-last{display:none;}
   .fr-compat{min-width:64px;}
+  /* À côté de « Retour », les trois mots tiennent sur une ligne */
+  .social-switch{gap:var(--sp-3);}
+  .social-switch .catalog-switch-btn{font-size:var(--fs-lg);}
+  /* 3 colonnes, comme les autres grilles d'affiches */
+  .fr-posters{grid-template-columns:repeat(3, minmax(0, 1fr)); gap:var(--sp-4) var(--sp-3);}
 }
