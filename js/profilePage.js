@@ -160,6 +160,9 @@ async function openProfilePage(){
   if(parseRoute().name !== 'profil') return;
   renderProfilePage();
   refreshProfilePageCards();
+  // Pastilles : réponse à un avis (js/feedback.js), choses à traiter (admin).
+  if(typeof refreshAvisBadge === 'function') refreshAvisBadge().catch(e => console.error(e));
+  if(typeof refreshAdminCounts === 'function') refreshAdminCounts().catch(e => console.error(e));
 }
 
 // Rangées relais : un clic = un clic sur le bouton d'origine. Le geste reste

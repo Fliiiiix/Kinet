@@ -64,7 +64,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,500&display=swap">
-<link rel="stylesheet" href="css/style.css?v=276">
+<link rel="stylesheet" href="css/style.css?v=277">
 </head>
 <body>
 
@@ -138,6 +138,9 @@
           <button class="header-nav-btn" id="upcomingBtn" type="button" title="Prochainement" aria-label="Prochainement"><span class="nav-pip nav-pip-gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5.5" width="17" height="15" rx="2"></rect><path d="M3.5 10h17"></path><path d="M8 3.5v4"></path><path d="M16 3.5v4"></path></svg></span><span>Bientôt</span></button>
           <button class="header-nav-btn" id="friendsBtn" type="button" title="Amis" aria-label="Amis"><span class="nav-pip nav-pip-teal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9.3" cy="8" r="3.3"></circle><path d="M16 3.8c1.5.7 2.5 2.2 2.5 4S17.5 11.1 16 11.8"></path><path d="M14.5 20.3c0-3-2.3-5-5.2-5s-5.2 2-5.2 5"></path><path d="M19 20c0-2.5-1.7-4.3-4-4.8"></path></svg></span><span>Amis</span></button>
           <button class="header-nav-btn" id="topBtn" type="button" title="Top films" aria-label="Top films"><span class="nav-pip nav-pip-bronze"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4h8v4a4 4 0 01-8 0V4z"></path><path d="M8 5H5.5a2.5 2.5 0 002.5 2.5"></path><path d="M16 5h2.5A2.5 2.5 0 0116 7.5"></path><path d="M12 12v3.5"></path><path d="M9.5 20h5"></path><path d="M10.3 15.5h3.4l.8 4.5H9.5l.8-4.5z"></path></svg></span><span>Top films</span></button>
+          <!-- Admin (draft Profil du 15/10) : pour le seul compte admin, avec le
+               nombre de choses à traiter. Voir refreshAdminCounts(), js/admin.js. -->
+          <button class="header-nav-btn" id="adminNavBtn" type="button" title="Admin" aria-label="Admin" hidden><span>Admin</span><span class="nav-count" id="adminNavCount" hidden></span></button>
           <!-- Installer l'app (v2.1) — accès direct sans ouvrir le profil ;
                seule icône d'action restée ici (v3.2) car conditionnelle
                (masquée tant que l'install n'a pas de sens, voir
@@ -1263,9 +1266,9 @@
       </div>
     </details>
     <button class="pp-row" type="button" data-proxy="chatbotBtn"><span class="pp-row-main"><span class="pp-row-title">Assistant</span><span class="pp-row-sub">Conseils ciné, aide dans l'app</span></span><span class="pp-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg></span></button>
-    <button class="pp-row" type="button" data-proxy="profileFeedbackLinkBtn"><span class="pp-row-main"><span class="pp-row-title">Donner un avis</span></span><span class="pp-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg></span></button>
+    <button class="pp-row" type="button" data-proxy="profileFeedbackLinkBtn"><span class="pp-row-main"><span class="pp-row-title">Donner un avis</span><span class="pp-row-sub" id="ppAvisSub" hidden>Une réponse t'attend</span></span><span class="pp-count" id="ppAvisCount" hidden></span><span class="pp-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg></span></button>
     <button class="pp-row" type="button" data-proxy="profileChangelogLinkBtn" id="ppChangelogRow" hidden><span class="pp-row-main"><span class="pp-row-title">Nouveautés</span></span><span class="pp-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg></span></button>
-    <button class="pp-row" type="button" data-proxy="adminBtn" id="ppAdminRow" hidden><span class="pp-row-main"><span class="pp-row-title">Admin</span><span class="pp-row-sub">Succès, happenings, avis, statistiques du site</span></span><span class="pp-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg></span></button>
+    <button class="pp-row" type="button" data-proxy="adminBtn" id="ppAdminRow" hidden><span class="pp-row-main"><span class="pp-row-title">Admin</span><span class="pp-row-sub" id="ppAdminSub">Avis, nouveautés, santé du site</span></span><span class="pp-count" id="ppAdminCount" hidden></span><span class="pp-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg></span></button>
   </div>
 </div>
 
@@ -1371,6 +1374,51 @@
       </div>
     </div>
   </div>
+</div>
+
+<!-- Donner un avis (#/avis), draft Profil du 15/10 : le type en trois
+     pastilles, la page d'où tu viens et l'appareil joints (désactivable),
+     et tes avis envoyés avec leur suivi et la réponse. Voir js/feedback.js. -->
+<div class="container page" id="avisPage" role="main" tabindex="-1" style="display:none;">
+  <div class="page-header">
+    <button class="btn secondary" id="avisPageBack" type="button">← Profil</button>
+    <h2>Donner un avis</h2>
+  </div>
+  <div class="av-form">
+    <div class="av-kinds" role="radiogroup" aria-label="Type d'avis">
+      <button type="button" role="radio" class="av-kind" data-avis-kind="bug" aria-checked="true">Un bug</button>
+      <button type="button" role="radio" class="av-kind" data-avis-kind="idee" aria-checked="false">Une idée</button>
+      <button type="button" role="radio" class="av-kind" data-avis-kind="autre" aria-checked="false">Autre chose</button>
+    </div>
+    <textarea id="avisMessage" class="av-message" rows="4" aria-label="Ton message"></textarea>
+    <label class="pp-row av-ctx" for="avisCtxToggle">
+      <span class="pp-row-main"><span class="pp-row-title">Joindre la page et l'appareil</span><span class="pp-row-sub" id="avisCtxSub"></span></span>
+      <input type="checkbox" id="avisCtxToggle" class="mm-switch-input" checked>
+      <span class="mm-switch" aria-hidden="true"></span>
+    </label>
+    <button class="btn" id="avisSendBtn" type="button">Envoyer</button>
+  </div>
+  <div class="pp-label av-mine-label">Tes avis</div>
+  <div class="av-mine" id="avisMine"></div>
+</div>
+
+<!-- Admin (#/admin), draft Profil du 15/10 : une page, dans l'entête sur PC
+     et en tête du Profil sur téléphone, qui commence par ce qu'il y a à
+     traiter. Succès et Happenings retirés (leurs réglages ne touchaient que
+     le compte admin), Cartes aussi (album sans hasard). Visible du seul
+     compte admin, voir js/admin.js. -->
+<div class="container page" id="adminPage" role="main" tabindex="-1" style="display:none;">
+  <div class="page-header">
+    <button class="btn secondary" id="adminPageBack" type="button">← Retour</button>
+    <h2>Admin</h2>
+    <div class="adm-tabs" role="tablist" aria-label="Admin">
+      <button class="top-tab is-active" type="button" role="tab" data-adm-view="todo" aria-selected="true">À traiter</button>
+      <button class="top-tab" type="button" role="tab" data-adm-view="avis" aria-selected="false">Avis</button>
+      <button class="top-tab" type="button" role="tab" data-adm-view="news" aria-selected="false">Nouveautés</button>
+      <button class="top-tab" type="button" role="tab" data-adm-view="health" aria-selected="false">Santé du site</button>
+    </div>
+  </div>
+  <div class="adm-content" id="adminContent"></div>
 </div>
 
 <button class="fab magnetic" id="fabAddBtn" title="Ajouter un film" aria-label="Ajouter un film">+</button>
@@ -2061,7 +2109,7 @@ Légende du 7e art (Légendaire) 2%</div>
       <button type="button" class="avatar-source-tab" data-admin-tab="feedback" role="tab" aria-selected="false">Avis</button>
       <button type="button" class="avatar-source-tab" data-admin-tab="stats" role="tab" aria-selected="false">Stats &amp; logs</button>
     </div>
-    <div id="adminContent"></div>
+    <!-- #adminContent : déplacé dans la page Admin (#adminPage). -->
   </div>
 </div>
 
@@ -2248,138 +2296,138 @@ Légende du 7e art (Légendaire) 2%</div>
 <!-- ?v=N sur chaque js/*.js ci-dessous (voir le commentaire dans <head>) —
      à incrémenter à chaque déploiement, même numéro pour tous les fichiers. -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/supabaseConfig.js?v=276"></script>
+<script src="js/supabaseConfig.js?v=277"></script>
 <!-- Juste après supabaseConfig.js (a besoin de supabaseClient) et avant
      tout le reste : capte les erreurs de chargement des scripts suivants,
      pas seulement celles de l'app une fois démarrée — voir js/logging.js. -->
-<script src="js/logging.js?v=276"></script>
-<script src="js/tmdbConfig.js?v=276"></script>
-<script src="js/data.js?v=276"></script>
-<script src="js/happenings.js?v=276"></script>
+<script src="js/logging.js?v=277"></script>
+<script src="js/tmdbConfig.js?v=277"></script>
+<script src="js/data.js?v=277"></script>
+<script src="js/happenings.js?v=277"></script>
 <!-- Ressort physique vanilla (audit design, apple-design) — avant ui.js,
      qui l'utilise pour le geste tirer-pour-rafraîchir. Aucune dépendance
      entre les deux au chargement (animateSpring() n'est appelée que dans
      des écouteurs tactiles, bien après le chargement complet), gardé
      avant par lisibilité : un utilitaire se charge avant ce qui s'en sert. -->
-<script src="js/spring.js?v=276"></script>
+<script src="js/spring.js?v=277"></script>
 <!-- Avant app.js et les 6 autres modules qui ouvrent/ferment une modale
      (openOverlay/closeOverlay) — l'ordre exact importe peu au runtime
      (rien n'y est appelé au chargement), gardé en premier des scripts
      "app" pour la lisibilité, comme un utilitaire partagé. -->
-<script src="js/ui.js?v=276"></script>
+<script src="js/ui.js?v=277"></script>
 <!-- Avant watchlist.js, qui appelle playRouletteTick()/playRouletteWin()
      (roulette "Surprends-moi") — l'ordre exact importe peu au runtime
      (rien n'y est appelé au chargement), gardé ici pour la lisibilité,
      comme ui.js juste au-dessus. -->
-<script src="js/sound.js?v=276"></script>
+<script src="js/sound.js?v=277"></script>
 <!-- Avant app.js/journal.js/watchlist.js, qui appellent saveOfflineCache()/
      loadOfflineCache()/blockIfOffline() (v1.6, mode hors ligne lecture
      seule) — l'ordre exact importe peu au runtime (rien n'y est appelé au
      chargement, seulement des listeners posés pour plus tard), gardé ici
      pour la lisibilité, comme ui.js juste au-dessus. -->
-<script src="js/offlineQueue.js?v=276"></script>
-<script src="js/offline.js?v=276"></script>
-<script src="js/app.js?v=276"></script>
-<script src="js/tmdb.js?v=276"></script>
-<script src="js/stats.js?v=276"></script>
-<script src="js/achievements.js?v=276"></script>
+<script src="js/offlineQueue.js?v=277"></script>
+<script src="js/offline.js?v=277"></script>
+<script src="js/app.js?v=277"></script>
+<script src="js/tmdb.js?v=277"></script>
+<script src="js/stats.js?v=277"></script>
+<script src="js/achievements.js?v=277"></script>
 <!-- Avant app.js/watchlist.js à l'exécution (pas au chargement — rien
      n'est appelé ici avant un vrai clic/ajout) : les deux appellent
      generateTcgCardsForFilm(), définie ici. -->
-<script src="js/tcg.js?v=276"></script>
-<script src="js/chatbot.js?v=276"></script>
-<script src="js/journal.js?v=276"></script>
+<script src="js/tcg.js?v=277"></script>
+<script src="js/chatbot.js?v=277"></script>
+<script src="js/journal.js?v=277"></script>
 <!-- Après app.js (showToast) — appelée par js/profile.js juste après. -->
-<script src="js/pwa.js?v=276"></script>
-<script src="js/profile.js?v=276"></script>
+<script src="js/pwa.js?v=277"></script>
+<script src="js/profile.js?v=277"></script>
 <!-- Paramètres — après profile.js (referme/rouvre "Ton profil") et pwa.js
      (updateInstallUI()), voir js/settings.js. -->
-<script src="js/settings.js?v=276"></script>
-<script src="js/backup.js?v=276"></script>
+<script src="js/settings.js?v=277"></script>
+<script src="js/backup.js?v=277"></script>
 <!-- Après profile.js (closeProfileModal/openProfileModal) et data.js
      (FEEDBACK_CATEGORIES) — même raisonnement que pwa.js juste au-dessus. -->
-<script src="js/feedback.js?v=276"></script>
+<script src="js/feedback.js?v=277"></script>
 <!-- Bilan cinéphile partageable (v2.43) — après journal.js (viewings) et
      profile.js (currentProfile), voir js/recap.js. -->
-<script src="js/recap.js?v=276"></script>
+<script src="js/recap.js?v=277"></script>
 <!-- N'a besoin que de ui.js (openOverlay/closeOverlay) et app.js
      (showToast), chargés bien avant — placé ici pour rester groupé avec
      les autres modales accessibles depuis le chrome plutôt que pour une
      vraie dépendance. -->
-<script src="js/share.js?v=276"></script>
+<script src="js/share.js?v=277"></script>
 <!-- Après happenings.js/achievements.js (définitions) et profile.js
      (closeProfileModal) : admin.js s'appuie sur les trois au clic, jamais au
      chargement — l'ordre exact importe peu, gardé groupé ici pour la
      lisibilité. -->
-<script src="js/admin.js?v=276"></script>
-<script src="js/router.js?v=276"></script>
-<script src="js/publicProfile.js?v=276"></script>
-<script src="js/top.js?v=276"></script>
-<script src="js/friends.js?v=276"></script>
+<script src="js/admin.js?v=277"></script>
+<script src="js/router.js?v=277"></script>
+<script src="js/publicProfile.js?v=277"></script>
+<script src="js/top.js?v=277"></script>
+<script src="js/friends.js?v=277"></script>
 <!-- Après friends.js (cacheProfile/friendDisplayName/friendAvatarHtml) et
      journal.js (formatViewingDate), avant groups.js qui l'appelle depuis
      openGroupDetail() — l'ordre exact importe peu au runtime (tout est en
      fonctions globales appelées après chargement complet), gardé groupé
      ici pour la lisibilité. -->
-<script src="js/activity.js?v=276"></script>
-<script src="js/watchlist.js?v=276"></script>
+<script src="js/activity.js?v=277"></script>
+<script src="js/watchlist.js?v=277"></script>
 <!-- Après watchlist.js (loadWatchlist/watchlist, réutilisés pour exclure
      ce qui y est déjà) et app.js (getDisplayNote, chargé plus haut) — voir
      js/suggestions.js. Avant auth.js, qui appelle loadSuggestions() depuis
      showApp(). -->
-<script src="js/suggestions.js?v=276"></script>
+<script src="js/suggestions.js?v=277"></script>
 <!-- Import externe (Letterboxd pour l'instant) — après watchlist.js/app.js/
      tmdb.js/journal.js dont il réutilise films/watchlist/searchTmdb()/
      addViewing(). Voir js/importExternal.js. -->
-<script src="js/importExternal.js?v=276"></script>
+<script src="js/importExternal.js?v=277"></script>
 <!-- Fiche film (v2.1) — voir js/filmDetail.js. Regroupée ici avec
      friends.js/watchlist.js dont elle réutilise les helpers (même
      remarque que suggestions.js juste au-dessus : l'ordre exact n'importe
      pas au runtime, tout est en fonctions appelées après chargement
      complet — router.js, plus haut, appelle déjà openFriends()/
      openWatchlist() en aval de leur propre script de la même façon). -->
-<script src="js/filmDetail.js?v=276"></script>
+<script src="js/filmDetail.js?v=277"></script>
 <!-- Après watchlist.js : js/upcoming.js réutilise le tableau watchlist déjà
      chargé (voir plus bas). -->
-<script src="js/series.js?v=276"></script>
+<script src="js/series.js?v=277"></script>
 <!-- Après watchlist.js ET series.js — a besoin des deux tableaux chargés
      (loadWatchlist()/loadTrackedShows()), voir js/upcoming.js. -->
-<script src="js/upcoming.js?v=276"></script>
-<script src="js/groups.js?v=276"></script>
-<script src="js/proposals.js?v=276"></script>
+<script src="js/upcoming.js?v=277"></script>
+<script src="js/groups.js?v=277"></script>
+<script src="js/proposals.js?v=277"></script>
 <!-- Après groups.js (renderInviteBox appelée depuis renderGroupDetail) et
      proposals.js (chosenProposal) — voir js/invites.js. -->
-<script src="js/invites.js?v=276"></script>
+<script src="js/invites.js?v=277"></script>
 <!-- Listes thématiques (retour utilisateur, étude comparative Letterboxd) —
      après friends.js (ensureProfilesCached vient de filmDetail.js, déjà
      chargé ; friendDisplayName/cacheProfile de friends.js) et filmDetail.js
      (goToFilmDetail réutilisé pour ouvrir un film d'une liste), voir
      js/lists.js. -->
-<script src="js/lists.js?v=276"></script>
+<script src="js/lists.js?v=277"></script>
 <!-- Après activity.js (rowToActivityEvent/renderActivityRowHtml) et
      friends.js (friendProfiles/cacheProfile) qu'elle réutilise pour le
      digest, avant auth.js qui appelle refreshActivityBadge()/
      maybeShowDigest() depuis showApp(). -->
-<script src="js/activityState.js?v=276"></script>
+<script src="js/activityState.js?v=277"></script>
 <!-- Après activityState.js (loadActivityState/activityState réutilisés
      pour son propre badge "vu") et avant auth.js qui appelle
      initChangelog() depuis showApp(). -->
-<script src="js/changelog.js?v=276"></script>
+<script src="js/changelog.js?v=277"></script>
 <!-- Recherche unique (audit M2) : après series.js/friends.js/groups.js
      dont elle réutilise les tableaux déjà chargés et les fonctions
      d'ouverture (openFriendProfile/goToSeriesDetail/goToGroup), et après
      app.js/data.js pour getSearchTerms()/normalizeSearch()/
      FILM_PLACEHOLDER_SVG. Voir js/globalSearch.js. -->
-<script src="js/globalSearch.js?v=276"></script>
+<script src="js/globalSearch.js?v=277"></script>
 <!-- Page Profil (option B) — après profile.js, stats.js, achievements.js,
      tcg.js, changelog.js et router.js dont elle lit l'état ; appelée par
      renderRoute() seulement après connexion. -->
-<script src="js/profilePage.js?v=276"></script>
+<script src="js/profilePage.js?v=277"></script>
 <!-- Tuto d'accueil interactif — avant auth.js dont showApp() appelle
      maybeStartOnboarding() ; après ui.js/router.js/profile.js/logging.js
      dont il réutilise respectivement openOverlay-style/goHome/
      closeProfileModal/logEvent. -->
-<script src="js/onboarding.js?v=276"></script>
-<script src="js/auth.js?v=276"></script>
+<script src="js/onboarding.js?v=277"></script>
+<script src="js/auth.js?v=277"></script>
 </body>
 </html>

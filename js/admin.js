@@ -415,7 +415,7 @@ function renderAdminChangelogTab(){
       <div class="wl-actions">
         <button class="btn secondary admin-changelog-toggle" data-id="${e.id}" type="button">${e.published ? 'Dépublier' : 'Publier'}</button>
         <button class="btn secondary admin-changelog-edit" data-id="${e.id}" type="button">Modifier</button>
-        <button class="btn secondary admin-changelog-delete" data-id="${e.id}" type="button" title="Supprimer" aria-label="Supprimer">🗑</button>
+        <button class="btn secondary admin-changelog-delete" data-id="${e.id}" type="button">Supprimer</button>
       </div>
     </div>
   `).join('');
@@ -719,23 +719,12 @@ function renderAdminStatsTab(){
   `;
 }
 
-async function openAdminModal(){
+// L'ancienne fenêtre admin n'est plus ouverte (draft Profil du 15/10) :
+// #adminBtn, relayé par la rangée Admin du Profil, mène à la page #/admin.
+function openAdminModal(){
   if(!isAdmin()) return;
   closeProfileModal();
-  if(!adminConfigLoaded) await loadAdminConfig();
-  // L'onglet Succès (ouvert par défaut ci-dessous) affiche la valeur
-  // ACTUELLE de chaque palier, dont Sérievore/Sociable (js/achievements.js,
-  // v2.29) qui lisent trackedShows/friendships — normalement chargés
-  // seulement sur leur propre page. Même préchargement que
-  // openAchievements() : sans lui, un admin qui n'a pas visité Séries/Amis
-  // cette session verrait ces seuils à "0" par erreur.
-  await Promise.all([
-    (typeof loadTrackedShows === 'function') ? loadTrackedShows() : Promise.resolve(),
-    (typeof loadFriendships === 'function') ? loadFriendships() : Promise.resolve(),
-    (typeof loadGroups === 'function') ? loadGroups() : Promise.resolve()
-  ]);
-  setAdminTab('achievements');
-  openOverlay('adminOverlay');
+  goToAdmin();
 }
 
 // Rouvre la modale profil (pas juste closeOverlay simple) : Admin n'est
@@ -889,3 +878,264 @@ async function exporterCatalogueCartes(){
   setTimeout(() => URL.revokeObjectURL(url), 1000);
   showToast(`${lignes.length} cartes exportées`);
 }
+
+
+// --- Page Admin (#/admin), draft Profil du 15/10 (choix de Flix) ---
+// « Admin » dans l'entête sur PC, en tête du Profil sur téléphone, avec le
+// nombre de choses à traiter. Quatre parties en texte : À traiter (avis
+// ouverts, erreurs de la semaine regroupées, notes en brouillon), Avis (avec
+// pseudo, page, appareil, version, et une réponse), Nouveautés (l'éditeur
+// d'avant, renderAdminChangelogTab()) et Santé du site. Succès et Happenings
+// sont retirés : leurs réglages (admin_config) ne touchaient que ce compte.
+// Cartes aussi : l'album sans hasard n'a plus de rareté à forcer.
+
+let adminView = 'todo';
+let adminFeedback = [];
+let adminFeedbackNames = {};
+let adminReplyOpen = null;
+let adminCounts = { avis: 0, errors: 0, drafts: 0 };
+
+function goToAdmin(){ location.hash = '#/admin'; }
+
+const ADMIN_KIND_LABELS = { bug: 'Bug', idee: 'Idée', autre: 'Autre' };
+
+function adminRelTime(iso){
+  return typeof friendFeedWhen === 'function' ? friendFeedWhen(iso) : new Date(iso).toLocaleDateString('fr-FR');
+}
+
+async function loadAdminFeedback(){
+  const { data, error } = await supabaseClient.from('feedback').select('*').order('created_at', { ascending: false });
+  if(error){ console.error(error); adminFeedback = []; return; }
+  adminFeedback = (data || []).map(rowToFeedback);
+  const ids = [...new Set(adminFeedback.map(f => f.userId).filter(Boolean))];
+  adminFeedbackNames = {};
+  if(ids.length){
+    const { data: profs, error: profError } = await supabaseClient.from('profiles').select('user_id, display_name').in('user_id', ids);
+    if(profError) console.error(profError);
+    (profs || []).forEach(p => { adminFeedbackNames[p.user_id] = p.display_name; });
+  }
+}
+
+// Une même erreur répétée ne prend qu'une ligne : même message, même
+// fichier, même ligne, quelle que soit la version du fichier.
+function adminErrorKey(detail){
+  return String(detail || 'Erreur sans détail')
+    .replace(/https?:\/\/\S*?\/(js\/[^\s?:)]+)(\?v=\d+)?/g, '$1')
+    .replace(/\?v=\d+/g, '')
+    .trim();
+}
+function groupAdminErrors(events, sinceMs){
+  const groups = new Map();
+  events.filter(e => e.eventType === 'error' && (!sinceMs || new Date(e.createdAt).getTime() >= sinceMs)).forEach(e => {
+    const key = adminErrorKey(e.detail);
+    const g = groups.get(key) || { key, count: 0, last: e.createdAt };
+    g.count++;
+    if(e.createdAt > g.last) g.last = e.createdAt;
+    groups.set(key, g);
+  });
+  return Array.from(groups.values()).sort((a, b) => (a.last < b.last ? 1 : -1));
+}
+
+function adminCountsText(c){
+  const parts = [];
+  if(c.avis) parts.push(`${c.avis} avis`);
+  if(c.errors) parts.push(`${c.errors} erreur${c.errors > 1 ? 's' : ''}`);
+  if(c.drafts) parts.push(`${c.drafts} note${c.drafts > 1 ? 's' : ''} en brouillon`);
+  return parts.length ? parts.join(', ') : 'Rien à traiter';
+}
+
+function renderAdminCounts(){
+  const admin = isAdmin();
+  const total = adminCounts.avis + adminCounts.errors + adminCounts.drafts;
+  const navBtn = document.getElementById('adminNavBtn');
+  const navCount = document.getElementById('adminNavCount');
+  if(navBtn) navBtn.hidden = !admin;
+  if(navCount){ navCount.hidden = !admin || total === 0; navCount.textContent = total ? String(total) : ''; }
+  const sub = document.getElementById('ppAdminSub');
+  const count = document.getElementById('ppAdminCount');
+  if(sub) sub.textContent = adminCountsText(adminCounts);
+  if(count){ count.hidden = total === 0; count.textContent = total ? String(total) : ''; }
+}
+
+// Avis ouverts, erreurs de la semaine (regroupées), notes en brouillon.
+// Appelée après la connexion (js/auth.js) et après chaque action ici.
+async function refreshAdminCounts(){
+  renderAdminCounts();
+  if(!isAdmin()) return;
+  const weekAgo = Date.now() - 7 * 86400000;
+  const [fb, er, dr] = await Promise.all([
+    supabaseClient.from('feedback').select('id', { count: 'exact', head: true }).eq('resolved', false),
+    supabaseClient.from('app_events').select('detail, created_at, event_type').eq('event_type', 'error').gte('created_at', new Date(weekAgo).toISOString()).limit(500),
+    supabaseClient.from('changelog_entries').select('id', { count: 'exact', head: true }).eq('published', false)
+  ]);
+  const weekErrors = er.error ? [] : (er.data || []).map(row => ({ eventType: row.event_type, detail: row.detail, createdAt: row.created_at }));
+  adminCounts = {
+    avis: fb.error ? 0 : (fb.count || 0),
+    errors: groupAdminErrors(weekErrors).length,
+    drafts: dr.error ? 0 : (dr.count || 0)
+  };
+  renderAdminCounts();
+}
+
+function adminFeedbackHtml(f){
+  const name = adminFeedbackNames[f.userId] || 'Quelqu’un';
+  const ctx = (typeof avisContextText === 'function') ? avisContextText(f.context) : '';
+  const actions = adminReplyOpen === f.id
+    ? `<div class="adm-reply">
+         <textarea id="admReplyText" rows="3" aria-label="Ta réponse">${escapeHtml(f.reply || '')}</textarea>
+         <div class="adm-acts"><button class="btn" type="button" data-adm-send="${f.id}">Envoyer et marquer traité</button><button class="adm-line-btn" type="button" data-adm-reply="${f.id}">Annuler</button></div>
+       </div>`
+    : `<div class="adm-acts"><button class="adm-line-btn" type="button" data-adm-reply="${f.id}">${f.reply ? 'Modifier la réponse' : 'Répondre'}</button><button class="adm-line-btn" type="button" data-adm-resolve="${f.id}">${f.resolved ? 'Rouvrir' : 'Traité'}</button></div>`;
+  return `
+    <div class="adm-fb${f.resolved ? ' is-resolved' : ''}">
+      <div class="adm-fb-top"><span class="adm-kind">${ADMIN_KIND_LABELS[f.category] || 'Autre'}</span><b>${escapeHtml(name)}</b>${ctx ? `<span>${escapeHtml(ctx)}</span>` : ''}<span>${escapeHtml(adminRelTime(f.createdAt))}</span></div>
+      <p class="adm-fb-msg">${escapeHtml(f.message)}</p>
+      ${f.reply && adminReplyOpen !== f.id ? `<div class="av-reply"><span class="av-reply-label">Ta réponse</span>${escapeHtml(f.reply)}</div>` : ''}
+      ${actions}
+    </div>`;
+}
+
+function adminErrorsHtml(groups){
+  if(groups.length === 0) return '<div class="empty-state">Aucune erreur.</div>';
+  return groups.map(g => `
+    <div class="adm-err">
+      <code>${escapeHtml(g.key)}</code>
+      <span class="adm-err-count">${g.count} fois</span>
+      <span class="adm-err-sub">Dernière ${escapeHtml(adminRelTime(g.last))}</span>
+    </div>`).join('');
+}
+
+function adminFigureHtml(value, label, view){
+  const hot = typeof value === 'number' && value > 0 && view;
+  return `<button type="button" class="adm-fig${hot ? ' is-hot' : ''}"${view ? ` data-adm-view="${view}"` : ' disabled'}><b>${value}</b><span>${escapeHtml(label)}</span></button>`;
+}
+
+function renderAdminTodo(){
+  const wrap = document.getElementById('adminContent');
+  const open = adminFeedback.filter(f => !f.resolved);
+  const weekGroups = groupAdminErrors(allEvents, Date.now() - 7 * 86400000);
+  const drafts = adminChangelogEntries.filter(e => !e.published).length;
+  wrap.innerHTML = `
+    <div class="adm-figs">
+      ${adminFigureHtml(open.length, 'avis à traiter', 'avis')}
+      ${adminFigureHtml(weekGroups.length, weekGroups.length > 1 ? 'erreurs cette semaine' : 'erreur cette semaine', 'health')}
+      ${adminFigureHtml(drafts, drafts > 1 ? 'notes en brouillon' : 'note en brouillon', 'news')}
+    </div>
+    <div class="pp-label">Avis à traiter</div>
+    ${open.length ? open.map(adminFeedbackHtml).join('') : '<div class="empty-state">Aucun avis en attente.</div>'}
+    <div class="pp-label adm-label">Erreurs de la semaine, regroupées</div>
+    ${adminErrorsHtml(weekGroups)}`;
+}
+
+function renderAdminAvis(){
+  const wrap = document.getElementById('adminContent');
+  const open = adminFeedback.filter(f => !f.resolved);
+  const done = adminFeedback.filter(f => f.resolved);
+  wrap.innerHTML = `
+    <div class="pp-label">À traiter</div>
+    ${open.length ? open.map(adminFeedbackHtml).join('') : '<div class="empty-state">Aucun avis en attente.</div>'}
+    <div class="pp-label adm-label">Traités</div>
+    ${done.length ? done.map(adminFeedbackHtml).join('') : '<div class="empty-state">Rien pour l’instant.</div>'}`;
+}
+
+function renderAdminHealth(){
+  const wrap = document.getElementById('adminContent');
+  const weekAgo = Date.now() - 7 * 86400000;
+  const since = (type) => allEvents.filter(e => e.eventType === type && new Date(e.createdAt).getTime() >= weekAgo).length;
+  const s = siteStats || {};
+  const val = (v) => (v != null ? v : '–');
+  const other = allEvents.filter(e => e.eventType !== 'error').slice(0, 20);
+  wrap.innerHTML = `
+    <div class="adm-figs adm-figs-4">
+      ${adminFigureHtml(val(s.total_users), `comptes · +${since('signup')} cette semaine`)}
+      ${adminFigureHtml(val(s.total_films), 'films notés')}
+      ${adminFigureHtml(val(s.total_series), 'séries suivies')}
+      ${adminFigureHtml(val(s.total_viewings), 'visionnages')}
+    </div>
+    <div class="pp-label">Erreurs, regroupées</div>
+    ${adminErrorsHtml(groupAdminErrors(allEvents))}
+    <div class="pp-label adm-label">Derniers évènements</div>
+    ${other.length ? `<div class="pp-rows">${other.map(e => `
+      <div class="pp-row st-row-static"><span class="pp-row-main"><span class="pp-row-title">${escapeHtml(EVENT_TYPE_LABELS[e.eventType] || e.eventType)}</span>${e.detail ? `<span class="pp-row-sub">${escapeHtml(e.detail)}</span>` : ''}</span><span class="pp-val">${escapeHtml(adminRelTime(e.createdAt))}</span></div>`).join('')}</div>` : '<div class="empty-state">Rien pour l’instant.</div>'}`;
+}
+
+function renderAdminView(){
+  document.querySelectorAll('#adminPage .top-tab[data-adm-view]').forEach(btn => {
+    const on = btn.dataset.admView === adminView;
+    btn.classList.toggle('is-active', on);
+    btn.setAttribute('aria-selected', String(on));
+  });
+  if(adminView === 'news'){ renderAdminChangelogTab(); return; }
+  if(adminView === 'avis') renderAdminAvis();
+  else if(adminView === 'health') renderAdminHealth();
+  else renderAdminTodo();
+}
+
+// Appelée par renderRoute() (js/router.js).
+async function openAdminPage(){
+  if(!isAdmin()){ goHome(); return; }
+  adminReplyOpen = null;
+  document.getElementById('adminContent').innerHTML = skeletonRows(3);
+  await Promise.all([
+    loadAdminFeedback(),
+    loadSiteStats(),
+    loadAdminChangelogEntries()
+  ]).catch(e => console.error(e));
+  if(parseRoute().name !== 'admin') return;
+  renderAdminView();
+  refreshAdminCounts();
+}
+
+async function adminSetResolved(id, resolved){
+  const f = adminFeedback.find(x => x.id === id);
+  if(!f) return;
+  const { error } = await supabaseClient.from('feedback').update({ resolved }).eq('id', id);
+  if(error){ showToast('Erreur, réessaie'); console.error(error); return; }
+  f.resolved = resolved;
+  renderAdminView();
+  refreshAdminCounts();
+}
+
+async function adminSendReply(id){
+  const f = adminFeedback.find(x => x.id === id);
+  const field = document.getElementById('admReplyText');
+  const text = field ? field.value.trim() : '';
+  if(!f || !text){ showToast('Écris une réponse avant d’envoyer'); return; }
+  const repliedAt = new Date().toISOString();
+  const { error } = await supabaseClient.from('feedback').update({ reply: text, replied_at: repliedAt, resolved: true }).eq('id', id);
+  if(error){
+    showToast(/reply/i.test(error.message || '') ? 'Pour répondre, lance d’abord la migration 063' : 'Erreur, réessaie');
+    console.error(error);
+    return;
+  }
+  Object.assign(f, { reply: text, repliedAt, resolved: true });
+  adminReplyOpen = null;
+  showToast('Réponse envoyée');
+  renderAdminView();
+  refreshAdminCounts();
+}
+
+document.getElementById('adminPage').addEventListener('click', (e) => {
+  const view = e.target.closest('[data-adm-view]');
+  if(view){ adminView = view.dataset.admView; adminReplyOpen = null; renderAdminView(); return; }
+  const reply = e.target.closest('[data-adm-reply]');
+  if(reply){
+    const id = Number(reply.dataset.admReply);
+    adminReplyOpen = adminReplyOpen === id ? null : id;
+    renderAdminView();
+    if(adminReplyOpen){ const t = document.getElementById('admReplyText'); if(t) t.focus(); }
+    return;
+  }
+  const send = e.target.closest('[data-adm-send]');
+  if(send){ adminSendReply(Number(send.dataset.admSend)); return; }
+  const resolve = e.target.closest('[data-adm-resolve]');
+  if(resolve){
+    const f = adminFeedback.find(x => x.id === Number(resolve.dataset.admResolve));
+    if(f) adminSetResolved(f.id, !f.resolved);
+  }
+});
+document.getElementById('adminNavBtn').addEventListener('click', goToAdmin);
+document.getElementById('adminPageBack').addEventListener('click', () => {
+  if(window.matchMedia('(max-width: 600px)').matches) returnToProfile();
+  else goHome();
+});

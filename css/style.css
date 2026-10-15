@@ -6945,3 +6945,70 @@ html:has(#authContainer:not([style*="none"])) #versionTag{display:none !importan
   .st-range{width:120px;}
   .st-seg button{padding:5px 10px;}
 }
+
+/* ==========================================================
+   DONNER UN AVIS (#avisPage) et ADMIN (#adminPage), draft Profil du
+   15/10. Rangées du Profil, pastilles de type, réponses de l'admin.
+   Voir js/feedback.js et la fin de js/admin.js.
+   ========================================================== */
+/* Pastilles de compte (Profil, entête) */
+.pp-count, .nav-count{display:inline-grid; place-items:center; flex:none; min-width:20px; height:20px; padding:0 6px; border-radius:var(--r-full); background:var(--accent); color:var(--accent-ink); font-size:var(--fs-xs); font-weight:600; font-variant-numeric:tabular-nums;}
+.pp-count[hidden], .nav-count[hidden]{display:none;}
+.header-nav-btn[hidden]{display:none;}
+.header-nav-btn .nav-count{min-width:18px; height:18px; margin-left:6px; padding:0 5px;}
+.header-nav-btn.active .nav-count{background:var(--accent-ink); color:var(--accent);}
+/* Avis */
+#avisPage .page-header, #adminPage .page-header{margin-bottom:var(--sp-5);}
+.av-form{max-width:640px; display:grid; gap:var(--sp-3); margin-bottom:var(--sp-7);}
+.av-kinds{display:flex; flex-wrap:wrap; gap:var(--sp-2);}
+.av-kind{height:36px; padding:0 var(--sp-4); border:1px solid var(--line-strong); border-radius:var(--r-full); background:none; cursor:pointer; font-family:var(--font-text); font-size:var(--fs-sm); font-weight:600; color:var(--text-2); transition:border-color var(--dur-fast), color var(--dur-fast), background-color var(--dur-fast);}
+.av-kind:hover{color:var(--text-1); border-color:var(--text-3);}
+.av-kind[aria-checked="true"]{background:var(--accent); border-color:var(--accent); color:var(--accent-ink);}
+.av-message{width:100%; min-height:120px; padding:var(--sp-3) var(--sp-4); border:1px solid var(--line-strong); border-radius:var(--r-md); background:var(--surface); font-family:var(--font-text); font-size:var(--fs-md); color:var(--text-1); resize:vertical;}
+.av-message:focus{outline:none; border-color:var(--accent);}
+.av-ctx{border-top:1px solid var(--line);}
+.av-form > .btn{justify-self:start;}
+.av-mine{max-width:640px;}
+.av-item{padding:var(--sp-3) 0; border-bottom:1px solid var(--line); display:grid; gap:var(--sp-1);}
+.av-item-meta{font-size:var(--fs-xs); color:var(--text-2);}
+.av-status{font-weight:600; color:var(--text-2);}
+.av-status.is-done{color:var(--note-high);}
+.av-item-msg{margin:0; font-size:var(--fs-sm); color:var(--text-1); white-space:pre-wrap;}
+.av-reply{margin-top:var(--sp-1); padding:var(--sp-2) var(--sp-3); border-left:2px solid var(--accent); border-radius:0 var(--r-sm) var(--r-sm) 0; background:var(--surface); font-size:var(--fs-sm); color:var(--text-1); white-space:pre-wrap;}
+.av-reply-label{display:block; margin-bottom:2px; font-size:var(--fs-xs); font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:var(--accent);}
+/* Admin */
+#adminPage .page-header{flex-wrap:wrap; row-gap:var(--sp-3);}
+.adm-tabs{display:flex; flex-wrap:wrap; gap:var(--sp-2) var(--sp-5);}
+.adm-tabs .top-tab{flex:none;}
+.adm-content{max-width:860px;}
+.adm-figs{display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:var(--sp-3); margin-bottom:var(--sp-6);}
+.adm-figs-4{grid-template-columns:repeat(4, minmax(0, 1fr));}
+.adm-fig{display:grid; gap:2px; padding:var(--sp-4); border:1px solid var(--line); border-radius:var(--r-md); background:none; text-align:left; cursor:pointer; color:var(--text-1); font-family:var(--font-text); transition:border-color var(--dur-fast);}
+.adm-fig:disabled{cursor:default;}
+.adm-fig:not(:disabled):hover{border-color:var(--line-strong);}
+.adm-fig b{font-family:var(--font-display); font-size:var(--fs-xl); font-weight:800; line-height:1.1; font-variant-numeric:tabular-nums;}
+.adm-fig.is-hot b{color:var(--accent);}
+.adm-fig span{font-size:var(--fs-xs); color:var(--text-2);}
+.adm-label{margin-top:var(--sp-6);}
+.adm-fb{padding:var(--sp-3) 0; border-bottom:1px solid var(--line); display:grid; gap:var(--sp-2);}
+.adm-fb.is-resolved .adm-fb-msg{color:var(--text-2);}
+.adm-fb-top{display:flex; flex-wrap:wrap; align-items:baseline; gap:var(--sp-1) var(--sp-3); font-size:var(--fs-xs); color:var(--text-2);}
+.adm-fb-top b{font-size:var(--fs-sm); color:var(--text-1);}
+.adm-kind{padding:1px 8px; border:1px solid var(--line-strong); border-radius:var(--r-full); font-weight:600; color:var(--text-1);}
+.adm-fb-msg{margin:0; font-size:var(--fs-sm); white-space:pre-wrap;}
+.adm-acts{display:flex; flex-wrap:wrap; gap:var(--sp-2);}
+.adm-line-btn{height:32px; padding:0 var(--sp-3); border:1px solid var(--line-strong); border-radius:var(--r-full); background:none; cursor:pointer; font-family:var(--font-text); font-size:var(--fs-xs); font-weight:600; color:var(--text-1); transition:border-color var(--dur-fast), color var(--dur-fast);}
+.adm-line-btn:hover{border-color:var(--accent); color:var(--accent);}
+.adm-reply{display:grid; gap:var(--sp-2);}
+.adm-reply textarea{width:100%; min-height:84px; padding:var(--sp-2) var(--sp-3); border:1px solid var(--line-strong); border-radius:var(--r-sm); background:var(--surface); font-family:var(--font-text); font-size:var(--fs-sm); color:var(--text-1); resize:vertical;}
+.adm-reply textarea:focus{outline:none; border-color:var(--accent);}
+.adm-err{display:grid; grid-template-columns:minmax(0, 1fr) auto; gap:2px var(--sp-3); padding:var(--sp-2) 0; border-bottom:1px solid var(--line);}
+.adm-err code{font-family:ui-monospace, Consolas, monospace; font-size:var(--fs-xs); color:var(--text-1); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.adm-err-count{font-size:var(--fs-sm); font-weight:600; color:var(--note-low); font-variant-numeric:tabular-nums;}
+.adm-err-sub{grid-column:1 / -1; font-size:var(--fs-xs); color:var(--text-2);}
+@media (max-width:600px){
+  #adminPage .adm-tabs{order:3; width:100%; gap:var(--sp-2) var(--sp-4);}
+  .adm-figs, .adm-figs-4{grid-template-columns:repeat(2, minmax(0, 1fr));}
+  .adm-fig{padding:var(--sp-3);}
+  .adm-fig b{font-size:var(--fs-lg);}
+}

@@ -506,6 +506,12 @@ function applyHeaderNavOrder(){
     const btn = document.getElementById(id);
     if(btn) nav.appendChild(btn);
   });
+  // Les boutons hors de l'ordre mémorisé restent après les pages : Admin
+  // (draft Profil du 15/10), puis Installer.
+  ['adminNavBtn', 'installHeaderBtn'].forEach(id => {
+    const btn = document.getElementById(id);
+    if(btn && btn.parentNode === nav) nav.appendChild(btn);
+  });
 }
 
 function saveHeaderNavOrder(order){

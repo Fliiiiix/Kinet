@@ -86,6 +86,8 @@ async function showApp(){
   // (films est déjà chargé à ce stade, aucun aller-retour réseau propre à
   // elle) — appelée directement, sans le `.then`/pas d'await des deux autres.
   refreshActivityBadge();
+  // Admin : nombre de choses à traiter dans l'entête (js/admin.js).
+  if(typeof refreshAdminCounts === 'function') refreshAdminCounts().catch(e => console.error(e));
   maybeShowDigest();
   maybeShowInactivityReminder();
   initChangelog();
