@@ -91,9 +91,101 @@ function friendRatingsLabel(watchlistId){
 // réduire à "dispo sur Netflix".
 function getFilteredWatchlist(){
   const providerFilter = document.getElementById('wlProviderFilter').value;
-  return providerFilter
-    ? watchlist.filter(item => (watchlistProviders[item.tmdbId] || []).some(p => String(p.provider_id) === providerFilter))
-    : watchlist;
+  if(!providerFilter) return watchlist;
+  const mine = getMyStreamingServices();
+  return watchlist.filter(item => watchlistServices(item).some(s =>
+    providerFilter === MY_SERVICES_FILTER ? mine.has(s.key) : s.key === providerFilter));
+}
+
+// --- Plateformes sur les affiches (draft du 15/10, option A validée) ---
+// Une plateforme, un nom : TMDB liste aussi les variantes « with Ads »,
+// « Premium » et les chaînes Amazon (« HBO Max Amazon Channel »), qui
+// comptent ici pour le service lui-même (31 noms deviennent 22 sur un vrai
+// À voir). Seul l'abonnement (flatrate) compte, comme le filtre.
+const STREAMING_SERVICE_ALIASES = {
+  'amazon prime video': 'Prime Video',
+  'disney plus': 'Disney+',
+  'paramount plus': 'Paramount+',
+  'cine+ ocs': 'Ciné+ OCS'
+};
+const WATCHLIST_LOGO_BASE = 'https://image.tmdb.org/t/p/w92';
+const WATCHLIST_MAX_LOGOS = 2;
+const MY_SERVICES_FILTER = '__mine';
+const MY_SERVICES_KEY = 'kinetMyStreamingServices';
+
+function streamingServiceBaseName(providerName){
+  return String(providerName || '').trim()
+    .replace(/\s+Amazon Channel$/i, '')
+    .replace(/\s+(Standard\s+)?with Ads$/i, '')
+    .replace(/\s+Premium$/i, '')
+    .trim();
+}
+
+function streamingServiceName(providerName){
+  const base = streamingServiceBaseName(providerName);
+  return STREAMING_SERVICE_ALIASES[base.toLowerCase()] || base;
+}
+
+// Plateformes d'un film, une par service, dans l'ordre de TMDB
+// (display_priority). Le logo est celui du service lui-même quand TMDB le
+// donne, pas celui d'une variante (pub, chaîne Amazon).
+function groupStreamingServices(flatrate){
+  const byKey = new Map();
+  (flatrate || []).forEach(p => {
+    const name = streamingServiceName(p.provider_name);
+    const key = name.toLowerCase();
+    const isVariant = streamingServiceBaseName(p.provider_name) !== String(p.provider_name || '').trim();
+    const priority = typeof p.display_priority === 'number' ? p.display_priority : 999;
+    const prev = byKey.get(key);
+    if(!prev){
+      byKey.set(key, { key, name, logoPath: p.logo_path || null, priority, isVariant });
+      return;
+    }
+    prev.priority = Math.min(prev.priority, priority);
+    if(prev.isVariant && !isVariant && p.logo_path){
+      prev.logoPath = p.logo_path;
+      prev.isVariant = false;
+    }
+  });
+  return Array.from(byKey.values()).sort((a, b) => a.priority - b.priority);
+}
+
+function watchlistServices(item){
+  return groupStreamingServices(watchlistProviders[item.tmdbId]);
+}
+
+// « Mes abonnements » : les plateformes cochées une fois par l'utilisateur.
+// Gardées sur cet appareil (même principe que grille ou liste, getViewMode(),
+// js/ui.js). Vide = toutes les plateformes restent sur les affiches.
+function getMyStreamingServices(){
+  try{
+    const parsed = JSON.parse(localStorage.getItem(MY_SERVICES_KEY) || '[]');
+    return new Set(Array.isArray(parsed) ? parsed : []);
+  }catch(e){
+    return new Set();
+  }
+}
+
+function toggleMyStreamingService(key){
+  const mine = getMyStreamingServices();
+  if(mine.has(key)) mine.delete(key); else mine.add(key);
+  try{ localStorage.setItem(MY_SERVICES_KEY, JSON.stringify(Array.from(mine))); }catch(e){}
+  return mine;
+}
+
+// Logos dans le coin bas de l'affiche : deux au plus, puis « +n ». Avec des
+// abonnements cochés, seulement ceux-là.
+function watchlistServicesHtml(item){
+  const mine = getMyStreamingServices();
+  const services = watchlistServices(item).filter(s => mine.size === 0 || mine.has(s.key));
+  if(services.length === 0) return '';
+  const names = services.map(s => s.name).join(', ');
+  const extra = services.length - WATCHLIST_MAX_LOGOS;
+  return `<div class="wl-services" role="img" aria-label="Disponible sur ${escapeHtml(names)}" title="${escapeHtml(names)}">${
+    services.slice(0, WATCHLIST_MAX_LOGOS).map(s => s.logoPath
+      ? `<img src="${WATCHLIST_LOGO_BASE}${s.logoPath}" alt="" loading="lazy">`
+      : `<span class="wl-services-more">${escapeHtml(s.name.slice(0, 2))}</span>`).join('')
+  }${extra > 0 ? `<span class="wl-services-more">+${extra}</span>` : ''}</div>`;
 }
 
 function renderWatchlist(){
@@ -104,7 +196,8 @@ function renderWatchlist(){
   }
   const filtered = getFilteredWatchlist();
   if(filtered.length === 0){
-    list.innerHTML = `<div class="empty-state">Aucun film d'À voir n'est disponible sur cette plateforme pour l'instant.</div>`;
+    const onMine = document.getElementById('wlProviderFilter').value === MY_SERVICES_FILTER;
+    list.innerHTML = `<div class="empty-state">Aucun film d'À voir n'est disponible sur ${onMine ? 'tes abonnements' : 'cette plateforme'} pour l'instant.</div>`;
     return;
   }
   list.innerHTML = '';
@@ -127,6 +220,7 @@ function renderWatchlist(){
           <button class="btn secondary" type="button" data-action="quick-cancel" data-id="${item.id}">Annuler</button>
         </div>
       </div>
+      ${watchlistServicesHtml(item)}
       <div class="wl-actions">${rowMoreButtonHtml(`Actions pour ${item.title}`)}</div>
     `;
     const quickForm = row.querySelector('[data-quick-form]');
@@ -237,16 +331,25 @@ async function loadWatchlistProviders(){
 function renderWatchlistReminder(){
   const el = document.getElementById('wlReminder');
   if(!el) return;
-  const parPlateforme = new Map(); // provider_id -> { nom, n }
+  const mine = getMyStreamingServices();
+  if(mine.size > 0 && Object.keys(watchlistProviders).length > 0){
+    // Avec « Mes abonnements » : ce que tu peux voir ce soir.
+    const n = watchlist.filter(item => watchlistServices(item).some(s => mine.has(s.key))).length;
+    el.textContent = n > 0
+      ? `${n} film${n > 1 ? 's' : ''} d'À voir disponible${n > 1 ? 's' : ''} sur tes abonnements.`
+      : 'Aucun film d\'À voir sur tes abonnements pour l\'instant.';
+    el.style.display = '';
+    return;
+  }
+  const parPlateforme = new Map(); // clé du service -> { nom, n }
   let filmsDispo = 0;
   watchlist.forEach(item => {
-    const offres = watchlistProviders[item.tmdbId] || [];
+    const offres = watchlistServices(item);
     if(offres.length) filmsDispo++;
-    offres.forEach(p => {
-      const cle = String(p.provider_id);
-      const entree = parPlateforme.get(cle) || { nom: p.provider_name, n: 0 };
+    offres.forEach(s => {
+      const entree = parPlateforme.get(s.key) || { nom: s.name, n: 0 };
       entree.n++;
-      parPlateforme.set(cle, entree);
+      parPlateforme.set(s.key, entree);
     });
   });
   if(filmsDispo === 0){ el.style.display = 'none'; el.textContent = ''; return; }
@@ -259,26 +362,79 @@ function renderWatchlistReminder(){
 // (js/app.js) : seules les plateformes RÉELLEMENT présentes dans la
 // watchlist (jamais une liste Netflix/Canal+/Prime... générique, une
 // plateforme qui ne concerne aucun film n'a rien à faire dans ce select).
-// Un même provider_id peut revenir sur plusieurs films, dédupliqué ici.
+// Une option par service (variantes regroupées, voir
+// groupStreamingServices()), plus « Mes abonnements » dès qu'il y en a.
 function buildWatchlistProviderFilterOptions(){
   const sel = document.getElementById('wlProviderFilter');
+  const toggle = document.getElementById('wlSubsToggle');
   const current = sel.value;
-  const present = new Map(); // provider_id -> provider_name
-  Object.values(watchlistProviders).forEach(list => {
-    list.forEach(p => present.set(p.provider_id, p.provider_name));
-  });
+  const present = watchlistServiceCounts();
   if(present.size === 0){
     sel.style.display = 'none';
     sel.innerHTML = `<option value="">Toutes les plateformes</option>`;
+    if(toggle) toggle.style.display = 'none';
     return;
   }
-  const options = Array.from(present.entries())
-    .sort((a, b) => a[1].localeCompare(b[1], 'fr'))
-    .map(([id, name]) => `<option value="${id}">${escapeHtml(name)}</option>`)
+  const mine = getMyStreamingServices();
+  const options = Array.from(present.values())
+    .sort((a, b) => a.name.localeCompare(b.name, 'fr'))
+    .map(s => `<option value="${escapeHtml(s.key)}">${escapeHtml(s.name)}</option>`)
     .join('');
-  sel.innerHTML = `<option value="">Toutes les plateformes</option>${options}`;
+  const mineOption = mine.size > 0 ? `<option value="${MY_SERVICES_FILTER}">Mes abonnements</option>` : '';
+  sel.innerHTML = `<option value="">Toutes les plateformes</option>${mineOption}${options}`;
   sel.style.display = '';
-  if(current && present.has(Number(current))) sel.value = current;
+  if(current && (present.has(current) || (current === MY_SERVICES_FILTER && mine.size > 0))) sel.value = current;
+  if(toggle){
+    toggle.style.display = '';
+    toggle.textContent = mine.size > 0 ? `Mes abonnements · ${mine.size}` : 'Mes abonnements';
+  }
+}
+
+// Services présents dans À voir : clé -> { key, name, logoPath, n }.
+function watchlistServiceCounts(){
+  const present = new Map();
+  watchlist.forEach(item => {
+    watchlistServices(item).forEach(s => {
+      const entry = present.get(s.key) || { key: s.key, name: s.name, logoPath: s.logoPath, n: 0 };
+      entry.n++;
+      if(!entry.logoPath && s.logoPath) entry.logoPath = s.logoPath;
+      present.set(s.key, entry);
+    });
+  });
+  return present;
+}
+
+// Choix des abonnements : une pastille par service présent dans À voir,
+// les plus fréquents d'abord.
+function renderMyServicesChips(){
+  const el = document.getElementById('wlSubsChips');
+  if(!el) return;
+  const mine = getMyStreamingServices();
+  el.innerHTML = Array.from(watchlistServiceCounts().values())
+    .sort((a, b) => b.n - a.n || a.name.localeCompare(b.name, 'fr'))
+    .map(s => `<button type="button" class="wl-sub-chip" data-service="${escapeHtml(s.key)}" aria-pressed="${mine.has(s.key)}">${s.logoPath ? `<img src="${WATCHLIST_LOGO_BASE}${s.logoPath}" alt="" loading="lazy">` : ''}${escapeHtml(s.name)}</button>`)
+    .join('');
+}
+
+function toggleMyServicesPanel(){
+  const panel = document.getElementById('wlSubsPanel');
+  const toggle = document.getElementById('wlSubsToggle');
+  const open = panel.style.display === 'none';
+  panel.style.display = open ? '' : 'none';
+  toggle.setAttribute('aria-expanded', String(open));
+  if(open) renderMyServicesChips();
+}
+
+function handleMyServiceChipClick(e){
+  const chip = e.target.closest('.wl-sub-chip');
+  if(!chip) return;
+  const mine = toggleMyStreamingService(chip.dataset.service);
+  chip.setAttribute('aria-pressed', String(mine.has(chip.dataset.service)));
+  const sel = document.getElementById('wlProviderFilter');
+  if(sel.value === MY_SERVICES_FILTER && mine.size === 0) sel.value = '';
+  buildWatchlistProviderFilterOptions();
+  renderWatchlistReminder();
+  renderWatchlist();
 }
 
 // Page watchlist — appelée par le routeur (#/watchlist).
@@ -735,3 +891,5 @@ document.getElementById('wlTitleInput').addEventListener('blur', () => {
 });
 document.getElementById('wlTmdbClearBtn').addEventListener('click', clearWlTmdbSelection);
 document.getElementById('wlProviderFilter').addEventListener('change', renderWatchlist);
+document.getElementById('wlSubsToggle').addEventListener('click', toggleMyServicesPanel);
+document.getElementById('wlSubsChips').addEventListener('click', handleMyServiceChipClick);

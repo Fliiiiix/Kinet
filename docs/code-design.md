@@ -164,6 +164,7 @@ Interdits : une boîte dans une boîte, une ombre sur du contenu posé, une doub
 - **Onglets** (Films / Séries, sections) : texte seul 15px 600, actif `--text-1` souligné 2px `--accent`, inactif `--text-2`.
 - **Navigation** : PC, le mot « Kinet » à gauche, les pages en texte à droite, page active en pilule `--accent`. Mobile, barre du bas flottante (5 destinations maximum).
 - **Affiche** : image 2:3, `--r-sm`, sans bordure ni fond autour. Sous l'image : titre 13px 500 sur une ligne, puis méta 11px `--text-2`. La note se lit dans le coin, en chiffre coloré.
+- **Plateformes (À voir)** : logos TMDB de 24px (20px sur téléphone), `--r-sm`, dans le coin bas gauche de l'affiche, deux au plus puis « +n ». Ce sont des données, comme l'affiche, pas une décoration. Avec « Mes abonnements » cochés, seulement ceux-là.
 - **Note** : sur une fiche, anneau 56px, bordure 2px couleur de la note, chiffre 15px 600 tabulaire. Dans une grille ou une liste, chiffre seul 13px 600 dans la couleur de la note.
 - **Ligne de liste** : hauteur 56 à 64px, séparateur `--line`, pas de fond.
 - **Modale / feuille** : niveau 2, `--r-md`, titre `--fs-lg`, fermeture par icône ✕ (bouton icône) en haut à droite. Sur mobile, feuille depuis le bas.

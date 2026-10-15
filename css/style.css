@@ -6625,3 +6625,54 @@ body[data-view-mode="grid"] #filmList .star-btn .ui-icon{width:16px; height:16px
 @media (max-width:600px){
   .search-extras{grid-template-columns:minmax(0, 1fr); gap:var(--sp-5); margin-top:var(--sp-6);}
 }
+
+/* ==========================================================
+   À VOIR : plateformes sur les affiches (draft du 15/10, option A) et
+   « Mes abonnements » (watchlistServicesHtml(), renderMyServicesChips(),
+   js/watchlist.js). Logos dans le coin bas de l'affiche, deux au plus.
+   ========================================================== */
+.wl-services{display:flex; align-items:center; gap:var(--sp-1); flex:none; pointer-events:none;}
+.wl-services img{width:24px; height:24px; border-radius:var(--r-sm); display:block; box-shadow:0 0 0 1px rgba(0,0,0,0.35), 0 2px 6px rgba(0,0,0,0.45);}
+.wl-services-more{
+  height:24px; min-width:24px; padding:0 6px;
+  display:grid; place-items:center;
+  border-radius:var(--r-full);
+  background:rgba(var(--glass-rgb),0.78);
+  backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+  color:var(--text); font-size:var(--fs-xs); font-weight:600; font-variant-numeric:tabular-nums;
+}
+/* Grille : calque de la taille de l'affiche (2:3, en haut de la case),
+   logos posés dans son coin bas gauche. */
+body[data-view-mode="grid"] #wlList .wl-services{
+  position:absolute; top:0; left:0; right:0; z-index:1;
+  aspect-ratio:2/3; align-items:flex-end; padding:6px;
+  transition:transform var(--dur-fast) var(--ease-out);
+}
+body[data-view-mode="grid"] #wlList .wl-row-clickable:hover .wl-services{transform:translateY(-2px);}
+@media (max-width:600px){
+  body[data-view-mode="grid"] #wlList .wl-services{padding:5px; gap:3px;}
+  body[data-view-mode="grid"] #wlList .wl-services img{width:20px; height:20px;}
+  body[data-view-mode="grid"] #wlList .wl-services-more{height:20px; min-width:20px; padding:0 5px;}
+}
+.wl-subs-toggle{
+  height:36px; padding:0 var(--sp-2);
+  background:none; border:none; cursor:pointer;
+  font-family:var(--font-text); font-size:var(--fs-sm); font-weight:600; color:var(--text-2);
+  transition:color var(--dur-fast);
+}
+.wl-subs-toggle:hover, .wl-subs-toggle[aria-expanded="true"]{color:var(--text-1);}
+.wl-subs{margin:0 0 var(--sp-4);}
+.wl-subs-hint{margin:0 0 var(--sp-2); font-size:var(--fs-xs); color:var(--text-2);}
+.wl-subs-chips{display:flex; flex-wrap:wrap; gap:var(--sp-2);}
+.wl-sub-chip{
+  display:inline-flex; align-items:center; gap:var(--sp-2);
+  height:32px; padding:0 var(--sp-3) 0 var(--sp-1);
+  border:1px solid var(--line); border-radius:var(--r-full); background:none; cursor:pointer;
+  font-family:var(--font-text); font-size:var(--fs-sm); font-weight:600; color:var(--text-2);
+  transition:border-color var(--dur-fast), color var(--dur-fast), background var(--dur-fast);
+}
+.wl-sub-chip:not(:has(img)){padding-left:var(--sp-3);}
+.wl-sub-chip img{width:24px; height:24px; border-radius:var(--r-full); display:block;}
+.wl-sub-chip:hover{color:var(--text-1); border-color:var(--line-strong);}
+.wl-sub-chip[aria-pressed="true"]{color:var(--text-1); border-color:var(--accent); background:var(--accent-wash);}
+.wl-sub-chip:active{transform:scale(0.97);}
