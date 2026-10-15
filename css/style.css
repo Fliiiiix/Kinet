@@ -6602,6 +6602,12 @@ button.btn-secondary{background:none; border:none; border-bottom:1px solid var(-
   animation:pageIn .18s cubic-bezier(.2,.8,.3,1);
 }
 .overlay.as-page.closing .modal{animation:none;}
+/* Page défilée puis rubrique ouverte : le verrou de défilement (html.scroll-locked)
+   fait remonter l'entête collant hors de l'écran. Tant qu'une rubrique est
+   affichée en page, l'entête est fixé en haut (le contenu derrière est couvert). */
+html:has(.overlay.as-page:is(.open, .closing)) header{
+  position:fixed; top:env(safe-area-inset-top, 0px); left:0; right:0;
+}
 @media (prefers-reduced-motion:reduce){ .overlay.as-page .modal{animation:none;} }
 
 @media (max-width:600px){

@@ -260,7 +260,7 @@ function updateTopFilmsVisibilityNote(){
   const on = document.getElementById('publicProfileToggle').checked;
   document.getElementById('topFilmsVisibilityNote').textContent = on
     ? 'Visibles par tout le monde (profil public activé).'
-    : 'Visibles par tes amis. Active « Profil public » plus bas pour les montrer à tout le monde.';
+    : 'Visibles par tes amis. Active « Profil public » dans les réglages de ta page Profil pour les montrer à tout le monde.';
 }
 
 function updatePublicProfileLinkVisibility(){
