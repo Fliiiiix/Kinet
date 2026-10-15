@@ -666,7 +666,7 @@ async function openFilmDetail(tmdbId){
   ]);
 }
 
-document.getElementById('filmDetailBack').addEventListener('click', goHome);
+document.getElementById('filmDetailBack').addEventListener('click', () => returnFromDetail(goHome));
 document.getElementById('filmDetailPrevBtn').addEventListener('click', () => goFilmNav(-1));
 document.getElementById('filmDetailNextBtn').addEventListener('click', () => goFilmNav(1));
 document.addEventListener('keydown', (e) => {

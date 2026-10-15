@@ -166,7 +166,33 @@ function goToSeries(){ location.hash = '#/series'; }
 let pendingShowNavList = null; // [{ id, title }] ou null
 function goToSeriesDetail(showId, navList){
   pendingShowNavList = Array.isArray(navList) ? navList : null;
+  rememberDetailOrigin();
   location.hash = `#/series/${showId}`;
+}
+
+// « Retour » d'une fiche film ou série (retour de Flix, 15/10 : un film
+// ouvert depuis À voir ramenait au catalogue) : revient à la page d'où la
+// fiche a été ouverte, à la même hauteur. L'origine tient tant qu'on va de
+// fiche en fiche (flèches, films similaires) et s'oublie dès qu'on change
+// de page autrement (renderRoute()). Lien direct ou F5 sur une fiche : pas
+// d'origine, retour par défaut (catalogue ou liste des séries). Le
+// catalogue, lui, repart toujours du haut (goHome(), voir resetHomeView()).
+let detailOrigin = null; // { hash, scrollY } ou null
+let pendingScrollRestore = null; // { hash, scrollY } ou null
+function isDetailRoute(name){
+  return name === 'filmDetail' || name === 'seriesDetail';
+}
+function rememberDetailOrigin(){
+  if(isDetailRoute(parseRoute().name)) return;
+  detailOrigin = { hash: location.hash || '', scrollY: window.scrollY || 0 };
+}
+function returnFromDetail(fallback){
+  const origin = detailOrigin;
+  detailOrigin = null;
+  if(!origin){ fallback(); return; }
+  if(origin.hash === '' || origin.hash === '#'){ goHome(); return; }
+  pendingScrollRestore = { hash: origin.hash, scrollY: origin.scrollY };
+  location.hash = origin.hash;
 }
 function goToUpcoming(){ location.hash = '#/prochainement'; }
 function goToAmis(){ location.hash = '#/amis'; }
@@ -194,6 +220,7 @@ function goToPublicProfile(userId){ location.hash = `#/u/${userId}`; }
 let pendingFilmNavList = null; // [{ tmdbId, title }] ou null
 function goToFilmDetail(tmdbId, navList){
   pendingFilmNavList = Array.isArray(navList) ? navList : null;
+  rememberDetailOrigin();
   location.hash = `#/film/${tmdbId}`;
 }
 
@@ -240,6 +267,11 @@ function parseRoute(){
 // direct vers une page groupe/proposition, y compris après un F5).
 async function renderRoute(){
   const route = parseRoute();
+  // Origine d'une fiche oubliée dès qu'on change de page autrement que de
+  // fiche en fiche ; hauteur à rétablir si on revient par « Retour ».
+  if(!isDetailRoute(route.name)) detailOrigin = null;
+  const restoreScrollY = (pendingScrollRestore && pendingScrollRestore.hash === location.hash) ? pendingScrollRestore.scrollY : null;
+  pendingScrollRestore = null;
   // États actifs (onglets Films/Séries, barre mobile, entête) mis à jour
   // AVANT les pages à part ci-dessous : sinon le profil public gardait
   // l'onglet de la page précédente allumé (audit C6).
@@ -329,6 +361,7 @@ async function renderRoute(){
     showOnlyPage('listDetailPage');
     await openListDetail(route.listId);
   }
+  if(restoreScrollY !== null) requestAnimationFrame(() => window.scrollTo(0, restoreScrollY));
 }
 
 window.addEventListener('hashchange', renderRoute);

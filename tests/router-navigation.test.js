@@ -117,4 +117,46 @@ function buildContext(initialHash){
   });
 }
 
+// --- « Retour » d'une fiche (retour de Flix, 15/10 : un film ouvert depuis
+// À voir ramenait au catalogue) --- returnFromDetail() revient à la page
+// d'où la fiche a été ouverte ; le repli ne sert que sans origine connue.
+{
+  test('fiche film ouverte depuis À voir : « Retour » ramène sur À voir', () => {
+    const { ctx } = buildContext('#/watchlist');
+    let fallbackCalls = 0;
+    ctx.goToFilmDetail(550, []);
+    assert.strictEqual(ctx.location.hash, '#/film/550');
+    ctx.returnFromDetail(() => { fallbackCalls++; });
+    assert.strictEqual(ctx.location.hash, '#/watchlist');
+    assert.strictEqual(fallbackCalls, 0);
+  });
+  test('de fiche en fiche (flèches, films similaires) : l\'origine reste la page de départ', () => {
+    const { ctx } = buildContext('#/watchlist');
+    ctx.goToFilmDetail(550);
+    ctx.goToFilmDetail(13);
+    ctx.returnFromDetail(() => {});
+    assert.strictEqual(ctx.location.hash, '#/watchlist');
+  });
+  test('fiche série ouverte depuis Bientôt : « Retour » ramène sur Bientôt', () => {
+    const { ctx } = buildContext('#/prochainement');
+    ctx.goToSeriesDetail(16, []);
+    ctx.returnFromDetail(() => { throw new Error('repli inattendu'); });
+    assert.strictEqual(ctx.location.hash, '#/prochainement');
+  });
+  test('fiche ouverte depuis le catalogue : « Retour » ramène au catalogue', () => {
+    const { ctx } = buildContext('');
+    let fallbackCalls = 0;
+    ctx.goToFilmDetail(550);
+    ctx.returnFromDetail(() => { fallbackCalls++; });
+    assert.strictEqual(ctx.location.hash, '');
+    assert.strictEqual(fallbackCalls, 0);
+  });
+  test('lien direct ou F5 sur une fiche (pas d\'origine) : retour par défaut', () => {
+    const { ctx } = buildContext('#/film/550');
+    let fallbackCalls = 0;
+    ctx.returnFromDetail(() => { fallbackCalls++; });
+    assert.strictEqual(fallbackCalls, 1);
+  });
+}
+
 module.exports = run('router-navigation.test.js');

@@ -1098,7 +1098,7 @@ async function openShowDetail(showId){
   }
 }
 
-document.getElementById('seriesDetailBack').addEventListener('click', goToSeries);
+document.getElementById('seriesDetailBack').addEventListener('click', () => returnFromDetail(goToSeries));
 document.getElementById('seriesDetailPrevBtn').addEventListener('click', () => goShowNav(-1));
 document.getElementById('seriesDetailNextBtn').addEventListener('click', () => goShowNav(1));
 document.addEventListener('keydown', (e) => {
