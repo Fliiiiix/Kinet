@@ -151,9 +151,6 @@ function renderTrackedShows(){
   const norm = (txt) => (typeof normalizeSearch === 'function') ? normalizeSearch(txt) : String(txt).toLowerCase();
   const q = input ? norm(input.value.trim()) : '';
   const shown = q ? trackedShows.filter(show => norm(show.title).includes(q)) : trackedShows;
-  // Recherche unique (audit M2) : films, amis et groupes qui correspondent,
-  // sous la liste (renderSearchExtras(), js/globalSearch.js).
-  if(typeof renderSearchExtras === 'function') renderSearchExtras('series', input ? input.value : '');
   const countEl = document.getElementById('seriesCountLine');
   if(countEl) countEl.textContent = !trackedShows.length ? ''
     : q ? `${shown.length} sur ${trackedShows.length}`
@@ -238,33 +235,9 @@ async function handleRemoveShow(id, fromDetail){
   else renderTrackedShows();
 }
 
-// --- Ajout : recherche TMDB (séries), voir js/tmdb.js ---
-
-let seriesTmdbSearchTimer = null;
-
-function renderSeriesTmdbResults(results){
-  const wrap = document.getElementById('seriesTmdbResults');
-  if(!results.length){
-    wrap.innerHTML = `<div class="tmdb-empty">Aucun résultat.</div>`;
-    return;
-  }
-  wrap.innerHTML = '';
-  results.forEach(r => {
-    const year = r.release_date ? r.release_date.slice(0, 4) : '?';
-    const poster = r.poster_path ? TMDB_IMG_BASE + r.poster_path : null;
-    const item = document.createElement('div');
-    item.className = 'tmdb-result';
-    item.innerHTML = `
-      ${poster ? `<img loading="lazy" decoding="async" src="${poster}" alt="">` : `<div class="tmdb-poster-placeholder">${TV_PLACEHOLDER_SVG}</div>`}
-      <div class="tmdb-result-info">
-        <div class="tmdb-result-title">${escapeHtml(r.title)}</div>
-        <div class="tmdb-result-year">${year}</div>
-      </div>
-    `;
-    item.addEventListener('mousedown', (e) => { e.preventDefault(); selectSeriesTmdbResult(r); });
-    wrap.appendChild(item);
-  });
-}
+// --- Ajout : recherche TMDB (séries), voir js/tmdb.js --- Les séries à
+// suivre sont proposées dans la liste sous la recherche (« À suivre »,
+// js/globalSearch.js), qui appelle selectSeriesTmdbResult() au choix.
 
 function selectSeriesTmdbResult(r){
   seriesTmdbSelected = {
@@ -276,7 +249,6 @@ function selectSeriesTmdbResult(r){
     original_title: r.original_title || null
   };
   document.getElementById('seriesTitleInput').value = r.title;
-  document.getElementById('seriesTmdbResults').innerHTML = '';
   updateSeriesTmdbSelectedUI();
 }
 
@@ -301,18 +273,6 @@ function updateSeriesTmdbSelectedUI(){
   img.style.display = seriesTmdbSelected.poster_url ? '' : 'none';
   document.getElementById('seriesTmdbSelectedTitle').textContent =
     seriesTmdbSelected.title + (seriesTmdbSelected.release_year ? ` (${seriesTmdbSelected.release_year})` : '');
-}
-
-async function handleSeriesTmdbSearch(query){
-  const wrap = document.getElementById('seriesTmdbResults');
-  wrap.innerHTML = `<div class="tmdb-empty">Recherche…</div>`;
-  try{
-    const results = await searchTmdbTv(query);
-    renderSeriesTmdbResults(results);
-  }catch(e){
-    wrap.innerHTML = `<div class="tmdb-empty">${escapeHtml(e.message)}</div>`;
-    console.error(e);
-  }
 }
 
 // Contrairement à la watchlist (titre libre accepté), une série suivie
@@ -379,19 +339,7 @@ async function handleAddShow(){
   const seriesAddBtn = document.getElementById('seriesAddBtn');
   seriesAddBtn.addEventListener('click', withSubmitGuard(seriesAddBtn, handleAddShow));
 }
-document.getElementById('seriesTitleInput').addEventListener('input', () => {
-  clearTimeout(seriesTmdbSearchTimer);
-  renderTrackedShows();
-  const query = document.getElementById('seriesTitleInput').value.trim();
-  if(query.length < 2){
-    document.getElementById('seriesTmdbResults').innerHTML = '';
-    return;
-  }
-  seriesTmdbSearchTimer = setTimeout(() => handleSeriesTmdbSearch(query), 350);
-});
-document.getElementById('seriesTitleInput').addEventListener('blur', () => {
-  setTimeout(() => { document.getElementById('seriesTmdbResults').innerHTML = ''; }, 150);
-});
+document.getElementById('seriesTitleInput').addEventListener('input', renderTrackedShows);
 document.getElementById('seriesTmdbClearBtn').addEventListener('click', clearSeriesTmdbSelection);
 
 // --- Détail d'une série : note/commentaire + accordéon de saisons ---

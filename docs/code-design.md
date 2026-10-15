@@ -132,7 +132,7 @@ Rien d'autre. Pour les très petits écrans, les grilles utilisent `repeat(auto-
 - Une seule ligne d'outils : recherche en pilule de 42px (fond `--surface`, filet `--line`), le filtre et l'affichage en icônes de 34px dedans, le compteur à droite (masqué sur téléphone).
 - Téléphone : Catalogue, À voir, Bientôt, Amis, Profil.
 - Statistiques, Succès, Cartes et Journal s'affichent en page (`.overlay.as-page`), sous l'entête, avec « ← Retour ».
-- Une seule recherche (audit M2, option A validée le 15/10) : la pilule filtre les films (ou les séries) et, dès 2 lettres, montre dessous les séries, films, amis et groupes qui correspondent, 5 au plus par rubrique, en lignes de liste (`.search-extras`, `js/globalSearch.js`). Pas de fenêtre de recherche à part. La touche « / » place le curseur dans la recherche.
+- Une seule recherche (audit M2) avec suggestions (draft du 15/10, option A) : la pilule filtre les films (ou les séries) et ouvre dessous, dès 2 lettres, une liste flottante (niveau 2, `.search-suggest`, `js/globalSearch.js`) : le meilleur résultat en tête, puis tes films, À voir, séries, amis, groupes (3 lignes chacun), puis les films ou séries à ajouter depuis TMDB à partir de 3 lettres. Lettres tapées en gras. Barre vide : les 3 derniers résultats ouverts. Flèches, Entrée, Échap sur PC. La touche « / » place le curseur dans la recherche.
 
 ## 5. Formes
 

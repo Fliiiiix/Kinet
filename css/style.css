@@ -6321,17 +6321,6 @@ button.btn-secondary{background:none; border:none; border-bottom:1px solid var(-
 /* Le bouton flottant « + » est remplacé par la recherche (audit M2/M13) ;
    il reste dans le HTML pour le JS qui le lit. */
 #fabAddBtn{display:none !important;}
-/* Case « Ajouter « titre » » en tête des résultats (buildAddFromSearchTile(), js/app.js) */
-.add-from-search{cursor:pointer;}
-.add-from-search .add-from-search-poster{
-  display:flex; align-items:center; justify-content:center;
-  border:1.5px dashed var(--line-strong) !important; background:none;
-  color:var(--text-2); font-size:var(--fs-xl); font-weight:400; line-height:1;
-  transition:border-color var(--dur-fast), color var(--dur-fast);
-}
-.add-from-search:hover .add-from-search-poster,
-.add-from-search:focus-visible .add-from-search-poster{border-color:var(--accent) !important; color:var(--accent);}
-.add-from-search .film-title{color:var(--text);}
 /* Objectif annuel sans trait au-dessus (moins de lignes, audit M13) */
 .annual-goal-widget{border-top:none; padding-top:0;}
 @media (max-width:600px){
@@ -6599,34 +6588,6 @@ body[data-view-mode="grid"] #filmList .star-btn .ui-icon{width:16px; height:16px
 
 
 /* ==========================================================
-   AUDIT M2 : recherche unique (draft option A, validée le 15/10). Sous
-   les films (ou sous les séries), ce qui correspond ailleurs : séries,
-   films, amis, groupes (renderSearchExtras(), js/globalSearch.js).
-   Lignes de liste du code de design : pas de fond, un filet.
-   ========================================================== */
-.search-extras{display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:var(--sp-6); margin-top:var(--sp-7);}
-.search-extras:empty{display:none;}
-.sx-group{min-width:0;}
-.sx-label{font-size:var(--fs-xs); font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:var(--text-2); margin-bottom:var(--sp-1);}
-.sx-row{display:flex; align-items:center; gap:var(--sp-3); min-height:60px; padding:var(--sp-2) 0; border-bottom:1px solid var(--line); cursor:pointer;}
-.sx-row:hover .sx-title, .sx-row:focus-visible .sx-title{color:var(--accent);}
-.sx-main{flex:1; min-width:0;}
-.sx-title{font-size:var(--fs-sm); font-weight:600; color:var(--text-1); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; transition:color var(--dur-fast);}
-.sx-sub{font-size:var(--fs-xs); color:var(--text-2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-.sx-thumb{width:32px; height:48px; flex:none; border-radius:var(--r-sm); object-fit:cover; background:var(--surface-2); color:var(--text-3); display:grid; place-items:center;}
-.sx-thumb svg{width:16px; height:16px;}
-.sx-face{width:40px; height:40px; flex:none; border-radius:var(--r-full); object-fit:cover; background:var(--surface-2); color:var(--text-2); display:grid; place-items:center;}
-.sx-glyph{width:40px; height:40px; flex:none; border-radius:var(--r-sm); background:var(--surface-2); color:var(--text-2); display:grid; place-items:center;}
-.sx-face .ui-icon, .sx-glyph .ui-icon{width:20px; height:20px;}
-.sx-note{flex:none; font-size:var(--fs-sm); font-weight:600; font-variant-numeric:tabular-nums;}
-.sx-note.rate-low{color:var(--note-low);}
-.sx-note.rate-mid{color:var(--note-mid);}
-.sx-note.rate-high{color:var(--note-high);}
-@media (max-width:600px){
-  .search-extras{grid-template-columns:minmax(0, 1fr); gap:var(--sp-5); margin-top:var(--sp-6);}
-}
-
-/* ==========================================================
    À VOIR : plateformes sur les affiches (draft du 15/10, option A) et
    « Mes abonnements » (watchlistServicesHtml(), renderMyServicesChips(),
    js/watchlist.js). Logos dans le coin bas de l'affiche, deux au plus.
@@ -6678,3 +6639,53 @@ body[data-view-mode="grid"] #wlList .wl-row-clickable:hover .wl-services{transfo
 .wl-sub-chip:hover{color:var(--text-1); border-color:var(--line-strong);}
 .wl-sub-chip[aria-pressed="true"]{color:var(--text-1); border-color:var(--accent); background:var(--accent-wash);}
 .wl-sub-chip:active{transform:scale(0.97);}
+
+/* ==========================================================
+   SUGGESTIONS SOUS LA RECHERCHE (draft du 15/10, option A) : meilleur
+   résultat puis rubriques, films ou séries à ajouter depuis TMDB
+   (js/globalSearch.js). Niveau 2 du code de design : ce qui flotte.
+   ========================================================== */
+.search-suggest{
+  position:absolute; top:calc(100% + var(--sp-2)); left:0; z-index:40;
+  width:min(560px, 100%);
+  max-height:min(70vh, 560px); overflow-y:auto; overscroll-behavior:contain;
+  padding:var(--sp-2) 0;
+  background:color-mix(in srgb, var(--surface) 94%, transparent);
+  backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+  border:1px solid var(--line); border-radius:var(--r-md);
+  box-shadow:var(--shadow-float);
+  text-align:left; cursor:default;
+}
+.sg-label{padding:var(--sp-3) var(--sp-4) var(--sp-1); font-size:var(--fs-xs); font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:var(--text-2);}
+.sg-row{display:flex; align-items:center; gap:var(--sp-3); min-height:56px; padding:var(--sp-1) var(--sp-4); cursor:pointer;}
+.sg-row:hover, .sg-row.is-active{background:var(--surface-2);}
+.sg-thumb{width:32px; height:48px; flex:none; border-radius:var(--r-sm); object-fit:cover; background:var(--surface-2); color:var(--text-3); display:grid; place-items:center;}
+.sg-thumb svg{width:16px; height:16px;}
+.sg-face{width:36px; height:36px; flex:none; border-radius:var(--r-full); object-fit:cover; background:var(--surface-2); color:var(--text-2); display:grid; place-items:center;}
+.sg-glyph{width:36px; height:36px; flex:none; border-radius:var(--r-sm); background:var(--surface-2); color:var(--text-2); display:grid; place-items:center;}
+.sg-face .ui-icon, .sg-glyph .ui-icon{width:20px; height:20px;}
+.sg-main{flex:1; min-width:0; display:flex; flex-direction:column;}
+.sg-title{font-size:var(--fs-sm); font-weight:400; color:var(--text-1); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.sg-title b{font-weight:600;}
+.sg-sub{font-size:var(--fs-xs); color:var(--text-2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.sg-note{flex:none; font-size:var(--fs-sm); font-weight:600; font-variant-numeric:tabular-nums;}
+.sg-note.rate-low{color:var(--note-low);}
+.sg-note.rate-mid{color:var(--note-mid);}
+.sg-note.rate-high{color:var(--note-high);}
+.sg-add{width:28px; height:28px; flex:none; border-radius:var(--r-full); border:1px solid var(--line-strong); color:var(--text-2); display:grid; place-items:center; font-size:var(--fs-md); line-height:1;}
+/* Le meilleur résultat, un cran plus grand */
+.sg-top .sg-row{min-height:64px;}
+.sg-top .sg-thumb{width:40px; height:60px;}
+.sg-top .sg-face, .sg-top .sg-glyph{width:44px; height:44px;}
+.sg-top .sg-title{font-size:var(--fs-md);}
+.sg-more{padding:var(--sp-3) var(--sp-4); margin-top:var(--sp-1); border-top:1px solid var(--line); font-size:var(--fs-sm); font-weight:600; color:var(--accent); cursor:pointer;}
+.sg-more + .sg-more{margin-top:0; border-top:none;}
+.sg-more:hover, .sg-more[aria-selected="true"]{background:var(--surface-2);}
+.sg-empty{padding:var(--sp-3) var(--sp-4); font-size:var(--fs-sm); color:var(--text-2);}
+.sg-hint{display:flex; gap:var(--sp-4); margin-top:var(--sp-1); padding:var(--sp-3) var(--sp-4) var(--sp-1); border-top:1px solid var(--line); font-size:var(--fs-xs); color:var(--text-3);}
+.sg-hint kbd{font-family:var(--font-text); font-size:var(--fs-xs); padding:1px 6px; border:1px solid var(--line-strong); border-radius:var(--r-full); color:var(--text-2);}
+@media (hover:none){ .sg-hint{display:none;} }
+@media (max-width:600px){
+  .search-suggest{width:100%; max-height:60vh;}
+  .sg-hint{display:none;}
+}

@@ -304,9 +304,6 @@ function render(){
   // feuille repliée, tri "note-desc" étant la valeur par défaut de #sortBy.
   document.getElementById('filtersToggleBtn').classList.toggle('has-active-filter', sortBy !== 'note-desc' || !!genreFilter || !!yearFilter);
   renderBulkActionsBar();
-  // Recherche unique (audit M2) : séries, amis et groupes qui correspondent,
-  // sous la grille (renderSearchExtras(), js/globalSearch.js).
-  if(typeof renderSearchExtras === 'function') renderSearchExtras('films', document.getElementById('search').value);
 
   const filtered = getFilteredSortedFilms();
 
@@ -317,22 +314,16 @@ function render(){
     ? `${filtered.length} sur ${films.length}`
     : `${filtered.length} film${filtered.length>1?'s':''}`;
 
-  // Ajouter un film passe par la recherche (audit M2, retour du 14/10 :
-  // « l'ajout de film devrait se faire par la recherche et non un
-  // bouton ») : dès qu'un titre est tapé, une case « Ajouter » ouvre la
-  // notation avec ce titre déjà cherché sur TMDB.
+  // Ajouter un film passe par la recherche (audit M2, retour du 14/10) :
+  // les films à ajouter sont proposés dans la liste sous la pilule
+  // (suggestions, js/globalSearch.js), plus de case « Ajouter » ici.
   const rawSearch = document.getElementById('search').value.trim();
-  const addTile = rawSearch.length >= 2 ? buildAddFromSearchTile(rawSearch) : null;
 
   if(filtered.length === 0){
-    if(addTile){
-      list.innerHTML = '';
-      list.appendChild(addTile);
-    }else{
-      list.innerHTML = `<div class="empty-state">${films.length === 0
-        ? 'Aucun film pour l\'instant. Tape un titre dans la recherche pour ajouter ton premier film.'
-        : 'Aucun film ne correspond à ces filtres.'}</div>`;
-    }
+    list.innerHTML = `<div class="empty-state">${films.length === 0
+      ? 'Aucun film pour l\'instant. Tape un titre dans la recherche pour ajouter ton premier film.'
+      : rawSearch ? `Aucun de tes films ne correspond à « ${escapeHtml(rawSearch)} ». Choisis-le dans la liste sous la recherche pour l'ajouter.`
+      : 'Aucun film ne correspond à ces filtres.'}</div>`;
     renderLoadMore(false);
     return;
   }
@@ -352,7 +343,6 @@ function render(){
   // goToFilmDetail() que Top/Watchlist/Amis (js/top.js, js/watchlist.js).
   // Le sens inverse (fiche film -> notation) existe déjà via "Modifier ma
   // note" sur cette fiche (handleFilmDetailRate(), js/filmDetail.js).
-  if(addTile) list.appendChild(addTile);
   const navList = pageItems.filter(f => f.tmdbId).map(f => ({ tmdbId: f.tmdbId, title: f.title }));
   pageItems.forEach(f => {
     const note = getDisplayNote(f);
@@ -435,21 +425,8 @@ function render(){
   renderLoadMore(currentPage < totalPages);
 }
 
-// Case « Ajouter « titre » » en tête des résultats de recherche (audit M2).
-function buildAddFromSearchTile(query){
-  const row = document.createElement('div');
-  row.className = 'film-row add-from-search';
-  row.innerHTML = `
-    <div class="film-poster add-from-search-poster" aria-hidden="true">+</div>
-    <div class="film-main">
-      <div class="film-title">Ajouter « ${escapeHtml(query)} »</div>
-      <div class="film-sub">Le chercher et le noter</div>
-    </div>
-  `;
-  makeRowClickable(row, () => openAddFromSearch(query));
-  return row;
-}
-
+// Notation avec le titre déjà cherché sur TMDB : « Plus de films sur TMDB »
+// en bas de la liste de suggestions (js/globalSearch.js).
 function openAddFromSearch(query){
   openModal(null);
   const titleInput = document.getElementById('titleInput');
