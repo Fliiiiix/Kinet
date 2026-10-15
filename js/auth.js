@@ -31,6 +31,10 @@ async function checkMaintenance(){
 
 function showAuthScreen(){
   document.getElementById('authContainer').style.display = '';
+  // Toujours le formulaire en arrivant (après une déconnexion, pas l'écran
+  // « Regarde tes mails » d'un envoi précédent).
+  document.getElementById('authSent').hidden = true;
+  document.getElementById('authForm').hidden = false;
   showOnlyPage(null); // masque appContainer + les pages Groupes (js/router.js)
   document.getElementById('userBar').style.display = 'none';
   document.getElementById('mobileTabbar').style.display = 'none';
@@ -116,18 +120,48 @@ function handleSession(session){
 async function handleSendMagicLink(){
   const email = document.getElementById('authEmail').value.trim();
   const statusEl = document.getElementById('authStatus');
-  if(!email){
-    statusEl.textContent = 'Entre un email valide.';
+  if(!email || !email.includes('@')){
+    statusEl.textContent = 'Entre ton email pour recevoir le lien.';
     return;
   }
   statusEl.textContent = 'Envoi en cours…';
-  const { error } = await supabaseClient.auth.signInWithOtp({
+  const error = await sendMagicLink(email);
+  if(error){
+    statusEl.textContent = `Erreur : ${error.message}`;
+    return;
+  }
+  statusEl.textContent = '';
+  showAuthSent(email);
+}
+
+function sendMagicLink(email){
+  return supabaseClient.auth.signInWithOtp({
     email,
     options: { emailRedirectTo: window.location.href.split('#')[0].split('?')[0] }
-  });
-  statusEl.textContent = error
-    ? `Erreur : ${error.message}`
-    : `Lien envoyé à ${email}, vérifie ta boîte mail (et les spams).`;
+  }).then(({ error }) => error || null);
+}
+
+// Écran « Regarde tes mails » (page de connexion, piste A du 15/10) : à la
+// place du formulaire, avec « Renvoyer le lien » et « Changer d'email ».
+function showAuthSent(email){
+  document.getElementById('authSentEmail').textContent = email;
+  document.getElementById('authForm').hidden = true;
+  document.getElementById('authSent').hidden = false;
+  document.getElementById('authResendBtn').textContent = 'Renvoyer le lien';
+}
+
+function showAuthForm(){
+  document.getElementById('authSent').hidden = true;
+  document.getElementById('authForm').hidden = false;
+  document.getElementById('authEmail').focus();
+}
+
+async function handleResendMagicLink(){
+  const btn = document.getElementById('authResendBtn');
+  const email = document.getElementById('authSentEmail').textContent;
+  btn.textContent = 'Envoi en cours…';
+  const error = await sendMagicLink(email);
+  btn.textContent = error ? 'Erreur, réessaie' : 'Lien renvoyé';
 }
 
 // Connexion Google (v2.1, retour utilisateur) — en plus du lien magique,
@@ -164,6 +198,8 @@ document.getElementById('authEmail').addEventListener('keydown', (e) => {
   if(e.key === 'Enter') handleSendMagicLink();
 });
 document.getElementById('googleSignInBtn').addEventListener('click', signInWithGoogle);
+document.getElementById('authResendBtn').addEventListener('click', handleResendMagicLink);
+document.getElementById('authChangeEmailBtn').addEventListener('click', showAuthForm);
 document.getElementById('logoutBtn').addEventListener('click', handleLogout);
 
 // Suppression de compte (décision validée, migration 053). Irréversible : on
@@ -191,46 +227,24 @@ async function handleDeleteAccount(){
 }
 document.getElementById('deleteAccountBtn').addEventListener('click', handleDeleteAccount);
 
-// --- Démo jouable de la grille (v2.0.16) ---
-// Signature element de l'écran de connexion (voir index.html pour le
-// diagnostic complet) : 7 curseurs générés depuis CRITERIA (js/data.js —
-// la même source que le vrai formulaire de notation, js/app.js), avec la
-// note recalculée en direct via computeNote()/noteColorClass() — les
-// MÊMES fonctions que le catalogue, pas une simulation à part réécrite
-// ici. Remplace setupAuthTagPanel()/#authTags/#authShowcasePanel
-// (v2.0.12-v2.0.13, supprimés).
-(function setupAuthDemo(){
-  const wrap = document.getElementById('authDemoSliders');
-  const counterEl = document.getElementById('authDemoCounter');
-  if(!wrap || !counterEl) return; // page publique/invite : pas de démo ici
-  const values = {};
-  CRITERIA.forEach(c => {
-    values[c.key] = 0.5; // point de départ neutre, au milieu de l'échelle
-    const row = document.createElement('div');
-    row.className = 'auth-demo-row';
-    // step="0.1" (retour utilisateur : step="0.5" ne donnait que 3
-    // positions possibles par curseur — 0/0.5/1, "un peu bizarre") plutôt
-    // que le step="0.05" du vrai formulaire (js/app.js) : assez fin pour
-    // ne plus sauter par paliers grossiers, sans les 20 crans du vrai
-    // formulaire, hors de propos pour une démo qu'on manipule 2 secondes.
-    row.innerHTML = `
-      <span class="auth-demo-label">${escapeHtml(c.label)}</span>
-      <input type="range" min="0" max="1" step="0.1" value="0.5" data-key="${c.key}" aria-label="${escapeHtml(c.label)}">
-    `;
-    wrap.appendChild(row);
-  });
-  function updateCounter(){
-    const note = computeNote(values);
-    counterEl.textContent = note.toFixed(1);
-    counterEl.className = 'counter auth-demo-counter ' + noteColorClass(note);
-  }
-  wrap.querySelectorAll('input[type="range"]').forEach(input => {
-    input.addEventListener('input', () => {
-      values[input.dataset.key] = parseFloat(input.value);
-      updateCounter();
-    });
-  });
-  updateCounter();
+// --- Mur d'affiches de la page de connexion (piste A du 15/10) ---
+// Une sélection fixe de films connus (affiches françaises de TMDB), pas le
+// catalogue de quelqu'un : la page est vue sans être connecté. 24 sur PC
+// (6 colonnes), le CSS n'en montre que 12 sur téléphone.
+const AUTH_WALL_POSTERS = [
+  'k3uIbYtiuK8pwbCcbma29nTqmgG', '12TAqK0AUgdcYE9ZYZ9r7ASbH5Q', 'pyNXnq8QBWoK3b37RS6C3axwUOy', '7hLSzZX2jROmEXz2aEoh6JKUFy2',
+  'aej3LRUga5rhgkmRP6XMFw3ejbl', 'sSQDxwm4r28YpJSQVyVOtpYVs0E', 'tdXtLG6L1QMwrv0MNdW6B9IwC8B', '1pnigkWWy8W032o9TKDneBa3eVK',
+  '4TBdF7nFw2aKNM0gPOlDNq3v3se', 'tBzOqSc51CiUeOlxW2unvYVBU8v', '3XriEpTdnplQRzyphAC0cu3emns', '45PVXJUYfH6yIINcQKelQ0SJPvh',
+  'pEoqbqtLc4CcwDUDqxmEDSWpWTZ', 'oLy2V6AWSEfdPgKOtrSGnwB3Q2R', 'qpyaW4xUPeIiYA5ckg5zAZFHvsb', 'iCgFtDUZxN8iUzNBCisjUrBmg2q',
+  'zi6RNYK1vXjIvpSBgjatXRcFYh2', 'v4c6WMVqUlSJHMyjHNj72iTFGhm', 'mSgYBWMybY9Ug4ZnCGsttPIjUx7', 'boAUuJBeID7VNp4L7LNMQs8mfQS',
+  'ywJsnH7BmM6GmugCvN6ZjIfgSHv', 'u0Ct3708zXaoJCkF65bLfenQmhM', 'zHKWxyG4j404HVeSYHNH4niUpkW', 't30GjttOdb5At1sYy8b3TOwFgWV'
+];
+(function setupAuthWall(){
+  const wall = document.getElementById('authWall');
+  if(!wall) return;
+  wall.innerHTML = AUTH_WALL_POSTERS
+    .map(path => `<img src="https://image.tmdb.org/t/p/w185/${path}.jpg" alt="" decoding="async">`)
+    .join('');
 })();
 
 (async function initAuth(){

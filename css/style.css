@@ -1637,7 +1637,6 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 }
 /* Ancienne texture de points de l'écran de connexion : retirée (code de
    design, fond uni, audit D7). L'élément reste dans le HTML, masqué. */
-.auth-pattern{display:none;}
 #authContainer::before{
   content:'';
   position:fixed;
@@ -1701,48 +1700,6 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   line-height:1.6;
   max-width:44ch;
   margin-bottom:24px;
-}
-/* Signature element (v2.0.16) : la grille à 7 critères, jouable avant
-   même la connexion, plutôt que décrite en prose à côté d'icônes — voir
-   le commentaire dans index.html pour le diagnostic complet. Carte à
-   part (fond + bordure) pour lire comme un vrai widget qu'on manipule,
-   pas comme un paragraphe de plus. */
-.auth-demo{
-  background:linear-gradient(160deg, var(--surface) 0%, var(--surface-2) 220%);
-  border:1px solid var(--line);
-  border-radius:var(--r-md);
-  padding:22px 24px;
-}
-.auth-demo-head{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:16px;
-  padding-bottom:16px;
-  margin-bottom:18px;
-  border-bottom:1px solid var(--line);
-}
-.auth-demo-head .eyebrow{margin-bottom:4px;}
-.auth-demo-hint{margin:0; font-size:var(--fs-sm); color:var(--text-muted);}
-/* Même classe .counter que partout dans l'app (grille/liste, vitrine
-   d'amis, top films...) — cette note EST une vraie note, calculée par la
-   même fonction (computeNote(), js/app.js), pas une maquette qui y
-   ressemble. */
-.auth-demo-counter{width:56px; height:56px; font-size:var(--fs-md); flex:none;}
-.auth-demo-sliders{display:flex; flex-direction:column; gap:12px;}
-.auth-demo-row{display:flex; align-items:center; gap:16px;}
-.auth-demo-label{
-  font-family:var(--font-text); font-variant-numeric:tabular-nums;
-  font-size:var(--fs-xs);
-  color:var(--text-muted);
-  width:148px;
-  flex:none;
-}
-.auth-pitch-foot{
-  margin:18px 0 0;
-  font-size:var(--fs-sm);
-  color:var(--text-muted);
-  line-height:1.6;
 }
 /* max-width seul (pas de width:100% explicite) : en grille (desktop),
    .auth-card est un item de grid-template-columns qui s'étire déjà à sa
@@ -6688,4 +6645,76 @@ body[data-view-mode="grid"] #wlList .wl-row-clickable:hover .wl-services{transfo
 @media (max-width:600px){
   .search-suggest{width:100%; max-height:60vh;}
   .sg-hint{display:none;}
+}
+
+/* ==========================================================
+   CONNEXION : mur d'affiches (piste A, audit et draft du 15/10).
+   Le mur part du haut de la page, derrière l'entête, et s'efface vers
+   la gauche (vers le bas sur téléphone). Titre, phrase et connexion
+   posés dessus, sans boîte. Un seul bouton principal, tout en pilule.
+   ========================================================== */
+#authContainer{position:static; padding:var(--sp-7) var(--sp-6) var(--sp-8);}
+#authContainer [hidden]{display:none !important;}
+.auth-wall{
+  position:absolute; top:0; right:0; z-index:0;
+  width:64vw; height:max(100vh, 760px); overflow:hidden; pointer-events:none;
+  display:grid; grid-template-columns:repeat(6, minmax(0, 1fr)); gap:var(--sp-3); padding:var(--sp-3);
+  align-content:start; opacity:0.62;
+  -webkit-mask-image:linear-gradient(to right, transparent 0%, #000 38%);
+  mask-image:linear-gradient(to right, transparent 0%, #000 38%);
+}
+.auth-wall img{width:100%; aspect-ratio:2/3; object-fit:cover; border-radius:var(--r-sm); display:block; background:var(--surface-2);}
+.auth-wall img:nth-child(6n+2), .auth-wall img:nth-child(6n+4), .auth-wall img:nth-child(6n+6){transform:translateY(-40%);}
+/* L'entête laisse voir le mur, sans numéro de version sur cette page */
+html:has(#authContainer:not([style*="none"])) header{background:none; backdrop-filter:none; -webkit-backdrop-filter:none;}
+html:has(#authContainer:not([style*="none"])) #versionTag{display:none !important;}
+#authContainer .auth-hero{
+  position:relative; z-index:1;
+  display:flex; flex-direction:column; gap:var(--sp-5);
+  max-width:440px; margin:0; padding:0;
+}
+#authContainer .auth-pitch{max-width:none; display:grid; gap:var(--sp-4);}
+#authContainer .auth-headline{font-size:var(--fs-2xl); line-height:1.02; margin:0;}
+#authContainer .auth-pitch-sub{font-size:var(--fs-md); font-weight:400; color:var(--text-2); max-width:44ch; margin:0;}
+.auth-form{display:grid; gap:var(--sp-3); width:100%; max-width:360px;}
+.auth-form-title{font-family:var(--font-text); font-size:var(--fs-md); font-weight:600; margin:0 0 2px;}
+#authContainer .google-btn{
+  height:44px; width:100%; border-radius:var(--r-full);
+  background:transparent; color:var(--text-1); border:1px solid var(--line-strong);
+  font-size:var(--fs-sm); font-weight:600;
+}
+#authContainer .google-btn:hover{background:var(--surface-2);}
+#authContainer .auth-divider{margin:0; color:var(--text-3);}
+.auth-email{
+  height:44px; width:100%; padding:0 18px;
+  border:1px solid var(--line); border-radius:var(--r-full); background:var(--surface);
+  font-family:var(--font-text); font-size:var(--fs-sm); color:var(--text-1);
+}
+.auth-email::placeholder{color:var(--text-3);}
+.auth-email:focus{outline:none; border-color:var(--accent);}
+#authContainer #authSendBtn{height:44px; width:100%; border-radius:var(--r-full); background:var(--accent); color:var(--accent-ink); font-size:var(--fs-sm); font-weight:600;}
+#authContainer .auth-status{margin:0; color:var(--text-2); font-size:var(--fs-sm);}
+#authContainer .auth-status:empty{display:none;}
+#authContainer .auth-card-foot{margin:0; font-size:var(--fs-xs); color:var(--text-2); text-align:left;}
+.auth-sent{display:grid; gap:var(--sp-3); max-width:360px;}
+.auth-sent-icon{width:44px; height:44px; border-radius:var(--r-full); background:var(--accent-wash); color:var(--accent); display:grid; place-items:center;}
+.auth-sent-icon svg{width:22px; height:22px;}
+.auth-sent-title{font-family:var(--font-display); font-size:var(--fs-lg); font-weight:700; letter-spacing:-0.01em; margin:0;}
+.auth-sent-text{margin:0; font-size:var(--fs-sm); color:var(--text-2); line-height:1.55;}
+.auth-sent-text b{color:var(--text-1); font-weight:600;}
+.auth-sent-links{display:flex; flex-wrap:wrap; gap:var(--sp-5);}
+.auth-sent-links button{background:none; border:none; padding:0; cursor:pointer; font-family:var(--font-text); font-size:var(--fs-sm); font-weight:600; color:var(--accent);}
+@media (max-width:600px){
+  #authContainer{padding:0 var(--sp-4) var(--sp-7);}
+  .auth-wall{
+    left:0; right:0; width:auto; height:300px;
+    grid-template-columns:repeat(4, minmax(0, 1fr)); gap:var(--sp-2); padding:var(--sp-2);
+    opacity:0.7;
+    -webkit-mask-image:linear-gradient(to bottom, #000 35%, transparent 100%);
+    mask-image:linear-gradient(to bottom, #000 35%, transparent 100%);
+  }
+  .auth-wall img:nth-child(n+13){display:none;}
+  .auth-wall img{transform:none !important;}
+  html:has(#authContainer:not([style*="none"])) header{background:linear-gradient(to bottom, rgba(var(--glass-rgb),0.85), rgba(var(--glass-rgb),0));}
+  #authContainer .auth-hero{padding-top:150px; gap:var(--sp-4);}
 }
