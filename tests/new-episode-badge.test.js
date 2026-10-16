@@ -1,7 +1,10 @@
-// --- Tests du badge "nouvel épisode" (js/series.js) ---
-// Retour utilisateur : "Badge 'nouvel épisode' sur les séries en cours" —
-// hasNewEpisode() est un signal léger dérivé de données déjà chargées
-// (numberOfEpisodes/watchedEpisodeCounts), sans appel TMDB dédié.
+// --- Tests du badge des séries en cours (js/series.js) ---
+// Audit des six écrans (S3, 16/10) : « Nouvel épisode » s'affichait dès qu'il
+// restait un épisode à voir, même sur une série jamais commencée. Désormais :
+// « Nouvel épisode » seulement pour un épisode sorti après ton dernier
+// visionnage, « À rattraper » s'il reste des épisodes sortis à voir, rien
+// sinon. Ce qui est sorti vient de TMDB (dernier épisode diffusé), gardé en
+// cache par saveShowAiring().
 const { createSuite, assert } = require('./helpers/tiny-test');
 const { createContext, loadFiles, setState, stubDocument } = require('./helpers/vm-harness');
 const { test, run } = createSuite();
@@ -16,35 +19,54 @@ function buildContext(){
   return ctx;
 }
 
-test('hasNewEpisode() : vrai quand une série en cours a moins d\'épisodes vus que connus', () => {
+// TMDB : saisons 1 (10 épisodes) et 2 (10), dernier épisode diffusé S2E3 le 20/09.
+const details = {
+  last_episode_to_air: { season_number: 2, episode_number: 3, air_date: '2026-09-20' },
+  seasons: [{ season_number: 0, episode_count: 4 }, { season_number: 1, episode_count: 10 }, { season_number: 2, episode_count: 10 }],
+};
+const show = { id: 1, tmdbId: 77, status: 'Returning Series', numberOfEpisodes: 20 };
+
+test('saveShowAiring() : compte les épisodes sortis (hors épisodes spéciaux)', () => {
   const ctx = buildContext();
-  setState(ctx, { watchedEpisodeCounts: { 1: 5 } });
-  assert.strictEqual(ctx.hasNewEpisode({ id: 1, status: 'Returning Series', numberOfEpisodes: 6 }), true);
+  ctx.saveShowAiring(77, details);
+  assert.strictEqual(ctx.showAiring(show).aired, 13);
 });
 
-test('hasNewEpisode() : faux si tous les épisodes connus sont déjà vus (à jour)', () => {
+test('un épisode sorti après ton dernier visionnage : « Nouvel épisode »', () => {
   const ctx = buildContext();
-  setState(ctx, { watchedEpisodeCounts: { 1: 6 } });
-  assert.strictEqual(ctx.hasNewEpisode({ id: 1, status: 'Returning Series', numberOfEpisodes: 6 }), false);
+  ctx.saveShowAiring(77, details);
+  setState(ctx, { watchedEpisodeCounts: { 1: 12 }, lastWatchedAtByShow: { 1: new Date('2026-09-15T20:00:00').getTime() } });
+  assert.strictEqual(ctx.showEpisodeBadge(show), 'new');
+  assert.strictEqual(ctx.hasNewEpisode(show), true);
 });
 
-test('hasNewEpisode() : jamais vrai sur une série terminée/annulée, même en retard', () => {
+test('en retard sur des épisodes déjà sortis avant ton dernier visionnage : « À rattraper »', () => {
   const ctx = buildContext();
-  setState(ctx, { watchedEpisodeCounts: { 1: 5, 2: 5 } });
-  assert.strictEqual(ctx.hasNewEpisode({ id: 1, status: 'Ended', numberOfEpisodes: 6 }), false);
-  assert.strictEqual(ctx.hasNewEpisode({ id: 2, status: 'Cancelled', numberOfEpisodes: 6 }), false);
+  ctx.saveShowAiring(77, details);
+  setState(ctx, { watchedEpisodeCounts: { 1: 5 }, lastWatchedAtByShow: { 1: new Date('2026-10-01T20:00:00').getTime() } });
+  assert.strictEqual(ctx.showEpisodeBadge(show), 'catchup');
+  assert.strictEqual(ctx.hasNewEpisode(show), false);
 });
 
-test('hasNewEpisode() : faux si le nombre d\'épisodes n\'est pas encore connu (jamais un badge sur une donnée manquante)', () => {
+test('jamais commencée : aucun badge', () => {
   const ctx = buildContext();
+  ctx.saveShowAiring(77, details);
   setState(ctx, { watchedEpisodeCounts: {} });
-  assert.strictEqual(ctx.hasNewEpisode({ id: 1, status: 'Returning Series', numberOfEpisodes: null }), false);
+  assert.strictEqual(ctx.showEpisodeBadge(show), null);
 });
 
-test('hasNewEpisode() : aucun épisode vu chargé pour cette série (undefined) -> traité comme 0, pas une exception', () => {
+test('à jour sur tout ce qui est sorti (les épisodes annoncés ne comptent pas) : aucun badge', () => {
   const ctx = buildContext();
-  setState(ctx, { watchedEpisodeCounts: {} });
-  assert.strictEqual(ctx.hasNewEpisode({ id: 99, status: 'Returning Series', numberOfEpisodes: 3 }), true);
+  ctx.saveShowAiring(77, details);
+  setState(ctx, { watchedEpisodeCounts: { 1: 13 }, lastWatchedAtByShow: { 1: Date.now() } });
+  assert.strictEqual(ctx.showEpisodeBadge(show), null);
+});
+
+test('série terminée, ou sorties pas encore connues : aucun badge', () => {
+  const ctx = buildContext();
+  setState(ctx, { watchedEpisodeCounts: { 1: 2, 2: 2 } });
+  assert.strictEqual(ctx.showEpisodeBadge({ id: 2, tmdbId: 88, status: 'Ended', numberOfEpisodes: 10 }), null);
+  assert.strictEqual(ctx.showEpisodeBadge(show), null, 'pas encore de données TMDB en cache');
 });
 
 module.exports = run('new-episode-badge.test.js');

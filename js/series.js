@@ -110,15 +110,17 @@ async function loadTrackedShows(){
   if(trackedShows.length > 0){
     const { data: watched, error: watchedErr } = await supabaseClient
       .from('tv_episodes_watched')
-      .select('tv_show_id, note, times_watched');
+      .select('tv_show_id, note, times_watched, watched_at');
     if(watchedErr){
       console.error(watchedErr);
     }else{
       watchedEpisodeCounts = {};
+      lastWatchedAtByShow = {};
       maxEpisodeTimesWatched = 0;
       notedEpisodeCount = 0;
       (watched || []).forEach(row => {
         watchedEpisodeCounts[row.tv_show_id] = (watchedEpisodeCounts[row.tv_show_id] || 0) + 1;
+        if(row.watched_at && row.watched_at > (lastWatchedAtByShow[row.tv_show_id] || 0)) lastWatchedAtByShow[row.tv_show_id] = row.watched_at;
         if(row.times_watched > maxEpisodeTimesWatched) maxEpisodeTimesWatched = row.times_watched;
         if(row.note != null) notedEpisodeCount++;
       });
@@ -134,11 +136,65 @@ async function loadTrackedShows(){
 // de la fiche détail, voir refreshShowMeta()) — un signal utile même
 // approximatif vaut mieux qu'aucun signal ici. Jamais affiché sur une série
 // terminée : "plus rien à rattraper de nouveau" par définition.
+// Audit des six écrans (S3) : le badge s'affichait dès qu'il restait un
+// épisode à voir, même sur une série jamais commencée. Désormais :
+// « Nouvel épisode » si un épisode est sorti après ton dernier visionnage,
+// « À rattraper » s'il reste des épisodes sortis à voir, rien sinon. Ce qui
+// est sorti vient de TMDB (dernier épisode diffusé), gardé 6 heures par
+// série (saveShowAiring()), rafraîchi en tâche de fond sur la page Séries.
+const SHOW_AIRING_KEY = 'kinetShowAiring';
+const SHOW_AIRING_TTL_MS = 6 * 3600 * 1000;
+let lastWatchedAtByShow = {}; // tv_show_id -> date du dernier épisode coché (ms)
+function loadShowAiringCache(){
+  try{ return JSON.parse(localStorage.getItem(SHOW_AIRING_KEY) || '{}') || {}; }catch(e){ return {}; }
+}
+function showAiring(show){
+  const entry = loadShowAiringCache()[show.tmdbId];
+  return entry && entry.aired != null ? entry : null;
+}
+function saveShowAiring(tmdbId, details){
+  const cache = loadShowAiringCache();
+  const last = details.last_episode_to_air;
+  const seasons = (details.seasons || []).filter(x => x.season_number > 0);
+  const aired = last
+    ? seasons.filter(x => x.season_number < last.season_number).reduce((a, x) => a + (x.episode_count || 0), 0) + last.episode_number
+    : null;
+  cache[tmdbId] = { t: Date.now(), aired, lastAir: last ? last.air_date || null : null };
+  try{ localStorage.setItem(SHOW_AIRING_KEY, JSON.stringify(cache)); }catch(e){}
+}
+// 'new' | 'catchup' | null
+function showEpisodeBadge(show){
+  if(isShowEnded(show.status)) return null;
+  const info = showAiring(show);
+  const watched = watchedEpisodeCounts[show.id] || 0;
+  if(!info || watched === 0 || watched >= info.aired) return null;
+  const lastSeen = lastWatchedAtByShow[show.id] || 0;
+  if(info.lastAir && new Date(info.lastAir + 'T23:59:59').getTime() > lastSeen) return 'new';
+  return 'catchup';
+}
 function hasNewEpisode(show){
-  if(isShowEnded(show.status)) return false;
-  if(show.numberOfEpisodes == null) return false;
-  const watchedCount = watchedEpisodeCounts[show.id] || 0;
-  return watchedCount < show.numberOfEpisodes;
+  return showEpisodeBadge(show) === 'new';
+}
+// Rafraîchit en tâche de fond ce qui est sorti pour les séries en cours
+// (une requête TMDB par série, au plus toutes les 6 heures), puis redessine.
+let showAiringRefreshing = false;
+async function refreshShowAiringInBackground(){
+  if(showAiringRefreshing || typeof fetchTvDetails !== 'function') return;
+  const cache = loadShowAiringCache();
+  const stale = trackedShows.filter(show => !isShowEnded(show.status) && show.tmdbId
+    && (!cache[show.tmdbId] || Date.now() - cache[show.tmdbId].t > SHOW_AIRING_TTL_MS));
+  if(!stale.length) return;
+  showAiringRefreshing = true;
+  try{
+    for(let i = 0; i < stale.length; i += 4){
+      await Promise.all(stale.slice(i, i + 4).map(async show => {
+        try{ saveShowAiring(show.tmdbId, await fetchTvDetails(show.tmdbId)); }catch(e){ console.error(e); }
+      }));
+    }
+  }finally{
+    showAiringRefreshing = false;
+  }
+  if(document.getElementById('seriesPage') && document.getElementById('seriesPage').style.display !== 'none') renderTrackedShows();
 }
 
 // Descend dans « Séries terminées » seulement une série qui ne sortira plus
@@ -220,10 +276,14 @@ function renderTrackedShows(){
   // film, qui vit dans sa fiche/modale, jamais sur la carte du catalogue.
   list.innerHTML = active.map(show => {
     const watchedCount = watchedEpisodeCounts[show.id] || 0;
-    const progress = show.numberOfEpisodes
-      ? `${watchedCount}/${show.numberOfEpisodes} épisode${show.numberOfEpisodes > 1 ? 's' : ''} vus`
+    // Sur les épisodes déjà sortis quand on le sait (S1), sinon le total TMDB.
+    const info = isShowEnded(show.status) ? null : showAiring(show);
+    const total = info ? info.aired : show.numberOfEpisodes;
+    const progress = total
+      ? `${watchedCount}/${total} épisode${total > 1 ? 's' : ''} vus`
       : `${watchedCount} épisode${watchedCount > 1 ? 's' : ''} vus`;
-    const newEp = hasNewEpisode(show);
+    const badge = showEpisodeBadge(show);
+    const newEp = badge === 'new';
     return `
       <div class="wl-row" data-id="${show.id}">
         <!-- Pastille sur l'affiche (.new-episode-dot) : cachée par défaut,
@@ -235,7 +295,7 @@ function renderTrackedShows(){
           ? `<img class="film-poster" src="${show.posterUrl}" alt="" loading="lazy">`
           : `<div class="film-poster film-poster-placeholder">${TV_PLACEHOLDER_SVG}</div>`}
         <div class="wl-main">
-          <div class="wl-title">${escapeHtml(show.title)}${show.firstAirYear ? ` <span class="wl-year">(${show.firstAirYear})</span>` : ''}${newEp ? ` <span class="new-episode-badge">Nouvel épisode</span>` : ''}</div>
+          <div class="wl-title">${escapeHtml(show.title)}${show.firstAirYear ? ` <span class="wl-year">(${show.firstAirYear})</span>` : ''}${badge ? ` <span class="new-episode-badge${badge === 'catchup' ? ' is-catchup' : ''}">${badge === 'new' ? 'Nouvel épisode' : 'À rattraper'}</span>` : ''}</div>
           <div class="wl-note">${progress}${show.status ? ` · ${escapeHtml(showStatusLabel(show.status))}` : ''}</div>
         </div>
         <!-- Note visible direct sur la liste (v2.1, retour utilisateur :
@@ -257,6 +317,7 @@ async function openSeries(){
   document.getElementById('seriesList').innerHTML = skeletonRows();
   await loadTrackedShows();
   renderTrackedShows();
+  refreshShowAiringInBackground();
 }
 
 async function deleteShowRow(id){
@@ -390,6 +451,7 @@ document.getElementById('seriesTmdbClearBtn').addEventListener('click', clearSer
 
 // --- Détail d'une série : note/commentaire + accordéon de saisons ---
 
+function formatDateLongFr(dateStr){ return formatDateFr(dateStr); }
 function formatDateFr(dateStr){
   if(!dateStr) return null;
   return new Date(dateStr + 'T00:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -410,14 +472,14 @@ function renderShowDetailHeader(show){
     backdropContainer.classList.remove('is-placeholder');
   }else{
     backdropContainer.style.display = '';
-    if(show.posterUrl){
-      backdropImg.src = show.posterUrl;
-      backdropImg.style.objectPosition = 'center 15%';
-      backdropContainer.classList.remove('is-placeholder');
-    }else{
-      backdropImg.removeAttribute('src');
-      backdropContainer.classList.add('is-placeholder');
-    }
+    backdropImg.removeAttribute('src');
+    backdropContainer.classList.add('is-placeholder');
+  }
+  // L'affiche posée sur le bandeau, comme sur la fiche film (piste D).
+  const poster = document.getElementById('seriesDetailPoster');
+  if(poster){
+    if(show.posterUrl){ poster.src = show.posterUrl; poster.hidden = false; }
+    else{ poster.removeAttribute('src'); poster.hidden = true; }
   }
 
   const metaParts = [];
@@ -427,27 +489,29 @@ function renderShowDetailHeader(show){
   document.getElementById('seriesDetailMeta').textContent = metaParts.join(' · ');
 
   renderRatingRing(show);
-  // Ligne masquée plutôt qu'un "—" muet (retour utilisateur) : TMDB ne
-  // renseigne created_by que pour une partie des séries (surtout les
-  // productions US/EU, quasi jamais pour l'animation japonaise par
-  // exemple) — une info qu'on n'a pas systématiquement, pas une anomalie
-  // sur une série précise.
+  // Ligne masquée plutôt qu'un "—" muet : TMDB ne renseigne created_by que
+  // pour une partie des séries.
   const creatorsRow = document.getElementById('seriesDetailCreatorsRow');
   if(creatorsRow) creatorsRow.style.display = show.creators ? '' : 'none';
   document.getElementById('seriesDetailCreators').textContent = show.creators || '';
   renderEpisodesFicheValue(show);
-  document.getElementById('seriesDetailStatus').textContent = show.status ? showStatusLabel(show.status) : '—';
+  // Statut, et la prochaine date connue : « En diffusion · saison 4 le 8 juillet 2027 ».
+  const next = show.nextEpisodeToAir;
+  const nextText = next && next.d
+    ? (next.e === 1 ? ` · saison ${next.s} le ${formatDateLongFr(next.d)}` : ` · prochain épisode le ${formatDateLongFr(next.d)}`)
+    : '';
+  document.getElementById('seriesDetailStatus').textContent = show.status ? showStatusLabel(show.status) + nextText : '—';
 
   document.getElementById('seriesDetailOverview').textContent = show.overview || '';
 
-  // Audit C4 : sans note, le curseur affichait « 2.50 » à côté d'un anneau
-  // vide, comme si la série était notée. Il reste au milieu (point de
-  // départ), mais neutre et annoncé comme non noté jusqu'au premier réglage.
+  // Ta note, dans le petit panneau ouvert par l'anneau (S7).
   const hasNote = show.manualNote != null;
   const slider = document.getElementById('seriesNoteSlider');
   slider.value = hasNote ? show.manualNote : 2.5;
   slider.classList.toggle('is-unset', !hasNote);
   document.getElementById('seriesNoteVal').textContent = hasNote ? show.manualNote.toFixed(1) : 'Non notée';
+  const popTitle = document.getElementById('seriesNotePopTitle');
+  if(popTitle) popTitle.textContent = `Ta note pour ${show.title}`;
 }
 
 // Même cadran que partout ailleurs (.counter, noteColorClass()) — voir le
@@ -470,8 +534,121 @@ function renderRatingRing(show){
 function renderEpisodesFicheValue(show){
   const el = document.getElementById('seriesDetailEpisodes');
   if(!el || !show) return;
+  // Seuls les épisodes sortis comptent (audit des six écrans, S1).
+  const aired = airedEpisodeCount();
+  if(aired !== null && aired > 0){
+    el.textContent = `${watchedEpisodeSet.size} vu${watchedEpisodeSet.size > 1 ? 's' : ''} sur ${aired} sorti${aired > 1 ? 's' : ''}`;
+    return;
+  }
   const total = show.numberOfEpisodes || currentShowSeasons.reduce((a, s) => a + (s.episode_count || 0), 0);
   el.textContent = total > 0 ? `${watchedEpisodeSet.size} / ${total} vus` : '—';
+}
+
+// --- Épisodes sortis (audit des six écrans, S1) ---
+// TMDB compte aussi les épisodes annoncés : Silo affichait « 11 / 31 vus »
+// avec une saison 4 prévue en 2027. Un épisode est sorti si sa date est
+// passée (épisodes de la saison déjà chargés), sinon s'il n'est pas après le
+// dernier épisode diffusé (last_episode_to_air, gardé par refreshShowMeta()).
+function seriesTodayIso(){ return new Date().toISOString().slice(0, 10); }
+function currentShowObj(){ return trackedShows.find(s => s.id === currentShowId) || null; }
+function isEpisodeAired(seasonNumber, episodeNumber){
+  const eps = loadedSeasonEpisodes[seasonNumber];
+  if(eps){
+    const ep = eps.find(e => e.episode_number === episodeNumber);
+    if(ep) return !!(ep.air_date && ep.air_date <= seriesTodayIso());
+  }
+  const show = currentShowObj();
+  const last = show && show.lastEpisodeToAir;
+  if(last) return seasonNumber < last.s || (seasonNumber === last.s && episodeNumber <= last.e);
+  const season = currentShowSeasons.find(x => x.season_number === seasonNumber);
+  return !!(season && season.air_date && season.air_date <= seriesTodayIso());
+}
+function airedEpisodesInSeason(season){
+  let n = 0;
+  for(let ep = 1; ep <= (season.episode_count || 0); ep++) if(isEpisodeAired(season.season_number, ep)) n++;
+  return n;
+}
+// Nombre d'épisodes sortis, ou null tant qu'on n'a aucune date pour le savoir.
+function airedEpisodeCount(){
+  const show = currentShowObj();
+  const known = (show && show.lastEpisodeToAir) || currentShowSeasons.some(s => s.air_date) || Object.keys(loadedSeasonEpisodes).length > 0;
+  if(!known) return null;
+  return currentShowSeasons.reduce((a, s) => a + airedEpisodesInSeason(s), 0);
+}
+function watchedInSeason(seasonNumber){
+  return Array.from(watchedEpisodeSet).filter(k => k.startsWith(`${seasonNumber}-`)).length;
+}
+// Prochain épisode à voir : le premier pas encore coché, dans l'ordre. null
+// si tout ce qui est sorti est vu (le suivant n'est pas encore diffusé).
+function nextEpisodeToWatch(){
+  const seasons = [...currentShowSeasons].sort((a, b) => a.season_number - b.season_number);
+  for(const s of seasons){
+    for(let ep = 1; ep <= (s.episode_count || 0); ep++){
+      if(watchedEpisodeSet.has(`${s.season_number}-${ep}`)) continue;
+      return isEpisodeAired(s.season_number, ep) ? { s: s.season_number, e: ep } : null;
+    }
+  }
+  return null;
+}
+function episodeInfo(seasonNumber, episodeNumber){
+  const ep = (loadedSeasonEpisodes[seasonNumber] || []).find(e => e.episode_number === episodeNumber);
+  return ep ? { name: ep.name || `Épisode ${episodeNumber}`, air: ep.air_date || null } : { name: `Épisode ${episodeNumber}`, air: null };
+}
+async function ensureSeasonEpisodes(seasonNumber){
+  if(loadedSeasonEpisodes[seasonNumber]) return loadedSeasonEpisodes[seasonNumber];
+  const show = currentShowObj();
+  if(!show) return [];
+  try{
+    const data = await fetchTvSeason(show.tmdbId, seasonNumber);
+    loadedSeasonEpisodes[seasonNumber] = data.episodes || [];
+  }catch(e){
+    console.error(e);
+    return [];
+  }
+  return loadedSeasonEpisodes[seasonNumber];
+}
+
+// « À suivre » (S4) : l'épisode suivant avec son titre, sa date et « Vu ».
+function renderSeriesNextBlock(){
+  const el = document.getElementById('seriesNextBlock');
+  if(!el) return;
+  const next = nextEpisodeToWatch();
+  const show = currentShowObj();
+  if(next){
+    const info = episodeInfo(next.s, next.e);
+    el.innerHTML = `
+      <div class="sx-nx"><small>À suivre · saison ${next.s}, épisode ${next.e}</small><b>${escapeHtml(info.name)}</b>${info.air ? `<span>Sorti le ${formatDateFr(info.air)}</span>` : ''}</div>
+      <button type="button" class="ff-btn-main" id="seriesNextVuBtn">${uiIcon('check')} Vu</button>`;
+    el.hidden = false;
+    document.getElementById('seriesNextVuBtn').addEventListener('click', withSubmitGuard(document.getElementById('seriesNextVuBtn'), markNextEpisodeWatched));
+    // Le titre de l'épisode vient de sa saison : chargée une fois, à la demande.
+    if(!loadedSeasonEpisodes[next.s]) ensureSeasonEpisodes(next.s).then(() => renderSeriesNextBlock());
+    return;
+  }
+  const upcoming = show && show.nextEpisodeToAir;
+  if(watchedEpisodeSet.size === 0 && !upcoming){ el.innerHTML = ''; el.hidden = true; return; }
+  el.innerHTML = `<div class="sx-nx"><small>À jour</small><b>Tu as vu tous les épisodes sortis</b>${upcoming && upcoming.d ? `<span>Prochain : saison ${upcoming.s}, épisode ${upcoming.e}, le ${formatDateLongFr(upcoming.d)}</span>` : ''}</div>`;
+  el.hidden = false;
+}
+function renderSeriesProgress(){
+  const el = document.getElementById('seriesProgress');
+  if(!el) return;
+  const aired = airedEpisodeCount();
+  if(!aired){ el.innerHTML = ''; return; }
+  const total = currentShowSeasons.reduce((a, s) => a + (s.episode_count || 0), 0);
+  const announced = Math.max(0, total - aired);
+  const show = currentShowObj();
+  const next = show && show.nextEpisodeToAir;
+  const pct = Math.min(100, Math.round(watchedEpisodeSet.size / aired * 100));
+  el.innerHTML = `<i><b style="width:${pct}%"></b></i><span class="num">${watchedEpisodeSet.size} sur ${aired} épisode${aired > 1 ? 's' : ''} sorti${aired > 1 ? 's' : ''}${announced ? ` · ${announced} annoncé${announced > 1 ? 's' : ''}${next && next.d ? `, dès le ${formatDateLongFr(next.d)}` : ''}` : ''}</span>`;
+}
+// Tout ce qui dépend des épisodes vus : fiche, à suivre, progression, saisons.
+function renderSeriesBlocks(){
+  const show = currentShowObj();
+  if(show) renderEpisodesFicheValue(show);
+  renderSeriesNextBlock();
+  renderSeriesProgress();
+  renderSeasonsList();
 }
 
 async function refreshShowMeta(show){
@@ -495,6 +672,12 @@ async function refreshShowMeta(show){
   // de colonne dédiée ni d'appel réseau en plus.
   show.creators = (details.created_by || []).map(c => c.name).filter(Boolean).join(', ') || null;
   show.genreNames = (details.genres || []).map(g => g.name).filter(Boolean).slice(0, 2).join(', ') || null;
+  // Dernier épisode diffusé et prochain annoncé (audit des six écrans, S1) :
+  // ce qui est sorti se déduit du premier, sans charger chaque saison.
+  const last = details.last_episode_to_air, nxt = details.next_episode_to_air;
+  show.lastEpisodeToAir = last ? { s: last.season_number, e: last.episode_number, d: last.air_date || null } : null;
+  show.nextEpisodeToAir = nxt ? { s: nxt.season_number, e: nxt.episode_number, d: nxt.air_date || null } : null;
+  if(typeof saveShowAiring === 'function') saveShowAiring(show.tmdbId, details);
   const updates = {
     status: details.status || null,
     number_of_seasons: details.number_of_seasons || null,
@@ -566,9 +749,9 @@ function seasonAverageNote(seasonNumber){
 }
 
 function seasonProgressLabel(seasonNumber, episodeCount){
-  const watched = Array.from(watchedEpisodeSet).filter(k => k.startsWith(`${seasonNumber}-`)).length;
+  const watched = watchedInSeason(seasonNumber);
   const avg = seasonAverageNote(seasonNumber);
-  return `${watched}/${episodeCount} vus${avg != null ? ` · ★ ${avg.toFixed(1)}` : ''}`;
+  return `${watched}/${episodeCount} vus${avg != null ? ` · ${avg.toFixed(1)}` : ''}`;
 }
 
 // Nom de saison en français (audit T1) : TMDB renvoie « Season 1 » quand
@@ -581,25 +764,109 @@ function seasonLabel(s){
   return name;
 }
 
+// Saisons en carrés (« Grille ») ou en rangées avec les titres (« Liste »),
+// au choix, gardé sur cet appareil (piste D).
+const SERIES_SEASON_VIEW_KEY = 'kinetSeriesSeasonView';
+let seriesSelectedEp = null;   // "saison-épisode" choisi dans la grille
+let seriesSeasonMenu = null;   // saison dont le menu ⋯ est ouvert
+let seriesUndo = null;         // { seasonNumber, rows } après « Tout décocher »
+function seriesSeasonView(){
+  try{ return localStorage.getItem(SERIES_SEASON_VIEW_KEY) === 'list' ? 'list' : 'grid'; }catch(e){ return 'grid'; }
+}
+function setSeriesSeasonView(view){
+  try{ localStorage.setItem(SERIES_SEASON_VIEW_KEY, view); }catch(e){}
+  seriesSelectedEp = null;
+  renderSeasonsList();
+}
+
+function seasonMenuHtml(s){
+  if(seriesSeasonMenu !== s.season_number) return '';
+  const aired = airedEpisodesInSeason(s);
+  return `<div class="ff-menu sx-season-menu" role="menu">
+    ${aired ? `<button type="button" role="menuitem" data-season-all="${s.season_number}">Marquer ${aired > 1 ? `les ${aired} épisodes sortis` : 'l’épisode sorti'} comme vu${aired > 1 ? 's' : ''}</button>` : `<button type="button" role="menuitem" disabled>Rien n’est encore sorti</button>`}
+    <button type="button" role="menuitem" data-season-none="${s.season_number}">Tout décocher</button>
+  </div>`;
+}
+function episodeExtrasHtml(key){
+  const extra = watchedEpisodeExtras[key] || { note: null, timesWatched: 1 };
+  const note = extra.note;
+  return `<div class="sx-extra">
+    <span class="sx-step">Ta note <button type="button" data-ep-note="${key}" data-dir="-" aria-label="Baisser la note">−</button><b class="num ${note == null ? '' : noteColorClass(note)}">${note == null ? '—' : Number(note).toFixed(1)}</b><button type="button" data-ep-note="${key}" data-dir="+" aria-label="Monter la note">+</button></span>
+    <span class="sx-step">Vu <button type="button" data-ep-times="${key}" data-dir="-" aria-label="Retirer un visionnage">−</button><b class="num">${extra.timesWatched || 1} fois</b><button type="button" data-ep-times="${key}" data-dir="+" aria-label="Ajouter un visionnage">+</button></span>
+  </div>`;
+}
+function seasonGridHtml(s){
+  const n = s.season_number;
+  const squares = [];
+  for(let ep = 1; ep <= (s.episode_count || 0); ep++){
+    const key = `${n}-${ep}`;
+    const aired = isEpisodeAired(n, ep);
+    const on = watchedEpisodeSet.has(key);
+    squares.push(`<button type="button" class="sx-sq-btn${on ? ' on' : ''}${aired ? '' : ' future'}${seriesSelectedEp === key ? ' sel' : ''}" data-sq="${key}" aria-pressed="${on}" aria-label="Épisode ${ep}${aired ? '' : ', pas encore sorti'}">${ep}</button>`);
+  }
+  let sel = '';
+  if(seriesSelectedEp && seriesSelectedEp.startsWith(`${n}-`)){
+    const ep = parseInt(seriesSelectedEp.split('-')[1], 10);
+    const info = episodeInfo(n, ep);
+    const on = watchedEpisodeSet.has(seriesSelectedEp);
+    const aired = isEpisodeAired(n, ep);
+    sel = `<div class="sx-sel"><b>${ep} · ${escapeHtml(info.name)}</b>${info.air ? `<span>${aired ? '' : 'sort le '}${formatDateFr(info.air)}</span>` : ''}<span>${on ? 'Vu' : aired ? 'Pas vu' : 'Pas encore sorti'}</span>${on ? episodeExtrasHtml(seriesSelectedEp) : ''}</div>`;
+  }
+  return `<div class="sx-sq">${squares.join('')}</div>${sel}`;
+}
 function renderSeasonsList(){
   const wrap = document.getElementById('seriesSeasonsList');
+  if(!wrap) return;
+  const view = seriesSeasonView();
+  document.querySelectorAll('[data-sx-view]').forEach(b => {
+    const on = b.dataset.sxView === view;
+    b.classList.toggle('is-active', on);
+    b.setAttribute('aria-selected', String(on));
+  });
+  const legend = document.getElementById('seriesLegend');
+  if(legend) legend.hidden = view !== 'grid' || currentShowSeasons.length === 0;
+  renderSeriesUndo();
   if(currentShowSeasons.length === 0){
     wrap.innerHTML = `<div class="tmdb-empty">Aucune saison référencée sur TMDB pour cette série.</div>`;
     return;
   }
-  wrap.innerHTML = currentShowSeasons.map(s => `
-    <div class="season-block" data-season="${s.season_number}">
-      <button class="season-header" type="button" data-season-toggle="${s.season_number}">
-        <span class="season-name">${escapeHtml(seasonLabel(s))}</span>
-        <span class="season-progress" id="seasonProgress-${s.season_number}">${seasonProgressLabel(s.season_number, s.episode_count)}</span>
-        <span class="season-caret">▾</span>
-      </button>
-      <div class="season-episodes" id="seasonEpisodes-${s.season_number}"></div>
-    </div>
-  `).join('');
-  wrap.querySelectorAll('[data-season-toggle]').forEach(btn => {
-    btn.addEventListener('click', () => toggleSeason(parseInt(btn.dataset.seasonToggle, 10)));
-  });
+  const expanded = (seasonUiCache[currentShowId] && seasonUiCache[currentShowId].expanded) || new Set();
+  wrap.innerHTML = currentShowSeasons.map(s => {
+    const n = s.season_number;
+    const aired = airedEpisodesInSeason(s);
+    const watched = watchedInSeason(n);
+    const avg = seasonAverageNote(n);
+    const progress = aired ? `${watched} / ${aired}` : (s.air_date ? `à venir · ${formatDateFr(s.air_date)}` : 'à venir');
+    const open = view === 'list' && expanded.has(n);
+    return `
+    <div class="season-block sx-season${open ? ' open' : ''}" data-season="${n}">
+      <div class="sx-season-head">
+        <button class="season-header" type="button" ${view === 'list' ? `data-season-toggle="${n}" aria-expanded="${open}"` : 'tabindex="-1"'}>
+          <span class="season-name">${escapeHtml(seasonLabel(s))}</span>
+          ${aired ? `<span class="sx-bar"><b style="width:${Math.round(watched / aired * 100)}%"></b></span>` : ''}
+          <span class="season-progress num" id="seasonProgress-${n}">${progress}</span>
+          <span class="sx-avg num ${avg == null ? '' : noteColorClass(avg)}" id="seasonAvg-${n}">${avg == null ? '' : avg.toFixed(1)}</span>
+        </button>
+        <div class="sx-season-more">
+          <button type="button" class="ff-btn-icon" data-season-menu="${n}" aria-label="Plus d'actions pour ${escapeHtml(seasonLabel(s))}" aria-haspopup="true">${uiIcon('dots')}</button>
+          ${seasonMenuHtml(s)}
+        </div>
+        ${view === 'list' ? `<span class="season-caret" aria-hidden="true"></span>` : ''}
+      </div>
+      ${view === 'grid' ? seasonGridHtml(s) : `<div class="season-episodes" id="seasonEpisodes-${n}"></div>`}
+    </div>`;
+  }).join('');
+  if(view === 'list') expanded.forEach(n => { if(loadedSeasonEpisodes[n]) renderSeasonEpisodes(n); });
+}
+
+// Bandeau « Saison 2 décochée. Annuler » après « Tout décocher » (S2).
+function renderSeriesUndo(){
+  const el = document.getElementById('seriesUndo');
+  if(!el) return;
+  if(!seriesUndo){ el.hidden = true; el.innerHTML = ''; return; }
+  el.hidden = false;
+  el.innerHTML = `<span><b>Saison ${seriesUndo.seasonNumber}</b> décochée.</span><button type="button" class="catalog-strip-btn" id="seriesUndoBtn">Annuler</button>`;
+  document.getElementById('seriesUndoBtn').addEventListener('click', undoUnmarkSeason);
 }
 
 // Déplie une saison : chargée une seule fois par série (voir
@@ -614,13 +881,13 @@ async function openSeason(seasonNumber){
   if(seasonUiCache[currentShowId]) seasonUiCache[currentShowId].expanded.add(seasonNumber);
   if(!loadedSeasonEpisodes[seasonNumber]){
     const episodesEl = document.getElementById(`seasonEpisodes-${seasonNumber}`);
-    episodesEl.innerHTML = `<div class="tmdb-empty">Chargement…</div>`;
+    if(episodesEl) episodesEl.innerHTML = `<div class="tmdb-empty">Chargement…</div>`;
     const show = trackedShows.find(s => s.id === currentShowId);
     try{
       const seasonData = await fetchTvSeason(show.tmdbId, seasonNumber);
       loadedSeasonEpisodes[seasonNumber] = seasonData.episodes || [];
     }catch(e){
-      episodesEl.innerHTML = `<div class="tmdb-empty">${escapeHtml(e.message)}</div>`;
+      if(episodesEl) episodesEl.innerHTML = `<div class="tmdb-empty">${escapeHtml(e.message)}</div>`;
       console.error(e);
       return;
     }
@@ -643,70 +910,48 @@ async function toggleSeason(seasonNumber){
 
 function renderSeasonEpisodes(seasonNumber){
   const episodesEl = document.getElementById(`seasonEpisodes-${seasonNumber}`);
+  // En grille, pas de liste d'épisodes : on redessine les carrés.
+  if(!episodesEl){ if(seriesSeasonView() === 'grid') renderSeasonsList(); return; }
   const episodes = loadedSeasonEpisodes[seasonNumber] || [];
   if(episodes.length === 0){
     episodesEl.innerHTML = `<div class="tmdb-empty">Aucun épisode référencé pour cette saison.</div>`;
     return;
   }
-  episodesEl.innerHTML = `
-    <div class="season-episodes-actions">
-      <button class="btn secondary" type="button" data-mark-season="${seasonNumber}">Tout marquer vu</button>
-      <button class="btn secondary" type="button" data-unmark-season="${seasonNumber}">Tout marquer non vu</button>
-    </div>
-    ${episodes.map(ep => {
-      const key = `${seasonNumber}-${ep.episode_number}`;
-      const checked = watchedEpisodeSet.has(key);
-      const extra = watchedEpisodeExtras[key];
-      const air = formatDateFr(ep.air_date);
-      return `
-        <div class="episode-row">
-          <label class="episode-row-main">
-            <span class="episode-num">E${String(ep.episode_number).padStart(2, '0')}</span>
-            <span class="episode-title">${escapeHtml(ep.name || `Épisode ${ep.episode_number}`)}</span>
-            ${air ? `<span class="episode-air">${air}</span>` : ''}
-            <input type="checkbox" data-season="${seasonNumber}" data-episode="${ep.episode_number}" ${checked ? 'checked' : ''}>
-          </label>
-          ${checked ? `
-          <div class="episode-extra">
-            <input type="number" class="episode-note-input" min="0" max="5" step="0.5" placeholder="note"
-              aria-label="Note pour l'épisode ${ep.episode_number}"
-              data-season="${seasonNumber}" data-episode="${ep.episode_number}"
-              value="${extra && extra.note != null ? extra.note : ''}">
-            <div class="episode-watch-count">
-              <button type="button" class="episode-count-btn" data-count="dec" data-season="${seasonNumber}" data-episode="${ep.episode_number}" aria-label="Retirer un visionnage">−</button>
-              <span class="episode-count-val">×${extra ? extra.timesWatched : 1}</span>
-              <button type="button" class="episode-count-btn" data-count="inc" data-season="${seasonNumber}" data-episode="${ep.episode_number}" aria-label="Ajouter un visionnage">+</button>
-            </div>
-          </div>` : ''}
-        </div>
-      `;
-    }).join('')}
-  `;
+  // Un épisode à venir est grisé, avec sa date, sans case (S1). La note et
+  // les revisionnages n'apparaissent qu'en touchant le titre d'un épisode vu (S6).
+  episodesEl.innerHTML = episodes.map(ep => {
+    const key = `${seasonNumber}-${ep.episode_number}`;
+    const checked = watchedEpisodeSet.has(key);
+    const aired = isEpisodeAired(seasonNumber, ep.episode_number);
+    const air = formatDateFr(ep.air_date);
+    return `
+      <div class="episode-row sx-ep${aired ? '' : ' future'}">
+        <span class="episode-num num">${ep.episode_number}</span>
+        <span class="episode-title" ${checked ? `data-ep-sel="${key}" role="button" tabindex="0"` : ''}>${escapeHtml(ep.name || `Épisode ${ep.episode_number}`)}</span>
+        <span class="episode-air">${air ? `${aired ? '' : 'sort le '}${air}` : ''}</span>
+        ${aired ? `<input type="checkbox" class="sx-check" data-season="${seasonNumber}" data-episode="${ep.episode_number}" aria-label="Vu" ${checked ? 'checked' : ''}>` : '<span></span>'}
+        ${checked && seriesSelectedEp === key ? episodeExtrasHtml(key) : ''}
+      </div>`;
+  }).join('');
   episodesEl.querySelectorAll('input[type="checkbox"]').forEach(cb => {
     cb.addEventListener('change', () => {
-      // Rebond immédiat si on coche (retour utilisateur : "une petite
-      // animation de ce carré quand on le coche") — avant même l'écriture
-      // réseau, voir pulseCheckbox(), js/ui.js.
       if(cb.checked) pulseCheckbox(cb);
       toggleEpisodeWatched(seasonNumber, parseInt(cb.dataset.episode, 10), cb.checked, cb);
     });
   });
-  episodesEl.querySelectorAll('.episode-note-input').forEach(inp => {
-    inp.addEventListener('change', () => updateEpisodeNote(seasonNumber, parseInt(inp.dataset.episode, 10), inp.value));
-  });
-  episodesEl.querySelectorAll('.episode-count-btn').forEach(btn => {
-    btn.addEventListener('click', () => changeEpisodeTimesWatched(seasonNumber, parseInt(btn.dataset.episode, 10), btn.dataset.count === 'inc' ? 1 : -1));
-  });
-  const markBtn = episodesEl.querySelector(`[data-mark-season="${seasonNumber}"]`);
-  const unmarkBtn = episodesEl.querySelector(`[data-unmark-season="${seasonNumber}"]`);
-  if(markBtn) markBtn.addEventListener('click', () => markSeasonWatched(seasonNumber, episodes.length));
-  if(unmarkBtn) unmarkBtn.addEventListener('click', () => unmarkSeasonWatched(seasonNumber));
 }
 
 function updateSeasonProgressUI(seasonNumber, episodeCount){
   const el = document.getElementById(`seasonProgress-${seasonNumber}`);
-  if(el) el.textContent = seasonProgressLabel(seasonNumber, episodeCount);
+  const season = currentShowSeasons.find(s => s.season_number === seasonNumber);
+  const aired = season ? airedEpisodesInSeason(season) : episodeCount;
+  if(el) el.textContent = `${watchedInSeason(seasonNumber)} / ${aired || episodeCount}`;
+  const avgEl = document.getElementById(`seasonAvg-${seasonNumber}`);
+  const avg = seasonAverageNote(seasonNumber);
+  if(avgEl) avgEl.textContent = avg == null ? '' : avg.toFixed(1);
   renderEpisodesFicheValue(trackedShows.find(s => s.id === currentShowId));
+  renderSeriesNextBlock();
+  renderSeriesProgress();
 }
 
 // checkboxEl : la case cliquée — sur échec réseau, le navigateur a déjà
@@ -840,8 +1085,11 @@ async function markSeasonWatched(seasonNumber, episodeCount){
   if(blockIfOffline()) return;
   const rows = [];
   for(let ep = 1; ep <= episodeCount; ep++){
+    // Seulement les épisodes déjà sortis (S1).
+    if(!isEpisodeAired(seasonNumber, ep)) continue;
     rows.push({ tv_show_id: currentShowId, season_number: seasonNumber, episode_number: ep, watched_at: Date.now() });
   }
+  if(rows.length === 0){ showToast('Rien n’est encore sorti dans cette saison'); return; }
   const { error } = await supabaseClient
     .from('tv_episodes_watched')
     .upsert(rows, { onConflict: 'user_id,tv_show_id,season_number,episode_number', ignoreDuplicates: true });
@@ -850,19 +1098,26 @@ async function markSeasonWatched(seasonNumber, episodeCount){
     console.error(error);
     return;
   }
-  for(let ep = 1; ep <= episodeCount; ep++){
-    const key = `${seasonNumber}-${ep}`;
+  rows.forEach(r => {
+    const key = `${seasonNumber}-${r.episode_number}`;
     watchedEpisodeSet.add(key);
     ensureEpisodeExtras(key);
-  }
-  updateSeasonProgressUI(seasonNumber, episodeCount);
+  });
   watchedEpisodeCounts[currentShowId] = watchedEpisodeSet.size;
-  renderSeasonEpisodes(seasonNumber);
-  showToast('Saison marquée vue');
+  renderSeriesBlocks();
+  showToast(`Saison ${seasonNumber} : épisodes sortis marqués vus`);
 }
 
+// « Tout décocher » une saison (S2) : plus d'effacement silencieux. Les
+// lignes retirées (avec leur note et leurs revisionnages) sont gardées le
+// temps de proposer « Annuler », qui les remet telles quelles.
 async function unmarkSeasonWatched(seasonNumber){
   if(blockIfOffline()) return;
+  const { data: removedRows, error: readErr } = await supabaseClient
+    .from('tv_episodes_watched')
+    .select('season_number, episode_number, watched_at, note, times_watched')
+    .eq('tv_show_id', currentShowId).eq('season_number', seasonNumber);
+  if(readErr) console.error(readErr);
   const { error } = await supabaseClient
     .from('tv_episodes_watched')
     .delete()
@@ -878,11 +1133,31 @@ async function unmarkSeasonWatched(seasonNumber){
       delete watchedEpisodeExtras[key];
     }
   });
-  const season = currentShowSeasons.find(s => s.season_number === seasonNumber);
-  if(season) updateSeasonProgressUI(seasonNumber, season.episode_count);
   watchedEpisodeCounts[currentShowId] = watchedEpisodeSet.size;
-  renderSeasonEpisodes(seasonNumber);
-  showToast('Saison marquée non vue');
+  seriesUndo = (removedRows && removedRows.length) ? { seasonNumber, showId: currentShowId, rows: removedRows } : null;
+  renderSeriesBlocks();
+}
+async function undoUnmarkSeason(){
+  const undo = seriesUndo;
+  seriesUndo = null;
+  if(!undo || undo.showId !== currentShowId){ renderSeriesUndo(); return; }
+  const rows = undo.rows.map(r => ({ tv_show_id: undo.showId, season_number: r.season_number, episode_number: r.episode_number, watched_at: r.watched_at, note: r.note, times_watched: r.times_watched || 1 }));
+  const { error } = await supabaseClient
+    .from('tv_episodes_watched')
+    .upsert(rows, { onConflict: 'user_id,tv_show_id,season_number,episode_number' });
+  if(error){
+    showToast('Erreur, réessaie');
+    console.error(error);
+    return;
+  }
+  rows.forEach(r => {
+    const key = `${r.season_number}-${r.episode_number}`;
+    watchedEpisodeSet.add(key);
+    watchedEpisodeExtras[key] = { note: r.note != null ? parseFloat(r.note) : null, timesWatched: r.times_watched || 1 };
+  });
+  watchedEpisodeCounts[currentShowId] = watchedEpisodeSet.size;
+  renderSeriesBlocks();
+  showToast(`Saison ${undo.seasonNumber} recochée`);
 }
 
 // --- Marquer TOUTE la série d'un coup (v2.1, retour utilisateur) ---
@@ -893,13 +1168,15 @@ async function unmarkSeasonWatched(seasonNumber){
 async function markAllSeasonsWatched(){
   if(blockIfOffline()) return;
   if(currentShowSeasons.length === 0) return;
-  if(!confirm('Marquer tous les épisodes de toutes les saisons comme vus ?')) return;
+  if(!confirm('Marquer comme vus tous les épisodes déjà sortis ?')) return;
   const rows = [];
   currentShowSeasons.forEach(s => {
     for(let ep = 1; ep <= s.episode_count; ep++){
+      if(!isEpisodeAired(s.season_number, ep)) continue;
       rows.push({ tv_show_id: currentShowId, season_number: s.season_number, episode_number: ep, watched_at: Date.now() });
     }
   });
+  if(rows.length === 0) return;
   const { error } = await supabaseClient
     .from('tv_episodes_watched')
     .upsert(rows, { onConflict: 'user_id,tv_show_id,season_number,episode_number', ignoreDuplicates: true });
@@ -908,18 +1185,14 @@ async function markAllSeasonsWatched(){
     console.error(error);
     return;
   }
-  currentShowSeasons.forEach(s => {
-    for(let ep = 1; ep <= s.episode_count; ep++){
-      const key = `${s.season_number}-${ep}`;
-      watchedEpisodeSet.add(key);
-      ensureEpisodeExtras(key);
-    }
-    updateSeasonProgressUI(s.season_number, s.episode_count);
-    // Rafraîchit aussi les cases à cocher des saisons déjà dépliées.
-    if(loadedSeasonEpisodes[s.season_number]) renderSeasonEpisodes(s.season_number);
+  rows.forEach(r => {
+    const key = `${r.season_number}-${r.episode_number}`;
+    watchedEpisodeSet.add(key);
+    ensureEpisodeExtras(key);
   });
   watchedEpisodeCounts[currentShowId] = watchedEpisodeSet.size;
-  showToast('Série entière marquée vue');
+  renderSeriesBlocks();
+  showToast('Épisodes sortis marqués vus');
 }
 
 async function unmarkAllSeasonsWatched(){
@@ -951,17 +1224,13 @@ async function unmarkAllSeasonsWatched(){
 // (déjà hors-ligne-compatible, voir plus haut) plutôt que de dupliquer
 // l'écriture ici.
 async function markNextEpisodeWatched(){
-  const seasons = [...currentShowSeasons].sort((a, b) => a.season_number - b.season_number);
-  for(const season of seasons){
-    for(let ep = 1; ep <= season.episode_count; ep++){
-      if(watchedEpisodeSet.has(`${season.season_number}-${ep}`)) continue;
-      await openSeason(season.season_number);
-      await toggleEpisodeWatched(season.season_number, ep, true);
-      showToast(`Épisode S${season.season_number}E${ep} marqué vu`);
-      return;
-    }
-  }
-  showToast('Tous les épisodes référencés sont déjà vus');
+  // Seulement un épisode déjà sorti (S1) : le suivant pas encore diffusé
+  // n'est jamais coché.
+  const next = nextEpisodeToWatch();
+  if(!next){ showToast('Tu as vu tous les épisodes sortis'); return; }
+  await toggleEpisodeWatched(next.s, next.e, true);
+  const info = episodeInfo(next.s, next.e);
+  showToast(`Saison ${next.s}, épisode ${next.e} « ${info.name} » marqué vu`);
 }
 
 // Champ "Commentaire" retiré de cette fiche (v3.2, retour utilisateur,
@@ -992,7 +1261,16 @@ async function renderShowDetailWatchProviders(tmdbId){
   const wrap = document.getElementById('seriesDetailWatchProviders');
   try{
     const providers = await fetchWatchProviders(tmdbId, 'tv');
-    wrap.innerHTML = renderWatchProvidersHtml(providers);
+    // Même présentation que la fiche film : tes abonnements d'abord.
+    wrap.innerHTML = typeof filmProvidersHtml === 'function' ? filmProvidersHtml(providers) : renderWatchProvidersHtml(providers);
+    const more = wrap.querySelector('.ff-rent-toggle');
+    if(more){
+      more.addEventListener('click', () => {
+        const list = wrap.querySelector('.ff-rent-list');
+        list.hidden = !list.hidden;
+        more.setAttribute('aria-expanded', String(!list.hidden));
+      });
+    }
   }catch(e){
     console.error(e);
     wrap.innerHTML = `<div class="tmdb-empty">Disponibilité indisponible pour l'instant.</div>`;
@@ -1008,6 +1286,7 @@ async function updateSeriesTrailerBtn(tmdbId){
   const btn = document.getElementById('seriesTrailerBtn');
   if(!btn) return;
   btn.style.display = 'none';
+  btn.innerHTML = `${uiIcon('play')}<span>Bande-annonce</span>`;
   try{
     const video = pickTrailerVideo(await fetchVideos(tmdbId, 'tv'));
     if(!video) return;
@@ -1074,6 +1353,9 @@ async function openShowDetail(showId){
 
   renderShowDetailHeader(show);
   document.getElementById('seriesSeasonsList').innerHTML = `${skeletonRows(3)}`;
+  document.getElementById('seriesNextBlock').innerHTML = '';
+  document.getElementById('seriesProgress').innerHTML = '';
+  closeSeriesNotePop();
   document.getElementById('seriesDetailWatchProviders').innerHTML = `<div class="tmdb-empty">Chargement…</div>`;
 
   await Promise.all([
@@ -1083,12 +1365,15 @@ async function openShowDetail(showId){
     updateSeriesTrailerBtn(show.tmdbId)
   ]);
   renderShowDetailHeader(show); // statut éventuellement mis à jour par refreshShowMeta() (gère déjà la pastille de note et le total d'épisodes)
-  renderSeasonsList();
-  // Redéplie les saisons qui l'étaient avant de quitter la page (retour
-  // utilisateur) — les épisodes déjà en cache ci-dessus évitent un nouvel
-  // appel réseau à TMDB.
-  for(const seasonNumber of seasonUiCache[showId].expanded){
-    await openSeason(seasonNumber);
+  seriesSelectedEp = null;
+  seriesSeasonMenu = null;
+  if(seriesUndo && seriesUndo.showId !== showId) seriesUndo = null;
+  renderSeriesBlocks();
+  // Vue Liste : redéplie les saisons qui l'étaient avant de quitter la page
+  // (retour utilisateur), épisodes gardés en cache pour la session.
+  if(seriesSeasonView() === 'list'){
+    for(const seasonNumber of seasonUiCache[showId].expanded) await ensureSeasonEpisodes(seasonNumber);
+    renderSeasonsList();
   }
 }
 
@@ -1110,6 +1395,107 @@ document.getElementById('seriesNoteSlider').addEventListener('input', (e) => {
 });
 document.getElementById('seriesNoteSlider').addEventListener('change', handleSaveSeriesNote);
 document.getElementById('seriesRemoveBtn').addEventListener('click', () => handleRemoveShow(currentShowId, true));
+// Saisons (piste D) : un seul écouteur pour la grille, la liste et les menus ⋯.
+document.getElementById('seriesSeasonsList').addEventListener('click', async (e) => {
+  const t = e.target;
+  const menuBtn = t.closest('[data-season-menu]');
+  if(menuBtn){
+    e.stopPropagation();
+    const n = parseInt(menuBtn.dataset.seasonMenu, 10);
+    seriesSeasonMenu = seriesSeasonMenu === n ? null : n;
+    renderSeasonsList();
+    return;
+  }
+  const all = t.closest('[data-season-all]');
+  if(all){
+    seriesSeasonMenu = null;
+    const n = parseInt(all.dataset.seasonAll, 10);
+    const season = currentShowSeasons.find(x => x.season_number === n);
+    await markSeasonWatched(n, season ? season.episode_count : 0);
+    return;
+  }
+  const none = t.closest('[data-season-none]');
+  if(none){
+    seriesSeasonMenu = null;
+    await unmarkSeasonWatched(parseInt(none.dataset.seasonNone, 10));
+    return;
+  }
+  const sq = t.closest('[data-sq]');
+  if(sq){
+    const [n, ep] = sq.dataset.sq.split('-').map(Number);
+    seriesSelectedEp = sq.dataset.sq;
+    if(!isEpisodeAired(n, ep)){
+      renderSeasonsList();
+      await ensureSeasonEpisodes(n);
+      renderSeasonsList();
+      return;
+    }
+    await toggleEpisodeWatched(n, ep, !watchedEpisodeSet.has(sq.dataset.sq));
+    if(!loadedSeasonEpisodes[n]){ await ensureSeasonEpisodes(n); renderSeasonsList(); }
+    return;
+  }
+  const sel = t.closest('[data-ep-sel]');
+  if(sel){
+    seriesSelectedEp = seriesSelectedEp === sel.dataset.epSel ? null : sel.dataset.epSel;
+    renderSeasonEpisodes(parseInt(sel.dataset.epSel.split('-')[0], 10));
+    return;
+  }
+  const noteBtn = t.closest('[data-ep-note]');
+  if(noteBtn){
+    const key = noteBtn.dataset.epNote;
+    const [n, ep] = key.split('-').map(Number);
+    const cur = watchedEpisodeExtras[key] && watchedEpisodeExtras[key].note;
+    const up = noteBtn.dataset.dir === '+';
+    const next = cur == null ? (up ? 3 : 2.5) : Math.min(5, Math.max(0.5, cur + (up ? 0.5 : -0.5)));
+    await updateEpisodeNote(n, ep, String(next));
+    renderSeasonEpisodes(n);
+    return;
+  }
+  const timesBtn = t.closest('[data-ep-times]');
+  if(timesBtn){
+    const [n, ep] = timesBtn.dataset.epTimes.split('-').map(Number);
+    await changeEpisodeTimesWatched(n, ep, timesBtn.dataset.dir === '+' ? 1 : -1);
+    return;
+  }
+  const toggle = t.closest('[data-season-toggle]');
+  if(toggle){
+    await toggleSeason(parseInt(toggle.dataset.seasonToggle, 10));
+    const block = toggle.closest('.season-block');
+    if(block) toggle.setAttribute('aria-expanded', String(block.classList.contains('open')));
+  }
+});
+document.addEventListener('click', (e) => {
+  if(seriesSeasonMenu !== null && (!e.target.closest || !e.target.closest('.sx-season-more'))){
+    seriesSeasonMenu = null;
+    if(document.getElementById('seriesDetailPage').style.display !== 'none') renderSeasonsList();
+  }
+});
+document.querySelectorAll('[data-sx-view]').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    setSeriesSeasonView(btn.dataset.sxView);
+    if(btn.dataset.sxView === 'list' && seasonUiCache[currentShowId]){
+      for(const n of seasonUiCache[currentShowId].expanded) await ensureSeasonEpisodes(n);
+      renderSeasonsList();
+    }
+  });
+});
+// Ta note : l'anneau ouvre le curseur sur place (S7).
+function closeSeriesNotePop(){
+  const pop = document.getElementById('seriesNotePop');
+  if(pop) pop.hidden = true;
+  const ring = document.getElementById('seriesDetailRatingRing');
+  if(ring) ring.setAttribute('aria-expanded', 'false');
+}
+document.getElementById('seriesDetailRatingRing').addEventListener('click', (e) => {
+  e.stopPropagation();
+  const pop = document.getElementById('seriesNotePop');
+  pop.hidden = !pop.hidden;
+  e.currentTarget.setAttribute('aria-expanded', String(!pop.hidden));
+});
+document.addEventListener('click', (e) => {
+  if(!e.target.closest || !e.target.closest('.sx-ring-wrap')) closeSeriesNotePop();
+});
+document.addEventListener('keydown', (e) => { if(e.key === 'Escape') closeSeriesNotePop(); });
 document.getElementById('seriesMarkAllBtn').addEventListener('click', markAllSeasonsWatched);
 document.getElementById('seriesUnmarkAllBtn').addEventListener('click', unmarkAllSeasonsWatched);
 document.getElementById('seriesNextEpisodeBtn').addEventListener('click', markNextEpisodeWatched);

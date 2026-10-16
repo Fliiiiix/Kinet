@@ -197,7 +197,7 @@ test('seasonProgressLabel() : inclut la moyenne seulement si elle existe', () =>
       '1-2': { note: 2, timesWatched: 1 },
     },
   });
-  assert.strictEqual(ctx.seasonProgressLabel(1, 10), '2/10 vus · ★ 3.0');
+  assert.strictEqual(ctx.seasonProgressLabel(1, 10), '2/10 vus · 3.0', 'moyenne en chiffre, sans étoile (audit des six écrans, S7)');
   setState(ctx, { watchedEpisodeSet: new Set(), watchedEpisodeExtras: {} });
   assert.strictEqual(ctx.seasonProgressLabel(1, 10), '0/10 vus', 'pas de "· ★" si rien de noté');
 });
@@ -205,10 +205,12 @@ test('seasonProgressLabel() : inclut la moyenne seulement si elle existe', () =>
 test('updateEpisodeNote() : rafraîchit l\'en-tête de saison (★ moyenne) tout de suite, pas seulement au prochain repli/dépli', async () => {
   const { stubDocument, stubElement } = require('./helpers/vm-harness');
   const progressEl = stubElement();
+  const avgEl = stubElement();
   // Clé avec un tiret ("seasonProgress-1") : construite via un objet mutable
   // plutôt qu'un littéral, un identifiant JS ne peut pas contenir "-".
   const elements = {};
   elements['seasonProgress-1'] = progressEl;
+  elements['seasonAvg-1'] = avgEl;
   const updateCalls = [];
   function makeQuery(){
     const call = { update: null };
@@ -229,7 +231,10 @@ test('updateEpisodeNote() : rafraîchit l\'en-tête de saison (★ moyenne) tout
     watchedEpisodeExtras: { '1-1': { note: null, timesWatched: 1 } },
   });
   await ctx.updateEpisodeNote(1, 1, '4');
-  assert.strictEqual(progressEl.textContent, '1/10 vus · ★ 4.0');
+  // Piste D de l'audit des six écrans : la progression et la moyenne (en
+  // chiffre de couleur, sans étoile) sont deux éléments de l'en-tête.
+  assert.strictEqual(progressEl.textContent, '1 / 10');
+  assert.strictEqual(avgEl.textContent, '4.0');
 });
 
 // --- File d'attente hors ligne (retour utilisateur, js/offlineQueue.js) ---
