@@ -74,7 +74,9 @@ function computeStats(list = films){
     if(!worst || n < getDisplayNote(worst)) worst = f;
   });
 
-  return { total: list.length, avg, favCount, manualCount, gridCount, distribution, activity, noteEvolution, genreByMonth, best, worst };
+  // rated : films qui ont une note (audit général du 16/10, B2) ; total
+  // compte aussi les films vus sans note (imports).
+  return { total: list.length, rated: rated.length, avg, favCount, manualCount, gridCount, distribution, activity, noteEvolution, genreByMonth, best, worst };
 }
 
 function monthLabel(key){
@@ -709,7 +711,7 @@ function renderStatsInto(content, list = films){
          critères » et « Note manuelle » retirés (retour du 14/10 : le mode
          de notation n'intéresse pas). -->
     <div class="stat-tiles stat-tiles-4 reveal">
-      <div class="stat-tile"><div class="stat-value">${s.total}</div><div class="stat-label">Films notés</div></div>
+      <div class="stat-tile"><div class="stat-value">${s.rated}</div><div class="stat-label">Films notés</div></div>
       <div class="stat-tile"><div class="stat-value">${s.avg !== null ? s.avg.toFixed(1) : '—'}</div><div class="stat-label">Note moyenne</div></div>
       <div class="stat-tile"><div class="stat-value">${s.favCount}</div><div class="stat-label">Favoris</div></div>
       <div class="stat-tile"><div class="stat-value">${rythmeAnnuel(s)}</div><div class="stat-label">Films par mois actif (${new Date().getFullYear()})</div></div>
@@ -773,9 +775,12 @@ function renderStatsInto(content, list = films){
   animateCounters(content.querySelector('.stat-tiles'));
   const bouton = document.createElement('div');
   bouton.className = 'tcg-card-detail-actions';
-  bouton.innerHTML = `<button class="btn secondary" id="openRecapBtn" type="button">Mon récap de l'année</button>`;
+  // Son propre identifiant (audit général du 16/10, B3) : il reprenait
+  // celui de « Mon bilan cinéphile » (#openRecapBtn, index.html), restait
+  // sans effet et ajoutait openYearRecap à l'autre bouton à chaque ouverture.
+  bouton.innerHTML = `<button class="btn secondary" id="openYearRecapBtn" type="button">Mon récap de l'année</button>`;
   content.insertBefore(bouton, content.firstChild);
-  document.getElementById('openRecapBtn').addEventListener('click', openYearRecap);
+  bouton.querySelector('#openYearRecapBtn').addEventListener('click', openYearRecap);
 
   const genreByMonthEl = content.querySelector('#genreByMonthList');
   if(genreByMonthEl){

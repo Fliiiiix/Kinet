@@ -829,7 +829,10 @@ function openModal(id, prefillTmdb){
   // Notation en pas à pas (audit des six écrans, piste B) : choisit l'écran
   // de départ (choix du film, premier critère, résumé ou note directe).
   if(typeof ntOpen === 'function') ntOpen(film);
-  openOverlay('overlay');
+  // Déjà ouverte : on bascule vers un autre film (déjà noté, voir
+  // renderTmdbResults(), js/tmdb.js) sans rouvrir la fenêtre, sinon le
+  // défilement de la page resterait bloqué.
+  if(!document.getElementById('overlay').classList.contains('open')) openOverlay('overlay');
   // Sur écran tactile, pas de clavier d'office (retour de Flix, 15/10) : on
   // vient souvent régler les curseurs, pas taper le titre.
   if(!window.matchMedia('(pointer: coarse)').matches && typeof ntScreen !== 'undefined' && ntScreen === 'pick') document.getElementById('titleInput').focus();
@@ -855,6 +858,16 @@ async function handleSave(){
   if(!title){
     showToast('Ajoute un titre avant d\'enregistrer');
     return;
+  }
+  // Même film TMDB déjà dans le catalogue (audit général du 16/10, B4) :
+  // jamais de doublon, on propose de remplacer sa note.
+  if(!editingId && tmdbSelected && tmdbSelected.tmdb_id){
+    const dup = films.find(f => f.tmdbId === tmdbSelected.tmdb_id);
+    if(dup){
+      const n = getDisplayNote(dup);
+      if(!confirm(`« ${dup.title} » est déjà dans ton catalogue${n !== null ? ` (ta note : ${n.toFixed(1)})` : ''}. Remplacer sa note par celle-ci ?`)) return;
+      editingId = dup.id;
+    }
   }
   const manual = isManualMode();
   // En note manuelle, la grille déjà enregistrée reste (audit N1), voir critForSave().

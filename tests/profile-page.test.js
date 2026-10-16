@@ -28,7 +28,7 @@ function buildContext({ profile, filmsList, shows = [], friends = [] } = {}){
     films: filmsList,
     trackedShows: shows,
     friendships: friends,
-    computeStats: (list) => ({ total: list.length, avg: 3.44, favCount: list.filter(f => f.fav).length, activity: [] }),
+    computeStats: (list) => ({ total: list.length, rated: list.length, avg: 3.44, favCount: list.filter(f => f.fav).length, activity: [] }),
     rythmeAnnuel: () => '16.8',
     computeAchievements: () => ({ tiersUnlocked: 20, tiersTotal: 30, hiddenUnlocked: 4, hiddenTotal: 7 }),
     isAdmin: () => false,

@@ -9,7 +9,9 @@
 // palier suivant.
 const CUMULATIVE_GROUPS = [
   {
-    key: 'cinephile', icon: '🎬', label: 'Cinéphile', unit: 'films notés',
+    // Compte tous les films du catalogue, notés ou non : « films vus »
+    // (audit général du 16/10, B2).
+    key: 'cinephile', icon: '🎬', label: 'Cinéphile', unit: 'films vus',
     metric: s => s.total,
     tiers: [{ name: 'Bronze', threshold: 10 }, { name: 'Argent', threshold: 50 }, { name: 'Or', threshold: 150 }]
   },

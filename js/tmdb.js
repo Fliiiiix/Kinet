@@ -427,18 +427,27 @@ function renderTmdbResults(results){
   results.forEach(r => {
     const year = r.release_date ? r.release_date.slice(0, 4) : '?';
     const poster = r.poster_path ? TMDB_IMG_BASE + r.poster_path : null;
+    // Déjà dans ton catalogue (audit général du 16/10, B4) : on ouvre sa
+    // note au lieu d'en créer une seconde.
+    const existing = typeof films !== 'undefined' ? films.find(f => f.tmdbId === r.id && f.id !== editingId) : null;
+    const existingNote = existing ? getDisplayNote(existing) : null;
     const item = document.createElement('div');
-    item.className = 'tmdb-result';
+    item.className = 'tmdb-result' + (existing ? ' is-rated' : '');
     item.innerHTML = `
       ${poster ? `<img loading="lazy" decoding="async" src="${escapeHtml(poster)}" alt="">` : `<div class="tmdb-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
       <div class="tmdb-result-info">
         <div class="tmdb-result-title">${escapeHtml(r.title)}</div>
-        <div class="tmdb-result-year">${year}</div>
+        <div class="tmdb-result-year">${year}${existing ? ` · déjà noté${existingNote !== null ? ` ${existingNote.toFixed(1)}` : ''}` : ''}</div>
       </div>
+      ${existing ? '<span class="tmdb-result-action">Ouvrir</span>' : ''}
     `;
     // mousedown (pas click) : se déclenche avant le blur du champ titre,
     // qui sinon referme les résultats avant que le clic soit pris en compte.
-    item.addEventListener('mousedown', (e) => { e.preventDefault(); selectTmdbResult(r); });
+    item.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      if(existing){ openModal(existing.id); return; }
+      selectTmdbResult(r);
+    });
     wrap.appendChild(item);
   });
 }

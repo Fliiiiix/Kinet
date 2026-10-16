@@ -698,7 +698,7 @@ function renderAdminStatsTab(){
       <div class="stats-section-title">Activité globale (tous comptes)</div>
       <div class="stat-tiles">
         ${stat(siteStats && siteStats.total_users, 'Comptes')}
-        ${stat(siteStats && siteStats.total_films, 'Films notés')}
+        ${stat(siteStats && siteStats.total_films, 'Films au catalogue')}
         ${stat(siteStats && siteStats.total_series, 'Séries suivies')}
         ${stat(siteStats && siteStats.total_viewings, 'Visionnages')}
       </div>
@@ -1048,7 +1048,7 @@ function renderAdminHealth(){
   wrap.innerHTML = `
     <div class="adm-figs adm-figs-4">
       ${adminFigureHtml(val(s.total_users), `comptes · +${since('signup')} cette semaine`)}
-      ${adminFigureHtml(val(s.total_films), 'films notés')}
+      ${adminFigureHtml(val(s.total_films), 'films au catalogue')}
       ${adminFigureHtml(val(s.total_series), 'séries suivies')}
       ${adminFigureHtml(val(s.total_viewings), 'visionnages')}
     </div>

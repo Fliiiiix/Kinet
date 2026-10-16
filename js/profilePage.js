@@ -65,7 +65,7 @@ function renderProfilePageHead(){
 function renderProfilePageFigures(){
   const s = computeStats(films);
   const figures = [
-    [String(s.total), 'Films notés'],
+    [String(s.rated), 'Films notés'],
     [s.avg !== null ? s.avg.toFixed(1) : '—', 'Note moyenne'],
     [String(s.favCount), 'Favoris'],
     [rythmeAnnuel(s), 'Films par mois']

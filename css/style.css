@@ -6437,7 +6437,7 @@ button.btn-secondary{background:none; border:none; border-bottom:1px solid var(-
 .pp-id{flex:1; min-width:0;}
 .pp-name{
   margin:0; font-family:var(--font-display); font-weight:800; font-size:var(--fs-xl);
-  letter-spacing:-0.02em; line-height:1.1; overflow-wrap:anywhere;
+  letter-spacing:-0.02em; line-height:1.1; overflow-wrap:break-word;
 }
 .pp-sub{margin-top:2px; font-size:var(--fs-sm); color:var(--text-2); font-variant-numeric:tabular-nums;}
 .pp-edit{
@@ -7027,6 +7027,15 @@ html:has(#authContainer:not([style*="none"])) #versionTag{display:none !importan
   transition:border-color var(--dur-fast), color var(--dur-fast);
 }
 .pp-edit:hover, .pp-edit[aria-expanded="true"]{border-color:var(--accent); color:var(--accent);}
+/* Téléphone (audit général du 16/10, B1) : le nom et ses chiffres gardent la
+   ligne à côté de la photo, « Modifier le profil » et « Partager » passent
+   dessous. Avant, ils écrasaient le nom à une lettre par ligne. */
+@media (max-width:600px){
+  .pp-id{flex:1 1 calc(100% - 68px - var(--sp-4));}
+  .pp-actions{flex:1 1 100%;}
+}
+.tmdb-result.is-rated .tmdb-result-year{color:var(--text-2);}
+.tmdb-result.is-rated .tmdb-result-action{margin-left:auto; font-size:var(--fs-sm); font-weight:600; color:var(--accent);}
 .pp-share{max-width:560px; margin:var(--sp-4) 0 0; padding:var(--sp-4); border:1px solid var(--line-strong); border-radius:var(--r-md); display:grid; gap:var(--sp-2);}
 .pp-share[hidden]{display:none;}
 .pp-share-title{font-size:var(--fs-md); font-weight:600;}
