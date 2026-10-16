@@ -149,7 +149,7 @@ function renderGroupProposals(){
       return `
       <div class="gp-prop">
         <button type="button" class="gp-prop-poster" data-open="${p.id}" aria-label="Ouvrir la proposition ${escapeHtml(p.title)}">${p.posterUrl
-          ? `<img src="${p.posterUrl}" alt="" loading="lazy">`
+          ? `<img src="${escapeHtml(p.posterUrl)}" alt="" loading="lazy">`
           : `<div class="film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}</button>
         <div class="gp-prop-main">
           <button type="button" class="gp-prop-title" data-open="${p.id}">${escapeHtml(p.title)}${p.releaseYear ? ` <span>${p.releaseYear}</span>` : ''}</button>
@@ -270,7 +270,7 @@ function renderProposalTmdbResults(results){
     const item = document.createElement('div');
     item.className = 'tmdb-result';
     item.innerHTML = `
-      ${poster ? `<img loading="lazy" decoding="async" src="${poster}" alt="">` : `<div class="tmdb-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
+      ${poster ? `<img loading="lazy" decoding="async" src="${escapeHtml(poster)}" alt="">` : `<div class="tmdb-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
       <div class="tmdb-result-info">
         <div class="tmdb-result-title">${escapeHtml(r.title)}</div>
         <div class="tmdb-result-year">${year}</div>
@@ -384,7 +384,7 @@ function renderProposalDetailFilm(){
   const date = p.createdAt ? `, le ${new Date(p.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}` : '';
   document.getElementById('proposalDetailFilm').innerHTML = `
     ${p.posterUrl
-      ? `<img src="${p.posterUrl}" alt="" loading="lazy">`
+      ? `<img src="${escapeHtml(p.posterUrl)}" alt="" loading="lazy">`
       : `<div class="film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
     <div class="gp-next-main">
       <small>Proposition${group ? ` · ${escapeHtml(group.name)}` : ''}</small>

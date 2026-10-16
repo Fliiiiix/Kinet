@@ -342,7 +342,7 @@ function statsFilmRowHtml(f){
   return `
     <div class="film-row friend-film-row" data-film-id="${f.id}">
       ${f.posterUrl
-        ? `<img class="film-poster" src="${f.posterUrl}" alt="" loading="lazy">`
+        ? `<img class="film-poster" src="${escapeHtml(f.posterUrl)}" alt="" loading="lazy">`
         : `<div class="film-poster film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
       <div class="film-main">
         <div class="film-title">${escapeHtml(f.title)}</div>
@@ -499,7 +499,7 @@ function openFilmReviewDetail(film){
   const isManual = film.manualNote != null;
 
   const posterHtml = film.posterUrl
-    ? `<img class="film-poster" src="${film.posterUrl}" alt="" loading="lazy">`
+    ? `<img class="film-poster" src="${escapeHtml(film.posterUrl)}" alt="" loading="lazy">`
     : `<div class="film-poster film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`;
 
   // Une note manuelle peut coexister avec une grille (audit N1, 16/10) : on
@@ -745,7 +745,7 @@ function renderStatsInto(content, list = films){
       ${s.best ? `
       <div class="stats-extreme stats-extreme-best">
         ${s.best.posterUrl
-          ? `<img class="stats-extreme-poster" src="${s.best.posterUrl}" alt="" loading="lazy">`
+          ? `<img class="stats-extreme-poster" src="${escapeHtml(s.best.posterUrl)}" alt="" loading="lazy">`
           : `<div class="stats-extreme-poster stats-extreme-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
         <div class="stats-extreme-info">
           <div class="stats-extreme-label">Mieux noté</div>
@@ -756,7 +756,7 @@ function renderStatsInto(content, list = films){
       ${s.worst && s.worst !== s.best ? `
       <div class="stats-extreme">
         ${s.worst.posterUrl
-          ? `<img class="stats-extreme-poster" src="${s.worst.posterUrl}" alt="" loading="lazy">`
+          ? `<img class="stats-extreme-poster" src="${escapeHtml(s.worst.posterUrl)}" alt="" loading="lazy">`
           : `<div class="stats-extreme-poster stats-extreme-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
         <div class="stats-extreme-info">
           <div class="stats-extreme-label">Moins bien noté</div>

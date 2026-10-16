@@ -221,7 +221,7 @@ function renderEndedShows(ended){
     return `
       <div class="wl-row ended-row" data-id="${show.id}">
         ${show.posterUrl
-          ? `<img class="film-poster" src="${show.posterUrl}" alt="" loading="lazy">`
+          ? `<img class="film-poster" src="${escapeHtml(show.posterUrl)}" alt="" loading="lazy">`
           : `<div class="film-poster film-poster-placeholder">${TV_PLACEHOLDER_SVG}</div>`}
         <div class="wl-main">
           <div class="wl-title">${escapeHtml(show.title)}</div>
@@ -292,7 +292,7 @@ function renderTrackedShows(){
              pas la peine de doubler le signal. -->
         ${newEp ? `<span class="new-episode-dot" title="Nouvel épisode" aria-hidden="true"></span>` : ''}
         ${show.posterUrl
-          ? `<img class="film-poster" src="${show.posterUrl}" alt="" loading="lazy">`
+          ? `<img class="film-poster" src="${escapeHtml(show.posterUrl)}" alt="" loading="lazy">`
           : `<div class="film-poster film-poster-placeholder">${TV_PLACEHOLDER_SVG}</div>`}
         <div class="wl-main">
           <div class="wl-title">${escapeHtml(show.title)}${show.firstAirYear ? ` <span class="wl-year">(${show.firstAirYear})</span>` : ''}${badge ? ` <span class="new-episode-badge${badge === 'catchup' ? ' is-catchup' : ''}">${badge === 'new' ? 'Nouvel épisode' : 'À rattraper'}</span>` : ''}</div>

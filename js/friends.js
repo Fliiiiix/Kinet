@@ -72,7 +72,7 @@ async function loadFriendships(){
 function friendAvatarHtml(userId, displayName){
   const url = friendAvatarUrl(userId);
   return url
-    ? `<img loading="lazy" decoding="async" class="friend-avatar" src="${url}" alt="${escapeHtml(displayName)}">`
+    ? `<img loading="lazy" decoding="async" class="friend-avatar" src="${escapeHtml(url)}" alt="${escapeHtml(displayName)}">`
     : `<div class="friend-avatar friend-avatar-placeholder">${uiIcon('user')}</div>`;
 }
 
@@ -215,7 +215,7 @@ function friendRichRowHtml(f){
     stats.last ? `dernier : ${escapeHtml(stats.last.title)}` : ''
   ].filter(Boolean).join(' · ');
   const last = stats && stats.last && stats.last.posterUrl
-    ? `<div class="fr-last"><img src="${stats.last.posterUrl}" alt="" loading="lazy">${stats.last.note != null ? `<span class="fr-note ${noteColorClass(stats.last.note)}">${stats.last.note.toFixed(1)}</span>` : ''}</div>`
+    ? `<div class="fr-last"><img src="${escapeHtml(stats.last.posterUrl)}" alt="" loading="lazy">${stats.last.note != null ? `<span class="fr-note ${noteColorClass(stats.last.note)}">${stats.last.note.toFixed(1)}</span>` : ''}</div>`
     : '';
   return `
     <div class="fr-row" data-user-id="${userId}">
@@ -534,7 +534,7 @@ function renderFriendRecommendations(films){
     : films.map(f => `
         <div class="fr-poster" data-tmdb-id="${f.tmdb_id}">
           <div class="fr-poster-img">
-            ${f.poster_url ? `<img src="${f.poster_url}" alt="" loading="lazy">` : FILM_PLACEHOLDER_SVG}
+            ${f.poster_url ? `<img src="${escapeHtml(f.poster_url)}" alt="" loading="lazy">` : FILM_PLACEHOLDER_SVG}
             <span class="fr-poster-note ${noteColorClass(Number(f.avg_note))}">${Number(f.avg_note).toFixed(1)}</span>
           </div>
           <div class="fr-poster-title">${escapeHtml(f.title)}</div>
@@ -598,7 +598,7 @@ function friendFeedRowHtml(e){
         <div class="fr-sub">${friendFeedWhen(e.createdAt)}</div>
       </div>
       ${note}
-      ${e.targetPosterUrl ? `<img class="fr-feed-poster" src="${e.targetPosterUrl}" alt="" loading="lazy">` : ''}
+      ${e.targetPosterUrl ? `<img class="fr-feed-poster" src="${escapeHtml(e.targetPosterUrl)}" alt="" loading="lazy">` : ''}
     </div>
   `;
 }
@@ -755,7 +755,7 @@ async function openFriendProfile(userId){
         ${friendTopFilms.map(f => `
           <div class="top-films-showcase-item" data-tmdb-id="${f.tmdbId}">
             ${f.posterUrl
-              ? `<img loading="lazy" decoding="async" src="${f.posterUrl}" alt="">`
+              ? `<img loading="lazy" decoding="async" src="${escapeHtml(f.posterUrl)}" alt="">`
               : `<div class="film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
             <div class="top-films-showcase-title">${escapeHtml(f.title)}</div>
           </div>
@@ -820,7 +820,7 @@ async function openFriendProfile(userId){
       renderCollapsible(commonWrap.querySelector('#friendCommonList'), commonFilms, (f) => `
         <div class="wl-row" data-tmdb-id="${f.tmdbId}">
           ${f.posterUrl
-            ? `<img class="film-poster" src="${f.posterUrl}" alt="" loading="lazy">`
+            ? `<img class="film-poster" src="${escapeHtml(f.posterUrl)}" alt="" loading="lazy">`
             : `<div class="film-poster film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
           <div class="wl-main">
             <div class="wl-title">${escapeHtml(f.title)}${f.releaseYear ? ` <span class="wl-year">(${f.releaseYear})</span>` : ''}</div>

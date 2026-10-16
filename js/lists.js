@@ -53,7 +53,7 @@ function seenCountIn(tmdbIds){
 function listCoverHtml(posters){
   const p = (posters || []).filter(Boolean).slice(0, 4);
   return p.length
-    ? `<div class="ls-cover${p.length === 1 ? ' is-one' : ''} list-cover-posters">${p.map(url => `<img src="${url}" alt="" loading="lazy">`).join('')}</div>`
+    ? `<div class="ls-cover${p.length === 1 ? ' is-one' : ''} list-cover-posters">${p.map(url => `<img src="${escapeHtml(url)}" alt="" loading="lazy">`).join('')}</div>`
     : `<div class="ls-cover list-cover-posters-empty">${uiIcon('list')}</div>`;
 }
 
@@ -288,7 +288,7 @@ function listItemTileHtml(item, index){
   const note = mine ? getDisplayNote(mine) : null;
   const editing = isOwnList() && listEditing;
   const poster = item.posterUrl
-    ? `<img src="${item.posterUrl}" alt="" loading="lazy">`
+    ? `<img src="${escapeHtml(item.posterUrl)}" alt="" loading="lazy">`
     : `<div class="film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`;
   const overlays = editing
     ? `<button type="button" class="ls-drag" data-drag-id="${item.id}" aria-label="Déplacer ${escapeHtml(item.title)}">${uiIcon('grip')}</button>`
@@ -515,7 +515,7 @@ function renderListItemTmdbResults(results){
     const item = document.createElement('div');
     item.className = 'tmdb-result';
     item.innerHTML = `
-      ${poster ? `<img loading="lazy" decoding="async" src="${poster}" alt="">` : `<div class="tmdb-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
+      ${poster ? `<img loading="lazy" decoding="async" src="${escapeHtml(poster)}" alt="">` : `<div class="tmdb-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
       <div class="tmdb-result-info">
         <div class="tmdb-result-title">${escapeHtml(r.title)}</div>
         <div class="tmdb-result-year">${year}${note !== null && note !== undefined ? ` · ta note ${note.toFixed(1)}` : ''}</div>

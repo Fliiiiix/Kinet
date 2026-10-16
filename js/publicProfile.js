@@ -22,7 +22,7 @@ function publicProfilePosterHtml(f){
   return `
     <div class="poster-wall-item">
       ${f.poster_url
-        ? `<img src="${f.poster_url}" alt="" loading="lazy">`
+        ? `<img src="${escapeHtml(f.poster_url)}" alt="" loading="lazy">`
         : `<div class="film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
       <div class="poster-wall-note ${noteColorClass(f.note)}">${f.note !== null && f.note !== undefined ? Number(f.note).toFixed(1) : '—'}</div>
       ${f.fav ? `<div class="poster-wall-fav" title="Favori">${uiIcon('star', true)}</div>` : ''}
@@ -108,7 +108,7 @@ async function renderPublicProfilePage(userId){
       ${topFilms.map(f => `
         <div class="top-films-showcase-item"${currentUser && f.tmdb_id ? ` data-tmdb-id="${f.tmdb_id}"` : ''}>
           ${f.poster_url
-            ? `<img loading="lazy" decoding="async" src="${f.poster_url}" alt="">`
+            ? `<img loading="lazy" decoding="async" src="${escapeHtml(f.poster_url)}" alt="">`
             : `<div class="film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
           <div class="top-films-showcase-title">${escapeHtml(f.title)}</div>
         </div>
@@ -118,7 +118,7 @@ async function renderPublicProfilePage(userId){
   content.innerHTML = `
     <div class="pub-hero">
       ${row.avatar_url
-        ? `<img loading="lazy" decoding="async" src="${row.avatar_url}" alt="">`
+        ? `<img loading="lazy" decoding="async" src="${escapeHtml(row.avatar_url)}" alt="">`
         : `<div class="avatar-fallback">${uiIcon('user')}</div>`}
       <div>
         <h3>${escapeHtml(name)}</h3>

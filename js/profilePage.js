@@ -90,7 +90,7 @@ function renderProfilePageFavs(){
   wrap.innerHTML = picked.map(f => `
     <button type="button" class="pp-fav" data-tmdb-id="${f.tmdbId}" aria-label="${escapeHtml(f.title)}">
       ${f.posterUrl
-        ? `<img class="pp-fav-poster" src="${f.posterUrl}" alt="" loading="lazy" decoding="async">`
+        ? `<img class="pp-fav-poster" src="${escapeHtml(f.posterUrl)}" alt="" loading="lazy" decoding="async">`
         : `<span class="pp-fav-poster film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</span>`}
       <span class="pp-fav-title">${escapeHtml(f.title)}</span>
     </button>

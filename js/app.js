@@ -402,7 +402,7 @@ function render(){
       ${bulkSelectMode ? `<input type="checkbox" class="bulk-select-checkbox" data-id="${f.id}" aria-label="Sélectionner ${escapeHtml(f.title)}" ${selectedFilmIds.has(f.id) ? 'checked' : ''}>` : ''}
       <div class="film-poster-box">
         ${f.posterUrl
-          ? `<img class="film-poster" src="${f.posterUrl}" alt="" loading="lazy">`
+          ? `<img class="film-poster" src="${escapeHtml(f.posterUrl)}" alt="" loading="lazy">`
           : `<div class="film-poster film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
         ${happening ? `<button class="happening-badge" type="button" title="Un petit quelque chose à découvrir..." aria-label="Un petit quelque chose à découvrir...">${happening.icon}</button>` : ''}
       </div>
@@ -611,10 +611,18 @@ document.getElementById('bulkUnfavBtn').addEventListener('click', () => handleBu
 document.getElementById('bulkDeleteBtn').addEventListener('click', handleBulkDelete);
 document.getElementById('bulkExportBtn').addEventListener('click', handleBulkExport);
 
+// Audit général (16/10) : échappe aussi « " » et « ' ». L'ancienne version
+// (textContent puis innerHTML) les laissait passer : un pseudo comme
+// `x" onload="…` sortait d'un attribut (alt, aria-label) et ajoutait le sien.
+// Sert pour le texte ET les attributs, adresses d'images comprises.
 function escapeHtml(str){
-  const d = document.createElement('div');
-  d.textContent = str;
-  return d.innerHTML;
+  if(str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 // Audit M11 : chaque critère s'affiche sur la même échelle que la note

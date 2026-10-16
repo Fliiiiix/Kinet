@@ -160,7 +160,7 @@ function albumCardHtml(c, index){
     : `${c.count} film${c.count > 1 ? 's' : ''}`;
   return `
     <button type="button" class="al-card al-r${c.rank}" data-album-index="${index}">
-      <span class="al-face">${img ? `<img src="${img}" alt="" loading="lazy" decoding="async">` : (c.kind === 'film' ? FILM_PLACEHOLDER_SVG : uiIcon('user'))}</span>
+      <span class="al-face">${img ? `<img src="${escapeHtml(img)}" alt="" loading="lazy" decoding="async">` : (c.kind === 'film' ? FILM_PLACEHOLDER_SVG : uiIcon('user'))}</span>
       <span class="al-name">${escapeHtml(name)}</span>
       <span class="al-rank"><b>${ALBUM_RANKS[c.rank]}</b> · ${escapeHtml(extra)}</span>
     </button>`;
@@ -191,7 +191,7 @@ function renderAlbum(){
       <div class="al-next">
         ${a.next.map(x => `
           <div class="al-next-row">
-            ${x.card.person.image_url ? `<img src="${x.card.person.image_url}" alt="" loading="lazy">` : `<span class="al-next-empty">${uiIcon('user')}</span>`}
+            ${x.card.person.image_url ? `<img src="${escapeHtml(x.card.person.image_url)}" alt="" loading="lazy">` : `<span class="al-next-empty">${uiIcon('user')}</span>`}
             <div class="al-next-main">
               <div class="al-next-title">${escapeHtml(x.card.person.name)} · ${ALBUM_RANKS[x.step.rank]}</div>
               <div class="al-next-sub">${escapeHtml(albumNextSub(x))}</div>
@@ -229,7 +229,7 @@ function openAlbumCard(index){
   const body = document.getElementById('tcgCardDetailBody');
   body.innerHTML = `
     <div class="al-detail al-r${c.rank}">
-      <span class="al-face">${c.person.image_url ? `<img src="${c.person.image_url}" alt="">` : uiIcon('user')}</span>
+      <span class="al-face">${c.person.image_url ? `<img src="${escapeHtml(c.person.image_url)}" alt="">` : uiIcon('user')}</span>
       <div class="al-detail-name">${escapeHtml(c.person.name)}</div>
       <div class="al-rank"><b>${ALBUM_RANKS[c.rank]}</b> · ${c.kind === 'director' ? 'Réalisateur' : 'Acteur'}</div>
       <p class="al-detail-films">Ses films que tu as vus : ${c.seen.map(escapeHtml).join(', ')}.</p>

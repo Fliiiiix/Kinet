@@ -227,11 +227,11 @@ let suggestTmdbTimer = null;
 function suggestVisualHtml(item){
   if(item.type === 'ami'){
     const avatar = friendAvatarUrl(item.ref.userId);
-    return avatar ? `<img class="sg-face" src="${avatar}" alt="" loading="lazy">` : `<span class="sg-face">${uiIcon('user')}</span>`;
+    return avatar ? `<img class="sg-face" src="${escapeHtml(avatar)}" alt="" loading="lazy">` : `<span class="sg-face">${uiIcon('user')}</span>`;
   }
   if(item.type === 'groupe') return `<span class="sg-glyph">${uiIcon('group')}</span>`;
   const placeholder = (item.type === 'serie' || item.type === 'tmdbtv') ? TV_PLACEHOLDER_SVG : FILM_PLACEHOLDER_SVG;
-  return item.posterUrl ? `<img class="sg-thumb" src="${item.posterUrl}" alt="" loading="lazy">` : `<span class="sg-thumb">${placeholder}</span>`;
+  return item.posterUrl ? `<img class="sg-thumb" src="${escapeHtml(item.posterUrl)}" alt="" loading="lazy">` : `<span class="sg-thumb">${placeholder}</span>`;
 }
 
 function suggestRowHtml(item, nq, index){

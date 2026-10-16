@@ -190,7 +190,7 @@ function renderJournalRow(e){
   return `
     <div class="journal-row">
       ${e.film.posterUrl
-        ? `<img class="film-poster" src="${e.film.posterUrl}" alt="" loading="lazy">`
+        ? `<img class="film-poster" src="${escapeHtml(e.film.posterUrl)}" alt="" loading="lazy">`
         : `<div class="film-poster film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
       <div class="journal-main">
         <div class="journal-title">${escapeHtml(e.film.title)}${e.isRewatch ? `<span class="rewatch-badge" title="Revisionnage">${uiIcon('repeat')}</span>` : ''}</div>
@@ -276,7 +276,7 @@ function filmsJournalRowHtml(e){
   return `
     <div class="fj-row" data-film-id="${e.film.id}">
       ${e.film.posterUrl
-        ? `<img class="fj-poster" src="${e.film.posterUrl}" alt="" loading="lazy" decoding="async">`
+        ? `<img class="fj-poster" src="${escapeHtml(e.film.posterUrl)}" alt="" loading="lazy" decoding="async">`
         : `<span class="fj-poster film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</span>`}
       <div class="fj-main">
         <div class="fj-title">${escapeHtml(e.film.title)}${e.isRewatch ? '<span class="fj-again">revu</span>' : ''}</div>

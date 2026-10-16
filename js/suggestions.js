@@ -27,7 +27,7 @@ function suggestionRowHtml(r){
   return `
     <div class="wl-row">
       ${poster
-        ? `<img class="film-poster" src="${poster}" alt="" loading="lazy">`
+        ? `<img class="film-poster" src="${escapeHtml(poster)}" alt="" loading="lazy">`
         : `<div class="film-poster film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
       <div class="wl-main">
         <div class="wl-title">${escapeHtml(r.title)}${year ? ` <span class="wl-year">(${year})</span>` : ''}</div>

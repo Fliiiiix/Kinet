@@ -264,7 +264,7 @@ async function addCinemaToWatchlist(tmdbId, btn){
 
 // --- Rendu du fil ---
 function upcomingThumbHtml(item){
-  if(item.posterUrl) return `<img class="up-thumb" src="${item.posterUrl}" alt="" loading="lazy">`;
+  if(item.posterUrl) return `<img class="up-thumb" src="${escapeHtml(item.posterUrl)}" alt="" loading="lazy">`;
   const placeholder = item.type === 'movie' || item.type === 'cinema' ? FILM_PLACEHOLDER_SVG : TV_PLACEHOLDER_SVG;
   return `<span class="up-thumb">${placeholder}</span>`;
 }
@@ -382,7 +382,7 @@ function upcomingCalItemHtml(item){
   const target = item.type === 'episode' ? ` data-cal-show="${item.showId}"` : item.tmdbId ? ` data-cal-film="${item.tmdbId}"` : '';
   const clickable = target ? ' is-clickable' : '';
   return item.posterUrl
-    ? `<img class="upcoming-cal-poster${clickable}" src="${item.posterUrl}" alt="" title="${escapeHtml(label)}" loading="lazy"${target}>`
+    ? `<img class="upcoming-cal-poster${clickable}" src="${escapeHtml(item.posterUrl)}" alt="" title="${escapeHtml(label)}" loading="lazy"${target}>`
     : `<div class="upcoming-cal-poster upcoming-cal-poster-placeholder${clickable}" title="${escapeHtml(label)}"${target}>${item.type === 'episode' ? TV_PLACEHOLDER_SVG : FILM_PLACEHOLDER_SVG}</div>`;
 }
 

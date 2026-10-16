@@ -252,7 +252,7 @@ function watchProviderChipsHtml(items){
     })
     .map(p => `
       <span class="watch-provider-chip" title="${escapeHtml(p.provider_name)}">
-        <img src="${WATCH_PROVIDER_IMG_BASE}${p.logo_path}" alt="${escapeHtml(p.provider_name)}" loading="lazy">
+        <img src="${escapeHtml(WATCH_PROVIDER_IMG_BASE + p.logo_path)}" alt="${escapeHtml(p.provider_name)}" loading="lazy">
       </span>
     `)
     .join('');
@@ -286,7 +286,7 @@ function renderWatchProvidersHtml(providers){
     <div class="watch-providers">
       ${flatrateHtml}
       ${buyRentHtml}
-      <a href="${providers.link}" target="_blank" rel="noopener" class="watch-provider-justwatch">Données JustWatch</a>
+      <a href="${escapeHtml(providers.link)}" target="_blank" rel="noopener" class="watch-provider-justwatch">Données JustWatch</a>
     </div>
   `;
 }
@@ -430,7 +430,7 @@ function renderTmdbResults(results){
     const item = document.createElement('div');
     item.className = 'tmdb-result';
     item.innerHTML = `
-      ${poster ? `<img loading="lazy" decoding="async" src="${poster}" alt="">` : `<div class="tmdb-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
+      ${poster ? `<img loading="lazy" decoding="async" src="${escapeHtml(poster)}" alt="">` : `<div class="tmdb-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
       <div class="tmdb-result-info">
         <div class="tmdb-result-title">${escapeHtml(r.title)}</div>
         <div class="tmdb-result-year">${year}</div>

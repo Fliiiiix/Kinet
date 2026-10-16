@@ -265,7 +265,7 @@ function watchlistServicesHtml(item){
   const extra = services.length - WATCHLIST_MAX_LOGOS;
   return `<div class="wl-services" role="img" aria-label="Disponible sur ${escapeHtml(names)}" title="${escapeHtml(names)}">${
     services.slice(0, WATCHLIST_MAX_LOGOS).map(s => s.logoPath
-      ? `<img src="${WATCHLIST_LOGO_BASE}${s.logoPath}" alt="" loading="lazy">`
+      ? `<img src="${escapeHtml(WATCHLIST_LOGO_BASE + s.logoPath)}" alt="" loading="lazy">`
       : `<span class="wl-services-more">${escapeHtml(s.name.slice(0, 2))}</span>`).join('')
   }${extra > 0 ? `<span class="wl-services-more">+${extra}</span>` : ''}</div>`;
 }
@@ -290,7 +290,7 @@ function renderWatchlist(){
     const friendLabel = friendRatingsLabel(item.id);
     row.innerHTML = `
       ${item.posterUrl
-        ? `<img class="film-poster" src="${item.posterUrl}" alt="" loading="lazy">`
+        ? `<img class="film-poster" src="${escapeHtml(item.posterUrl)}" alt="" loading="lazy">`
         : `<div class="film-poster film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
       <div class="wl-main">
         <div class="wl-title">${escapeHtml(item.title)}${item.releaseYear ? ` <span class="wl-year">(${item.releaseYear})</span>` : ''}</div>
@@ -494,7 +494,7 @@ function renderMyServicesChips(){
   const mine = getMyStreamingServices();
   el.innerHTML = Array.from(watchlistServiceCounts().values())
     .sort((a, b) => b.n - a.n || a.name.localeCompare(b.name, 'fr'))
-    .map(s => `<button type="button" class="wl-sub-chip" data-service="${escapeHtml(s.key)}" aria-pressed="${mine.has(s.key)}">${s.logoPath ? `<img src="${WATCHLIST_LOGO_BASE}${s.logoPath}" alt="" loading="lazy">` : ''}${escapeHtml(s.name)}</button>`)
+    .map(s => `<button type="button" class="wl-sub-chip" data-service="${escapeHtml(s.key)}" aria-pressed="${mine.has(s.key)}">${s.logoPath ? `<img src="${escapeHtml(WATCHLIST_LOGO_BASE + s.logoPath)}" alt="" loading="lazy">` : ''}${escapeHtml(s.name)}</button>`)
     .join('');
 }
 
@@ -718,7 +718,7 @@ function rouletteItemHtml(item){
   return `
     <div class="surprise-roulette-item">
       ${item.posterUrl
-        ? `<img src="${item.posterUrl}" alt="" loading="lazy">`
+        ? `<img src="${escapeHtml(item.posterUrl)}" alt="" loading="lazy">`
         : `<div class="film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
     </div>
   `;
@@ -895,7 +895,7 @@ function renderWlTmdbResults(results){
     const item = document.createElement('div');
     item.className = 'tmdb-result';
     item.innerHTML = `
-      ${poster ? `<img loading="lazy" decoding="async" src="${poster}" alt="">` : `<div class="tmdb-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
+      ${poster ? `<img loading="lazy" decoding="async" src="${escapeHtml(poster)}" alt="">` : `<div class="tmdb-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
       <div class="tmdb-result-info">
         <div class="tmdb-result-title">${escapeHtml(r.title)}</div>
         <div class="tmdb-result-year">${year}</div>

@@ -778,7 +778,7 @@ async function renderAdminCardsTab(){
   const rows = triees.map(c => `
     <div class="wl-row admin-card-row">
       ${c.image_url
-        ? `<img class="film-poster" src="${c.image_url}" alt="" loading="lazy">`
+        ? `<img class="film-poster" src="${escapeHtml(c.image_url)}" alt="" loading="lazy">`
         : `<div class="film-poster film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
       <div class="wl-main">
         <div class="wl-title">${escapeHtml(c.name)}</div>

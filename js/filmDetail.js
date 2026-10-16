@@ -578,7 +578,7 @@ function filmProvidersHtml(providers){
   const mine = typeof getMyStreamingServices === 'function' ? getMyStreamingServices() : new Set();
   const mineNames = flat.filter(s => mine.has(s.key));
   const others = flat.filter(s => !mine.has(s.key));
-  const logo = (s) => s.logoPath ? `<img src="${WATCHLIST_LOGO_BASE}${s.logoPath}" alt="" loading="lazy">` : '';
+  const logo = (s) => s.logoPath ? `<img src="${escapeHtml(WATCHLIST_LOGO_BASE + s.logoPath)}" alt="" loading="lazy">` : '';
   const rows = [];
   mineNames.forEach(s => rows.push(`<div class="ff-prov">${logo(s)}<span><b>${escapeHtml(s.name)}</b> · dans tes abonnements</span></div>`));
   if(others.length){
@@ -590,7 +590,7 @@ function filmProvidersHtml(providers){
     rows.push(`<button type="button" class="ff-rent-toggle" aria-expanded="false">${rentNames.length} plateforme${rentNames.length > 1 ? 's' : ''} en location ou achat ›</button>
       <p class="ff-rent-list" hidden>${rentNames.map(escapeHtml).join(', ')}.</p>`);
   }
-  if(providers && providers.link) rows.push(`<a href="${providers.link}" target="_blank" rel="noopener" class="watch-provider-justwatch">Données JustWatch</a>`);
+  if(providers && providers.link) rows.push(`<a href="${escapeHtml(providers.link)}" target="_blank" rel="noopener" class="watch-provider-justwatch">Données JustWatch</a>`);
   return `<div class="ff-provs">${rows.join('')}</div>`;
 }
 
@@ -619,7 +619,7 @@ async function renderFilmDetailCast(tmdbId){
     wrap.innerHTML = cast.map(p => `
       <div class="cast-card">
         ${p.profile_path
-          ? `<img class="cast-photo" src="${TMDB_PROFILE_IMG_BASE}${p.profile_path}" alt="" loading="lazy" decoding="async">`
+          ? `<img class="cast-photo" src="${escapeHtml(TMDB_PROFILE_IMG_BASE + p.profile_path)}" alt="" loading="lazy" decoding="async">`
           : `<div class="cast-photo cast-photo-placeholder">${PERSON_PLACEHOLDER_SVG}</div>`}
         <div class="cast-name">${escapeHtml(p.name)}</div>
         ${p.character ? `<div class="cast-character">${escapeHtml(p.character)}</div>` : ''}
@@ -650,7 +650,7 @@ async function renderFilmDetailSimilar(tmdbId){
     wrap.innerHTML = results.map(r => `
       <div class="similar-card" data-tmdb-id="${r.id}">
         ${r.poster_path
-          ? `<img src="${TMDB_IMG_BASE}${r.poster_path}" alt="" loading="lazy" decoding="async">`
+          ? `<img src="${escapeHtml(TMDB_IMG_BASE + r.poster_path)}" alt="" loading="lazy" decoding="async">`
           : `<div class="film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
         <div class="similar-card-title">${escapeHtml(r.title)}</div>
         ${r.release_year ? `<div class="similar-card-year">${r.release_year}</div>` : ''}

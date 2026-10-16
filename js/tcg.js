@@ -232,7 +232,7 @@ function rarityLabel(rarity){
 function tcgCardFaceHtml(card){
   return `
     ${card.image_url
-      ? `<img src="${card.image_url}" alt="" loading="lazy">`
+      ? `<img src="${escapeHtml(card.image_url)}" alt="" loading="lazy">`
       : `<div class="film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
     <div class="tcg-card-name">${escapeHtml(card.name)}</div>
   `;
@@ -422,7 +422,7 @@ function renderTcgCollection(){
   grid.innerHTML = filtered.map(c => `
     <div class="tcg-card rarity-${c.rarity}" data-card-id="${c.cardId}" title="${escapeHtml(c.name)} : ${rarityLabel(c.rarity)}">
       ${c.imageUrl
-        ? `<img src="${c.imageUrl}" alt="" loading="lazy">`
+        ? `<img src="${escapeHtml(c.imageUrl)}" alt="" loading="lazy">`
         : `<div class="film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
       <div class="tcg-card-name">${escapeHtml(c.name)}</div>
       ${c.quantity > 1 ? `<div class="tcg-card-qty">×${c.quantity}</div>` : ''}
@@ -508,7 +508,7 @@ function renderDuplicatesList(){
   wrap.innerHTML = dups.map(c => `
     <div class="wl-row">
       ${c.imageUrl
-        ? `<img class="film-poster" src="${c.imageUrl}" alt="" loading="lazy">`
+        ? `<img class="film-poster" src="${escapeHtml(c.imageUrl)}" alt="" loading="lazy">`
         : `<div class="film-poster film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
       <div class="wl-main">
         <div class="wl-title">${escapeHtml(c.name)}</div>
@@ -576,7 +576,7 @@ async function runCraftSearch(query){
     return `
       <div class="wl-row">
         ${c.image_url
-          ? `<img class="film-poster" src="${c.image_url}" alt="" loading="lazy">`
+          ? `<img class="film-poster" src="${escapeHtml(c.image_url)}" alt="" loading="lazy">`
           : `<div class="film-poster film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
         <div class="wl-main">
           <div class="wl-title">${escapeHtml(c.name)}</div>
@@ -784,7 +784,7 @@ function tcgTradeCardHtml(c, selected){
   return `
     <div class="tcg-card rarity-${c.rarity}${selected ? ' selected' : ''}" data-trade-card="${c.cardId}" title="${escapeHtml(c.name)}">
       ${c.imageUrl
-        ? `<img src="${c.imageUrl}" alt="" loading="lazy">`
+        ? `<img src="${escapeHtml(c.imageUrl)}" alt="" loading="lazy">`
         : `<div class="film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
       <div class="tcg-card-name">${escapeHtml(c.name)}</div>
       ${c.quantity > 1 ? `<div class="tcg-card-qty">×${c.quantity}</div>` : ''}
@@ -933,7 +933,7 @@ function showCardDetail(card){
   body.innerHTML = `
     <div class="tcg-card-detail rarity-${card.rarity}">
       ${card.imageUrl || card.image_url
-        ? `<img src="${card.imageUrl || card.image_url}" alt="" class="tcg-card-detail-img">`
+        ? `<img src="${escapeHtml(card.imageUrl || card.image_url)}" alt="" class="tcg-card-detail-img">`
         : `<div class="tcg-card-detail-img film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
       <div class="tcg-card-detail-name">${escapeHtml(card.name)}</div>
       <div class="wl-note">${TCG_TYPE_LABEL[card.cardType || card.card_type] || ''} · ${rarityLabel(card.rarity)}</div>

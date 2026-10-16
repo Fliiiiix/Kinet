@@ -196,7 +196,7 @@ function renderChosenBanner(groupId){
   const group = groups.find(g => g.id === groupId);
   const isOwner = !!(group && group.ownerId === currentUser.id);
   const chosen = (typeof chosenProposal === 'function') ? chosenProposal(groupId) : null;
-  const poster = (p) => p.posterUrl ? `<img src="${p.posterUrl}" alt="" loading="lazy">` : `<div class="film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`;
+  const poster = (p) => p.posterUrl ? `<img src="${escapeHtml(p.posterUrl)}" alt="" loading="lazy">` : `<div class="film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`;
   if(chosen){
     const n = typeof proposalScore === 'function' ? proposalScore(chosen.id) : 0;
     el.innerHTML = `<div class="gp-next">${poster(chosen)}<div class="gp-next-main">
@@ -321,7 +321,7 @@ function renderGroupSeenHistory(groupId, electionEvents){
   list.innerHTML = rows.map(r => {
     const mine = r.tmdbId ? films.find(f => f.tmdbId === r.tmdbId) : null;
     const note = mine ? getDisplayNote(mine) : null;
-    return `<div class="gp-taste">${r.poster ? `<img src="${r.poster}" alt="" loading="lazy">` : `<div class="film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
+    return `<div class="gp-taste">${r.poster ? `<img src="${escapeHtml(r.poster)}" alt="" loading="lazy">` : `<div class="film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
       <div class="gp-taste-main"><b>${escapeHtml(r.title)}</b><span class="gp-notes">${escapeHtml(r.when)}</span></div>
       ${note !== null ? `<span class="gp-avg num ${noteColorClass(note)}">${note.toFixed(1)}</span>` : (r.tmdbId ? `<button type="button" class="ff-link" data-gp-rate="${r.tmdbId}">Noter</button>` : '')}
     </div>`;
@@ -399,7 +399,7 @@ function renderGroupTopFilms(films){
     : films.map(f => `
         <div class="wl-row" data-tmdb-id="${f.tmdb_id}">
           ${f.poster_url
-            ? `<img class="film-poster" src="${f.poster_url}" alt="" loading="lazy">`
+            ? `<img class="film-poster" src="${escapeHtml(f.poster_url)}" alt="" loading="lazy">`
             : `<div class="film-poster film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
           <div class="wl-main">
             <div class="wl-title">${escapeHtml(f.title)}${f.release_year ? ` <span class="wl-year">(${f.release_year})</span>` : ''}</div>
@@ -444,7 +444,7 @@ function renderGroupTasteComparison(rows){
     return `
     <div class="gp-taste" data-tmdb-id="${f.tmdb_id}">
       ${f.poster_url
-        ? `<img src="${f.poster_url}" alt="" loading="lazy">`
+        ? `<img src="${escapeHtml(f.poster_url)}" alt="" loading="lazy">`
         : `<div class="film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
       <div class="gp-taste-main">
         <b>${escapeHtml(f.title)}</b>

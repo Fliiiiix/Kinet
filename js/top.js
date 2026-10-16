@@ -88,7 +88,7 @@ function topMineHtml(f){
 
 function topPosterHtml(f, cls){
   return f.posterUrl
-    ? `<img class="${cls}" src="${f.posterUrl}" alt="" loading="lazy" decoding="async">`
+    ? `<img class="${cls}" src="${escapeHtml(f.posterUrl)}" alt="" loading="lazy" decoding="async">`
     : `<span class="${cls} top-poster-empty">${FILM_PLACEHOLDER_SVG}</span>`;
 }
 
