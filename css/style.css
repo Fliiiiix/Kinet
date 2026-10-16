@@ -7143,3 +7143,108 @@ html:has(#authContainer:not([style*="none"])) #versionTag{display:none !importan
 @media (max-width:600px){
   .pp-admin-rows:has(> .pp-row:not([hidden])){display:block; margin-bottom:var(--sp-4);}
 }
+
+/* ==========================================================
+   AUDIT DES SIX ÉCRANS, CATALOGUE (piste A choisie le 16/10)
+   Pastilles de filtre, filtres actifs, vraie vue Liste en rangées,
+   titre sur deux lignes sous l'affiche, tri par critère expliqué.
+   ========================================================== */
+/* Panneau « Trier et filtrer » : pastilles */
+.toolbar-filters-sheet{width:min(460px, calc(100vw - 32px)); gap:var(--sp-2);}
+.toolbar-filters-head{margin-bottom:var(--sp-1);}
+.filter-chips{display:grid; gap:var(--sp-2);}
+.filter-label{
+  font-size:var(--fs-xs); font-weight:600; letter-spacing:0.06em; text-transform:uppercase;
+  color:var(--text-2); margin-top:var(--sp-2);
+}
+.filter-label:first-child{margin-top:0;}
+.filter-row{display:flex; flex-wrap:wrap; gap:var(--sp-2);}
+.filter-chip{
+  height:32px; padding:0 12px;
+  display:inline-flex; align-items:center; gap:6px;
+  border:1px solid var(--line-strong); border-radius:var(--r-full);
+  background:none; color:var(--text-2);
+  font-family:var(--font-text); font-size:var(--fs-sm); font-weight:600; white-space:nowrap;
+  cursor:pointer; transition:color var(--dur-fast), border-color var(--dur-fast), background var(--dur-fast);
+}
+.filter-chip:hover{color:var(--text-1);}
+.filter-chip small{font-size:var(--fs-xs); font-weight:500; color:var(--text-3);}
+.filter-chip.is-on{background:var(--accent-wash); border-color:var(--accent); color:var(--accent);}
+.filter-chip.is-on small{color:var(--accent);}
+.filter-chip span{font-size:15px; line-height:1;}
+.filter-foot{display:flex; align-items:center; justify-content:space-between; gap:var(--sp-3); margin-top:var(--sp-3);}
+.filter-clear{
+  background:none; border:0; padding:8px 0; cursor:pointer;
+  font-family:var(--font-text); font-size:var(--fs-sm); font-weight:600; color:var(--text-2);
+}
+.filter-clear:hover{color:var(--text-1);}
+.filter-apply{display:none;}
+@media (max-width:600px){
+  .toolbar-filters-sheet{width:100%; max-width:none; max-height:86vh; overflow-y:auto;}
+  .filter-apply{display:inline-flex; border-radius:var(--r-full); height:44px; padding:0 20px;}
+}
+/* Filtres actifs et explication sous la recherche */
+.active-filters{display:flex; flex-wrap:wrap; align-items:center; gap:var(--sp-2); margin-top:var(--sp-3);}
+.active-filters[hidden], .catalog-notice[hidden]{display:none;}
+.catalog-hint{margin:var(--sp-3) 0 0; max-width:62ch; font-size:12px; color:var(--text-2);}
+.catalog-strip{
+  display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:var(--sp-3);
+  margin-top:var(--sp-4); padding:var(--sp-3) 0;
+  border-top:1px solid var(--line); border-bottom:1px solid var(--line);
+  font-size:var(--fs-sm); color:var(--text-2);
+}
+.catalog-strip b{color:var(--text-1); font-weight:600;}
+.catalog-strip-btn{background:none; border:0; padding:6px 0; cursor:pointer; font-family:var(--font-text); font-size:var(--fs-sm); font-weight:600; color:var(--accent);}
+/* Séparateur du tri par critère */
+.film-divider{
+  grid-column:1/-1; padding-top:var(--sp-3); border-top:1px solid var(--line);
+  font-size:var(--fs-xs); font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:var(--text-2);
+}
+body[data-view-mode="list"] #filmList .film-divider{padding:var(--sp-5) 0 var(--sp-2); border-top:0;}
+/* Affiche et pictos de happening sur l'affiche, plus dans le titre (C7) */
+.film-poster-box{position:relative; flex:none;}
+#filmList .film-poster-box .happening-badge{
+  position:absolute; left:6px; bottom:10px; z-index:1; margin:0;
+  width:24px; height:24px; border-radius:var(--r-full);
+  display:flex; align-items:center; justify-content:center;
+  background:rgba(var(--glass-rgb),0.78); font-size:13px;
+}
+/* Grille : titre sur deux lignes au plus, puis l'année */
+body[data-view-mode="grid"] #filmList .film-title{
+  white-space:normal; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+}
+body[data-view-mode="grid"] #filmList :is(.film-sub-list, .row-rate-link){display:none;}
+body[data-view-mode="grid"] #filmList .film-row:hover .film-title{color:var(--accent);}
+/* Téléphone : l'étoile seulement sur les favoris (C4) */
+@media (hover:none){
+  body[data-view-mode="grid"] #filmList .star-btn:not(.active){display:none;}
+}
+/* Liste : vraies rangées de 64 px, sans boîte, note à droite (C1) */
+body[data-view-mode="list"] #filmList{display:flex; flex-direction:column; gap:0;}
+body[data-view-mode="list"] #filmList .film-row{
+  display:flex; flex-direction:row; align-items:center; gap:var(--sp-3);
+  min-height:64px; padding:2px 0; margin:0;
+  background:none; border:0; border-bottom:1px solid var(--line); border-radius:0;
+  box-shadow:none; transform:none;
+}
+body[data-view-mode="list"] #filmList .film-row:hover{background:none; border-color:var(--line); box-shadow:none; transform:none;}
+body[data-view-mode="list"] #filmList .film-row:hover .film-title{color:var(--accent);}
+body[data-view-mode="list"] #filmList :is(.film-poster, .film-poster-placeholder){width:40px; height:60px; margin:0; border:0; border-radius:var(--r-sm);}
+body[data-view-mode="list"] #filmList .film-poster-box .happening-badge{left:-4px; bottom:-4px; width:20px; height:20px; font-size:11px;}
+body[data-view-mode="list"] #filmList .film-main{flex:1; min-width:0; display:grid; gap:2px;}
+body[data-view-mode="list"] #filmList .film-title{font-size:var(--fs-sm); font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; transition:color var(--dur-fast);}
+body[data-view-mode="list"] #filmList .film-sub-grid{display:none;}
+body[data-view-mode="list"] #filmList .film-sub-list{font-size:var(--fs-xs); color:var(--text-2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin:0;}
+body[data-view-mode="list"] #filmList .star-btn{width:28px; height:28px; padding:0; background:none; border:0; color:var(--accent); flex:none;}
+body[data-view-mode="list"] #filmList .star-btn:not(.active){display:none;}
+body[data-view-mode="list"] #filmList .counter{
+  width:auto; height:auto; min-width:32px; padding:0; flex:none;
+  border:0; border-radius:0; background:none; box-shadow:none;
+  font-size:14px; font-weight:600; font-variant-numeric:tabular-nums; text-align:right;
+}
+body[data-view-mode="list"] #filmList .counter:not(.rate-low):not(.rate-mid):not(.rate-high){display:none;}
+.row-rate-link{
+  flex:none; background:none; border:0; padding:8px 0; cursor:pointer;
+  font-family:var(--font-text); font-size:var(--fs-sm); font-weight:600; color:var(--accent);
+}
+body[data-view-mode="list"] #filmList .bulk-select-checkbox{flex:none;}

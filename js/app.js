@@ -112,91 +112,141 @@ function showToast(msg){
   t._timer = setTimeout(()=> t.classList.remove('show'), 2200);
 }
 
-// Options de #sortCriterion, générées depuis CRITERIA (js/data.js) plutôt
-// que dupliquées à la main dans index.html — évite le décalage si un
-// critère est renommé/ajouté un jour.
-function buildSortOptions(){
-  document.getElementById('sortCriterion').innerHTML = CRITERIA
-    .map(c => `<option value="${c.key}">${escapeHtml(c.label)}</option>`)
-    .join('');
+// --- Filtres du catalogue (audit des six écrans, piste A choisie le 16/10) ---
+// Des pastilles au lieu de trois menus déroulants : trier (note, ajout
+// récent, titre, par critère), afficher (tous, favoris, sans note, revus),
+// genres (plusieurs à la fois) et décennie. Les filtres actifs restent
+// visibles sous la recherche, avec une croix (renderActiveFilters()).
+const CAT_SORTS = [['note', 'Note'], ['recent', 'Ajout récent'], ['title', 'Titre'], ['crit', 'Par critère']];
+const CAT_SHOWS = [['all', 'Tous'], ['fav', 'Favoris'], ['unrated', 'Sans note'], ['rewatch', 'Revus']];
+const CRIT_SHORT = { jeu: 'Jeu', esthetique: 'Esthétique', ressenti: 'Ressenti' };
+let catFilter = { sort: 'note', crit: 'scenario', show: 'all', genres: [], decade: null };
+
+function critShortLabel(key){
+  if(CRIT_SHORT[key]) return CRIT_SHORT[key];
+  const c = CRITERIA.find(x => x.key === key);
+  return c ? c.label : key;
+}
+// Décennie d'un film : 2020, 2010… ou 0 pour « Avant 1990 ».
+function filmDecade(f){
+  if(!f.releaseYear) return null;
+  return f.releaseYear < 1990 ? 0 : Math.floor(f.releaseYear / 10) * 10;
+}
+function decadeLabel(d){ return d === 0 ? 'Avant 1990' : String(d); }
+function isRewatched(f){ return typeof rewatchCount === 'function' && rewatchCount(f.id) > 1; }
+function catFilterActive(){
+  return catFilter.sort !== 'note' || catFilter.show !== 'all' || catFilter.genres.length > 0 || catFilter.decade !== null;
+}
+function hasCritValue(f, key){ return !!(f.crit && typeof f.crit[key] === 'number'); }
+
+// Pastilles du panneau « Trier et filtrer » : seuls les genres et décennies
+// présents dans ton catalogue ; « Favoris », « Sans note » et « Revus »
+// seulement s'ils mènent quelque part, avec leur nombre.
+function renderFilterChips(){
+  const wrap = document.getElementById('filterChips');
+  if(!wrap) return;
+  const chip = (on, act, label, count) => `<button type="button" class="filter-chip${on ? ' is-on' : ''}" data-filter="${act}" aria-pressed="${on}">${escapeHtml(label)}${count != null ? ` <small>${count}</small>` : ''}</button>`;
+  const counts = {
+    fav: films.filter(f => f.fav).length,
+    unrated: films.filter(f => getDisplayNote(f) === null).length,
+    rewatch: films.filter(isRewatched).length,
+  };
+  const genres = new Set();
+  films.forEach(f => (f.genreIds || []).forEach(id => { if(GENRE_MAP[id]) genres.add(id); }));
+  const genreList = Array.from(genres).sort((a, b) => GENRE_MAP[a].localeCompare(GENRE_MAP[b], 'fr'));
+  // Décennies de la plus récente à la plus ancienne, « Avant 1990 » en dernier.
+  const decades = Array.from(new Set(films.map(filmDecade).filter(d => d !== null))).sort((a, b) => b - a);
+  const shows = CAT_SHOWS.filter(([k]) => k === 'all' || counts[k] > 0 || catFilter.show === k);
+  wrap.innerHTML = `
+    <div class="filter-label">Trier</div>
+    <div class="filter-row">${CAT_SORTS.map(([k, l]) => chip(catFilter.sort === k, 'sort:' + k, l)).join('')}</div>
+    ${catFilter.sort === 'crit' ? `<div class="filter-row">${CRITERIA.map(c => chip(catFilter.crit === c.key, 'crit:' + c.key, critShortLabel(c.key))).join('')}</div>` : ''}
+    <div class="filter-label">Afficher</div>
+    <div class="filter-row">${shows.map(([k, l]) => chip(catFilter.show === k, 'show:' + k, l, k === 'all' ? null : counts[k])).join('')}</div>
+    ${genreList.length ? `<div class="filter-label">Genre</div><div class="filter-row">${genreList.map(id => chip(catFilter.genres.includes(id), 'genre:' + id, GENRE_MAP[id])).join('')}</div>` : ''}
+    ${decades.length ? `<div class="filter-label">Décennie</div><div class="filter-row">${decades.map(d => chip(catFilter.decade === d, 'decade:' + d, decadeLabel(d))).join('')}</div>` : ''}`;
 }
 
-// Options de #genreFilter (v2.1, retour utilisateur), reconstruites à
-// chaque mutation du catalogue (chargement, ajout/édition/suppression,
-// import) — seulement les genres RÉELLEMENT présents (pas la liste TMDB
-// complète, voir GENRE_MAP dans js/data.js) : pas la peine de proposer
-// "Western" à quelqu'un qui n'a aucun film de ce genre. Sélection
-// existante restaurée si le genre choisi est toujours représenté.
-// Valeur spéciale de #genreFilter, PAS un vrai genre (voir GENRE_MAP,
-// js/data.js — les ids TMDB sont toujours des entiers positifs, jamais
-// cette chaîne) : rattrapage des films vus mais jamais notés (retour
-// utilisateur — notamment ceux importés via watched.csv de Letterboxd,
-// voir js/importExternal.js, qui n'a justement aucune note à donner).
-// "Jamais noté" = getDisplayNote() renvoie null, peu importe la raison
-// (import sans note, ou simplement pas encore noté) — un seul critère
-// déjà utilisé partout ailleurs dans l'app plutôt qu'un nouveau champ.
-const UNRATED_FILTER_VALUE = '__unrated__';
-
+// Gardé sous ce nom : appelé après chaque changement du catalogue (ajout,
+// import, suppression...). Retire des filtres un genre ou une décennie qui
+// n'existent plus, puis redessine les pastilles.
 function buildGenreFilterOptions(){
-  const sel = document.getElementById('genreFilter');
-  const current = sel.value;
-  const present = new Set();
-  films.forEach(f => (f.genreIds || []).forEach(id => present.add(id)));
-  const options = Array.from(present)
-    .filter(id => GENRE_MAP[id])
-    .sort((a, b) => GENRE_MAP[a].localeCompare(GENRE_MAP[b], 'fr'))
-    .map(id => `<option value="${id}">${escapeHtml(GENRE_MAP[id])}</option>`)
-    .join('');
-  const unratedCount = films.filter(f => getDisplayNote(f) === null).length;
-  // N'apparaît que s'il y a effectivement quelque chose à rattraper —
-  // sinon une option qui ne mène jamais nulle part n'a rien à faire là.
-  const unratedOption = unratedCount > 0
-    ? `<option value="${UNRATED_FILTER_VALUE}">Sans note (${unratedCount})</option>`
-    : '';
-  sel.innerHTML = `<option value="">Tous les genres</option>${unratedOption}${options}`;
-  if(current === UNRATED_FILTER_VALUE && unratedCount > 0) sel.value = current;
-  else if(current && present.has(Number(current))) sel.value = current;
-  // buildYearFilterOptions() (juste en dessous) doit être reconstruite
-  // exactement aux mêmes moments que ce select (toute mutation du
-  // catalogue) — appelée ici plutôt que dupliquée aux ~9 sites d'appel de
-  // buildGenreFilterOptions() (auth.js, handleSave/handleDelete/import
-  // Letterboxd/Trakt/watchlist...), pour ne jamais risquer que les deux
-  // dérivent l'une de l'autre.
-  buildYearFilterOptions();
+  const genres = new Set();
+  films.forEach(f => (f.genreIds || []).forEach(id => genres.add(id)));
+  catFilter.genres = catFilter.genres.filter(id => genres.has(id));
+  if(catFilter.decade !== null && !films.some(f => filmDecade(f) === catFilter.decade)) catFilter.decade = null;
+  renderFilterChips();
+}
+// Ancien remplissage du menu des critères : ce sont désormais des pastilles.
+function buildSortOptions(){ renderFilterChips(); }
+
+function applyCatFilter(act){
+  const [k, v] = act.split(':');
+  if(k === 'sort') catFilter.sort = v;
+  else if(k === 'crit') catFilter.crit = v;
+  else if(k === 'show') catFilter.show = (catFilter.show === v && v !== 'all') ? 'all' : v;
+  else if(k === 'genre'){
+    const id = Number(v);
+    catFilter.genres = catFilter.genres.includes(id) ? catFilter.genres.filter(g => g !== id) : catFilter.genres.concat(id);
+  }else if(k === 'decade'){
+    const d = Number(v);
+    catFilter.decade = catFilter.decade === d ? null : d;
+  }else if(k === 'clear'){
+    catFilter = { sort: 'note', crit: catFilter.crit, show: 'all', genres: [], decade: null };
+  }
+  currentPage = 1;
+  renderFilterChips();
+  render();
 }
 
-// Options de #yearFilter (retour utilisateur : "Filtre catalogue par
-// année/décennie") — même principe que buildGenreFilterOptions() : seules
-// les années RÉELLEMENT présentes au catalogue, groupées par décennie
-// (<optgroup>) pour rester lisible même avec 30-40 années différentes
-// plutôt qu'une liste plate à faire défiler. Le filtre lui-même reste sur
-// une année exacte (pas un bucket "2020s") — une décennie n'est ici qu'un
-// regroupement visuel du <select>, pas une valeur de filtre à part.
-function buildYearFilterOptions(){
-  const sel = document.getElementById('yearFilter');
-  const current = sel.value;
-  const years = new Set();
-  films.forEach(f => { if(f.releaseYear) years.add(f.releaseYear); });
-  const decades = new Map(); // début de décennie (ex. 2020) -> [années]
-  Array.from(years).sort((a, b) => b - a).forEach(y => {
-    const decadeStart = Math.floor(y / 10) * 10;
-    if(!decades.has(decadeStart)) decades.set(decadeStart, []);
-    decades.get(decadeStart).push(y);
-  });
-  const optgroups = Array.from(decades.entries())
-    .sort((a, b) => b[0] - a[0])
-    .map(([decadeStart, ys]) => `
-      <optgroup label="${decadeStart}s">
-        ${ys.map(y => `<option value="${y}">${y}</option>`).join('')}
-      </optgroup>
-    `).join('');
-  sel.innerHTML = `<option value="">Toutes les années</option>${optgroups}`;
-  if(current && years.has(Number(current))) sel.value = current;
+// Filtres actifs sous la recherche, chacun avec sa croix.
+function renderActiveFilters(){
+  const el = document.getElementById('activeFilters');
+  if(!el) return;
+  const items = [];
+  if(catFilter.sort !== 'note') items.push([catFilter.sort === 'crit' ? `Trié par ${critShortLabel(catFilter.crit)}` : CAT_SORTS.find(s => s[0] === catFilter.sort)[1], 'sort:note']);
+  if(catFilter.show !== 'all') items.push([CAT_SHOWS.find(s => s[0] === catFilter.show)[1], 'show:all']);
+  catFilter.genres.forEach(id => items.push([GENRE_MAP[id] || '', 'genre:' + id]));
+  if(catFilter.decade !== null) items.push([decadeLabel(catFilter.decade), 'decade:' + catFilter.decade]);
+  el.hidden = items.length === 0;
+  el.innerHTML = items.map(([l, a]) => `<button type="button" class="filter-chip is-on" data-filter="${a}" aria-label="Retirer le filtre ${escapeHtml(l)}">${escapeHtml(l)} <span aria-hidden="true">×</span></button>`).join('')
+    + (items.length ? `<button type="button" class="filter-clear" data-filter="clear">Tout effacer</button>` : '');
 }
 
-// Sens du tri par critère (#sortAdvancedRow) — bouton-bascule plutôt qu'un
-// 2e select, voir setSortDir() plus bas.
-let sortDir = 'desc';
+// Sous les filtres : ce que montre le coin des affiches quand on trie par
+// critère, ou la rangée « Noter le premier » des films sans note.
+function renderCatalogNotice(){
+  const el = document.getElementById('catalogNotice');
+  if(!el) return;
+  let html = '';
+  if(catFilter.sort === 'crit'){
+    const name = critShortLabel(catFilter.crit).toLowerCase();
+    const without = films.filter(f => getDisplayNote(f) !== null && !hasCritValue(f, catFilter.crit)).length;
+    html += `<p class="catalog-hint">Trié par ${escapeHtml(name)} : le chiffre dans le coin est ta note de ${escapeHtml(name)}, sur 5.${without ? ` Les ${without} films notés sans critères sont à la fin.` : ''}</p>`;
+  }
+  if(catFilter.show === 'unrated'){
+    const n = films.filter(f => getDisplayNote(f) === null).length;
+    if(n > 0) html += `<div class="catalog-strip"><span><b>${n} film${n > 1 ? 's' : ''}</b> vu${n > 1 ? 's' : ''} mais pas encore noté${n > 1 ? 's' : ''}.</span><button type="button" class="catalog-strip-btn" id="rateFirstUnratedBtn">Noter le premier ›</button></div>`;
+  }
+  el.innerHTML = html;
+  el.hidden = !html;
+  const btn = document.getElementById('rateFirstUnratedBtn');
+  if(btn) btn.addEventListener('click', startUnratedQueue);
+}
+
+// « Noter le premier » : ouvre la notation du premier film sans note de la
+// liste affichée ; après « Enregistrer », la fenêtre passe au suivant
+// (voir handleSave()). Fermer la fenêtre arrête l'enchaînement.
+let unratedQueueActive = false;
+function nextUnratedFilm(exceptId){
+  return getFilteredSortedFilms().find(f => f.id !== exceptId && getDisplayNote(f) === null) || null;
+}
+function startUnratedQueue(){
+  const first = nextUnratedFilm(null);
+  if(!first) return;
+  openModal(first.id);
+  unratedQueueActive = true;
+}
 
 // Extrait du click .star-btn (voir render() plus bas) pour rester testable
 // isolément (tests/favorite-offline.test.js) — renvoie true si l'état
@@ -223,62 +273,37 @@ async function toggleFilmFavorite(f){
   return true;
 }
 
-// Filtre + trie `films` selon l'état actuel des contrôles (recherche, tri,
-// genre, année) — extrait de render() pour être réutilisable par
-// openModal() (navList des flèches "film d'à côté" vers la fiche
-// communautaire, voir goFilmNav()/js/filmDetail.js) sans dupliquer cette
-// logique ni dépendre de la pagination de l'écran catalogue.
+// Filtre + trie `films` selon la recherche et les filtres du catalogue
+// (catFilter) — extrait de render() pour être réutilisable par openModal()
+// (navList des flèches vers la fiche) et par l'enchaînement « Noter le
+// premier », sans dépendre de la pagination de l'écran.
 function getFilteredSortedFilms(){
   const search = normalizeSearch(document.getElementById('search').value.trim());
-  const sortBy = document.getElementById('sortBy').value;
-  const isAdvanced = sortBy === 'advanced';
-  const critKey = isAdvanced ? document.getElementById('sortCriterion').value : null;
-  const critFilterMin = isAdvanced ? parseFloat(document.getElementById('critFilterMin').value) : 0;
-  const genreFilter = document.getElementById('genreFilter').value;
-  const yearFilter = document.getElementById('yearFilter').value;
-
   // Matche le titre FR ou le titre VO (ex. "créatures féroces" trouve aussi
   // "Fierce Creatures"), accents/casse ignorés — voir getSearchTerms().
   let filtered = films.filter(f => !search || getSearchTerms(f).some(t => t.includes(search)));
 
-  // Filtre genre (v2.1, retour utilisateur) — voir buildGenreFilterOptions()
-  // plus haut et GENRE_MAP (js/data.js). "Sans note" (retour utilisateur,
-  // rattrapage des films vus non notés) partage le même <select> mais n'est
-  // pas un genre — vérifié en premier, avant de traiter genreFilter comme
-  // un id TMDB.
-  if(genreFilter === UNRATED_FILTER_VALUE){
-    filtered = filtered.filter(f => getDisplayNote(f) === null);
-  }else if(genreFilter){
-    const genreId = Number(genreFilter);
-    filtered = filtered.filter(f => (f.genreIds || []).includes(genreId));
-  }
+  if(catFilter.show === 'fav') filtered = filtered.filter(f => f.fav);
+  else if(catFilter.show === 'unrated') filtered = filtered.filter(f => getDisplayNote(f) === null);
+  else if(catFilter.show === 'rewatch') filtered = filtered.filter(isRewatched);
+  if(catFilter.genres.length) filtered = filtered.filter(f => catFilter.genres.some(g => (f.genreIds || []).includes(g)));
+  if(catFilter.decade !== null) filtered = filtered.filter(f => filmDecade(f) === catFilter.decade);
 
-  // Filtre année (retour utilisateur : "Filtre catalogue par
-  // année/décennie") — voir buildYearFilterOptions() plus haut.
-  if(yearFilter){
-    const year = Number(yearFilter);
-    filtered = filtered.filter(f => f.releaseYear === year);
-  }
-
-  // Seuil sur le critère en cours de tri (voir #sortAdvancedRow) — un film
-  // noté en note manuelle n'a pas cette valeur (crit vide) et sort donc du
-  // lot dès que le seuil dépasse 0, pas juste mal classé.
-  if(isAdvanced && critFilterMin > 0){
-    filtered = filtered.filter(f => typeof f.crit[critKey] === 'number' && f.crit[critKey] >= critFilterMin);
-  }
-
-  filtered.sort((a,b) => {
-    if(isAdvanced){
-      const av = typeof a.crit[critKey] === 'number' ? a.crit[critKey] : -1;
-      const bv = typeof b.crit[critKey] === 'number' ? b.crit[critKey] : -1;
-      return sortDir === 'desc' ? bv - av : av - bv;
+  const noteOf = (f) => { const n = getDisplayNote(f); return n === null ? -1 : n; };
+  filtered.sort((a, b) => {
+    if(catFilter.sort === 'crit'){
+      // Les films notés sur ce critère d'abord, du meilleur au moins bon,
+      // puis ceux notés sans critères (par note), puis les films sans note.
+      const key = catFilter.crit;
+      const rank = (f) => hasCritValue(f, key) ? 2 : (getDisplayNote(f) !== null ? 1 : 0);
+      const ra = rank(a), rb = rank(b);
+      if(ra !== rb) return rb - ra;
+      if(ra === 2) return b.crit[key] - a.crit[key];
+      return noteOf(b) - noteOf(a);
     }
-    if(sortBy === 'note-desc') return (getDisplayNote(b)||0) - (getDisplayNote(a)||0);
-    if(sortBy === 'note-asc') return (getDisplayNote(a)||0) - (getDisplayNote(b)||0);
-    if(sortBy === 'title-asc') return a.title.localeCompare(b.title, 'fr');
-    if(sortBy === 'fav-first') return (b.fav - a.fav) || ((getDisplayNote(b)||0) - (getDisplayNote(a)||0));
-    if(sortBy === 'recent') return b.added - a.added;
-    return 0;
+    if(catFilter.sort === 'title') return a.title.localeCompare(b.title, 'fr');
+    if(catFilter.sort === 'recent') return b.added - a.added;
+    return noteOf(b) - noteOf(a);
   });
 
   return filtered;
@@ -305,37 +330,29 @@ function render(){
     renderLoadMore(false);
     return;
   }
-  const search = normalizeSearch(document.getElementById('search').value.trim());
-  const sortBy = document.getElementById('sortBy').value;
-  const isAdvanced = sortBy === 'advanced';
-  const critFilterMin = isAdvanced ? parseFloat(document.getElementById('critFilterMin').value) : 0;
-  const genreFilter = document.getElementById('genreFilter').value;
-  const yearFilter = document.getElementById('yearFilter').value;
+  const search = document.getElementById('search').value.trim();
 
-  // Point d'état sur le bouton Filtres (v2.1.x, mobile — voir index.html) :
-  // seul indice qu'un tri/genre/année non-défaut est actif une fois la
-  // feuille repliée, tri "note-desc" étant la valeur par défaut de #sortBy.
-  document.getElementById('filtersToggleBtn').classList.toggle('has-active-filter', sortBy !== 'note-desc' || !!genreFilter || !!yearFilter);
+  // Point sur le bouton filtre : un tri ou un filtre autre que celui par défaut est actif.
+  document.getElementById('filtersToggleBtn').classList.toggle('has-active-filter', catFilterActive());
   renderBulkActionsBar();
+  renderActiveFilters();
+  renderCatalogNotice();
 
   const filtered = getFilteredSortedFilms();
 
-  const isFiltered = !!search || !!genreFilter || !!yearFilter || (isAdvanced && critFilterMin > 0);
-  // Compteur à droite de la recherche (draft option B) : « 334 films », ou
-  // « 12 sur 334 » quand un filtre ou une recherche réduit la liste.
+  const isFiltered = !!search || catFilter.show !== 'all' || catFilter.genres.length > 0 || catFilter.decade !== null;
+  // Compteur à droite de la recherche : « 334 films », ou « 12 sur 334 »
+  // quand un filtre ou une recherche réduit la liste.
   countLine.textContent = isFiltered
     ? `${filtered.length} sur ${films.length}`
     : `${filtered.length} film${filtered.length>1?'s':''}`;
-
-  // Ajouter un film passe par la recherche (audit M2, retour du 14/10) :
-  // les films à ajouter sont proposés dans la liste sous la pilule
-  // (suggestions, js/globalSearch.js), plus de case « Ajouter » ici.
-  const rawSearch = document.getElementById('search').value.trim();
+  const applyBtn = document.getElementById('applyFiltersBtn');
+  if(applyBtn) applyBtn.textContent = isFiltered ? `Voir ${filtered.length} film${filtered.length > 1 ? 's' : ''}` : 'Voir les films';
 
   if(filtered.length === 0){
     list.innerHTML = `<div class="empty-state">${films.length === 0
       ? 'Aucun film pour l\'instant. Tape un titre dans la recherche pour ajouter ton premier film.'
-      : rawSearch ? `Aucun de tes films ne correspond à « ${escapeHtml(rawSearch)} ». Choisis-le dans la liste sous la recherche pour l'ajouter.`
+      : search ? `Aucun de tes films ne correspond à « ${escapeHtml(search)} ». Choisis-le dans la liste sous la recherche pour l'ajouter.`
       : 'Aucun film ne correspond à ces filtres.'}</div>`;
     renderLoadMore(false);
     return;
@@ -354,56 +371,55 @@ function render(){
   // utilisateur : "quand je clique sur un que j'ai déjà vu je veux arriver
   // sur la fiche des films pas sur ma fiche de notation") — même
   // goToFilmDetail() que Top/Watchlist/Amis (js/top.js, js/watchlist.js).
-  // Le sens inverse (fiche film -> notation) existe déjà via "Modifier ma
-  // note" sur cette fiche (handleFilmDetailRate(), js/filmDetail.js).
   const navList = pageItems.filter(f => f.tmdbId).map(f => ({ tmdbId: f.tmdbId, title: f.title }));
+  // Trié par critère : la note de ce critère dans le coin, et un séparateur
+  // avant les films notés sans critères (audit des six écrans, piste A).
+  const critKey = catFilter.sort === 'crit' ? catFilter.crit : null;
+  let dividerDone = !critKey || !pageItems.some(f => hasCritValue(f, critKey));
   pageItems.forEach(f => {
+    if(!dividerDone && !hasCritValue(f, critKey)){
+      dividerDone = true;
+      const sep = document.createElement('div');
+      sep.className = 'film-divider';
+      sep.textContent = 'Notés sans critères, puis sans note';
+      list.appendChild(sep);
+    }
     const note = getDisplayNote(f);
+    const critShown = critKey && hasCritValue(f, critKey) ? f.crit[critKey] : null;
+    const cornerValue = critKey ? (critShown !== null ? critShown * CRIT_DISPLAY_SCALE : null) : note;
+    const cornerText = critKey ? (critShown !== null ? critToDisplay(critShown) : '—') : (note !== null ? note.toFixed(1) : '—');
     const rewatches = typeof rewatchCount === 'function' ? rewatchCount(f.id) : 0;
     const happening = getClickHappeningForFilm(f);
     const row = document.createElement('div');
     row.className = 'film-row';
     row.dataset.id = f.id; // cible du pulse de sauvegarde (voir handleSave()) et du pulse favori ci-dessous
-    // Genres visibles direct sur la fiche (v2.1, retour utilisateur, avant
-    // même le filtre #genreFilter) — 2 maximum, assez pour situer le film
-    // sans allonger la ligne indéfiniment (certains en ont 4-5 sur TMDB).
     const genres = (f.genreIds || []).map(id => GENRE_MAP[id]).filter(Boolean).slice(0, 2).join(', ');
-    // Genre en bronze (v2.8, retour utilisateur — "où est la couleur ?") :
-    // seul segment de .film-sub à sortir du gris muet, sur la ligne la
-    // plus vue de toute l'app (le catalogue).
-    // Ligne allégée (v3.2, retour utilisateur : "trop de choses écrites,
-    // pas forcément utiles" — "savoir que c'est une note manuelle... je
-    // m'en fiche"). "7 critères notés" / "Note manuelle · ancien
-    // référentiel" ne disaient tous les deux que "oui, c'est noté" avec
-    // des mots différents — aucune info qu'on vient chercher en
-    // parcourant son catalogue. Seul "Pas encore noté" reste : ça, c'est
-    // actionnable (un trou à combler), pas juste du bruit sur une note
-    // qui existe déjà. Le badge "manuel" à côté du titre (même retour,
-    // "pareil pour le tag manuel qui est de trop") est retiré aussi —
-    // f.manualNote ne sert donc plus qu'au calcul de la note elle-même
-    // (getDisplayNote()), plus à l'affichage.
-    const critLabel = note === null ? 'Pas encore noté' : '';
-    const sub = [critLabel, f.releaseYear, genres ? `<span class="film-sub-genre">${genres}</span>` : ''].filter(Boolean).join(' · ');
+    // Sous l'affiche : l'année (et « sans note »). En liste : l'année, les
+    // genres et les revisionnages (audit des six écrans, C6 et C7).
+    const subGrid = [f.releaseYear, note === null ? 'sans note' : ''].filter(Boolean).join(' · ');
+    const subList = [f.releaseYear, genres, rewatches > 1 ? `revu ${rewatches} fois` : ''].filter(Boolean).join(' · ');
     row.innerHTML = `
-      
       ${bulkSelectMode ? `<input type="checkbox" class="bulk-select-checkbox" data-id="${f.id}" aria-label="Sélectionner ${escapeHtml(f.title)}" ${selectedFilmIds.has(f.id) ? 'checked' : ''}>` : ''}
-      ${f.posterUrl
-        ? `<img class="film-poster" src="${f.posterUrl}" alt="" loading="lazy">`
-        : `<div class="film-poster film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
+      <div class="film-poster-box">
+        ${f.posterUrl
+          ? `<img class="film-poster" src="${f.posterUrl}" alt="" loading="lazy">`
+          : `<div class="film-poster film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
+        ${happening ? `<button class="happening-badge" type="button" title="Un petit quelque chose à découvrir..." aria-label="Un petit quelque chose à découvrir...">${happening.icon}</button>` : ''}
+      </div>
       <div class="film-main">
-        <div class="film-title">${escapeHtml(f.title)}${f.review ? `<span class="review-badge" title="Commentaire enregistré">${uiIcon('chat')}</span>` : ''}${rewatches > 1 ? `<span class="rewatch-badge" title="Revu ${rewatches} fois">${uiIcon('repeat')} ×${rewatches}</span>` : ''}${happening ? `<button class="happening-badge" type="button" title="Un petit quelque chose à découvrir..." aria-label="Un petit quelque chose à découvrir...">${happening.icon}</button>` : ''}</div>
-        <div class="film-sub">${sub}</div>
+        <div class="film-title">${escapeHtml(f.title)}</div>
+        <div class="film-sub film-sub-grid">${escapeHtml(subGrid)}</div>
+        <div class="film-sub film-sub-list">${escapeHtml(subList)}</div>
       </div>
       <button class="star-btn ${f.fav ? 'active' : ''}" data-id="${f.id}" type="button" title="Favori" aria-label="${f.fav ? 'Retirer des favoris' : 'Ajouter aux favoris'}" aria-pressed="${f.fav}">${uiIcon('star', f.fav)}</button>
-      <div class="counter ${noteColorClass(note)}">${note !== null ? note.toFixed(1) : '—'}</div>
+      ${note === null ? `<button class="row-rate-link" type="button">Noter</button>` : ''}
+      <div class="counter ${noteColorClass(cornerValue)}">${cornerText}</div>
     `;
     makeRowClickable(row, (e) => {
-      if(e.target.classList.contains('star-btn')) return;
+      if(e.target.closest && e.target.closest('.star-btn, .row-rate-link, .happening-badge')) return;
       if(e.target.classList.contains('bulk-select-checkbox')) return; // déjà géré par son propre listener 'change' ci-dessous
       // Actions groupées (retour utilisateur) : en mode sélection, la ligne
-      // entière coche/décoche au lieu d'ouvrir la fiche — cocher UN PAR UN
-      // 50 films avec une case minuscule serait pénible, toute la ligne
-      // (déjà cliquable) est une cible bien plus grande.
+      // entière coche/décoche au lieu d'ouvrir la fiche.
       if(bulkSelectMode){ toggleFilmSelection(f.id); render(); return; }
       // Entrée manuelle sans tmdbId (ancien référentiel, pas de fiche TMDB
       // possible) : seul cas qui ouvre encore la notation directement.
@@ -420,6 +436,13 @@ function render(){
       row.querySelector('.happening-badge').addEventListener('click', (e) => {
         e.stopPropagation();
         happening.run(f);
+      });
+    }
+    const rateLink = row.querySelector('.row-rate-link');
+    if(rateLink){
+      rateLink.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openModal(f.id);
       });
     }
     row.querySelector('.star-btn').addEventListener('click', async (e) => {
@@ -806,6 +829,7 @@ function openModal(id, prefillTmdb){
 }
 
 function closeModal(){
+  unratedQueueActive = false;
   closeOverlay('overlay', () => {
     editingId = null;
     convertingFromWatchlistId = null;
@@ -814,6 +838,7 @@ function closeModal(){
 }
 
 async function handleSave(){
+  const continueQueue = unratedQueueActive;
   const title = document.getElementById('titleInput').value.trim();
   if(!title){
     showToast('Ajoute un titre avant d\'enregistrer');
@@ -915,6 +940,14 @@ async function handleSave(){
   // 5/5 tout juste (arrondi d'affichage compris) : petite célébration.
   if(filmEnregistre && getDisplayNote(filmEnregistre) >= 4.995) celebrateConfetti();
   showToast('Film enregistré');
+  // « Noter le premier » (filtre Sans note) : on enchaîne sur le suivant.
+  if(continueQueue){
+    const nextFilm = nextUnratedFilm(pulseId);
+    if(nextFilm){
+      setTimeout(() => { openModal(nextFilm.id); unratedQueueActive = true; }, 380);
+      showToast(`Film enregistré. Au suivant : ${nextFilm.title}`);
+    }
+  }
 }
 
 async function handleDelete(){
@@ -1126,40 +1159,30 @@ document.getElementById('overlay').addEventListener('click', (e) => {
 });
 document.getElementById('search').addEventListener('input', () => { currentPage = 1; render(); });
 
-// Le sélecteur avancé (#sortAdvancedRow : critère, sens, seuil) n'a de sens
-// qu'en mode "Par critère…" — masqué et remis à zéro sinon, pour ne pas
-// laisser un filtre invisible actif après être revenu à "Note globale".
-function updateSortMode(){
-  const active = document.getElementById('sortBy').value === 'advanced';
-  document.getElementById('sortAdvancedRow').style.display = active ? '' : 'none';
-  if(!active){
-    sortDir = 'desc';
-    document.getElementById('sortDirDesc').classList.add('active');
-    document.getElementById('sortDirDesc').setAttribute('aria-pressed', 'true');
-    document.getElementById('sortDirAsc').classList.remove('active');
-    document.getElementById('sortDirAsc').setAttribute('aria-pressed', 'false');
-    document.getElementById('critFilterMin').value = 0;
-    document.getElementById('critFilterMinVal').textContent = '0.00';
-  }
-}
-document.getElementById('sortBy').addEventListener('change', () => {
-  currentPage = 1;
-  updateSortMode();
-  render();
+// Pastilles du panneau et filtres actifs (audit des six écrans, piste A) :
+// un seul écouteur par conteneur. stopPropagation() parce que la pastille
+// cliquée est redessinée tout de suite : sans ça, l'écouteur « clic hors du
+// panneau » plus bas la croirait dehors et refermerait le panneau.
+['filterChips', 'activeFilters'].forEach(id => {
+  document.getElementById(id).addEventListener('click', (e) => {
+    const chip = e.target.closest('[data-filter]');
+    if(!chip) return;
+    e.stopPropagation();
+    applyCatFilter(chip.dataset.filter);
+  });
 });
-document.getElementById('sortCriterion').addEventListener('change', () => { currentPage = 1; render(); });
-document.getElementById('genreFilter').addEventListener('change', () => { currentPage = 1; render(); });
-document.getElementById('yearFilter').addEventListener('change', () => { currentPage = 1; render(); });
+document.getElementById('clearFiltersBtn').addEventListener('click', (e) => {
+  e.stopPropagation();
+  applyCatFilter('clear');
+});
+document.getElementById('applyFiltersBtn').addEventListener('click', () => closeToolbarFilters());
 
-// --- Feuille Filtres (v2.1.x, mobile) — voir #toolbarFilters, index.html ---
-// #sortBy/#genreFilter eux-mêmes gardent leurs listeners ci-dessus tels
-// quels (choisir une option ferme le picker natif mais pas cette feuille).
-// Fermeture manuelle seulement : bouton ✕ ou tap hors de la feuille,
-// jamais automatique au changement d'un select — "Par critère…" révèle
-// #sortAdvancedRow qui vit sous la toolbar, PAS dans cette feuille (prend
-// toute la largeur sur sa propre ligne, voir index.html) : se fermer tout
-// seul à ce moment-là masquerait le résultat au lieu de le montrer.
+// --- Panneau « Trier et filtrer » — voir #toolbarFilters, index.html ---
+// Fermeture manuelle seulement : ✕, tap hors du panneau, Échap ou « Voir
+// les films » au téléphone. Une pastille ne le ferme pas : on enchaîne
+// souvent plusieurs filtres.
 function openToolbarFilters(){
+  renderFilterChips();
   document.getElementById('toolbarFilters').classList.add('open');
   document.getElementById('filtersToggleBtn').setAttribute('aria-expanded', 'true');
 }
@@ -1190,22 +1213,6 @@ document.addEventListener('click', (e) => {
 });
 document.addEventListener('keydown', (e) => {
   if(e.key === 'Escape') closeToolbarFilters();
-});
-function setSortDir(dir){
-  sortDir = dir;
-  document.getElementById('sortDirDesc').classList.toggle('active', dir === 'desc');
-  document.getElementById('sortDirDesc').setAttribute('aria-pressed', String(dir === 'desc'));
-  document.getElementById('sortDirAsc').classList.toggle('active', dir === 'asc');
-  document.getElementById('sortDirAsc').setAttribute('aria-pressed', String(dir === 'asc'));
-  currentPage = 1;
-  render();
-}
-document.getElementById('sortDirDesc').addEventListener('click', () => setSortDir('desc'));
-document.getElementById('sortDirAsc').addEventListener('click', () => setSortDir('asc'));
-document.getElementById('critFilterMin').addEventListener('input', (e) => {
-  document.getElementById('critFilterMinVal').textContent = parseFloat(e.target.value).toFixed(2);
-  currentPage = 1;
-  render();
 });
 document.getElementById('exportBtn').addEventListener('click', exportFilms);
 document.getElementById('importBtn').addEventListener('click', () => document.getElementById('importFile').click());
