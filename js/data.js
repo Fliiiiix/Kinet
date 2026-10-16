@@ -73,7 +73,8 @@ const UI_ICON_PATHS = {
   play: '<circle cx="12" cy="12" r="8.5"></circle><path d="M10.3 8.8l4.9 3.2-4.9 3.2z"></path>',
   dots: '<circle cx="5.5" cy="12" r="1"></circle><circle cx="12" cy="12" r="1"></circle><circle cx="18.5" cy="12" r="1"></circle>',
   check: '<path d="M5 12.5l4.5 4.5L19 7.5"></path>',
-  plus: '<path d="M12 5v14M5 12h14"></path>'
+  plus: '<path d="M12 5v14M5 12h14"></path>',
+  grip: '<circle cx="9" cy="6" r="1"></circle><circle cx="15" cy="6" r="1"></circle><circle cx="9" cy="12" r="1"></circle><circle cx="15" cy="12" r="1"></circle><circle cx="9" cy="18" r="1"></circle><circle cx="15" cy="18" r="1"></circle>'
 };
 function uiIcon(name, filled){
   const paths = UI_ICON_PATHS[name];

@@ -7641,3 +7641,96 @@ body[data-view-mode="list"] #filmList .bulk-select-checkbox{flex:none;}
   .gp-prop{gap:10px;}
   .gp-vote{padding:0 12px;}
 }
+
+/* ==========================================================
+   AUDIT DES SIX ÉCRANS, LISTES (piste A, 16/10)
+   Même couverture de 4 affiches pour tes listes et celles de tes amis,
+   une liste en grille d'affiches, « Modifier », « Ajouter à une liste ».
+   ========================================================== */
+.ls-page .stats-section{margin-top:var(--sp-6);}
+.ls-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr)); gap:24px 18px; margin-top:var(--sp-4);}
+.ls-card{display:grid; gap:8px; align-content:start; min-width:0; padding:0; margin:0; background:none; border:0; border-radius:0; overflow:visible; color:var(--text-1); text-align:left; cursor:pointer; font-family:var(--font-text);}
+.ls-card:hover{transform:none; border-color:transparent;}
+.ls-card b{font-size:var(--fs-sm); font-weight:600; line-height:1.25; transition:color var(--dur-fast); overflow-wrap:anywhere;}
+.ls-card span{font-size:12px; color:var(--text-2); margin-top:-4px;}
+.ls-card:hover b{color:var(--accent);}
+.ls-card:focus-visible{outline:2px solid var(--accent); outline-offset:4px; border-radius:var(--r-sm);}
+.ls-cover.list-cover-posters, .ls-cover.list-cover-posters-empty{
+  display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); grid-template-rows:repeat(2, minmax(0, 1fr)); gap:3px; aspect-ratio:1;
+  border-radius:var(--r-sm); overflow:hidden; background:var(--surface-2);
+}
+.ls-cover.is-one{grid-template-columns:1fr; grid-template-rows:minmax(0, 1fr);}
+.ls-cover img{width:100%; height:100%; object-fit:cover; display:block;}
+.ls-cover.list-cover-posters-empty{grid-template-columns:1fr; grid-template-rows:minmax(0, 1fr); place-items:center; color:var(--text-3);}
+.ls-cover.list-cover-posters-empty .ui-icon{width:28px; height:28px;}
+.ls-new-card .ls-new{display:grid; place-items:center; aspect-ratio:1; border:1.5px dashed var(--line-strong); border-radius:var(--r-sm); color:var(--text-2); font-size:13px; font-weight:600; margin:0; transition:border-color var(--dur-fast), color var(--dur-fast);}
+.ls-new-card:hover .ls-new, .ls-new-card[aria-expanded="true"] .ls-new{border-color:var(--accent); color:var(--accent);}
+.ls-empty{grid-column:1 / -1; margin:0;}
+.ls-page .gp-create{margin-top:var(--sp-4);}
+/* Une liste */
+.ls-page .gp-id{min-width:0;}
+.ls-page .gp-id[hidden]{display:none;}
+.ls-edit-fields{display:grid; gap:8px; flex:1; min-width:220px; max-width:520px;}
+.ls-edit-fields input{height:40px; border-radius:var(--r-md); padding:0 14px;}
+.ls-edit-fields #listEditTitle{font-size:var(--fs-md); font-weight:600;}
+.ls-page .gp-meta .friend-avatar{width:22px; height:22px; border-radius:50%; flex:none;}
+.ls-page .gp-meta .friend-avatar-placeholder{display:grid; place-items:center; background:var(--surface-2); color:var(--text-2);}
+.ls-page .gp-meta .friend-avatar-placeholder .ui-icon{width:12px; height:12px;}
+.ls-page .gp-actions > [hidden]{display:none;}
+#listLikeBtn.active{color:var(--accent);}
+#listLikeBtn .ui-icon{width:16px; height:16px; vertical-align:-3px;}
+.ff-menu .nt-danger{color:var(--note-low);}
+#listLikesSummary:empty{display:none;}
+.ls-progress{display:flex; align-items:center; gap:12px; margin-top:var(--sp-4); font-size:12px; color:var(--text-2);}
+.ls-progress:empty{display:none;}
+.ls-progress i{flex:1; max-width:240px; height:4px; border-radius:var(--r-full); background:var(--surface-2); overflow:hidden;}
+.ls-progress i b{display:block; height:100%; background:var(--accent);}
+.ls-edit-bar[hidden], .ls-add #listAddSearch[hidden], #listAddToggle[hidden]{display:none;}
+.ls-edit-bar .nt-switch{margin-top:var(--sp-4);}
+.ls-add{margin-top:var(--sp-3);}
+.ls-drag-hint{margin-top:var(--sp-2);}
+.ls-items{display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:22px 16px; margin-top:var(--sp-5);}
+.ls-items > .tmdb-empty{grid-column:1 / -1;}
+.ls-tile{display:grid; gap:6px; align-content:start; min-width:0; cursor:pointer;}
+.ls-tile-img{position:relative; aspect-ratio:2/3; border-radius:var(--r-sm); overflow:hidden; background:var(--surface-2);}
+.ls-tile-img img, .ls-tile-img .film-poster-placeholder{width:100%; height:100%; object-fit:cover; display:block;}
+.ls-tile-img .film-poster-placeholder{display:grid; place-items:center;}
+.ls-tile-t{font-size:var(--fs-sm); font-weight:600; line-height:1.25; transition:color var(--dur-fast); overflow-wrap:anywhere;}
+.ls-tile-s{font-size:12px; color:var(--text-2); margin-top:-2px;}
+.ls-tile:not(.is-editing):hover .ls-tile-t{color:var(--accent);}
+.ls-rank{position:absolute; top:6px; left:6px; z-index:1; min-width:24px; height:24px; padding:0 6px; border-radius:var(--r-full); display:grid; place-items:center; background:rgba(var(--glass-rgb),0.78); color:var(--text-1); font-size:11px; font-weight:700; font-variant-numeric:tabular-nums;}
+.ls-tile.is-editing{cursor:default;}
+.ls-tile.is-editing .ls-tile-img::after{content:""; position:absolute; inset:0; background:rgba(10,10,10,0.35); pointer-events:none;}
+.ls-tile.is-dragging{opacity:0.6;}
+.ls-drag, .ls-x{position:absolute; top:6px; z-index:2; width:32px; height:32px; padding:0; border:0; border-radius:50%; display:grid; place-items:center; background:rgba(var(--glass-rgb),0.85); color:var(--text-1); cursor:pointer;}
+.ls-drag{left:6px; cursor:grab; touch-action:none;}
+.ls-drag:active{cursor:grabbing;}
+.ls-drag .ui-icon{width:16px; height:16px;}
+.ls-x{right:6px; font-size:18px; line-height:1;}
+.ls-drag:focus-visible, .ls-x:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+/* Ajouter à une liste */
+.modal.ls-sheet{max-width:440px; padding:20px 24px 0; display:flex; flex-direction:column; max-height:calc(100vh - 80px);}
+.ls-sheet .nt-ht b{white-space:normal;}
+.ls-check-list{margin-top:var(--sp-3); overflow-y:auto; min-height:0;}
+.ls-check{display:flex; align-items:center; gap:12px; min-height:52px; padding:6px 0; border-bottom:1px solid var(--line); font-size:var(--fs-sm); cursor:pointer;}
+.ls-check input{width:22px; height:22px; margin:0; flex:none; accent-color:var(--accent); cursor:pointer;}
+.ls-check-main{flex:1; min-width:0; display:grid; gap:2px;}
+.ls-check-main small{font-size:12px; color:var(--text-2);}
+.ls-new-row{display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:var(--sp-3) 0;}
+.ls-new-row input{flex:1; min-width:180px; height:40px; border-radius:var(--r-full); padding:0 16px;}
+.ls-new-row input[hidden]{display:none;}
+.ls-sheet .nt-foot .nt-hint{margin:0;}
+@media (max-width:600px){
+  .ls-grid{grid-template-columns:repeat(2, minmax(0, 1fr)); gap:18px 12px;}
+  .ls-items{grid-template-columns:repeat(3, minmax(0, 1fr)); gap:16px 12px;}
+  .ls-edit-fields{flex-basis:100%; max-width:none;}
+  .ls-drag, .ls-x{width:30px; height:30px; top:4px;}
+  .ls-drag{left:4px;}
+  .ls-x{right:4px;}
+  #addToListOverlay{padding:44px 0 0; align-items:flex-end;}
+  .modal.ls-sheet{max-width:none; width:100%; border-radius:var(--r-md) var(--r-md) 0 0; padding:16px 16px 0;}
+  .ls-sheet .nt-foot{padding-bottom:calc(16px + env(safe-area-inset-bottom, 0px));}
+}
+@media (prefers-reduced-motion:reduce){
+  .ls-card b, .ls-tile-t, .ls-new-card .ls-new{transition:none;}
+}

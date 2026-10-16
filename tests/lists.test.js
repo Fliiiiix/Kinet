@@ -42,6 +42,11 @@ function buildContext(overrides = {}){
     cacheProfile(){},
     FILM_PLACEHOLDER_SVG: '', TMDB_IMG_BASE: 'https://img/',
     goToFilmDetail(){},
+    friendAvatarHtml(){ return '<i class="av"></i>'; },
+    films: [],
+    getDisplayNote(f){ return f.note; },
+    noteColorClass(n){ return n >= 4 ? 'rate-high' : 'rate-mid'; },
+    openOverlay(){}, closeOverlay(){},
   }, overrides));
   loadFiles(ctx, ['js/lists.js']);
   return { ctx, elements, toasts };
@@ -72,12 +77,37 @@ test('renderMyLists() : aucune liste -> message d\'état vide', () => {
   assert.ok(elements.myListsList.innerHTML.includes('Pas encore de liste'));
 });
 
-test('renderMyLists() : une liste -> son titre et sa description apparaissent', () => {
+// Piste A de l'audit des six écrans (16/10) : une carte avec la couverture,
+// le titre et « N films · tu en as vu X », puis la tuile « + Nouvelle liste ».
+test('renderMyLists() : une liste -> carte avec son titre, son compte et « + Nouvelle liste »', () => {
   const { ctx, elements } = buildContext();
-  setState(ctx, { myLists: [{ id: 1, userId: 'me', title: 'Mes comédies', description: 'Pour rire', createdAt: '2026-01-01' }] });
+  setState(ctx, {
+    myLists: [{ id: 1, userId: 'me', title: 'Mes comédies', description: 'Pour rire', createdAt: '2026-01-01' }],
+    myListCovers: { 1: { posters: ['a.jpg'], count: 2, tmdbIds: [10, 11] } },
+    films: [{ tmdbId: 10 }],
+  });
   ctx.renderMyLists();
-  assert.ok(elements.myListsList.innerHTML.includes('Mes comédies'));
-  assert.ok(elements.myListsList.innerHTML.includes('Pour rire'));
+  const html = elements.myListsList.innerHTML;
+  assert.ok(html.includes('Mes comédies'));
+  assert.ok(html.includes('2 films · tu en as vu 1'), html);
+  assert.ok(html.includes('a.jpg'));
+  assert.ok(html.includes('+ Nouvelle liste'));
+  assert.ok(!html.includes('Pas encore de liste'));
+});
+
+test('myListSubLabel() : vide, tout vu, un seul film vu', () => {
+  const { ctx } = buildContext();
+  setState(ctx, {
+    myListCovers: { 1: { posters: [], count: 0, tmdbIds: [] }, 2: { posters: [], count: 2, tmdbIds: [10, 11] }, 3: { posters: [], count: 1, tmdbIds: [10] } },
+    films: [{ tmdbId: 10 }, { tmdbId: 11 }],
+  });
+  assert.strictEqual(ctx.myListSubLabel(1), 'vide pour l’instant');
+  assert.strictEqual(ctx.myListSubLabel(2), '2 films · tu les as tous vus');
+  assert.strictEqual(ctx.myListSubLabel(3), '1 film · tu l’as vu');
+  assert.strictEqual(ctx.myListSubLabel(99), 'vide pour l’instant');
+  setState(ctx, { films: [] });
+  assert.strictEqual(ctx.myListSubLabel(2), '2 films · tu n’en as vu aucun');
+  assert.strictEqual(ctx.myListSubLabel(3), '1 film · pas encore vu');
 });
 
 // --- handleCreateList() ---
@@ -239,6 +269,140 @@ test('handleRemoveListItem() : succès -> retiré de currentListItems', async ()
   const items = getState(ctx, 'currentListItems');
   assert.strictEqual(items.length, 1);
   assert.strictEqual(items[0].id, 2);
+});
+
+// --- Piste A : une liste en grille, « Modifier », « Ajouter à une liste » ---
+function headerElements(){
+  return {
+    listEditBtn: stubElement({ hidden: false }), listDoneBtn: stubElement({ hidden: false }),
+    listMoreWrap: stubElement({ hidden: false }), listEditBar: stubElement({ hidden: false }),
+    listHeadView: stubElement({ hidden: false }), listHeadEdit: stubElement({ hidden: false }),
+    listNumbered: stubElement({ checked: false }), listDetailMeta: stubElement(),
+  };
+}
+
+test('renderListDetailHeader() : ta liste -> « Modifier » et ⋯, pas de « Aimer »', () => {
+  const { ctx, elements } = buildContext({ elements: headerElements() });
+  setState(ctx, { currentListMeta: { id: 1, userId: 'me', title: 'Ma liste', description: null, numbered: true }, currentListItems: [{ id: 1 }, { id: 2 }] });
+  ctx.renderListDetailHeader();
+  assert.strictEqual(elements.listLikeBtn.hidden, true);
+  assert.strictEqual(elements.listEditBtn.hidden, false);
+  assert.strictEqual(elements.listMoreWrap.hidden, false);
+  assert.strictEqual(elements.listEditBar.hidden, true, 'barre de modification cachée hors mode Modifier');
+  assert.strictEqual(elements.listNumbered.checked, true);
+  assert.ok(elements.listDetailMeta.innerHTML.includes('Par toi · 2 films · numérotée'), elements.listDetailMeta.innerHTML);
+});
+
+test('renderListDetailHeader() : liste d’un ami -> « Aimer », ni « Modifier » ni ⋯', () => {
+  const { ctx, elements } = buildContext({ elements: headerElements(), friendProfiles: { ami1: { displayName: 'Sam' } } });
+  setState(ctx, { currentListMeta: { id: 1, userId: 'ami1', title: 'Sa liste', description: null, numbered: false }, currentListItems: [] });
+  ctx.renderListDetailHeader();
+  assert.strictEqual(elements.listLikeBtn.hidden, false);
+  assert.strictEqual(elements.listEditBtn.hidden, true);
+  assert.strictEqual(elements.listMoreWrap.hidden, true);
+  assert.ok(elements.listDetailMeta.innerHTML.includes('Par Sam · 0 film'));
+});
+
+test('listItemTileHtml() : rang si numérotée, ta note ou « pas vu »', () => {
+  const { ctx } = buildContext();
+  setState(ctx, {
+    currentListMeta: { id: 1, userId: 'me', numbered: true },
+    films: [{ tmdbId: 10, note: 4.5 }],
+  });
+  const seen = ctx.listItemTileHtml({ id: 1, tmdbId: 10, title: 'Arrival', posterUrl: 'a.jpg', releaseYear: 2016 }, 0);
+  assert.ok(seen.includes('class="ls-rank">1<'), seen);
+  assert.ok(seen.includes('rate-high">4.5<'), seen);
+  assert.ok(!seen.includes('pas vu'));
+  const unseen = ctx.listItemTileHtml({ id: 2, tmdbId: 11, title: 'Moon', posterUrl: null, releaseYear: 2009 }, 1);
+  assert.ok(unseen.includes('class="ls-rank">2<'));
+  assert.ok(unseen.includes('2009 · pas vu'), unseen);
+});
+
+test('listItemTileHtml() : en mode Modifier -> poignée et ✕, sans rang ni note', () => {
+  const { ctx } = buildContext();
+  setState(ctx, {
+    currentListMeta: { id: 1, userId: 'me', numbered: true },
+    films: [{ tmdbId: 10, note: 4.5 }],
+    listEditing: true,
+  });
+  const html = ctx.listItemTileHtml({ id: 1, tmdbId: 10, title: 'Arrival', posterUrl: 'a.jpg', releaseYear: 2016 }, 0);
+  assert.ok(html.includes('ls-drag') && html.includes('ls-x'));
+  assert.ok(!html.includes('ls-rank') && !html.includes('4.5'));
+});
+
+test('applyListOrder() : range, renumérote et marque l’ordre à enregistrer', () => {
+  const { ctx } = buildContext();
+  setState(ctx, { currentListItems: [{ id: 1, position: 0 }, { id: 2, position: 1 }, { id: 3, position: 2 }], listOrderDirty: false });
+  ctx.applyListOrder([3, 1, 2]);
+  const items = getState(ctx, 'currentListItems');
+  assert.strictEqual(JSON.stringify(items.map(i => [i.id, i.position])), '[[3,0],[1,1],[2,2]]');
+  assert.strictEqual(getState(ctx, 'listOrderDirty'), true);
+  setState(ctx, { listOrderDirty: false });
+  ctx.applyListOrder([3, 1, 2]);
+  assert.strictEqual(getState(ctx, 'listOrderDirty'), false, 'même ordre : rien à enregistrer');
+});
+
+test('saveListEdits() : sans la migration 066, l’ordre ne passe pas et un message le dit', async () => {
+  const updates = [];
+  const elements = Object.assign(headerElements(), {
+    listEditTitle: stubElement({ value: 'Ma liste' }), listEditDesc: stubElement({ value: '' }),
+  });
+  const { ctx, toasts } = buildContext({
+    elements,
+    supabaseClient: {
+      from(table){
+        return {
+          update(payload){
+            updates.push([table, payload]);
+            const res = { data: [], error: null };
+            return { eq(){ return { select(){ return Promise.resolve(res); }, then(r){ return Promise.resolve(res).then(r); } }; } };
+          },
+        };
+      },
+    },
+  });
+  setState(ctx, {
+    currentListMeta: { id: 1, userId: 'me', title: 'Ma liste', description: null, numbered: false },
+    currentListItems: [{ id: 2, position: 0 }, { id: 1, position: 1 }],
+    listEditing: true, listOrderDirty: true,
+  });
+  await ctx.saveListEdits();
+  assert.strictEqual(updates.filter(u => u[0] === 'list_items').length, 2);
+  assert.strictEqual(updates.filter(u => u[0] === 'lists').length, 0, 'titre inchangé : pas de mise à jour');
+  assert.ok(toasts[toasts.length - 1].includes('066'), toasts[toasts.length - 1]);
+  assert.strictEqual(getState(ctx, 'listEditing'), false);
+  assert.strictEqual(getState(ctx, 'listOrderDirty'), true, 'reste à enregistrer');
+});
+
+test('Ajouter à une liste : cocher ajoute, décocher retire, « Terminé » résume', async () => {
+  const calls = [];
+  const { ctx, toasts } = buildContext({
+    supabaseClient: {
+      from(table){
+        return {
+          insert(payload){ calls.push(['insert', payload]); return { select(){ return this; }, single(){ return Promise.resolve({ data: { id: 40 }, error: null }); } }; },
+          delete(){ return { eq(col, id){ calls.push(['delete', id]); return Promise.resolve({ error: null }); } }; },
+        };
+      },
+    },
+  });
+  setState(ctx, {
+    myLists: [{ id: 7, userId: 'me', title: 'SF' }],
+    myListCovers: { 7: { posters: ['x.jpg'], count: 3, tmdbIds: [1, 2, 3] } },
+    addToListFilm: { tmdbId: 329865, title: 'Arrival', posterUrl: 'arr.jpg', releaseYear: 2016 },
+    addToListMembership: {},
+  });
+  await ctx.toggleFilmInList(7, true);
+  const ins = JSON.parse(JSON.stringify(calls[0][1]));
+  assert.strictEqual(ins.position, 3, 'ajouté en fin de liste');
+  assert.strictEqual(ins.tmdb_id, 329865);
+  assert.strictEqual(getState(ctx, 'myListCovers')[7].count, 4);
+  await ctx.toggleFilmInList(7, false);
+  assert.strictEqual(JSON.stringify(calls[1]), '["delete",40]');
+  assert.strictEqual(getState(ctx, 'myListCovers')[7].count, 3);
+  await ctx.toggleFilmInList(7, true);
+  ctx.closeAddToListSheet();
+  assert.strictEqual(toasts[toasts.length - 1], 'Arrival est dans 1 liste');
 });
 
 module.exports = run('lists.test.js');
