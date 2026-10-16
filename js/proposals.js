@@ -29,7 +29,10 @@ function rowToProposal(row){
     createdAt: row.created_at,
     chosen: !!row.chosen,
     chosenAt: row.chosen_at || null,
-    watchDate: row.watch_date || null
+    watchDate: row.watch_date || null,
+    // « On l'a vu » (migration 065) : colonne absente tant qu'elle n'est pas lancée.
+    hasSeenColumn: Object.prototype.hasOwnProperty.call(row, 'seen_at'),
+    seenAt: row.seen_at || null
   };
 }
 
@@ -76,9 +79,20 @@ async function unmarkChosen(groupId){
   if(typeof renderChosenBanner === 'function') renderChosenBanner(groupId);
 }
 
+// Un seul geste, « Partant » (audit des six écrans, piste A) : on compte les
+// partants. Les anciens votes « contre » ne comptent plus.
 function proposalScore(proposalId){
-  const votes = proposalVotes[proposalId] || [];
-  return votes.reduce((sum, v) => sum + v.value, 0);
+  return (proposalVotes[proposalId] || []).filter(v => v.value > 0).length;
+}
+function proposalVoters(proposalId){
+  return (proposalVotes[proposalId] || []).filter(v => v.value > 0).map(v => v.userId);
+}
+function isPartant(proposalId){ return myVoteOn(proposalId) > 0; }
+// Propositions en cours d'un groupe (ni choisie, ni déjà vue), par partants.
+function openProposalsFor(groupId){
+  return proposals
+    .filter(p => p.groupId === groupId && !p.chosen && !p.seenAt)
+    .sort((a, b) => proposalScore(b.id) - proposalScore(a.id) || new Date(b.createdAt) - new Date(a.createdAt));
 }
 
 function myVoteOn(proposalId){
@@ -122,63 +136,54 @@ async function loadProposals(groupId){
 
 function renderGroupProposals(){
   const list = document.getElementById('groupProposalsList');
-  if(proposals.length === 0){
-    list.innerHTML = `<div class="tmdb-empty">Aucune proposition pour l'instant. Propose un film ci-dessus.</div>`;
+  const open = openProposalsFor(currentGroupId);
+  if(open.length === 0){
+    list.innerHTML = `<div class="tmdb-empty">Aucune proposition en cours. Propose un film pour lancer le vote.</div>`;
+  }else{
+    list.innerHTML = open.map(p => {
+      const n = proposalScore(p.id);
+      const on = isPartant(p.id);
+      const voters = proposalVoters(p.id);
+      const com = proposalCommentCounts[p.id] || 0;
+      const who = p.proposedBy === currentUser.id ? 'toi' : friendDisplayName(p.proposedBy);
+      return `
+      <div class="gp-prop">
+        <button type="button" class="gp-prop-poster" data-open="${p.id}" aria-label="Ouvrir la proposition ${escapeHtml(p.title)}">${p.posterUrl
+          ? `<img src="${p.posterUrl}" alt="" loading="lazy">`
+          : `<div class="film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}</button>
+        <div class="gp-prop-main">
+          <button type="button" class="gp-prop-title" data-open="${p.id}">${escapeHtml(p.title)}${p.releaseYear ? ` <span>${p.releaseYear}</span>` : ''}</button>
+          <span class="gp-prop-sub">Proposé par ${escapeHtml(who)}${com ? ` · ${com} message${com > 1 ? 's' : ''}` : ''}</span>
+          ${voters.length ? `<span class="gp-voters">${typeof groupAvatarStackHtml === 'function' ? groupAvatarStackHtml(voters, 5) : ''}</span>` : ''}
+        </div>
+        <button type="button" class="gp-vote${on ? ' is-on' : ''}" data-vote-id="${p.id}" aria-pressed="${on}">${on ? uiIcon('check') : ''}Partant <b>${n}</b></button>
+      </div>`;
+    }).join('');
+    list.querySelectorAll('[data-open]').forEach(btn => {
+      btn.addEventListener('click', () => goToProposal(currentGroupId, parseInt(btn.dataset.open, 10)));
+    });
+    list.querySelectorAll('[data-vote-id]').forEach(btn => {
+      btn.addEventListener('click', () => castVote(parseInt(btn.dataset.voteId, 10), 1));
+    });
+  }
+  if(typeof renderChosenBanner === 'function' && document.getElementById('groupDetailPage').style.display !== 'none') renderChosenBanner(currentGroupId);
+}
+
+// « On l'a vu » : le film choisi part dans « Déjà vus ensemble » (migration 065).
+async function markProposalSeen(groupId, proposalId){
+  if(blockIfOffline()) return;
+  const { error } = await supabaseClient.rpc('mark_proposal_seen', { p_group_id: groupId, p_proposal_id: proposalId });
+  if(error){
+    showToast('Impossible pour l’instant (migration 065 à lancer ?)');
+    console.error(error);
     return;
   }
-  const isOwner = typeof groups !== 'undefined' && groups.some(g => g.id === currentGroupId && g.ownerId === currentUser.id);
-
-  list.innerHTML = proposals.map(p => {
-    const score = proposalScore(p.id);
-    const my = myVoteOn(p.id);
-    const commentCount = proposalCommentCounts[p.id] || 0;
-    const proposer = friendDisplayName(p.proposedBy);
-    const chosenBadge = p.chosen ? ` <span class="review-badge" title="Séance élue">${uiIcon('ticket')}</span>` : '';
-    let chosenAction = '';
-    if(isOwner){
-      chosenAction = p.chosen
-        ? `<button class="btn secondary" data-unchoose="${p.id}" type="button">Retirer</button>`
-        : `<button class="btn secondary" data-choose="${p.id}" type="button">Élire</button>`;
-    }
-    return `
-    <div class="wl-row proposal-row">
-      ${p.posterUrl
-        ? `<img class="film-poster" src="${p.posterUrl}" alt="" loading="lazy">`
-        : `<div class="film-poster film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
-      <div class="wl-main">
-        <div class="wl-title">${escapeHtml(p.title)}${p.releaseYear ? ` <span class="wl-year">(${p.releaseYear})</span>` : ''}${chosenBadge}</div>
-        <div class="wl-note">Proposé par ${escapeHtml(proposer)}</div>
-      </div>
-      <div class="vote-controls-inline">
-        <button class="vote-btn${my === 1 ? ' active' : ''}" data-vote="1" data-id="${p.id}" type="button" aria-label="Voter pour" aria-pressed="${my === 1}">▲</button>
-        <span class="vote-count">${score}</span>
-        <button class="vote-btn${my === -1 ? ' active' : ''}" data-vote="-1" data-id="${p.id}" type="button" aria-label="Voter contre" aria-pressed="${my === -1}">▼</button>
-      </div>
-      <div class="wl-actions">
-        ${chosenAction}
-        <button class="btn secondary" data-open="${p.id}" type="button">${uiIcon('chat')} ${commentCount}</button>
-      </div>
-    </div>`;
-  }).join('');
-  list.querySelectorAll('button[data-vote]').forEach(btn => {
-    btn.addEventListener('click', () => castVote(parseInt(btn.dataset.id, 10), parseInt(btn.dataset.vote, 10)));
-  });
-  list.querySelectorAll('button[data-open]').forEach(btn => {
-    btn.addEventListener('click', () => goToProposal(currentGroupId, parseInt(btn.dataset.open, 10)));
-  });
-  list.querySelectorAll('button[data-choose]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      let watchDate = prompt('Date de la séance (AAAA-MM-JJ), ou laisse vide :') || null;
-      if(watchDate && !/^\d{4}-\d{2}-\d{2}$/.test(watchDate)){
-        showToast('Date ignorée, format attendu AAAA-MM-JJ');
-        watchDate = null;
-      }
-      markAsChosen(currentGroupId, parseInt(btn.dataset.choose, 10), watchDate);
-    });
-  });
-  list.querySelectorAll('button[data-unchoose]').forEach(btn => {
-    btn.addEventListener('click', () => unmarkChosen(currentGroupId));
-  });
+  const p = proposals.find(x => x.id === proposalId);
+  if(p){ p.seenAt = new Date().toISOString(); p.chosen = false; }
+  renderGroupProposals();
+  if(typeof renderChosenBanner === 'function') renderChosenBanner(groupId);
+  if(typeof renderGroupSeenHistory === 'function') renderGroupSeenHistory(groupId, []);
+  showToast(p ? `« ${p.title} » rangé dans Déjà vus ensemble. Pense à le noter.` : 'Rangé dans Déjà vus ensemble');
 }
 
 // Vote haut/bas façon Reddit : recliquer sur son propre vote le retire,
@@ -257,9 +262,11 @@ function renderProposalTmdbResults(results){
     return;
   }
   wrap.innerHTML = '';
-  results.forEach(r => {
-    const year = r.release_date ? r.release_date.slice(0, 4) : '?';
+  // Un tap sur un film le propose tout de suite (piste A), plus de bouton à part.
+  results.slice(0, 6).forEach(r => {
+    const year = r.release_date ? r.release_date.slice(0, 4) : '';
     const poster = r.poster_path ? TMDB_IMG_BASE + r.poster_path : null;
+    const already = proposals.some(p => p.groupId === currentGroupId && p.tmdbId === r.id && !p.seenAt);
     const item = document.createElement('div');
     item.className = 'tmdb-result';
     item.innerHTML = `
@@ -268,8 +275,17 @@ function renderProposalTmdbResults(results){
         <div class="tmdb-result-title">${escapeHtml(r.title)}</div>
         <div class="tmdb-result-year">${year}</div>
       </div>
+      <span class="tmdb-result-action">${already ? 'Déjà proposé' : 'Proposer'}</span>
     `;
-    item.addEventListener('mousedown', (e) => { e.preventDefault(); selectProposalTmdbResult(r); });
+    item.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      selectProposalTmdbResult(r);
+      if(currentGroupId) handleProposeFilm(currentGroupId).then(() => {
+        document.getElementById('groupProposeRow').hidden = true;
+        document.getElementById('groupProposeToggle').setAttribute('aria-expanded', 'false');
+        document.getElementById('groupProposeToggle').textContent = '+ Proposer un film';
+      });
+    });
     wrap.appendChild(item);
   });
 }
@@ -332,6 +348,14 @@ document.getElementById('proposalTitleInput').addEventListener('blur', () => {
   setTimeout(() => { document.getElementById('proposalTmdbResults').innerHTML = ''; }, 150);
 });
 document.getElementById('proposalTmdbClearBtn').addEventListener('click', clearProposalTmdbSelection);
+// « + Proposer un film » (piste A) : ouvre la recherche sur place.
+document.getElementById('groupProposeToggle').addEventListener('click', (e) => {
+  const row = document.getElementById('groupProposeRow');
+  row.hidden = !row.hidden;
+  e.currentTarget.setAttribute('aria-expanded', String(!row.hidden));
+  e.currentTarget.textContent = row.hidden ? '+ Proposer un film' : 'Fermer';
+  if(!row.hidden) document.getElementById('proposalTitleInput').focus();
+});
 {
   const proposeFilmBtn = document.getElementById('proposeFilmBtn');
   proposeFilmBtn.addEventListener('click', withSubmitGuard(proposeFilmBtn, () => {
@@ -343,43 +367,52 @@ document.getElementById('proposalTmdbClearBtn').addEventListener('click', clearP
 
 function renderProposalDetailVotes(){
   if(!currentProposal) return;
-  const score = proposalScore(currentProposal.id);
-  const my = myVoteOn(currentProposal.id);
-  document.getElementById('proposalDetailVotes').innerHTML = `
-    <button class="vote-btn${my === 1 ? ' active' : ''}" id="proposalDetailUp" type="button" aria-label="Voter pour" aria-pressed="${my === 1}">▲</button>
-    <span class="vote-count">${score}</span>
-    <button class="vote-btn${my === -1 ? ' active' : ''}" id="proposalDetailDown" type="button" aria-label="Voter contre" aria-pressed="${my === -1}">▼</button>
-  `;
-  document.getElementById('proposalDetailUp').addEventListener('click', () => castVote(currentProposal.id, 1));
-  document.getElementById('proposalDetailDown').addEventListener('click', () => castVote(currentProposal.id, -1));
+  const voters = proposalVoters(currentProposal.id);
+  document.getElementById('proposalVotersCount').textContent = voters.length ? String(voters.length) : '';
+  document.getElementById('proposalDetailVotes').innerHTML = voters.length
+    ? voters.map(uid => `<span class="gp-voter">${friendAvatarHtml(uid, uid === currentUser.id ? 'Toi' : friendDisplayName(uid))}${escapeHtml(uid === currentUser.id ? 'Toi' : friendDisplayName(uid))}</span>`).join('')
+    : `<div class="tmdb-empty">Personne pour l'instant. Sois le premier partant.</div>`;
+  renderProposalDetailFilm();
 }
 
 function renderProposalDetailFilm(){
   const p = currentProposal;
-  const proposer = friendDisplayName(p.proposedBy);
+  const who = p.proposedBy === currentUser.id ? 'toi' : friendDisplayName(p.proposedBy);
+  const group = typeof groups !== 'undefined' ? groups.find(g => g.id === p.groupId) : null;
+  const on = isPartant(p.id);
+  const n = proposalScore(p.id);
+  const date = p.createdAt ? `, le ${new Date(p.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}` : '';
   document.getElementById('proposalDetailFilm').innerHTML = `
     ${p.posterUrl
-      ? `<img class="film-poster" src="${p.posterUrl}" alt="" loading="lazy">`
-      : `<div class="film-poster film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
-    <div class="wl-main">
-      <div class="wl-title">${escapeHtml(p.title)}${p.releaseYear ? ` <span class="wl-year">(${p.releaseYear})</span>` : ''}</div>
-      <div class="wl-note">Proposé par ${escapeHtml(proposer)}</div>
-      ${p.overview ? `<div class="wl-note">${escapeHtml(p.overview)}</div>` : ''}
+      ? `<img src="${p.posterUrl}" alt="" loading="lazy">`
+      : `<div class="film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
+    <div class="gp-next-main">
+      <small>Proposition${group ? ` · ${escapeHtml(group.name)}` : ''}</small>
+      <div class="gp-nt">${escapeHtml(p.title)}</div>
+      <div class="gp-nd">${p.releaseYear ? `${p.releaseYear} · ` : ''}proposé par ${escapeHtml(who)}${date}</div>
+      <div class="ff-actions">
+        <button type="button" class="gp-vote${on ? ' is-on' : ''}" id="proposalPartantBtn" aria-pressed="${on}">${on ? uiIcon('check') : ''}Partant <b>${n}</b></button>
+        ${p.tmdbId ? `<button type="button" class="ff-btn-line" id="proposalFicheBtn">Fiche du film</button>` : ''}
+      </div>
+      ${p.overview ? `<p class="gp-syn">${escapeHtml(p.overview)}</p>` : ''}
     </div>
   `;
+  document.getElementById('proposalPartantBtn').addEventListener('click', () => castVote(p.id, 1));
+  const fiche = document.getElementById('proposalFicheBtn');
+  if(fiche) fiche.addEventListener('click', () => goToFilmDetail(p.tmdbId));
 }
 
 function renderProposalComments(){
   const list = document.getElementById('proposalCommentsList');
   if(proposalComments.length === 0){
-    list.innerHTML = `<div class="tmdb-empty">Aucun commentaire. Lance la discussion.</div>`;
+    list.innerHTML = `<div class="tmdb-empty">Pas encore de message. Lance la discussion.</div>`;
     return;
   }
   list.innerHTML = proposalComments.map(c => `
     <div class="comment-item">
       ${friendAvatarHtml(c.userId, friendDisplayName(c.userId))}
       <div class="comment-body-wrap">
-        <div class="comment-author">${escapeHtml(friendDisplayName(c.userId))}</div>
+        <div class="comment-author">${escapeHtml(friendDisplayName(c.userId))}${c.createdAt && typeof friendFeedWhen === 'function' ? `<span class="comment-when">${escapeHtml(friendFeedWhen(c.createdAt))}</span>` : ''}</div>
         <div class="comment-body">${escapeHtml(c.body)}</div>
       </div>
       ${c.userId === currentUser.id ? `<button class="comment-delete" data-id="${c.id}" type="button" title="Supprimer" aria-label="Supprimer ce commentaire">✕</button>` : ''}
@@ -417,7 +450,7 @@ async function openProposalDetail(proposalId){
   const isOwnerOrAuthor = p.proposedBy === currentUser.id
     || (typeof groups !== 'undefined' && groups.some(g => g.id === p.groupId && g.ownerId === currentUser.id));
   document.getElementById('proposalDetailFooter').innerHTML = isOwnerOrAuthor
-    ? `<button class="btn danger" id="deleteProposalBtn" type="button">Supprimer la proposition</button>`
+    ? `<button class="back-link" id="deleteProposalBtn" type="button">Retirer cette proposition</button>`
     : '';
   if(isOwnerOrAuthor){
     document.getElementById('deleteProposalBtn').addEventListener('click', () => deleteProposal(proposalId));

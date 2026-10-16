@@ -32,10 +32,10 @@ function buildContext(){
   return ctx;
 }
 
-test('proposalScore() : somme des votes (haut = +1, bas = -1)', () => {
+test('proposalScore() : le nombre de partants, les anciens votes contre ne comptent plus (audit des six écrans, piste A)', () => {
   const ctx = buildContext();
-  assert.strictEqual(ctx.proposalScore(1), 1); // +1 +1 -1
-  assert.strictEqual(ctx.proposalScore(2), -1);
+  assert.strictEqual(ctx.proposalScore(1), 2); // moi et alice partants, bob contre
+  assert.strictEqual(ctx.proposalScore(2), 0);
   assert.strictEqual(ctx.proposalScore(999), 0, 'proposition sans aucun vote -> 0, pas une exception');
 });
 

@@ -13,6 +13,7 @@ function buildContext(initialFriendships){
     escapeHtml(s){ return s; },
     skeletonRows(){ return ''; },
     friendships: initialFriendships,
+    proposals: [],
     async loadFriendships(){ calls.push('loadFriendships'); ctx.friendships = [{ status: 'accepted' }]; },
     async loadProposals(){ calls.push('loadProposals'); },
     renderGroupProposals(){ calls.push('renderGroupProposals'); },

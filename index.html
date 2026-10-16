@@ -64,7 +64,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,500&display=swap">
-<link rel="stylesheet" href="css/style.css?v=289">
+<link rel="stylesheet" href="css/style.css?v=290">
 </head>
 <body>
 
@@ -953,69 +953,72 @@
 <!-- Page Groupes : liste — écran à part entière (pas une modal), voir
      js/router.js. Un groupe contient membres + propositions + votes +
      discussion : trop pour rester empilé en popups. -->
-<div class="container page" id="groupsListPage" role="main" tabindex="-1" style="display:none;">
-  <div class="page-header">
-    <button class="btn secondary" id="groupsPageBack">← Retour</button>
+<div class="container page gp-page" id="groupsListPage" role="main" tabindex="-1" style="display:none;">
+  <!-- Groupes, piste A de l'audit des six écrans (choisie par Flix le 16/10) :
+       une rangée par groupe (membres, prochaine séance ou propositions en
+       cours), sans boîte ni « Ouvrir ». Voir js/groups.js. -->
+  <div class="gp-list-head">
+    <button class="btn secondary" id="groupsPageBack" type="button" hidden>← Retour</button>
     <div class="catalog-switch social-switch" role="tablist" aria-label="Amis, groupes ou listes">
       <button type="button" role="tab" class="catalog-switch-btn" aria-selected="false" data-social="amis">Amis</button>
       <button type="button" role="tab" class="catalog-switch-btn is-active" aria-selected="true" data-social="groupes">Groupes</button>
       <button type="button" role="tab" class="catalog-switch-btn" aria-selected="false" data-social="listes">Listes</button>
     </div>
+    <button class="ff-link" id="groupCreateToggle" type="button" aria-expanded="false">+ Créer un groupe</button>
   </div>
-
-  <details class="create-disclosure">
-  <summary>+ Créer un groupe</summary>
-  <div class="field">
-    <label for="groupNameInput">Nom du groupe</label>
-    <input type="text" id="groupNameInput" placeholder="Ex. Soirées ciné du dimanche" autocomplete="off">
+  <div class="gp-create" id="groupCreateRow" hidden>
+    <input type="text" id="groupNameInput" placeholder="Nom du groupe, par exemple Soirées ciné du dimanche" autocomplete="off" aria-label="Nom du groupe">
+    <textarea id="groupDescInput" hidden></textarea>
+    <button class="ff-btn-main" id="createGroupBtn" type="button">Créer</button>
   </div>
-  <div class="field">
-    <label for="groupDescInput">Description (optionnel)</label>
-    <textarea id="groupDescInput" placeholder="À quoi sert ce groupe…" rows="2"></textarea>
-  </div>
-  <button class="btn" id="createGroupBtn" type="button">Créer le groupe</button>
-  </details>
-
-  <div class="stats-section">
-    <div class="stats-section-title">Mes groupes</div>
-    <div class="wl-list" id="groupsList"></div>
-  </div>
+  <div class="gp-list" id="groupsList"></div>
 </div>
 
-<!-- Page Groupes : détail d'un groupe -->
-<div class="container page" id="groupDetailPage" role="main" tabindex="-1" style="display:none;">
-  <div class="page-header">
-    <button class="btn secondary" id="groupDetailBack">← Retour</button>
-    <h2 id="groupDetailTitle">Groupe</h2>
+<!-- Page Groupes : détail d'un groupe (piste A) : la prochaine séance en tête,
+     puis les propositions triées par partants, ce que vous pensez des films vus
+     par au moins deux d'entre vous, et les films déjà vus ensemble. Membres,
+     ajout d'amis, invitation et suppression passent par le menu ⋯. -->
+<div class="container page gp-page" id="groupDetailPage" role="main" tabindex="-1" style="display:none;">
+  <div class="detail-topbar">
+    <button class="back-link" id="groupDetailBack" type="button">‹ Retour</button>
   </div>
-  <p class="auth-intro" id="groupDetailDesc" style="display:none;"></p>
+  <div class="gp-head">
+    <div class="gp-id">
+      <h1 id="groupDetailTitle">Groupe</h1>
+      <div class="gp-meta" id="groupDetailMeta"></div>
+    </div>
+    <div class="gp-actions">
+      <button class="ff-btn-text" id="groupInviteBtn" type="button" hidden>Inviter</button>
+      <div class="ff-more">
+        <button class="ff-btn-icon" id="groupMoreBtn" type="button" aria-label="Plus d'actions" aria-haspopup="true" aria-expanded="false"></button>
+        <div class="ff-menu gp-menu" id="groupMenu" role="menu" hidden>
+          <button type="button" role="menuitem" id="groupMenuMembers">Membres</button>
+          <button type="button" role="menuitem" id="groupMenuAdd" hidden>Ajouter un ami</button>
+          <button type="button" role="menuitem" id="groupMenuInvite" hidden>Lien d'invitation</button>
+          <button type="button" role="menuitem" class="nt-danger" id="groupMenuDanger">Quitter le groupe</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="gp-desc" id="groupDetailDesc" style="display:none;"></p>
 
-  <!-- Séance élue (js/proposals.js, migrations/020) : masqué tant qu'aucune
-       proposition n'est élue. -->
-  <div class="chosen-banner" id="chosenBanner" style="display:none;"></div>
+  <!-- Membres, Ajouter un ami, Inviter : ouverts depuis le menu ⋯. -->
+  <div class="gp-manage" id="groupManagePanel" hidden>
+    <div class="gp-manage-head"><b id="groupManageTitle">Membres</b><button class="close-x" id="groupManageClose" type="button" aria-label="Fermer">✕</button></div>
+    <div id="groupMembersSection"><div class="wl-list" id="groupMembersList"></div></div>
+    <div id="groupAddFriendSection" style="display:none;"><div class="wl-list" id="groupAddFriendList"></div></div>
+    <div id="groupInviteSection" style="display:none;"><div id="groupInviteBox"></div></div>
+  </div>
+
+  <!-- Prochaine séance : le film choisi et sa date, ou le film en tête des votes
+       (renderChosenBanner(), js/groups.js). -->
+  <div class="gp-next-wrap" id="chosenBanner" style="display:none;"></div>
 
   <div class="stats-section">
-    <div class="stats-section-title">Membres</div>
-    <div class="wl-list" id="groupMembersList"></div>
-  </div>
-
-  <div class="stats-section" id="groupAddFriendSection" style="display:none;">
-    <div class="stats-section-title">Ajouter un ami</div>
-    <div class="wl-list" id="groupAddFriendList"></div>
-  </div>
-
-  <!-- Lien d'invitation (js/invites.js) : owner seul. -->
-  <div class="stats-section" id="groupInviteSection" style="display:none;">
-    <div class="stats-section-title">Inviter</div>
-    <div id="groupInviteBox"></div>
-  </div>
-
-  <div class="stats-section">
-    <div class="stats-section-title">Propositions</div>
-    <div class="wl-add-form">
+    <div class="gp-sec-head"><span class="stats-section-title">Propositions</span><small>triées par partants</small><button class="ff-link" id="groupProposeToggle" type="button" aria-expanded="false">+ Proposer un film</button></div>
+    <div class="gp-propose" id="groupProposeRow" hidden>
       <div class="field tmdb-search-field">
-        <label for="proposalTitleInput">Proposer un film</label>
-        <input type="text" id="proposalTitleInput" placeholder="Ex. Paprika" autocomplete="off">
+        <input type="text" id="proposalTitleInput" placeholder="Chercher un film à proposer…" autocomplete="off" aria-label="Chercher un film à proposer">
         <div id="proposalTmdbResults" class="tmdb-results"></div>
         <div id="proposalTmdbSelected" class="tmdb-selected" style="display:none;">
           <img id="proposalTmdbSelectedPoster" alt="Affiche">
@@ -1025,77 +1028,49 @@
           </div>
         </div>
       </div>
-      <button class="btn" id="proposeFilmBtn" type="button">+ Proposer au groupe</button>
+      <button class="btn" id="proposeFilmBtn" type="button" hidden>+ Proposer au groupe</button>
     </div>
-    <div class="wl-list" id="groupProposalsList"></div>
+    <div class="gp-props" id="groupProposalsList"></div>
   </div>
 
-  <!-- Historique des élections (retour utilisateur) — chaque élection
-       (set_chosen_proposal, migrations/020) log déjà un événement
-       'proposal_chosen' dans activity_events (migrations/019) : liste
-       dédiée à CE seul type d'événement (voir loadActivity(), js/activity.js),
-       sinon perdue au milieu du fil d'activité général plus bas qui mélange
-       tout (propositions, commentaires, arrivées de membres...). Masquée
-       tant qu'aucune élection n'a encore eu lieu (voir renderGroupDetail(),
-       js/groups.js). -->
+  <div class="stats-section">
+    <div class="gp-sec-head"><span class="stats-section-title">Ce que vous en pensez</span><small>films notés par au moins 2 d'entre vous</small></div>
+    <div class="gp-tastes" id="groupTasteComparisonList"></div>
+  </div>
+
   <div class="stats-section" id="groupElectionHistorySection" style="display:none;">
-    <div class="stats-section-title">Historique des élections</div>
-    <div class="wl-list" id="groupElectionHistoryList"></div>
+    <div class="stats-section-title">Déjà vus ensemble</div>
+    <div class="gp-tastes" id="groupElectionHistoryList"></div>
   </div>
 
-  <!-- Goûts du groupe (get_group_top_films, migrations/022) : films notés
-       par au moins 2 membres — jamais un seul, ça reviendrait à exposer sa
-       note individuelle à tout le groupe. -->
-  <div class="stats-section">
-    <div class="stats-section-title">Goûts du groupe</div>
-    <div class="wl-list" id="groupTopFilmsList"></div>
-  </div>
-
-  <!-- Comparaison de goûts élargie (retour utilisateur, migrations/038) —
-       complète la section ci-dessus : pour les mêmes films, qui a mis
-       quelle note plutôt que la seule moyenne. Voir get_group_taste_comparison(),
-       js/groups.js. -->
-  <div class="stats-section">
-    <div class="stats-section-title">Comparaison de goûts</div>
-    <div class="wl-list" id="groupTasteComparisonList"></div>
-  </div>
-
-  <!-- Fil d'activité (js/activity.js) : qui a proposé/commenté/rejoint
-       récemment — pour qu'un groupe revisité ne semble pas mort. -->
-  <div class="stats-section">
-    <div class="stats-section-title">Activité récente</div>
-    <div class="wl-list" id="groupActivityList"></div>
-  </div>
-
-  <div class="modal-footer">
-    <div></div>
-    <div class="right" id="groupDetailFooter"></div>
+  <!-- Anciennes sections, gardées cachées (leurs fonctions écrivent encore dedans). -->
+  <div hidden>
+    <div id="groupTopFilmsList"></div>
+    <div id="groupActivityList"></div>
+    <div id="groupDetailFooter"></div>
   </div>
 </div>
 
-<!-- Page Groupes : détail d'une proposition (votes + discussion) -->
-<div class="container page" id="proposalDetailPage" role="main" tabindex="-1" style="display:none;">
-  <div class="page-header">
-    <button class="btn secondary" id="proposalDetailBack">← Retour</button>
-    <h2>Proposition</h2>
+<!-- Page Groupes : une proposition (piste A) : grande affiche, « Partant »,
+     lien vers la fiche, qui est partant, discussion. -->
+<div class="container page gp-page" id="proposalDetailPage" role="main" tabindex="-1" style="display:none;">
+  <div class="detail-topbar">
+    <button class="back-link" id="proposalDetailBack" type="button">‹ Retour</button>
   </div>
-
-  <div class="proposal-detail-film" id="proposalDetailFilm"></div>
-  <div class="vote-controls" id="proposalDetailVotes"></div>
-
+  <div class="gp-next gp-prop-head" id="proposalDetailFilm"></div>
+  <div class="stats-section">
+    <div class="gp-sec-head"><span class="stats-section-title">Partants</span><small id="proposalVotersCount"></small></div>
+    <div class="gp-voters-list" id="proposalDetailVotes"></div>
+  </div>
   <div class="stats-section">
     <div class="stats-section-title">Discussion</div>
     <div class="comment-list" id="proposalCommentsList"></div>
     <div class="comment-input-row">
-      <textarea id="proposalCommentInput" placeholder="Écrire un commentaire…" rows="2"></textarea>
+      <textarea id="proposalCommentInput" placeholder="Écrire un message…" rows="2"></textarea>
       <button class="btn" id="proposalCommentBtn" type="button">Envoyer</button>
     </div>
   </div>
-
-  <div class="modal-footer">
-    <div></div>
-    <div class="right" id="proposalDetailFooter"></div>
-  </div>
+  <div class="stats-section" id="proposalDetailFooter"></div>
 </div>
 
 <!-- Page Listes : liste — écran à part entière (pas une modal), voir
@@ -2284,140 +2259,140 @@ Légende du 7e art (Légendaire) 2%</div>
 <!-- ?v=N sur chaque js/*.js ci-dessous (voir le commentaire dans <head>) —
      à incrémenter à chaque déploiement, même numéro pour tous les fichiers. -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/supabaseConfig.js?v=289"></script>
+<script src="js/supabaseConfig.js?v=290"></script>
 <!-- Juste après supabaseConfig.js (a besoin de supabaseClient) et avant
      tout le reste : capte les erreurs de chargement des scripts suivants,
      pas seulement celles de l'app une fois démarrée — voir js/logging.js. -->
-<script src="js/logging.js?v=289"></script>
-<script src="js/tmdbConfig.js?v=289"></script>
-<script src="js/data.js?v=289"></script>
-<script src="js/happenings.js?v=289"></script>
+<script src="js/logging.js?v=290"></script>
+<script src="js/tmdbConfig.js?v=290"></script>
+<script src="js/data.js?v=290"></script>
+<script src="js/happenings.js?v=290"></script>
 <!-- Ressort physique vanilla (audit design, apple-design) — avant ui.js,
      qui l'utilise pour le geste tirer-pour-rafraîchir. Aucune dépendance
      entre les deux au chargement (animateSpring() n'est appelée que dans
      des écouteurs tactiles, bien après le chargement complet), gardé
      avant par lisibilité : un utilitaire se charge avant ce qui s'en sert. -->
-<script src="js/spring.js?v=289"></script>
+<script src="js/spring.js?v=290"></script>
 <!-- Avant app.js et les 6 autres modules qui ouvrent/ferment une modale
      (openOverlay/closeOverlay) — l'ordre exact importe peu au runtime
      (rien n'y est appelé au chargement), gardé en premier des scripts
      "app" pour la lisibilité, comme un utilitaire partagé. -->
-<script src="js/ui.js?v=289"></script>
+<script src="js/ui.js?v=290"></script>
 <!-- Avant watchlist.js, qui appelle playRouletteTick()/playRouletteWin()
      (roulette "Surprends-moi") — l'ordre exact importe peu au runtime
      (rien n'y est appelé au chargement), gardé ici pour la lisibilité,
      comme ui.js juste au-dessus. -->
-<script src="js/sound.js?v=289"></script>
+<script src="js/sound.js?v=290"></script>
 <!-- Avant app.js/journal.js/watchlist.js, qui appellent saveOfflineCache()/
      loadOfflineCache()/blockIfOffline() (v1.6, mode hors ligne lecture
      seule) — l'ordre exact importe peu au runtime (rien n'y est appelé au
      chargement, seulement des listeners posés pour plus tard), gardé ici
      pour la lisibilité, comme ui.js juste au-dessus. -->
-<script src="js/offlineQueue.js?v=289"></script>
-<script src="js/offline.js?v=289"></script>
-<script src="js/app.js?v=289"></script>
-<script src="js/tmdb.js?v=289"></script>
-<script src="js/stats.js?v=289"></script>
-<script src="js/achievements.js?v=289"></script>
+<script src="js/offlineQueue.js?v=290"></script>
+<script src="js/offline.js?v=290"></script>
+<script src="js/app.js?v=290"></script>
+<script src="js/tmdb.js?v=290"></script>
+<script src="js/stats.js?v=290"></script>
+<script src="js/achievements.js?v=290"></script>
 <!-- Avant app.js/watchlist.js à l'exécution (pas au chargement — rien
      n'est appelé ici avant un vrai clic/ajout) : les deux appellent
      generateTcgCardsForFilm(), définie ici. -->
-<script src="js/tcg.js?v=289"></script>
-<script src="js/album.js?v=289"></script>
-<script src="js/chatbot.js?v=289"></script>
-<script src="js/journal.js?v=289"></script>
-<script src="js/notation.js?v=289"></script>
+<script src="js/tcg.js?v=290"></script>
+<script src="js/album.js?v=290"></script>
+<script src="js/chatbot.js?v=290"></script>
+<script src="js/journal.js?v=290"></script>
+<script src="js/notation.js?v=290"></script>
 <!-- Après app.js (showToast) — appelée par js/profile.js juste après. -->
-<script src="js/pwa.js?v=289"></script>
-<script src="js/profile.js?v=289"></script>
+<script src="js/pwa.js?v=290"></script>
+<script src="js/profile.js?v=290"></script>
 <!-- Paramètres — après profile.js (referme/rouvre "Ton profil") et pwa.js
      (updateInstallUI()), voir js/settings.js. -->
-<script src="js/settings.js?v=289"></script>
-<script src="js/backup.js?v=289"></script>
+<script src="js/settings.js?v=290"></script>
+<script src="js/backup.js?v=290"></script>
 <!-- Après profile.js (closeProfileModal/openProfileModal) et data.js
      (FEEDBACK_CATEGORIES) — même raisonnement que pwa.js juste au-dessus. -->
-<script src="js/feedback.js?v=289"></script>
+<script src="js/feedback.js?v=290"></script>
 <!-- Bilan cinéphile partageable (v2.43) — après journal.js (viewings) et
      profile.js (currentProfile), voir js/recap.js. -->
-<script src="js/recap.js?v=289"></script>
+<script src="js/recap.js?v=290"></script>
 <!-- N'a besoin que de ui.js (openOverlay/closeOverlay) et app.js
      (showToast), chargés bien avant — placé ici pour rester groupé avec
      les autres modales accessibles depuis le chrome plutôt que pour une
      vraie dépendance. -->
-<script src="js/share.js?v=289"></script>
+<script src="js/share.js?v=290"></script>
 <!-- Après happenings.js/achievements.js (définitions) et profile.js
      (closeProfileModal) : admin.js s'appuie sur les trois au clic, jamais au
      chargement — l'ordre exact importe peu, gardé groupé ici pour la
      lisibilité. -->
-<script src="js/admin.js?v=289"></script>
-<script src="js/router.js?v=289"></script>
-<script src="js/publicProfile.js?v=289"></script>
-<script src="js/top.js?v=289"></script>
-<script src="js/friends.js?v=289"></script>
+<script src="js/admin.js?v=290"></script>
+<script src="js/router.js?v=290"></script>
+<script src="js/publicProfile.js?v=290"></script>
+<script src="js/top.js?v=290"></script>
+<script src="js/friends.js?v=290"></script>
 <!-- Après friends.js (cacheProfile/friendDisplayName/friendAvatarHtml) et
      journal.js (formatViewingDate), avant groups.js qui l'appelle depuis
      openGroupDetail() — l'ordre exact importe peu au runtime (tout est en
      fonctions globales appelées après chargement complet), gardé groupé
      ici pour la lisibilité. -->
-<script src="js/activity.js?v=289"></script>
-<script src="js/watchlist.js?v=289"></script>
+<script src="js/activity.js?v=290"></script>
+<script src="js/watchlist.js?v=290"></script>
 <!-- Après watchlist.js (loadWatchlist/watchlist, réutilisés pour exclure
      ce qui y est déjà) et app.js (getDisplayNote, chargé plus haut) — voir
      js/suggestions.js. Avant auth.js, qui appelle loadSuggestions() depuis
      showApp(). -->
-<script src="js/suggestions.js?v=289"></script>
+<script src="js/suggestions.js?v=290"></script>
 <!-- Import externe (Letterboxd pour l'instant) — après watchlist.js/app.js/
      tmdb.js/journal.js dont il réutilise films/watchlist/searchTmdb()/
      addViewing(). Voir js/importExternal.js. -->
-<script src="js/importExternal.js?v=289"></script>
+<script src="js/importExternal.js?v=290"></script>
 <!-- Fiche film (v2.1) — voir js/filmDetail.js. Regroupée ici avec
      friends.js/watchlist.js dont elle réutilise les helpers (même
      remarque que suggestions.js juste au-dessus : l'ordre exact n'importe
      pas au runtime, tout est en fonctions appelées après chargement
      complet — router.js, plus haut, appelle déjà openFriends()/
      openWatchlist() en aval de leur propre script de la même façon). -->
-<script src="js/filmDetail.js?v=289"></script>
+<script src="js/filmDetail.js?v=290"></script>
 <!-- Après watchlist.js : js/upcoming.js réutilise le tableau watchlist déjà
      chargé (voir plus bas). -->
-<script src="js/series.js?v=289"></script>
+<script src="js/series.js?v=290"></script>
 <!-- Après watchlist.js ET series.js — a besoin des deux tableaux chargés
      (loadWatchlist()/loadTrackedShows()), voir js/upcoming.js. -->
-<script src="js/upcoming.js?v=289"></script>
-<script src="js/groups.js?v=289"></script>
-<script src="js/proposals.js?v=289"></script>
+<script src="js/upcoming.js?v=290"></script>
+<script src="js/groups.js?v=290"></script>
+<script src="js/proposals.js?v=290"></script>
 <!-- Après groups.js (renderInviteBox appelée depuis renderGroupDetail) et
      proposals.js (chosenProposal) — voir js/invites.js. -->
-<script src="js/invites.js?v=289"></script>
+<script src="js/invites.js?v=290"></script>
 <!-- Listes thématiques (retour utilisateur, étude comparative Letterboxd) —
      après friends.js (ensureProfilesCached vient de filmDetail.js, déjà
      chargé ; friendDisplayName/cacheProfile de friends.js) et filmDetail.js
      (goToFilmDetail réutilisé pour ouvrir un film d'une liste), voir
      js/lists.js. -->
-<script src="js/lists.js?v=289"></script>
+<script src="js/lists.js?v=290"></script>
 <!-- Après activity.js (rowToActivityEvent/renderActivityRowHtml) et
      friends.js (friendProfiles/cacheProfile) qu'elle réutilise pour le
      digest, avant auth.js qui appelle refreshActivityBadge()/
      maybeShowDigest() depuis showApp(). -->
-<script src="js/activityState.js?v=289"></script>
+<script src="js/activityState.js?v=290"></script>
 <!-- Après activityState.js (loadActivityState/activityState réutilisés
      pour son propre badge "vu") et avant auth.js qui appelle
      initChangelog() depuis showApp(). -->
-<script src="js/changelog.js?v=289"></script>
+<script src="js/changelog.js?v=290"></script>
 <!-- Recherche unique (audit M2) : après series.js/friends.js/groups.js
      dont elle réutilise les tableaux déjà chargés et les fonctions
      d'ouverture (openFriendProfile/goToSeriesDetail/goToGroup), et après
      app.js/data.js pour getSearchTerms()/normalizeSearch()/
      FILM_PLACEHOLDER_SVG. Voir js/globalSearch.js. -->
-<script src="js/globalSearch.js?v=289"></script>
+<script src="js/globalSearch.js?v=290"></script>
 <!-- Page Profil (option B) — après profile.js, stats.js, achievements.js,
      tcg.js, changelog.js et router.js dont elle lit l'état ; appelée par
      renderRoute() seulement après connexion. -->
-<script src="js/profilePage.js?v=289"></script>
+<script src="js/profilePage.js?v=290"></script>
 <!-- Tuto d'accueil interactif — avant auth.js dont showApp() appelle
      maybeStartOnboarding() ; après ui.js/router.js/profile.js/logging.js
      dont il réutilise respectivement openOverlay-style/goHome/
      closeProfileModal/logEvent. -->
-<script src="js/onboarding.js?v=289"></script>
-<script src="js/auth.js?v=289"></script>
+<script src="js/onboarding.js?v=290"></script>
+<script src="js/auth.js?v=290"></script>
 </body>
 </html>
