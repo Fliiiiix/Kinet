@@ -487,11 +487,14 @@ function updateTmdbSelectedUI(){
   }
   if(!tmdbSelected){
     box.style.display = 'none';
-    return;
+  }else{
+    box.style.display = '';
+    document.getElementById('tmdbSelectedTitle').textContent =
+      tmdbSelected.title + (tmdbSelected.release_year ? ` (${tmdbSelected.release_year})` : '');
   }
-  box.style.display = '';
-  document.getElementById('tmdbSelectedTitle').textContent =
-    tmdbSelected.title + (tmdbSelected.release_year ? ` (${tmdbSelected.release_year})` : '');
+  // Notation en pas à pas (js/notation.js) : un film choisi fait passer au
+  // premier critère.
+  if(typeof ntOnFilmChosen === 'function') ntOnFilmChosen();
 }
 
 async function handleTmdbSearch(query){

@@ -772,7 +772,6 @@ function openModal(id, prefillTmdb){
   const film = id ? films.find(f => f.id === id) : null;
   const manualNote = film && film.manualNote != null ? film.manualNote : null;
 
-  document.getElementById('modalTitle').textContent = film ? 'Modifier le film' : 'Nouveau film';
   document.getElementById('titleInput').value = film ? film.title : (prefillTmdb ? prefillTmdb.title : '');
   document.getElementById('deleteBtn').style.display = film ? 'inline-block' : 'none';
   const openFilmDetailBtn = document.getElementById('modalOpenFilmDetailBtn');
@@ -819,10 +818,13 @@ function openModal(id, prefillTmdb){
     renderViewingsSection(film.id);
   }
 
+  // Notation en pas à pas (audit des six écrans, piste B) : choisit l'écran
+  // de départ (choix du film, premier critère, résumé ou note directe).
+  if(typeof ntOpen === 'function') ntOpen(film);
   openOverlay('overlay');
   // Sur écran tactile, pas de clavier d'office (retour de Flix, 15/10) : on
   // vient souvent régler les curseurs, pas taper le titre.
-  if(!window.matchMedia('(pointer: coarse)').matches) document.getElementById('titleInput').focus();
+  if(!window.matchMedia('(pointer: coarse)').matches && typeof ntScreen !== 'undefined' && ntScreen === 'pick') document.getElementById('titleInput').focus();
   // Happenings "dwell" (ex. The Whale) : se déclenchent en restant un
   // moment sur la fiche d'un film précis — voir js/happenings.js.
   startDwellWatch(film);
@@ -830,6 +832,7 @@ function openModal(id, prefillTmdb){
 
 function closeModal(){
   unratedQueueActive = false;
+  if(typeof ntCloseMenu === 'function') ntCloseMenu();
   closeOverlay('overlay', () => {
     editingId = null;
     convertingFromWatchlistId = null;
@@ -838,6 +841,7 @@ function closeModal(){
 }
 
 async function handleSave(){
+  if(typeof ntCanSave === 'function' && !ntCanSave()) return;
   const continueQueue = unratedQueueActive;
   const title = document.getElementById('titleInput').value.trim();
   if(!title){
@@ -900,7 +904,7 @@ async function handleSave(){
     pulseId = data.id;
 
     // Premier visionnage automatique, daté de l'ajout — voir js/journal.js.
-    await addViewing(data.id, data.added);
+    await addViewing(data.id, typeof ntFirstViewTimestamp === 'function' ? ntFirstViewTimestamp(data.added) : data.added);
 
     // Cartes à collectionner (retour utilisateur, js/tcg.js) : jamais
     // attendue (pas de await) — générer les cartes de ce film est un à-

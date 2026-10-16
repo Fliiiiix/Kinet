@@ -122,6 +122,20 @@ function renderViewingsSection(filmId){
   });
 }
 
+// Changer la date d'un visionnage (notation en pas à pas, « Changer la date »).
+async function updateViewingDate(id, watchedAt){
+  if(blockIfOffline()) return false;
+  const { error } = await supabaseClient.from('viewings').update({ watched_at: watchedAt }).eq('id', id);
+  if(error){
+    showToast('Erreur, réessaie');
+    console.error(error);
+    return false;
+  }
+  const v = viewings.find(x => x.id === id);
+  if(v) v.watchedAt = watchedAt;
+  return true;
+}
+
 function formatViewingDate(ts){
   return new Date(ts).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
 }
