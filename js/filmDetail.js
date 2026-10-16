@@ -100,7 +100,7 @@ function renderFilmDetailRatingRing(){
   const myFilm = films.find(f => f.tmdbId === currentFilmTmdbId);
   const myNote = myFilm ? getDisplayNote(myFilm) : null;
   ring.textContent = myNote !== null ? myNote.toFixed(1) : '—';
-  ring.className = `counter ${noteColorClass(myNote)}`;
+  ring.className = `counter ff-ring ${noteColorClass(myNote)}`;
   const label = myNote !== null ? `Ta note : ${myNote.toFixed(1)}. Modifier ma note` : 'Noter ce film';
   ring.title = label;
   ring.setAttribute('aria-label', label);
@@ -459,9 +459,9 @@ function renderFilmDetailAvis(){
   }
   const note = getDisplayNote(myFilm);
   const hasCrit = !!(myFilm.crit && CRITERIA.some(c => typeof myFilm.crit[c.key] === 'number'));
-  const how = myFilm.manualNote != null
-    ? (hasCrit ? 'note directe, ta grille est gardée' : 'note directe')
-    : 'calculée sur tes 7 critères';
+  // Note directe égale à la grille (les 52 films de l'audit N1) : c'est la grille.
+  const direct = myFilm.manualNote != null && !(hasCrit && myFilm.manualNote === computeNote(myFilm.crit));
+  const how = direct ? (hasCrit ? 'note directe, ta grille est gardée' : 'note directe') : 'calculée sur tes 7 critères';
   const seen = typeof viewingsForFilm === 'function' ? viewingsForFilm(myFilm.id) : [];
   const last = seen.length ? seen[seen.length - 1] : null;
   const lastDate = last ? new Date(last.watchedAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
