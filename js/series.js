@@ -851,7 +851,7 @@ function renderSeasonsList(){
           <button type="button" class="ff-btn-icon" data-season-menu="${n}" aria-label="Plus d'actions pour ${escapeHtml(seasonLabel(s))}" aria-haspopup="true">${uiIcon('dots')}</button>
           ${seasonMenuHtml(s)}
         </div>
-        ${view === 'list' ? `<span class="season-caret" aria-hidden="true"></span>` : ''}
+        ${view === 'list' ? `<button type="button" class="sx-caret-btn" data-season-toggle="${n}" aria-expanded="${open}" aria-label="${open ? 'Replier' : 'Déplier'} ${escapeHtml(seasonLabel(s))}"><span class="season-caret" aria-hidden="true"></span></button>` : ''}
       </div>
       ${view === 'grid' ? seasonGridHtml(s) : `<div class="season-episodes" id="seasonEpisodes-${n}"></div>`}
     </div>`;
@@ -1457,11 +1457,19 @@ document.getElementById('seriesSeasonsList').addEventListener('click', async (e)
     await changeEpisodeTimesWatched(n, ep, timesBtn.dataset.dir === '+' ? 1 : -1);
     return;
   }
+  // Le nom de la saison et la flèche à droite déplient tous les deux.
   const toggle = t.closest('[data-season-toggle]');
   if(toggle){
-    await toggleSeason(parseInt(toggle.dataset.seasonToggle, 10));
+    const n = parseInt(toggle.dataset.seasonToggle, 10);
     const block = toggle.closest('.season-block');
-    if(block) toggle.setAttribute('aria-expanded', String(block.classList.contains('open')));
+    await toggleSeason(n);
+    if(block){
+      const open = block.classList.contains('open');
+      const season = currentShowSeasons.find(x => x.season_number === n);
+      block.querySelectorAll('[data-season-toggle]').forEach(b => b.setAttribute('aria-expanded', String(open)));
+      const caret = block.querySelector('.sx-caret-btn');
+      if(caret && season) caret.setAttribute('aria-label', `${open ? 'Replier' : 'Déplier'} ${seasonLabel(season)}`);
+    }
   }
 });
 document.addEventListener('click', (e) => {

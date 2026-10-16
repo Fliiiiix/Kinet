@@ -7487,6 +7487,12 @@ body[data-view-mode="list"] #filmList .bulk-select-checkbox{flex:none;}
 .sx-season-menu button[disabled]{color:var(--text-3); cursor:default;}
 .series-page .season-caret{width:8px; height:8px; margin:0 10px 4px 6px; border-right:1.5px solid var(--text-2); border-bottom:1.5px solid var(--text-2); transform:rotate(45deg); transition:transform var(--dur-fast);}
 .series-page .sx-season.open .season-caret{transform:rotate(-135deg); margin-bottom:-2px;}
+/* La flèche est un vrai bouton (elle ne réagissait pas au toucher). */
+.sx-caret-btn{flex:none; width:40px; height:40px; display:grid; place-items:center; padding:0; margin:0; border:0; border-radius:var(--r-full); background:none; cursor:pointer;}
+.series-page .sx-caret-btn .season-caret{margin:0 0 4px;}
+.series-page .sx-season.open .sx-caret-btn .season-caret{margin:4px 0 0;}
+.sx-caret-btn:hover .season-caret{border-color:var(--text-1);}
+.sx-caret-btn:focus-visible{outline:2px solid var(--accent); outline-offset:-2px;}
 .series-page .season-episodes{display:none; padding:0 0 var(--sp-3);}
 .series-page .sx-season.open .season-episodes{display:block;}
 /* Grille d'épisodes */

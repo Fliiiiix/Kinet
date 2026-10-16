@@ -95,4 +95,21 @@ test('« Tout décocher » puis « Annuler » remet les épisodes avec leur note
   assert.strictEqual(getState(ctx, 'watchedEpisodeExtras["2-1"].timesWatched'), 2);
 });
 
+// Retour de Flix (16/10) : en vue Liste, la flèche à droite d'une saison ne
+// réagissait pas (simple dessin à côté du bouton). Elle déplie maintenant
+// comme le nom de la saison.
+test('vue Liste : la flèche de chaque saison est un bouton qui déplie', () => {
+  const ctx = buildContext([]);
+  const { stubElement } = require('./helpers/vm-harness');
+  const wrap = stubElement();
+  ctx.document.getElementById = (id) => id === 'seriesSeasonsList' ? wrap : stubElement();
+  ctx.seriesSeasonView = () => 'list';
+  ctx.uiIcon = () => '';
+  ctx.noteColorClass = () => '';
+  ctx.renderSeasonsList();
+  const carets = wrap.innerHTML.match(/<button type="button" class="sx-caret-btn" data-season-toggle="\d+"/g) || [];
+  assert.strictEqual(carets.length, 4, wrap.innerHTML);
+  assert.ok(wrap.innerHTML.includes('aria-label="Déplier Saison 1"'), wrap.innerHTML);
+});
+
 module.exports = run('series-aired.test.js');
