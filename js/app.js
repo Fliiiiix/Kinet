@@ -604,11 +604,24 @@ function critToDisplay(v){
 // Tant qu'un nouveau film n'a reçu aucun réglage, sa note calculée (2.5 par
 // défaut) reste neutre plutôt que colorée comme une vraie note (audit M11).
 let critPristine = false;
+// Un curseur de critère a-t-il bougé depuis l'ouverture de la fenêtre ?
+// Sert à critForSave() (audit N1, 16/10).
+let critTouched = false;
+
+// Critères à enregistrer (audit N1, 16/10) : 52 films avaient une grille ET une
+// note manuelle égale ; ouverts en « note manuelle », ils perdaient leur grille
+// au premier « Enregistrer » (crit: {}). En note manuelle, on garde la grille
+// déjà enregistrée, sauf si un curseur a été bougé dans cette fenêtre.
+function critForSave(manual, film, touched, formCrit){
+  if(!manual || touched) return formCrit;
+  return (film && film.crit && typeof film.crit === 'object') ? film.crit : {};
+}
 
 function buildCriteriaInputs(critObj){
   const wrap = document.getElementById('criteriaWrap');
   wrap.innerHTML = '';
   critPristine = !critObj;
+  critTouched = false;
   CRITERIA.forEach((c, idx) => {
     const val = (critObj && typeof critObj[c.key] === 'number') ? critObj[c.key] : 0.5;
     const block = document.createElement('div');
@@ -635,6 +648,7 @@ function buildCriteriaInputs(critObj){
   wrap.querySelectorAll('input[type="range"]').forEach(input => {
     input.addEventListener('input', () => {
       critPristine = false;
+      critTouched = true;
       document.getElementById('val-' + input.dataset.key).value = critToDisplay(parseFloat(input.value));
       updateLiveScore();
     });
@@ -648,6 +662,7 @@ function buildCriteriaInputs(critObj){
     const slider = () => document.getElementById('slider-' + input.dataset.key);
     const sync = (clampDisplay) => {
       critPristine = false;
+      critTouched = true;
       let v = parseFloat(input.value) / CRIT_DISPLAY_SCALE;
       if(isNaN(v)) v = parseFloat(slider().value);
       v = Math.min(1, Math.max(0, v));
@@ -805,8 +820,9 @@ async function handleSave(){
     return;
   }
   const manual = isManualMode();
-  // En mode manuel, la grille n'est pas utilisée : crit vide, note = manual_note.
-  const crit = manual ? {} : readCriteriaFromForm();
+  // En note manuelle, la grille déjà enregistrée reste (audit N1), voir critForSave().
+  const editedFilm = editingId ? films.find(f => f.id === editingId) : null;
+  const crit = critForSave(manual, editedFilm, critTouched, manual && !critTouched ? null : readCriteriaFromForm());
   const manualNote = manual ? parseFloat(document.getElementById('manualScoreSlider').value) : null;
   const review = document.getElementById('reviewInput').value.trim() || null;
   const tmdbFields = tmdbSelected

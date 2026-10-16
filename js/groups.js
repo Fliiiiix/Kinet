@@ -244,12 +244,22 @@ async function openGroupDetail(groupId){
   document.getElementById('groupActivityList').innerHTML = skeletonRows(3);
   document.getElementById('groupElectionHistorySection').style.display = 'none';
 
-  const members = await loadGroupMembers(groupId);
+  // Audit G2 (16/10) : en arrivant ici sans passer par Amis ou Profil (lien,
+  // rechargement, suggestion de la recherche), la liste d'amis n'était pas
+  // chargée et « Ajouter un ami » disait « Tous tes amis sont déjà dans ce
+  // groupe ». On la charge avant de dessiner la page.
+  const [members] = await Promise.all([
+    loadGroupMembers(groupId),
+    (typeof loadFriendships === 'function' && friendships.length === 0) ? loadFriendships().catch(e => console.error(e)) : Promise.resolve()
+  ]);
   groupMembersCache[groupId] = members;
   renderGroupDetail(group, members);
 
   await loadProposals(groupId);
   renderGroupProposals();
+  // Audit G1 (16/10) : le bandeau de la séance élue était dessiné par
+  // renderGroupDetail(), avant le chargement des propositions, donc jamais.
+  renderChosenBanner(groupId);
 
   // Fil d'activité + historique des élections + goûts du groupe
   // (js/activity.js, migrations/022) — pour qu'un groupe revisité ne

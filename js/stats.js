@@ -502,7 +502,10 @@ function openFilmReviewDetail(film){
     ? `<img class="film-poster" src="${film.posterUrl}" alt="" loading="lazy">`
     : `<div class="film-poster film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`;
 
-  const critHtml = isManual
+  // Une note manuelle peut coexister avec une grille (audit N1, 16/10) : on
+  // montre la grille dès qu'elle existe.
+  const hasCrit = !!(film.crit && Object.keys(film.crit).length > 0);
+  const critHtml = !hasCrit
     ? `<div class="wl-note">Note manuelle : pas de détail par critère.</div>`
     : `<div class="crit-review-list">${CRITERIA.map(c => critReviewRowHtml(c.label, (film.crit && typeof film.crit[c.key] === 'number') ? film.crit[c.key] : 0)).join('')}</div>`;
 
@@ -510,7 +513,7 @@ function openFilmReviewDetail(film){
     <div class="film-review-layout">
       <div class="film-review-poster-col">
         ${posterHtml}
-        ${!isManual ? renderCritRadar(film.crit) : ''}
+        ${hasCrit ? renderCritRadar(film.crit) : ''}
       </div>
       <div class="film-review-main-col">
         <div class="film-review-title">${escapeHtml(film.title)}</div>
