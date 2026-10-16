@@ -68,7 +68,12 @@ const UI_ICON_PATHS = {
   heart: '<path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0112 7a4.3 4.3 0 017.5 2.8C19.5 15.4 12 20 12 20z"></path>',
   bookmark: '<path d="M6 3.5h12v17l-6-4.5-6 4.5z"></path>',
   repeat: '<path d="M17 2.5l3 3-3 3"></path><path d="M4 11v-1.5a4 4 0 014-4h12"></path><path d="M7 21.5l-3-3 3-3"></path><path d="M20 13v1.5a4 4 0 01-4 4H4"></path>',
-  join: '<circle cx="9.3" cy="8" r="3.3"></circle><path d="M14.5 20.3c0-3-2.3-5-5.2-5s-5.2 2-5.2 5"></path><path d="M18.5 8v6M15.5 11h6"></path>'
+  join: '<circle cx="9.3" cy="8" r="3.3"></circle><path d="M14.5 20.3c0-3-2.3-5-5.2-5s-5.2 2-5.2 5"></path><path d="M18.5 8v6M15.5 11h6"></path>',
+  // Audit des six écrans (16/10) : bande-annonce, menu « ⋯ », coche, ajout.
+  play: '<circle cx="12" cy="12" r="8.5"></circle><path d="M10.3 8.8l4.9 3.2-4.9 3.2z"></path>',
+  dots: '<circle cx="5.5" cy="12" r="1"></circle><circle cx="12" cy="12" r="1"></circle><circle cx="18.5" cy="12" r="1"></circle>',
+  check: '<path d="M5 12.5l4.5 4.5L19 7.5"></path>',
+  plus: '<path d="M12 5v14M5 12h14"></path>'
 };
 function uiIcon(name, filled){
   const paths = UI_ICON_PATHS[name];

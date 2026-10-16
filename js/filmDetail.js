@@ -32,6 +32,8 @@ let filmDetailComments = [];   // [{ id, userId, body, createdAt }]
 // emoji complet à ouvrir pour un geste censé être léger.
 const COMMENT_REACTION_EMOJIS = ['👍', '❤️', '😂', '👏', '😮'];
 let commentReactions = {};
+// Répartition des notes d'un film : à partir de 5 notes (audit des six écrans, F6).
+const FILM_DISTRIBUTION_MIN_NOTES = 5;
 
 function normalizeMovieDetails(details){
   return {
@@ -73,25 +75,18 @@ function renderFilmDetailHeader(){
     backdropContainer.classList.remove('is-placeholder');
   }else{
     backdropContainer.style.display = '';
-    if(d.poster_url){
-      backdropImg.src = d.poster_url;
-      backdropImg.style.objectPosition = 'center 15%';
-      backdropContainer.classList.remove('is-placeholder');
-    }else{
-      backdropImg.removeAttribute('src');
-      backdropContainer.classList.add('is-placeholder');
-    }
+    backdropImg.removeAttribute('src');
+    backdropContainer.classList.add('is-placeholder');
   }
+  // L'affiche, posée sur le bandeau (piste A) : celle que tu reconnais dans ta grille.
+  const poster = document.getElementById('filmDetailPoster');
+  const posterUrl = (myFilm && myFilm.posterUrl) || d.poster_url;
+  if(posterUrl){ poster.src = posterUrl; poster.hidden = false; }
+  else{ poster.removeAttribute('src'); poster.hidden = true; }
 
+  // Une ligne d'infos sans capitales : année · genres · durée.
   const genres = (d.genre_ids || []).map(id => GENRE_MAP[id]).filter(Boolean).join(', ');
-  const metaParts = [];
-  if(d.release_year) metaParts.push(d.release_year);
-  if(genres) metaParts.push(genres);
-  document.getElementById('filmDetailMeta').textContent = metaParts.join(' · ');
-
-  const runtimeRow = document.getElementById('filmDetailRuntimeRow');
-  runtimeRow.style.display = d.runtime ? '' : 'none';
-  document.getElementById('filmDetailRuntime').textContent = formatRuntime(d.runtime);
+  document.getElementById('filmDetailMeta').textContent = [d.release_year, genres, formatRuntime(d.runtime)].filter(Boolean).join(' · ');
 
   document.getElementById('filmDetailOverview').textContent = d.overview || 'Aucun résumé disponible.';
   renderFilmDetailRatingRing();
@@ -120,28 +115,37 @@ async function renderNoteHistory(myFilm){
   if(!myFilm || !myFilm.id) return;
   const { data, error } = await supabaseClient
     .from('film_note_history')
-    .select('changed_at, manuelle_apres')
+    .select('changed_at, crit_avant, crit_apres, manuelle_avant, manuelle_apres')
     .eq('film_id', myFilm.id)
     .order('changed_at', { ascending: false })
     .limit(10);
   if(error || !data || data.length === 0) return;
-  const lignes = data.map(r => {
-    const date = new Date(r.changed_at).toLocaleDateString('fr-FR');
-    const quoi = r.manuelle_apres != null ? `note manuelle ${Number(r.manuelle_apres).toFixed(2)}` : 'grille de critères';
-    return `${date} : ${quoi}`;
-  });
-  el.textContent = `Historique de ta note : ${lignes.join(' · ')}`;
+  el.textContent = noteHistoryLine(data);
+}
+
+// Dernier changement de ta note, en clair (audit des six écrans) : « Ta
+// note est passée de 4.0 à 4.5 le 12 octobre », au lieu de « grille de critères ».
+function noteHistoryLine(rows){
+  const noteOf = (crit, manual) => manual != null ? Number(manual) : (crit && Object.keys(crit).length ? computeNote(crit) : null);
+  for(const r of rows){
+    const before = noteOf(r.crit_avant, r.manuelle_avant);
+    const after = noteOf(r.crit_apres, r.manuelle_apres);
+    if(after === null || before === after) continue;
+    const date = new Date(r.changed_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+    return before === null
+      ? `Notée ${after.toFixed(1)} le ${date}.`
+      : `Ta note est passée de ${before.toFixed(1)} à ${after.toFixed(1)} le ${date}.`;
+  }
+  return '';
 }
 
 async function renderFilmDetailNotes(){
   const wrap = document.getElementById('filmDetailNotes');
+  const section = document.getElementById('filmDetailNotesSection');
   renderNoteHistory(films.find(f => f.tmdbId === currentFilmTmdbId));
-  wrap.innerHTML = `<div class="tmdb-empty">Chargement…</div>`;
-  // En parallèle : la moyenne (déjà existante) et sa répartition par palier
-  // (retour utilisateur, étude comparative Letterboxd/Goodreads — jusqu'ici
-  // une moyenne unique, jamais comment ces notes se répartissent). Une
-  // erreur sur la répartition (ex. migration 059 pas encore appliquée)
-  // n'empêche jamais d'afficher au moins la moyenne.
+  // En parallèle : la moyenne et sa répartition par palier. Une erreur sur la
+  // répartition (ex. migration 059 pas encore appliquée) n'empêche jamais
+  // d'afficher au moins la moyenne.
   const [statsResult, distResult] = await Promise.all([
     supabaseClient.rpc('get_film_stats', { p_tmdb_id: currentFilmTmdbId }),
     supabaseClient.rpc('get_film_note_distribution', { p_tmdb_id: currentFilmTmdbId }),
@@ -152,35 +156,16 @@ async function renderFilmDetailNotes(){
   if(statsResult.error) console.error(statsResult.error);
   if(distResult.error) console.error(distResult.error);
 
-  const myFilm = films.find(f => f.tmdbId === currentFilmTmdbId);
-  const myNote = myFilm ? getDisplayNote(myFilm) : null;
-
-  // Pas la peine de 11 barres pour 0 ou 1 note : rien à "répartir" tant que
-  // deux avis au moins ne divergent pas.
-  const distItems = (!distResult.error && ratingCount >= 2)
-    ? (distResult.data || []).map(row => ({ label: Number(row.note).toFixed(1), count: row.note_count }))
-    : null;
-
-  // Moyenne dans la fiche (ligne « Note Kinet »), ta note à droite du titre :
-  // cette section ne garde que la répartition et le détail de ta critique
-  // (audit M4 : deux anneaux de note empilés ici auparavant).
   document.getElementById('filmDetailAvg').textContent = avgNote !== null
-    ? `${avgNote.toFixed(1)} / 5 · ${ratingCount} note${ratingCount > 1 ? 's' : ''}`
+    ? `${avgNote.toFixed(1)} · ${ratingCount} note${ratingCount > 1 ? 's' : ''}`
     : 'Personne ne l\'a encore noté';
-  wrap.innerHTML = `
-    ${distItems ? renderBarChart(distItems) : (ratingCount < 2 ? `<div class="wl-note">La répartition s'affiche à partir de deux notes.</div>` : '')}
-    ${myNote !== null ? `<button class="btn-secondary film-detail-my-review-btn" type="button" id="filmDetailMyReviewBtn">Voir le détail de ta critique</button>` : ''}
-  `;
-
-  // Réutilise openFilmReviewDetail() (js/stats.js) plutôt que de dupliquer
-  // une troisième fois le radar/la grille de critères ici (déjà présents
-  // dans la modale d'ajout ET dans cette fiche critique). Cette page
-  // communautaire n'affichait jusqu'ici que le chiffre de la note, jamais
-  // le détail par critère (retour utilisateur, backlog).
-  const myReviewBtn = document.getElementById('filmDetailMyReviewBtn');
-  if(myFilm && myReviewBtn){
-    myReviewBtn.addEventListener('click', () => openFilmReviewDetail(myFilm));
-  }
+  // La répartition ne dit quelque chose qu'à partir de 5 notes (audit des
+  // six écrans, F6 : 11 barres pour 2 notes). En dessous, la section disparaît.
+  const showDist = !distResult.error && ratingCount >= FILM_DISTRIBUTION_MIN_NOTES;
+  if(section) section.hidden = !showDist;
+  wrap.innerHTML = showDist
+    ? renderBarChart((distResult.data || []).map(row => ({ label: Number(row.note).toFixed(1), count: row.note_count })))
+    : '';
 }
 
 // S'assure que friendProfiles (js/friends.js) connaît bien tous les
@@ -202,7 +187,7 @@ function updateLikeButtonUI(){
   const btn = document.getElementById('filmDetailLikeBtn');
   const liked = filmDetailLikes.some(l => l.userId === currentUser.id);
   btn.classList.toggle('active', liked);
-  btn.innerHTML = `${uiIcon('heart', liked)} ${liked ? 'Aimé' : 'Aimer'}`;
+  btn.innerHTML = `${uiIcon('heart', liked)}<span>${liked ? 'Ne plus aimer' : 'Aimer'}</span><small>tes amis le voient</small>`;
 }
 
 // Notes des amis sur CE film précis (retour utilisateur, étude comparative
@@ -216,9 +201,9 @@ async function renderFilmDetailFriendRatings(tmdbId){
   if(!wrap) return;
   try{
     const { data, error } = await supabaseClient.rpc('get_film_friend_ratings', { p_tmdb_id: tmdbId });
-    if(error){ console.error(error); wrap.innerHTML = ''; return; }
+    if(error){ console.error(error); wrap.innerHTML = ''; updateFilmFriendsSection(); return; }
     const ratings = (data || []).map(r => ({ friendId: r.friend_id, note: Number(r.note) }));
-    if(ratings.length === 0){ wrap.innerHTML = ''; return; }
+    if(ratings.length === 0){ wrap.innerHTML = ''; updateFilmFriendsSection(); return; }
     await ensureProfilesCached(ratings.map(r => r.friendId));
     wrap.innerHTML = ratings.map(r => `
       <div class="friend-rating-chip">
@@ -231,15 +216,26 @@ async function renderFilmDetailFriendRatings(tmdbId){
     console.error(e);
     wrap.innerHTML = '';
   }
+  updateFilmFriendsSection();
+}
+
+// « Tes amis » ne s'affiche que si un ami a noté ou aimé le film (F6).
+function updateFilmFriendsSection(){
+  const section = document.getElementById('filmDetailFriendsSection');
+  if(!section) return;
+  const strip = document.getElementById('filmDetailFriendRatings');
+  const summary = document.getElementById('filmDetailLikesSummary');
+  section.hidden = !((strip && strip.innerHTML.trim()) || (summary && summary.textContent.trim()));
 }
 
 function renderFilmDetailLikesSummary(){
   const others = filmDetailLikes.filter(l => l.userId !== currentUser.id);
   const summaryEl = document.getElementById('filmDetailLikesSummary');
   summaryEl.textContent = others.length === 0
-    ? 'Aucun ami ne l\'a encore aimé.'
+    ? ''
     : `Aimé par ${others.map(l => friendDisplayName(l.userId)).join(', ')}.`;
   updateLikeButtonUI();
+  updateFilmFriendsSection();
 }
 
 async function loadFilmDetailLikes(){
@@ -302,16 +298,19 @@ function commentReactionsHtml(commentId){
 function renderFilmDetailComments(){
   const list = document.getElementById('filmDetailCommentsList');
   if(filmDetailComments.length === 0){
-    list.innerHTML = `<div class="tmdb-empty">Aucun commentaire pour l'instant.</div>`;
+    list.innerHTML = `<div class="tmdb-empty">Pas encore de commentaire. Lance la discussion.</div>`;
     return;
   }
+  // Datés, et les réactions sans compteur n'apparaissent qu'au survol ou
+  // après « Réagir » (audit des six écrans, F9).
   list.innerHTML = filmDetailComments.map(c => `
     <div class="comment-item">
       ${friendAvatarHtml(c.userId, friendDisplayName(c.userId))}
       <div class="comment-body-wrap">
-        <div class="comment-author">${escapeHtml(friendDisplayName(c.userId))}</div>
+        <div class="comment-author">${escapeHtml(friendDisplayName(c.userId))}${c.createdAt && typeof friendFeedWhen === 'function' ? `<span class="comment-when">${escapeHtml(friendFeedWhen(c.createdAt))}</span>` : ''}</div>
         <div class="comment-body">${escapeHtml(c.body)}</div>
         ${commentReactionsHtml(c.id)}
+        <button type="button" class="comment-react-toggle">Réagir</button>
       </div>
       ${c.userId === currentUser.id ? `<button class="comment-delete" data-id="${c.id}" type="button" title="Supprimer" aria-label="Supprimer ce commentaire">✕</button>` : ''}
     </div>
@@ -324,6 +323,9 @@ function renderFilmDetailComments(){
       const commentId = parseInt(btn.closest('.comment-reactions').dataset.commentId, 10);
       toggleCommentReaction(commentId, btn.dataset.emoji);
     });
+  });
+  list.querySelectorAll('.comment-react-toggle').forEach(btn => {
+    btn.addEventListener('click', () => btn.closest('.comment-item').classList.toggle('show-reactions'));
   });
 }
 
@@ -416,23 +418,76 @@ function updateFilmDetailActionButtons(){
   const rateBtn = document.getElementById('filmDetailRateBtn');
   rateBtn.textContent = myFilm ? 'Modifier ma note' : 'Noter ce film';
 
+  // À voir (F1) : « + À voir » pour un film pas encore noté, « Dans À voir »
+  // une fois ajouté (un tap le retire). Un film noté n'y a plus sa place.
   const inWatchlist = watchlist.some(w => w.tmdbId === currentFilmTmdbId);
   const watchlistBtn = document.getElementById('filmDetailWatchlistBtn');
-  // Un film déjà noté n'a plus sa place dans "à voir" — masqué plutôt que
-  // désactivé, pas d'action possible qui aurait un sens ici.
-  watchlistBtn.style.display = (myFilm || inWatchlist) ? 'none' : '';
+  watchlistBtn.style.display = myFilm ? 'none' : '';
+  watchlistBtn.classList.toggle('is-on', inWatchlist);
+  watchlistBtn.innerHTML = inWatchlist ? `${uiIcon('check')}<span>Dans À voir</span>` : `${uiIcon('plus')}<span>À voir</span>`;
+  watchlistBtn.setAttribute('aria-pressed', String(inWatchlist));
+  const removeWl = document.getElementById('filmDetailRemoveWlBtn');
+  if(removeWl) removeWl.hidden = !inWatchlist || !!myFilm;
 
-  // Favori depuis la fiche (jusqu'ici seulement l'étoile du catalogue,
-  // peu pratique au doigt) : seulement pour un film de ton catalogue.
+  // Favori : seulement pour un film de ton catalogue.
   const favBtn = document.getElementById('filmDetailFavBtn');
   if(favBtn){
     favBtn.style.display = myFilm ? '' : 'none';
     const isFav = !!(myFilm && myFilm.fav);
-    favBtn.innerHTML = `${uiIcon('star', isFav)} ${isFav ? 'Favori' : 'Ajouter aux favoris'}`;
+    favBtn.innerHTML = `${uiIcon('star', isFav)}<span class="ff-label">Favori</span>`;
     favBtn.setAttribute('aria-pressed', String(isFav));
+    favBtn.setAttribute('aria-label', isFav ? 'Retirer des favoris' : 'Ajouter aux favoris');
     favBtn.classList.toggle('active', isFav);
   }
   renderFilmDetailRatingRing();
+  renderFilmDetailAvis();
+}
+
+// « Ton avis » (piste A) : ta note, tes 7 critères, ton commentaire, tes
+// visionnages. Remplace « Voir le détail de ta critique » et sa fenêtre.
+function renderFilmDetailAvis(){
+  const el = document.getElementById('filmDetailAvis');
+  if(!el) return;
+  const myFilm = films.find(f => f.tmdbId === currentFilmTmdbId);
+  if(!myFilm || getDisplayNote(myFilm) === null){
+    el.innerHTML = `
+      <div class="stats-section-title">Ton avis</div>
+      <p class="tmdb-empty">${myFilm ? 'Tu as vu ce film mais tu ne l\'as pas encore noté.' : 'Tu n\'as pas encore noté ce film.'}</p>
+      <button type="button" class="ff-btn-main" data-avis-rate>Noter ce film</button>`;
+    el.querySelector('[data-avis-rate]').addEventListener('click', handleFilmDetailRate);
+    return;
+  }
+  const note = getDisplayNote(myFilm);
+  const hasCrit = !!(myFilm.crit && CRITERIA.some(c => typeof myFilm.crit[c.key] === 'number'));
+  const how = myFilm.manualNote != null
+    ? (hasCrit ? 'note directe, ta grille est gardée' : 'note directe')
+    : 'calculée sur tes 7 critères';
+  const seen = typeof viewingsForFilm === 'function' ? viewingsForFilm(myFilm.id) : [];
+  const last = seen.length ? seen[seen.length - 1] : null;
+  const lastDate = last ? new Date(last.watchedAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+  const seenText = !seen.length ? '' : seen.length === 1 ? `Vu une fois, le ${lastDate}` : `Vu ${seen.length} fois, la dernière le ${lastDate}`;
+  el.innerHTML = `
+    <div class="ff-sec-head"><span class="stats-section-title">Ton avis</span><button type="button" class="ff-link" data-avis-rate>Modifier</button></div>
+    <div class="ff-avis-grid${hasCrit ? '' : ' no-crit'}">
+      <div class="ff-avis-note"><span class="counter ${noteColorClass(note)}">${note.toFixed(1)}</span><div><b>Ta note</b><small>${how}</small></div></div>
+      ${hasCrit ? `<div class="ff-crits">${CRITERIA.map(c => {
+        const v = typeof myFilm.crit[c.key] === 'number' ? myFilm.crit[c.key] : 0;
+        return `<div class="ff-crit"><span>${escapeHtml(critShortLabel(c.key))}</span><i><b style="width:${Math.round(v * 100)}%"></b></i><span class="num">${critToDisplay(v)}</span></div>`;
+      }).join('')}</div>` : ''}
+    </div>
+    ${myFilm.review ? `<p class="ff-quote">${escapeHtml(myFilm.review)}</p>` : ''}
+    <div class="ff-seen">${seenText ? `<span>${escapeHtml(seenText)}</span>` : ''}<button type="button" class="ff-link" data-avis-rewatch>+ Je l'ai revu</button></div>`;
+  el.querySelectorAll('[data-avis-rate]').forEach(b => b.addEventListener('click', handleFilmDetailRate));
+  el.querySelector('[data-avis-rewatch]').addEventListener('click', async (e) => {
+    if(blockIfOffline()) return;
+    e.currentTarget.disabled = true;
+    const v = await addViewing(myFilm.id, Date.now());
+    if(v){
+      showToast('Visionnage ajouté, daté d\'aujourd\'hui');
+      renderFilmDetailAvis();
+      if(typeof render === 'function') render();
+    }
+  });
 }
 
 async function handleFilmDetailToggleFav(){
@@ -455,6 +510,13 @@ function handleFilmDetailRate(){
 
 async function handleFilmDetailAddWatchlist(){
   if(blockIfOffline()) return;
+  // Déjà dans À voir : le même bouton l'en retire, avec « Annuler » (F1).
+  const existing = watchlist.find(w => w.tmdbId === currentFilmTmdbId);
+  if(existing){
+    handleRemoveFromWatchlist(existing.id);
+    updateFilmDetailActionButtons();
+    return;
+  }
   const d = currentFilmData;
   const payload = {
     title: d.title,
@@ -476,7 +538,7 @@ async function handleFilmDetailAddWatchlist(){
     originalTitle: payload.original_title, added: data.added
   });
   updateFilmDetailActionButtons();
-  showToast('Ajouté à la watchlist');
+  showToast('Ajouté à À voir');
 }
 
 // Où regarder (retour utilisateur), voir renderWatchProvidersHtml()
@@ -489,11 +551,47 @@ async function renderFilmDetailWatchProviders(){
   const wrap = document.getElementById('filmDetailWatchProviders');
   try{
     const providers = await fetchWatchProviders(currentFilmTmdbId, 'movie');
-    wrap.innerHTML = renderWatchProvidersHtml(providers);
+    wrap.innerHTML = filmProvidersHtml(providers);
+    const more = wrap.querySelector('.ff-rent-toggle');
+    if(more){
+      more.addEventListener('click', () => {
+        const list = wrap.querySelector('.ff-rent-list');
+        list.hidden = !list.hidden;
+        more.setAttribute('aria-expanded', String(!list.hidden));
+      });
+    }
   }catch(e){
     console.error(e);
     wrap.innerHTML = `<div class="tmdb-empty">Disponibilité indisponible pour l'instant.</div>`;
   }
+}
+
+// Où regarder (piste A, F7) : tes abonnements d'abord, les autres plateformes
+// en abonnement ensuite, la location et l'achat repliés en une ligne.
+function filmProvidersHtml(providers){
+  const flat = typeof groupStreamingServices === 'function' ? groupStreamingServices((providers && providers.flatrate) || []) : [];
+  const rentBuy = [...((providers && providers.rent) || []), ...((providers && providers.buy) || [])];
+  const rentNames = Array.from(new Set(rentBuy.map(p => (typeof streamingServiceName === 'function' ? streamingServiceName(p.provider_name) : p.provider_name))));
+  if(!flat.length && !rentNames.length){
+    return `<div class="tmdb-empty">Pas d'info de disponibilité pour la France pour l'instant.</div>`;
+  }
+  const mine = typeof getMyStreamingServices === 'function' ? getMyStreamingServices() : new Set();
+  const mineNames = flat.filter(s => mine.has(s.key));
+  const others = flat.filter(s => !mine.has(s.key));
+  const logo = (s) => s.logoPath ? `<img src="${WATCHLIST_LOGO_BASE}${s.logoPath}" alt="" loading="lazy">` : '';
+  const rows = [];
+  mineNames.forEach(s => rows.push(`<div class="ff-prov">${logo(s)}<span><b>${escapeHtml(s.name)}</b> · dans tes abonnements</span></div>`));
+  if(others.length){
+    const note = mine.size && !mineNames.length ? ` · pas dans tes abonnements` : '';
+    rows.push(`<div class="ff-prov">${others.map(logo).join('')}<span>${others.map(s => `<b>${escapeHtml(s.name)}</b>`).join(', ')}${note}</span></div>`);
+  }
+  if(!flat.length) rows.push(`<div class="ff-prov"><span>Pas en abonnement en France.</span></div>`);
+  if(rentNames.length){
+    rows.push(`<button type="button" class="ff-rent-toggle" aria-expanded="false">${rentNames.length} plateforme${rentNames.length > 1 ? 's' : ''} en location ou achat ›</button>
+      <p class="ff-rent-list" hidden>${rentNames.map(escapeHtml).join(', ')}.</p>`);
+  }
+  if(providers && providers.link) rows.push(`<a href="${providers.link}" target="_blank" rel="noopener" class="watch-provider-justwatch">Données JustWatch</a>`);
+  return `<div class="ff-provs">${rows.join('')}</div>`;
 }
 
 // Appelée par le routeur (#/film/:tmdbId).
@@ -574,6 +672,8 @@ async function updateFilmDetailTrailerBtn(tmdbId){
   const btn = document.getElementById('filmDetailTrailerBtn');
   if(!btn) return;
   btn.style.display = 'none';
+  btn.innerHTML = `${uiIcon('play')}<span class="ff-label">Bande-annonce</span>`;
+  btn.setAttribute('aria-label', 'Bande-annonce');
   try{
     const video = pickTrailerVideo(await fetchVideos(tmdbId, 'movie'));
     if(!video) return;
@@ -630,9 +730,14 @@ async function openFilmDetail(tmdbId){
   document.getElementById('filmDetailOverview').textContent = '';
   document.getElementById('filmDetailMeta').textContent = '';
   document.getElementById('filmDetailDirectorRow').style.display = 'none';
-  document.getElementById('filmDetailRuntimeRow').style.display = 'none';
   document.getElementById('filmDetailAvg').textContent = '—';
   document.getElementById('filmDetailNotes').innerHTML = '';
+  document.getElementById('filmDetailNotesSection').hidden = true;
+  document.getElementById('filmDetailFriendsSection').hidden = true;
+  document.getElementById('filmDetailAvis').innerHTML = '';
+  document.getElementById('filmDetailHistory').textContent = '';
+  document.getElementById('filmDetailPoster').hidden = true;
+  closeFilmDetailMenu();
   document.getElementById('filmDetailWatchProviders').innerHTML = `<div class="tmdb-empty">Chargement…</div>`;
   document.getElementById('filmDetailCast').innerHTML = `<div class="tmdb-empty">Chargement…</div>`;
   document.getElementById('filmDetailSimilarSection').style.display = 'none';
@@ -684,7 +789,29 @@ document.getElementById('filmDetailRatingRing').addEventListener('click', handle
   const filmDetailWatchlistBtn = document.getElementById('filmDetailWatchlistBtn');
   filmDetailWatchlistBtn.addEventListener('click', withSubmitGuard(filmDetailWatchlistBtn, handleFilmDetailAddWatchlist));
 }
-document.getElementById('filmDetailLikeBtn').addEventListener('click', toggleFilmLike);
+// Menu « ⋯ » de la fiche (piste A) : Aimer, Retirer d'À voir.
+function closeFilmDetailMenu(){
+  const menu = document.getElementById('filmDetailMenu');
+  if(menu) menu.hidden = true;
+  const btn = document.getElementById('filmDetailMoreBtn');
+  if(btn) btn.setAttribute('aria-expanded', 'false');
+}
+{
+  const moreBtn = document.getElementById('filmDetailMoreBtn');
+  moreBtn.innerHTML = uiIcon('dots');
+  moreBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const menu = document.getElementById('filmDetailMenu');
+    menu.hidden = !menu.hidden;
+    moreBtn.setAttribute('aria-expanded', String(!menu.hidden));
+  });
+  document.addEventListener('click', (e) => {
+    if(!e.target.closest || !e.target.closest('.ff-more')) closeFilmDetailMenu();
+  });
+  document.addEventListener('keydown', (e) => { if(e.key === 'Escape') closeFilmDetailMenu(); });
+}
+document.getElementById('filmDetailLikeBtn').addEventListener('click', () => { closeFilmDetailMenu(); toggleFilmLike(); });
+document.getElementById('filmDetailRemoveWlBtn').addEventListener('click', () => { closeFilmDetailMenu(); handleFilmDetailAddWatchlist(); });
 {
   const filmDetailCommentBtn = document.getElementById('filmDetailCommentBtn');
   filmDetailCommentBtn.addEventListener('click', withSubmitGuard(filmDetailCommentBtn, addFilmComment));

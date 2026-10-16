@@ -7248,3 +7248,110 @@ body[data-view-mode="list"] #filmList .counter:not(.rate-low):not(.rate-mid):not
   font-family:var(--font-text); font-size:var(--fs-sm); font-weight:600; color:var(--accent);
 }
 body[data-view-mode="list"] #filmList .bulk-select-checkbox{flex:none;}
+#filmList .film-poster-box > .film-poster{display:block;}
+
+/* ==========================================================
+   AUDIT DES SIX ÉCRANS, FICHE FILM (piste A choisie le 16/10)
+   Bandeau fondu, affiche posée dessus, actions sur une ligne,
+   « Ton avis », où regarder selon tes abonnements.
+   ========================================================== */
+.detail-topbar{display:flex; align-items:center; justify-content:space-between; gap:var(--sp-3); margin-bottom:var(--sp-3);}
+.back-link{background:none; border:0; padding:6px 0; cursor:pointer; font-family:var(--font-text); font-size:var(--fs-sm); color:var(--text-2);}
+.back-link:hover{color:var(--text-1);}
+.film-page .detail-backdrop.is-fade{height:280px; border:0; margin-bottom:0;}
+.film-page .detail-backdrop.is-fade::after{background:linear-gradient(to bottom, rgba(var(--glass-rgb),0) 45%, var(--bg) 100%);}
+.ff-top{display:grid; grid-template-columns:180px minmax(0,1fr) auto; gap:var(--sp-5); align-items:end; margin-top:-110px; position:relative; z-index:2;}
+.ff-poster{width:180px; aspect-ratio:2/3; object-fit:cover; border-radius:var(--r-sm); box-shadow:var(--shadow-float); display:block;}
+.ff-poster[hidden]{display:none;}
+.ff-top:has(.ff-poster[hidden]){grid-template-columns:minmax(0,1fr) auto; margin-top:var(--sp-4);}
+.ff-id{min-width:0;}
+.film-page .detail-title{font-size:var(--fs-2xl); line-height:1.02; letter-spacing:-0.02em;}
+.film-page .detail-meta{text-transform:none; letter-spacing:0; color:var(--text-2); font-size:var(--fs-sm); margin-top:var(--sp-2);}
+.ff-under{display:grid; grid-template-columns:180px minmax(0,1fr); gap:var(--sp-5);}
+.ff-under > .ff-col{grid-column:2; min-width:0;}
+.ff-actions{display:flex; align-items:center; flex-wrap:wrap; gap:6px 8px; margin-top:var(--sp-5);}
+.ff-btn-main{
+  height:40px; padding:0 20px; border:0; border-radius:var(--r-full);
+  background:var(--accent); color:var(--accent-ink);
+  font-family:var(--font-text); font-size:var(--fs-sm); font-weight:600; cursor:pointer;
+  transition:transform var(--dur-press) var(--ease-out);
+}
+.ff-btn-main:active{transform:scale(0.97);}
+.ff-btn-line{
+  height:36px; padding:0 14px; display:inline-flex; align-items:center; gap:6px;
+  border:1px solid var(--line-strong); border-radius:var(--r-full); background:none; color:var(--text-1);
+  font-family:var(--font-text); font-size:var(--fs-sm); font-weight:600; cursor:pointer;
+}
+.ff-btn-line:hover, .ff-btn-line.is-on{border-color:var(--accent); color:var(--accent);}
+.ff-btn-text{
+  height:40px; padding:0 8px; display:inline-flex; align-items:center; gap:6px;
+  background:none; border:0; color:var(--text-2); text-decoration:none;
+  font-family:var(--font-text); font-size:var(--fs-sm); font-weight:600; cursor:pointer;
+}
+.ff-btn-text:hover{color:var(--text-1);}
+.ff-btn-text.active{color:var(--accent);}
+.ff-btn-icon{width:40px; height:40px; border-radius:50%; display:grid; place-items:center; background:none; border:0; color:var(--text-2); cursor:pointer;}
+.ff-btn-icon:hover{background:var(--surface-2); color:var(--text-1);}
+.ff-actions .ui-icon{width:18px; height:18px;}
+.ff-more{position:relative;}
+.ff-menu{
+  position:absolute; top:calc(100% + 6px); left:0; z-index:30; min-width:250px; padding:6px;
+  display:grid; background:rgba(var(--glass-rgb),0.92);
+  backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+  border:1px solid var(--line); border-radius:var(--r-md); box-shadow:var(--shadow-float);
+}
+.ff-menu[hidden]{display:none;}
+.ff-menu button{
+  display:flex; align-items:center; gap:10px; padding:10px 12px; border:0; border-radius:var(--r-sm);
+  background:none; color:var(--text-1); text-align:left; cursor:pointer;
+  font-family:var(--font-text); font-size:var(--fs-sm); font-weight:500;
+}
+.ff-menu button[hidden]{display:none;}
+.ff-menu button:hover{background:var(--surface-2);}
+.ff-menu button small{margin-left:auto; font-size:12px; color:var(--text-2);}
+.ff-menu #filmDetailLikeBtn.active{border:0; color:var(--accent);}
+.ff-menu .ui-icon{width:16px; height:16px;}
+.film-page .synopsis{margin:var(--sp-5) 0 0;}
+.film-page .fiche{margin-top:var(--sp-5);}
+.ff-sec-head{display:flex; align-items:baseline; gap:10px;}
+.ff-sec-head .ff-link{margin-left:auto;}
+.ff-link{background:none; border:0; padding:4px 0; cursor:pointer; color:var(--accent); font-family:var(--font-text); font-size:var(--fs-sm); font-weight:600;}
+.ff-avis .tmdb-empty{margin-bottom:var(--sp-3);}
+.ff-avis-grid{display:grid; grid-template-columns:auto minmax(0,1fr); gap:20px 28px; align-items:start;}
+.ff-avis-grid.no-crit{grid-template-columns:1fr;}
+.ff-avis-note{display:flex; align-items:center; gap:12px;}
+.ff-avis-note .counter{width:72px; height:72px; font-size:20px;}
+.ff-avis-note b{display:block; font-size:var(--fs-sm); font-weight:600;}
+.ff-avis-note small{display:block; font-size:12px; color:var(--text-2);}
+.ff-crits{display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:10px 28px;}
+.ff-crit{display:grid; grid-template-columns:96px minmax(0,1fr) 36px; gap:10px; align-items:center; font-size:12px; color:var(--text-2);}
+.ff-crit i{display:block; height:4px; border-radius:var(--r-full); background:var(--surface-2); overflow:hidden;}
+.ff-crit i b{display:block; height:100%; background:var(--text-2);}
+.ff-crit .num{color:var(--text-1); font-weight:600; text-align:right;}
+.ff-quote{margin:var(--sp-5) 0 0; padding-left:14px; border-left:2px solid var(--line-strong); max-width:62ch; font-size:var(--fs-md); line-height:1.55; color:var(--text-1); white-space:pre-line;}
+.ff-seen{display:flex; flex-wrap:wrap; align-items:center; gap:6px 14px; margin-top:var(--sp-4); font-size:var(--fs-sm); color:var(--text-2);}
+.ff-history{margin-top:var(--sp-2);}
+.ff-provs{display:grid; gap:var(--sp-3);}
+.ff-prov{display:flex; align-items:center; flex-wrap:wrap; gap:10px; font-size:var(--fs-sm); color:var(--text-2);}
+.ff-prov img{width:32px; height:32px; border-radius:var(--r-sm);}
+.ff-prov b{color:var(--text-1); font-weight:600;}
+.ff-rent-toggle{justify-self:start; background:none; border:0; padding:4px 0; cursor:pointer; color:var(--text-2); font-family:var(--font-text); font-size:var(--fs-sm); font-weight:600;}
+.ff-rent-toggle:hover{color:var(--text-1);}
+.ff-rent-list{margin:0; max-width:62ch; font-size:var(--fs-sm); color:var(--text-2);}
+/* Commentaires : datés, réactions sans compteur au survol ou après « Réagir » */
+.comment-when{margin-left:8px; font-size:12px; font-weight:400; color:var(--text-2);}
+.comment-item:not(:hover):not(.show-reactions):not(:focus-within) .comment-reactions .reaction-btn:not(.active):not(:has(.reaction-count)){display:none;}
+.comment-react-toggle{background:none; border:0; padding:4px 0; cursor:pointer; color:var(--text-2); font-family:var(--font-text); font-size:12px; font-weight:600;}
+@media (hover:hover){ .comment-react-toggle{display:none;} }
+@media (max-width:600px){
+  .film-page .detail-backdrop.is-fade{height:190px;}
+  .ff-top{grid-template-columns:100px minmax(0,1fr); gap:var(--sp-4); margin-top:-56px;}
+  .ff-poster{width:100px;}
+  .ff-top .ff-ring{display:none;}
+  .ff-under{display:block;}
+  .film-page .detail-title{font-size:var(--fs-xl);}
+  .ff-label{display:none;}
+  .ff-btn-text{width:40px; padding:0; justify-content:center;}
+  .ff-btn-main{height:44px;}
+  .ff-avis-grid, .ff-crits{grid-template-columns:1fr;}
+}

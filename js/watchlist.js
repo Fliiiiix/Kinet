@@ -595,7 +595,7 @@ function handleRemoveFromWatchlist(id){
   const [removed] = watchlist.splice(idx, 1);
   renderWatchlist();
   showUndoToast(
-    `« ${removed.title} » retiré de la watchlist`,
+    `« ${removed.title} » retiré d'À voir`,
     async () => {
       if(isOfflineMode){
         enqueueOfflineWrite({ table: 'watchlist', op: 'delete', match: { id } });

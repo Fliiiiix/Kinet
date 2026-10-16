@@ -48,11 +48,20 @@ test('renderFilmDetailNotes() : 0 ou 1 note -> pas d\'histogramme (rien à répa
   assert.ok(!notesEl.innerHTML.includes('bar-chart'), notesEl.innerHTML);
 });
 
-test('renderFilmDetailNotes() : au moins 2 notes -> histogramme affiché avec les 11 paliers', async () => {
-  const dist = [];
-  for(let n = 0; n <= 5; n += 0.5) dist.push({ note: n, note_count: n === 4 ? 2 : 0 });
+test('renderFilmDetailNotes() : moins de 5 notes -> pas d’histogramme (audit des six écrans, F6)', async () => {
   const { ctx, notesEl } = buildContext({
-    get_film_stats: { data: [{ avg_note: 4, rating_count: 2 }], error: null },
+    get_film_stats: { data: [{ avg_note: 4.3, rating_count: 2 }], error: null },
+    get_film_note_distribution: { data: [{ note: 4, note_count: 1 }, { note: 4.5, note_count: 1 }], error: null },
+  });
+  await ctx.renderFilmDetailNotes();
+  assert.ok(!notesEl.innerHTML.includes('bar-chart'), notesEl.innerHTML);
+});
+
+test('renderFilmDetailNotes() : à partir de 5 notes -> histogramme affiché avec les 11 paliers', async () => {
+  const dist = [];
+  for(let n = 0; n <= 5; n += 0.5) dist.push({ note: n, note_count: n === 4 ? 5 : 0 });
+  const { ctx, notesEl } = buildContext({
+    get_film_stats: { data: [{ avg_note: 4, rating_count: 5 }], error: null },
     get_film_note_distribution: { data: dist, error: null },
   });
   await ctx.renderFilmDetailNotes();
