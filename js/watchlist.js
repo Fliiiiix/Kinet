@@ -75,7 +75,7 @@ async function loadWatchlist(){
       enterOfflineMode(cached.savedAt);
       return;
     }
-    showToast('Erreur de chargement de la watchlist');
+    showToast('Erreur de chargement d\'À voir');
     console.error(error);
     watchlist = [];
     return;
@@ -579,7 +579,33 @@ async function handleAddToWatchlist(){
   document.getElementById('wlNoteInput').value = '';
   clearWlTmdbSelection();
   playPopChime();
-  showToast('Ajouté à la watchlist');
+  showToast('Ajouté à À voir');
+}
+
+// Un film tout juste noté pour la première fois quitte À voir, quel que
+// soit le chemin pris pour le noter : recherche, fiche du film, « Noter »
+// d'À voir (retour de Flix, 18/10 : « Les Enchantés », noté depuis la
+// recherche juste après l'avoir mis dans À voir, y restait). Cherche en base
+// par fiche TMDB, pas seulement dans `watchlist` : la page À voir n'a pas
+// forcément été chargée pendant la session. Renvoie le nombre d'éléments
+// retirés.
+async function removeSeenFromWatchlist(tmdbId, watchlistId){
+  if(!watchlistId && !tmdbId) return 0;
+  const removed = new Set();
+  try{
+    const calls = [];
+    if(watchlistId) calls.push(supabaseClient.from('watchlist').delete().eq('id', watchlistId).select('id'));
+    if(tmdbId) calls.push(supabaseClient.from('watchlist').delete().eq('tmdb_id', tmdbId).select('id'));
+    const results = await Promise.all(calls);
+    results.forEach(r => {
+      if(r.error){ console.error(r.error); return; }
+      (r.data || []).forEach(row => removed.add(row.id));
+    });
+  }catch(e){
+    console.error(e); // le film est déjà enregistré, on ne bloque pas là-dessus
+  }
+  if(removed.size) watchlist = watchlist.filter(w => !removed.has(w.id));
+  return removed.size;
 }
 
 // Toast d'annulation (v2.8) plutôt qu'un confirm() bloquant — voir
@@ -663,9 +689,7 @@ async function handleQuickRate(item, rawValue, confirmBtn, inputEl){
   films.push(rowToFilm(data));
   await addViewing(data.id, data.added);
 
-  const { error: wlError } = await supabaseClient.from('watchlist').delete().eq('id', item.id);
-  if(wlError) console.error(wlError); // le film est déjà enregistré, on ne bloque pas là-dessus
-  watchlist = watchlist.filter(w => w.id !== item.id);
+  await removeSeenFromWatchlist(item.tmdbId, item.id);
 
   renderWatchlist();
   buildGenreFilterOptions();

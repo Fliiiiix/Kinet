@@ -46,7 +46,8 @@ function buildContext(){
         }
         if(table === 'watchlist'){
           return {
-            delete(){ return { eq(col, id){ deletedWatchlistIds.push(id); return Promise.resolve({ error: null }); } }; },
+            // Retrait par id de l'item et par fiche TMDB (removeSeenFromWatchlist(), js/watchlist.js).
+            delete(){ return { eq(col, v){ if(col === 'id') deletedWatchlistIds.push(v); return { select(){ return Promise.resolve({ data: col === 'id' ? [{ id: v }] : [], error: null }); } }; } }; },
           };
         }
         throw new Error(`table inattendue dans ce test : ${table}`);

@@ -872,6 +872,7 @@ async function handleSave(){
   const manual = isManualMode();
   // En note manuelle, la grille déjà enregistrée reste (audit N1), voir critForSave().
   const editedFilm = editingId ? films.find(f => f.id === editingId) : null;
+  let leftWatchlist = 0;
   const crit = critForSave(manual, editedFilm, critTouched, manual && !critTouched ? null : readCriteriaFromForm());
   const manualNote = manual ? parseFloat(document.getElementById('manualScoreSlider').value) : null;
   const review = document.getElementById('reviewInput').value.trim() || null;
@@ -933,16 +934,9 @@ async function handleSave(){
     // dépendre de son succès réseau.
     if(tmdbFields.tmdb_id) generateTcgCardsForFilm(tmdbFields.tmdb_id);
 
-    // Film créé depuis "✔ Noter" dans la watchlist (js/watchlist.js) :
-    // on retire l'item d'origine maintenant que le film est bien enregistré.
-    // En tâche de fond, sans bloquer la fermeture du formulaire.
-    if(convertingFromWatchlistId){
-      const wlId = convertingFromWatchlistId;
-      supabaseClient.from('watchlist').delete().eq('id', wlId).then(({ error: wlError }) => {
-        if(wlError) console.error(wlError);
-        else watchlist = watchlist.filter(w => w.id !== wlId);
-      });
-    }
+    // Premier visionnage : le film quitte À voir, qu'il vienne du bouton
+    // « Noter » d'À voir, de la recherche ou de sa fiche (js/watchlist.js).
+    leftWatchlist = await removeSeenFromWatchlist(tmdbFields.tmdb_id, convertingFromWatchlistId);
   }
   closeModal();
   buildGenreFilterOptions(); // le film enregistré peut introduire un genre inédit au catalogue
@@ -964,7 +958,7 @@ async function handleSave(){
   playRatingTone(filmEnregistre ? getDisplayNote(filmEnregistre) : 0);
   // 5/5 tout juste (arrondi d'affichage compris) : petite célébration.
   if(filmEnregistre && getDisplayNote(filmEnregistre) >= 4.995) celebrateConfetti();
-  showToast('Film enregistré');
+  showToast(leftWatchlist ? 'Film enregistré et retiré d\'À voir' : 'Film enregistré');
   // « Noter le premier » (filtre Sans note) : on enchaîne sur le suivant.
   if(continueQueue){
     const nextFilm = nextUnratedFilm(pulseId);
