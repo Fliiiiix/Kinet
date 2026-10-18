@@ -211,7 +211,9 @@ function friendRichRowHtml(f){
   const name = friendDisplayName(userId);
   const stats = friendStats[userId];
   const sub = !stats ? '' : [
-    stats.common ? `${stats.common} film${stats.common > 1 ? 's' : ''} en commun` : 'Aucun film en commun',
+    // Rien en commun : la colonne de droite dit déjà « pas assez en commun »
+    // (audit général du 16/10, I8).
+    stats.common ? `${stats.common} film${stats.common > 1 ? 's' : ''} en commun` : '',
     stats.last ? `dernier : ${escapeHtml(stats.last.title)}` : ''
   ].filter(Boolean).join(' · ');
   const last = stats && stats.last && stats.last.posterUrl

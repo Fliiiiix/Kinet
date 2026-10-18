@@ -90,7 +90,7 @@ test('"au hasard" avec watchlist vide -> dit qu\'elle est vide, ne propose rien'
 test('question sur l\'app (cartes) -> réponse d\'aide prévue, sans accents requis', () => {
   const ctx = buildContext();
   const r = ctx.answerChatbotQuestion('comment avoir des boosters', donnees(FILMS, WATCHLIST));
-  assert.ok(r.includes('Mon activité > Cartes'), r);
+  assert.ok(r.includes('Profil, Cartes') && r.includes('sans tirage'), r);
 });
 
 test('question hors sujet -> réponse de repli honnête, jamais une invention', () => {
@@ -144,12 +144,12 @@ test('merci et qui es-tu -> réponses courtes, sans confusion avec une autre int
   assert.ok(ctx.answerChatbotQuestion('Qui es-tu ?', donnees(FILMS, WATCHLIST)).includes('assistant de Kinet'));
 });
 
-test('boosters -> compte ceux à ouvrir, ou dit comment en débloquer un', () => {
+// Audit général du 16/10 (B7) : l'album est sans tirage depuis la v280,
+// l'assistant ne compte plus de boosters à ouvrir.
+test('boosters -> explique qu’il n’y en a plus, cartes sans tirage', () => {
   const ctx = buildContext();
-  const avec = ctx.answerChatbotQuestion('Combien de boosters ai-je ?', { ...donnees(FILMS, WATCHLIST), boosters: 2 });
-  assert.ok(avec.includes('2 boosters'), avec);
-  const sans = ctx.answerChatbotQuestion('Combien de boosters ai-je ?', { ...donnees(FILMS, WATCHLIST), boosters: 0 });
-  assert.ok(sans.includes('Aucun booster'), sans);
+  const r = ctx.answerChatbotQuestion('Combien de boosters ai-je ?', { ...donnees(FILMS, WATCHLIST), boosters: 2 });
+  assert.ok(r.includes('plus de boosters') && r.includes('Profil, Cartes'), r);
 });
 
 test('suggestions -> 6 boutons tant que la conversation est vide, plus aucun après une question', () => {

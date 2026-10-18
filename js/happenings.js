@@ -609,7 +609,7 @@ function runPaprikaHappening(){
           <span>🎺</span><span>🚪</span><span>🎎</span><span>📞</span><span>🐸</span><span>🎏</span><span>🕰️</span><span>🎻</span><span>🚪</span>
         </div>
       </div>
-      <p class="happening-caption">Un défilé de rêve traverse la ville, frigos et jouets en fanfare — la police n'y peut rien.</p>
+      <p class="happening-caption">Un défilé de rêve traverse la ville, frigos et jouets en fanfare, et la police n'y peut rien.</p>
     </div>
   `;
   document.body.appendChild(overlay);
@@ -757,7 +757,7 @@ function runParasiteHappening(){
         <button class="close-x" data-close aria-label="Fermer">✕</button>
       </div>
       <div class="parasite-rock${reduced ? ' static' : ''}" id="parasiteRock">🪨</div>
-      <p class="happening-caption" id="parasiteCaption">Min le lui avait offert pour porter chance. Ki-woo ne l'a plus jamais lâché — même dans l'eau qui monte.</p>
+      <p class="happening-caption" id="parasiteCaption">Min le lui avait offert pour porter chance. Ki-woo ne l'a plus jamais lâché, même dans l'eau qui monte.</p>
       <button class="btn" id="parasitePlanBtn" type="button">Faire le plan</button>
     </div>
   `;

@@ -198,7 +198,7 @@ function showOnboardingWelcome(){
   card.innerHTML = `
     <div class="onboarding-icon-badge">${ONBOARDING_COMPASS_ICON}</div>
     <div class="onboarding-title">Bienvenue sur Kinet</div>
-    <div class="onboarding-body">Ta grille perso pour films et séries, à ta façon — et partagée avec tes amis. Un tour en 30 secondes ?</div>
+    <div class="onboarding-body">Ta grille perso pour films et séries, à ta façon, et partagée avec tes amis. Un tour en 30 secondes ?</div>
     <div class="onboarding-foot">
       <button class="onboarding-link-btn" type="button" data-onb-act="skip">Plus tard</button>
       <button class="btn" type="button" data-onb-act="welcome-start">Découvrir</button>

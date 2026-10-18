@@ -448,8 +448,8 @@ async function importLetterboxdFile(file){
   // réelle de l'historique. Il suit donc le même chemin que diary.csv/
   // ratings.csv (importLetterboxdRatings gère déjà manual_note null).
   const UNSUPPORTED_MESSAGES = {
-    profile: 'profile.csv contient tes infos de compte Letterboxd (pseudo, bio, date d\'inscription…), pas tes films — rien à importer depuis ce fichier. Utilise diary.csv, ratings.csv, reviews.csv ou watchlist.csv',
-    comments: 'comments.csv contient tes commentaires sous des films, pas tes notes — utilise diary.csv, ratings.csv, reviews.csv ou watchlist.csv'
+    profile: 'profile.csv contient tes infos de compte Letterboxd (pseudo, bio, date d\'inscription…), pas tes films : rien à importer depuis ce fichier. Utilise diary.csv, ratings.csv, reviews.csv ou watchlist.csv',
+    comments: 'comments.csv contient tes commentaires sous des films, pas tes notes. Utilise diary.csv, ratings.csv, reviews.csv ou watchlist.csv'
   };
   if(UNSUPPORTED_MESSAGES[type]){
     showToast(UNSUPPORTED_MESSAGES[type]);

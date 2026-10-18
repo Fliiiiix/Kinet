@@ -10,18 +10,18 @@
 
 let chatbotMessages = []; // [{ role: 'user'|'assistant', content }]
 
-const CHATBOT_GREETING = 'Salut ! Je peux te dire ce que tu as noté, te sortir un film au hasard dans ta watchlist, te donner tes meilleurs films, ou t\'expliquer une partie de Kinet. Demande-moi ce que tu veux.';
+const CHATBOT_GREETING = 'Salut ! Je peux te dire ce que tu as noté, te sortir un film au hasard dans À voir, te donner tes meilleurs films, ou t\'expliquer une partie de Kinet. Demande-moi ce que tu veux.';
 
 // Réponses sur l'app — une entrée par sujet. "mots" : mots-clés (sans
 // accents, minuscules) qui déclenchent la réponse.
 const CHATBOT_HELP_TOPICS = [
-  { mots: ['watchlist', 'a voir'], texte: 'La watchlist (« À voir ») garde les films que tu veux regarder. Tu peux noter un film directement depuis la liste, ou le sortir au hasard avec « Surprends-moi ».' },
-  { mots: ['serie'], texte: 'Les séries se suivent épisode par épisode dans la section Séries : tu coches ce que tu as vu, et Kinet te signale les nouveaux épisodes.' },
-  { mots: ['ami', 'groupe'], texte: 'Dans Amis, tu ajoutes des personnes par email ou pseudo. Les groupes se créent depuis la même page, ils servent à proposer des films et voter ensemble.' },
-  { mots: ['carte', 'booster', 'tcg'], texte: 'Les cartes se débloquent en regardant des films (2 films vus = 1 booster de 5 cartes). Elles se trouvent dans Ton profil > Mon activité > Cartes.' },
-  { mots: ['stat', 'statistique'], texte: 'Les Statistiques (Ton profil > Mon activité) montrent la répartition de tes notes, tes genres et ton évolution dans le temps.' },
+  { mots: ['watchlist', 'a voir'], texte: 'À voir garde les films que tu veux regarder, avec les plateformes où ils sont disponibles. Un film que tu notes en sort tout seul, et « Surprends-moi » en tire un au hasard.' },
+  { mots: ['serie'], texte: 'Sur la fiche d\'une série, « À suivre » montre le prochain épisode et ses saisons se cochent en petits carrés (ou en liste). Bientôt annonce les prochains épisodes de tes séries.' },
+  { mots: ['ami', 'groupe'], texte: 'Dans Amis, tu ajoutes des personnes par pseudo ou par email, ou tu partages ton profil. Un groupe sert à choisir votre prochaine séance : chacun propose des films, on se dit « Partant », et le créateur fixe la date.' },
+  { mots: ['carte', 'booster', 'tcg'], texte: 'Les cartes viennent sans tirage : chaque film de ton catalogue donne sa carte, et réalisateurs et acteurs montent de rang avec tes films. Elles sont dans Profil, Cartes.' },
+  { mots: ['stat', 'statistique'], texte: 'Les Statistiques (Profil, Statistiques) montrent la répartition de tes notes, tes genres et ton évolution dans le temps.' },
   { mots: ['note', 'grille', 'critere'], texte: 'Chaque film se note sur 7 critères (scénario, mise en scène, jeu d\'acteur, esthétique, son, musique, ressenti). La note globale se calcule toute seule à partir de ces critères, ou tu peux saisir une note manuelle.' },
-  { mots: ['export', 'import', 'letterboxd'], texte: 'Tu peux exporter ton catalogue en JSON ou CSV, et importer un export Letterboxd depuis le menu ⋯ de la page d\'accueil.' },
+  { mots: ['export', 'import', 'letterboxd', 'sauvegard'], texte: 'Dans Paramètres, Données : « Tout sauvegarder » met tes films, séries, À voir, journal et listes dans un seul fichier. Tu peux aussi importer un export Letterboxd, ou exporter tes films pour Letterboxd.' },
 ];
 
 // Suggestions cliquables affichées tant que la conversation n'a pas commencé.
@@ -89,10 +89,9 @@ function answerChatbotQuestion(texte, donnees){
     return 'Tes mieux notés :\n' + top.map((f, i) => `${i + 1}. ${f.titre} (${f.note.toFixed(2)})`).join('\n');
   }
 
+  // Plus de boosters depuis l'album sans tirage (v280) : audit général du 16/10, B7.
   if(contientUn(q, ['booster', 'paquet', 'pack']) && !contientUn(q, ['comment', 'explique'])){
-    const n = donnees.boosters || 0;
-    if(n <= 0) return "Aucun booster à ouvrir pour l'instant : regarde 2 films (vus) pour en débloquer un.";
-    return `Tu as ${n} booster${n > 1 ? 's' : ''} à ouvrir. Ouvre-les depuis Ton profil > Mon activité > Cartes.`;
+    return 'Il n’y a plus de boosters : les cartes viennent sans tirage, chaque film de ton catalogue donne la sienne. Elles sont dans Profil, Cartes.';
   }
 
   const series = donnees.series || [];
@@ -187,7 +186,7 @@ function answerChatbotQuestion(texte, donnees){
   }
 
   if(contientUn(q, ['aide', 'help', 'que peux', 'que sais', 'comment'])){
-    return 'Je peux te donner ta note moyenne, tes meilleurs films, tes genres, te sortir un film au hasard dans ta watchlist, ou t\'expliquer la watchlist, les séries, les amis, les cartes, les statistiques, la notation ou l\'export.';
+    return 'Je peux te donner ta note moyenne, tes meilleurs films, tes genres, te sortir un film au hasard dans À voir, ou t\'expliquer À voir, les séries, les amis, les cartes, les statistiques, la notation ou l\'export.';
   }
 
   for(const sujet of CHATBOT_HELP_TOPICS){
@@ -198,7 +197,7 @@ function answerChatbotQuestion(texte, donnees){
     return `Tu veux parler du genre ${genreFlou.toLowerCase()} ? Demande « mes films ${genreFlou.toLowerCase()} ».`;
   }
 
-  return 'Je ne suis pas sûr de comprendre. Essaie « ma note moyenne », « mes meilleurs films », « un film au hasard », ou une question sur une partie de Kinet (watchlist, séries, amis, cartes, statistiques, notation).';
+  return 'Je ne suis pas sûr de comprendre. Essaie « ma note moyenne », « mes meilleurs films », « un film au hasard », ou une question sur une partie de Kinet (À voir, séries, amis, cartes, statistiques, notation).';
 }
 
 function chatbotDonnees(){
