@@ -472,7 +472,7 @@ function renderFilmDetailAvis(){
       <div class="ff-avis-note"><span class="counter ${noteColorClass(note)}">${note.toFixed(1)}</span><div><b>Ta note</b><small>${how}</small></div></div>
       ${hasCrit ? `<div class="ff-crits">${CRITERIA.map(c => {
         const v = typeof myFilm.crit[c.key] === 'number' ? myFilm.crit[c.key] : 0;
-        return `<div class="ff-crit"><span>${escapeHtml(critShortLabel(c.key))}</span><i><b style="width:${Math.round(v * 100)}%"></b></i><span class="num">${critToDisplay(v)}</span></div>`;
+        return `<div class="ff-crit"><span>${escapeHtml(critShortLabel(c.key))}</span><i><b style="width:${Math.round(v * 100)}%"></b></i><span class="num">${critLabel(v)}</span></div>`;
       }).join('')}</div>` : ''}
     </div>
     ${myFilm.review ? `<p class="ff-quote">${escapeHtml(myFilm.review)}</p>` : ''}

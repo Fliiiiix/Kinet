@@ -119,7 +119,7 @@ function ntStepHtml(){
       <span class="nt-step-count">Critère ${ntStep + 1} sur ${CRITERIA.length}</span>
       <h3 class="nt-step-label">${escapeHtml(c.label)}</h3>
       <p class="nt-step-def">${escapeHtml(c.def)}</p>
-      <div class="nt-step-val num ${neutral ? '' : noteColorClass(v * CRIT_DISPLAY_SCALE)}" id="ntStepVal">${critToDisplay(v)}</div>
+      <div class="nt-step-val num ${neutral ? '' : noteColorClass(v * CRIT_DISPLAY_SCALE)}" id="ntStepVal">${critLabel(v)}</div>
       <input type="range" class="nt-range nt-range-big${neutral ? ' is-unset' : ''}" min="0" max="1" step="0.1" value="${v}" data-nt-crit="${c.key}" aria-label="${escapeHtml(c.label)}, sur 5">
       <div class="nt-anchors">
         <div><b>0</b>${escapeHtml(anchors[0] || '')}</div>
@@ -138,7 +138,7 @@ function ntSummaryHtml(){
     </div>
     <div class="nt-sum">${CRITERIA.map((c, i) => {
       const v = ntCritValue(c.key);
-      return `<button type="button" class="nt-sumrow" data-nt-goto="${i}"><span>${escapeHtml(critShortLabel(c.key))}</span><i><b style="width:${critPristine ? 0 : Math.round(v * 100)}%"></b></i><span class="num">${critPristine ? '—' : critToDisplay(v)}</span></button>`;
+      return `<button type="button" class="nt-sumrow" data-nt-goto="${i}"><span>${escapeHtml(critShortLabel(c.key))}</span><i><b style="width:${critPristine ? 0 : Math.round(v * 100)}%"></b></i><span class="num">${critPristine ? '—' : critLabel(v)}</span></button>`;
     }).join('')}</div>
     <p class="nt-hint">Touche un critère pour y revenir. <button type="button" class="ff-link" data-nt-direct>Note directe</button></p>`;
 }
@@ -227,7 +227,7 @@ function ntCloseMenu(){
       ntSetCritValue(r.dataset.ntCrit, v);
       r.classList.remove('is-unset');
       const out = document.getElementById('ntStepVal');
-      if(out){ out.textContent = critToDisplay(v); out.className = 'nt-step-val num ' + noteColorClass(v * CRIT_DISPLAY_SCALE); }
+      if(out){ out.textContent = critLabel(v); out.className = 'nt-step-val num ' + noteColorClass(v * CRIT_DISPLAY_SCALE); }
     }else if(r.hasAttribute('data-nt-direct-range')){
       const v = parseFloat(r.value);
       document.getElementById('manualScoreSlider').value = v;

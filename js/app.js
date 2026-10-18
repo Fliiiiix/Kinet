@@ -387,7 +387,7 @@ function render(){
     const note = getDisplayNote(f);
     const critShown = critKey && hasCritValue(f, critKey) ? f.crit[critKey] : null;
     const cornerValue = critKey ? (critShown !== null ? critShown * CRIT_DISPLAY_SCALE : null) : note;
-    const cornerText = critKey ? (critShown !== null ? critToDisplay(critShown) : '—') : (note !== null ? note.toFixed(1) : '—');
+    const cornerText = critKey ? (critShown !== null ? critLabel(critShown) : '—') : (note !== null ? note.toFixed(1) : '—');
     const rewatches = typeof rewatchCount === 'function' ? rewatchCount(f.id) : 0;
     const happening = getClickHappeningForFilm(f);
     const row = document.createElement('div');
@@ -631,6 +631,12 @@ function escapeHtml(str){
 const CRIT_DISPLAY_SCALE = 5;
 function critToDisplay(v){
   return String(Math.round(v * CRIT_DISPLAY_SCALE * 100) / 100);
+}
+// Pour lire un critère (fiche, résumé de la notation, coin d'affiche) : une
+// décimale, comme les notes (audit général du 16/10, I5). critToDisplay()
+// garde deux décimales pour les champs, qui doivent rester exacts.
+function critLabel(v){
+  return (Math.round(v * CRIT_DISPLAY_SCALE * 10) / 10).toFixed(1);
 }
 // Tant qu'un nouveau film n'a reçu aucun réglage, sa note calculée (2.5 par
 // défaut) reste neutre plutôt que colorée comme une vraie note (audit M11).
