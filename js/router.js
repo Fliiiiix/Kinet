@@ -281,6 +281,11 @@ function parseRoute(){
 // direct vers une page groupe/proposition, y compris après un F5).
 async function renderRoute(){
   const route = parseRoute();
+  // Rappel « Ça fait N jours que tu n'as rien noté » (js/activityState.js) :
+  // sur le catalogue seulement (audit général du 16/10, B6), il s'affichait
+  // au-dessus des fiches, d'Amis, du Top et du Profil.
+  const inactivityBanner = document.getElementById('inactivityReminderBanner');
+  if(inactivityBanner) inactivityBanner.classList.toggle('off-route', route.name !== 'home');
   // Origine d'une fiche oubliée dès qu'on change de page autrement que de
   // fiche en fiche ; hauteur à rétablir si on revient par « Retour ».
   if(!isDetailRoute(route.name)) detailOrigin = null;

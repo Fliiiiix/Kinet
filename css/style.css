@@ -7749,3 +7749,27 @@ body[data-view-mode="list"] #filmList .bulk-select-checkbox{flex:none;}
 @media (prefers-reduced-motion:reduce){
   .ls-card b, .ls-tile-t, .ls-new-card .ls-new{transition:none;}
 }
+
+/* ==========================================================
+   AUDIT GÉNÉRAL, LOT 3 (16/10) : confort au doigt, rappel, bande-annonce.
+   ========================================================== */
+/* B6 : rappel d'inactivité sur le catalogue seulement, dans les marges au téléphone. */
+#inactivityReminderBanner.off-route{display:none !important;}
+@media (max-width:600px){
+  .digest-banner{margin:var(--sp-3) var(--sp-4); padding:var(--sp-4);}
+}
+/* B5 : toute la ligne d'une saison réagit, pas seulement la bande du texte. */
+.sx-season-head .season-header{align-self:stretch; min-height:44px;}
+/* B5 : sur écran tactile, les onglets et petits liens gardent leur dessin
+   mais leur zone de toucher s'étend à 44 px de haut environ. */
+@media (pointer:coarse){
+  .top-tab, .catalog-switch-btn, .gp-prop-title, .app-footer-link, .watch-provider-justwatch{position:relative;}
+  .top-tab::after, .catalog-switch-btn::after, .gp-prop-title::after, .app-footer-link::after, .watch-provider-justwatch::after{
+    content:""; position:absolute; left:-4px; right:-4px; top:-12px; bottom:-12px;
+  }
+}
+/* B8 : « Bande-annonce » ne se coupe plus à côté de la plateforme. */
+.sx-where #seriesTrailerBtn{flex:none; white-space:nowrap;}
+@media (max-width:600px){
+  .sx-where{display:grid; justify-items:start; gap:var(--sp-2);}
+}
