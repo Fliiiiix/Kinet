@@ -17,7 +17,7 @@
 // (voir watchForUpdate() dans js/offline.js). Il purge aussi le cache
 // ci-dessous à chaque déploiement plutôt que de le laisser grossir sans
 // fin (chaque ?v=N étant une URL distincte, jamais réutilisée).
-const CACHE_NAME = 'critique-films-shell-v298';
+const CACHE_NAME = 'critique-films-shell-v299';
 
 self.addEventListener('activate', (event) => {
   // Nettoie le cache de toute version antérieure (voir CACHE_NAME
@@ -47,6 +47,31 @@ self.addEventListener('fetch', (event) => {
   // supabase-js (déjà mis en cache HTTP par le navigateur comme n'importe
   // quelle ressource externe).
   if(url.origin !== self.location.origin) return;
+
+  // Fichiers numérotés (?v=N, voir index.html) : servis tout de suite depuis
+  // le cache, puis revérifiés en arrière-plan (audit général du 16/10, T1 :
+  // chaque visite retéléchargeait les 49 fichiers de l'app, 900 Ko). La
+  // revérification passe par le cache HTTP normal : le plus souvent une
+  // petite réponse 304. Elle corrige aussi, dès la visite suivante, un
+  // fichier que GitHub Pages aurait encore servi dans son ancienne version
+  // juste après un déploiement.
+  if(url.searchParams.has('v')){
+    event.respondWith(caches.open(CACHE_NAME).then(async (cache) => {
+      const cached = await cache.match(event.request);
+      const network = fetch(event.request)
+        .then(res => {
+          if(res.ok) cache.put(event.request, res.clone());
+          return res;
+        })
+        .catch(() => cached);
+      if(cached){
+        event.waitUntil(network.then(() => {}, () => {}));
+        return cached;
+      }
+      return network;
+    }));
+    return;
+  }
 
   // no-store : ignore le cache HTTP du navigateur pour cette requête réseau
   // (GitHub Pages sert index.html avec Cache-Control: max-age=600 — sans
