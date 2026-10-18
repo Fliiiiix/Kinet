@@ -165,10 +165,9 @@ async function refreshAvisBadge(alreadyLoaded){
   }
 }
 
-// Ancienne fenêtre, plus jamais ouverte : gardée pour ses ids. Ses points
-// d'entrée mènent à la page.
+// L'ancienne fenêtre « Donner un avis » est retirée (audit général du 16/10) ;
+// ses anciens points d'entrée mènent à la page Avis.
 function openFeedbackModal(){ goToAvis(); }
-function closeFeedbackModal(){ closeOverlay('feedbackOverlay'); }
 
 document.querySelectorAll('#avisPage [data-avis-kind]').forEach(btn => {
   btn.addEventListener('click', () => { avisKind = btn.dataset.avisKind; renderAvisKind(); });
@@ -179,7 +178,6 @@ document.querySelectorAll('#avisPage [data-avis-kind]').forEach(btn => {
 }
 document.getElementById('avisPageBack').addEventListener('click', () => returnToProfile());
 document.getElementById('feedbackBtn').addEventListener('click', goToAvis);
-document.getElementById('closeFeedback').addEventListener('click', closeFeedbackModal);
 // Rangée « Donner un avis » de la page Profil (relayée par data-proxy).
 document.getElementById('profileFeedbackLinkBtn').addEventListener('click', () => {
   closeProfileModal();

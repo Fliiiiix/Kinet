@@ -3,36 +3,52 @@
 Ces actions touchent ta base Supabase, ton compte ou une décision que tu
 dois prendre. Tout le reste est fait dans le code, poussé sur `main`.
 
+## 0. État au 18/10/2026 (audit général)
+- [ ] **Seule migration à lancer : `supabase/migrations/067_fonctions_fermees_aux_visiteurs.sql`.**
+      Les fonctions de la base ne seront plus appelables sans session (sauf le
+      profil partagé, l'aperçu d'invitation et celles des règles d'accès). Rien
+      ne change pour un compte connecté. La dernière requête du fichier liste ce
+      qui reste ouvert aux visiteurs.
+- Vérifié le 18/10, en lecture seule et sans session : les tables et colonnes
+  des migrations 048, 050, 051, 052 et 054 existent, la fonction de 049 aussi ;
+  056 à 066 sont en place (fonctionnalités en ligne, colonnes de 065 et 066
+  contrôlées). 053 (suppression de compte) ne se vérifie pas sans l'appeler :
+  à confirmer de ton côté si tu veux.
+- Les sections 1 et 5 ci-dessous datent d'avant : leurs cases sont cochées
+  quand c'est vérifié.
+- Note de version 4.1 : brouillon prêt (`note-v4.1-brouillon.md`, dossier
+  parent), à ne publier qu'avec ton accord.
+
 ## 1. Migrations SQL à appliquer (dans cet ordre, éditeur SQL Supabase)
-- [ ] `supabase/migrations/056_add_annual_goal.sql` : objectif annuel chiffré
+- [x] `supabase/migrations/056_add_annual_goal.sql` : objectif annuel chiffré
       (nombre de films que tu te fixes pour l'année) + barre de progression sur
       l'accueil — deux colonnes ajoutées à `profiles`. Tant qu'elle n'est pas
       appliquée, le widget propose quand même de définir un objectif mais
       l'enregistrement échoue avec un toast clair (pas de plantage).
-- [ ] `supabase/migrations/057_add_film_friend_ratings.sql` : notes des amis
+- [x] `supabase/migrations/057_add_film_friend_ratings.sql` : notes des amis
       directement sur la fiche film (get_film_friend_ratings()). Tant qu'elle
       n'est pas appliquée, le bloc "Amis" de la fiche film reste silencieux
       (vide), pas de plantage.
-- [ ] `supabase/migrations/058_add_lists.sql` : Listes thématiques partageables
+- [x] `supabase/migrations/058_add_lists.sql` : Listes thématiques partageables
       (3 nouvelles tables + get_friends_lists()) — nouvelle page #/listes,
       accès depuis la page Amis. Tant qu'elle n'est pas appliquée, la page
       Listes affiche une erreur de chargement (tables inexistantes) mais le
       reste de l'app n'est pas affecté.
-- [ ] `supabase/migrations/059_add_film_note_distribution.sql` : histogramme
+- [x] `supabase/migrations/059_add_film_note_distribution.sql` : histogramme
       de répartition des notes sur la fiche film (get_film_note_distribution()).
       Tant qu'elle n'est pas appliquée, la moyenne reste affichée normalement,
       seul l'histogramme est absent.
-- [ ] `supabase/migrations/060_widen_friend_activity.sql` : flux d'activité
+- [x] `supabase/migrations/060_widen_friend_activity.sql` : flux d'activité
       amis élargi (watchlist_added + list_created, en plus de film_rated).
       À appliquer APRÈS 058 (le trigger list_created a besoin de la table
       `lists`). Sans elle, le fil continue de fonctionner comme avant,
       juste sans ces deux nouveaux types d'événements.
-- [ ] `supabase/migrations/048_tcg_pity.sql` : garantie d'une Légendaire après
+- [x] `supabase/migrations/048_tcg_pity.sql` : garantie d'une Légendaire après
       N boosters sans elle (pity system). Vérifiée sur base simulée.
-- [ ] `supabase/migrations/049_draft_classement_amis.sql` : BROUILLON. Classement
+- [x] `supabase/migrations/049_draft_classement_amis.sql` : BROUILLON. Classement
       entre amis, ne renvoie que des compteurs (cartes, films notés), jamais les
       notes. Testé sur base simulée. À relire puis appliquer si tu es d'accord.
-- [ ] `supabase/migrations/050_draft_journal_raretes.sql` : BROUILLON. Journal
+- [x] `supabase/migrations/050_draft_journal_raretes.sql` : BROUILLON. Journal
       des changements de rareté (qui, quand, ancienne et nouvelle valeur), lisible
       par l'admin seulement. Testé sur base simulée.
 - [ ] Les migrations 049 et 050 ne sont PAS dans `schema.sql` tant que tu ne les
@@ -85,7 +101,7 @@ Chaque point : réponds « oui », « non » ou donne une autre règle.
       récap annuel), générée dans le navigateur. Oui ou non ?
 - [ ] Recalcul périodique : je recommande un workflow GitHub manuel (lancé à la
       main), sans planification, car le fichier IMDb pèse plusieurs centaines de Mo.
-- [ ] Tests de bout en bout : il faut installer Playwright (npm). Oui ?
+- [x] Tests de bout en bout : Playwright est installé (`npm run test:e2e`).
 - [ ] Changelog plus lisible : publication gated, je ne publierai rien sans ton
       accord explicite.
 - [ ] Thème clair : je ne peux pas le voir sans ton compte. Vérifie les écrans
@@ -96,16 +112,16 @@ Chaque point : réponds « oui », « non » ou donne une autre règle.
 ## 5. Migrations validées (brouillons prêts, à appliquer dans cet ordre)
 Chaque migration est testée sur base simulée. Les appliquer dans Supabase, dans
 l'ordre, puis recharger le site.
-- [ ] `051_draft_historique_notes.sql` : historique des notes (table + trigger).
-- [ ] `052_draft_annee_cartes.sql` : année de sortie sur les cartes film. Une
+- [x] `051_draft_historique_notes.sql` : historique des notes (table + trigger).
+- [x] `052_draft_annee_cartes.sql` : année de sortie sur les cartes film. Une
       fois appliquée, je pourrai ajouter le regroupement par décennie dans la
       collection (je ne l'ai pas fait avant, pour ne pas casser l'affichage).
 - [ ] `053_draft_suppression_compte.sql` : IRRÉVERSIBLE. Le bouton « Supprimer mon
       compte » demande la saisie de SUPPRIMER et affiche un message clair tant que
       la migration n'est pas appliquée.
-- [ ] `054_draft_films_prives.sql` : films privés. Dès qu'elle est appliquée, la case
+- [x] `054_draft_films_prives.sql` : films privés. Dès qu'elle est appliquée, la case
       « Privé » du formulaire fonctionne pour les amis.
-- [ ] `055_draft_profil_public_prive.sql` : à appliquer JUSTE APRÈS la 054. Sans
+- [x] `055_draft_profil_public_prive.sql` : à appliquer JUSTE APRÈS la 054. Sans
       elle, un film privé peut encore apparaître sur le profil public (accessible
       sans connexion). Testé : les films privés sont exclus de la liste et des films
       mis en avant.

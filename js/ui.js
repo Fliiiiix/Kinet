@@ -131,7 +131,6 @@ document.addEventListener('keydown', (e) => {
     adminOverlay: () => closeAdminModal(),
     journalOverlay: () => closeJournal(),
     friendProfileOverlay: () => closeFriendProfile(),
-    feedbackOverlay: () => closeFeedbackModal(),
     shareOverlay: () => closeShareModal(),
     importLetterboxdTutoOverlay: () => closeOverlay('importLetterboxdTutoOverlay'),
     surpriseOverlay: () => closeOverlay('surpriseOverlay'),

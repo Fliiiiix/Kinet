@@ -580,14 +580,6 @@ header{
   color:var(--violet);
   border-bottom-color:var(--violet);
 }
-.eyebrow{
-  font-family:var(--font-text); font-variant-numeric:tabular-nums;
-  font-size:var(--fs-xs);
-  letter-spacing:0.16em;
-  color:var(--violet);
-  text-transform:uppercase;
-  margin-bottom:8px;
-}
 h1{
   font-family:var(--font-display);
   font-weight:800;
@@ -718,14 +710,6 @@ h1{
   box-shadow:0 16px 36px rgba(0,0,0,0.45);
 }
 .toolbar-filters-sheet select{width:100%;}
-.toolbar-filter-field{display:flex; flex-direction:column; gap:5px;}
-.toolbar-filter-label{
-  font-family:var(--font-text); font-variant-numeric:tabular-nums;
-  font-size:var(--fs-xs);
-  letter-spacing:0.04em;
-  text-transform:uppercase;
-  color:var(--text-muted);
-}
 .toolbar-filters-head{
   display:flex;
   align-items:center;
@@ -734,26 +718,6 @@ h1{
   font-weight:700;
   font-size:var(--fs-sm);
 }
-/* Tri par critère individuel (#sortBy = "advanced") — voir index.html et
-   updateSortMode() dans js/app.js. Critère + sens + seuil ensemble plutôt
-   que d'entasser 14 options (7 critères × ↓/↑) dans le sélecteur général.
-   Tirée vers le haut pour rester rattachée visuellement à la toolbar
-   plutôt que de flotter seule. */
-.sort-advanced-row{
-  display:flex;
-  align-items:center;
-  flex-wrap:wrap;
-  gap:12px;
-  margin:-14px 0 24px;
-  font-family:var(--font-text); font-variant-numeric:tabular-nums;
-  font-size:var(--fs-sm);
-  color:var(--text-muted);
-}
-.sort-advanced-row b{color:var(--gold); font-weight:600;}
-.sort-advanced-row input[type="range"]{flex:1; min-width:120px; max-width:240px;}
-.sort-dir-toggle{display:flex; gap:4px;}
-.sort-dir-toggle .btn{padding:8px 12px;}
-.sort-dir-toggle .btn.active{border-color:var(--violet); color:var(--violet);}
 /* Bouton "Sélectionner" (actions groupées), même traitement pressé que les
    autres bascules .btn.active ci-dessus. */
 #bulkSelectBtn.active{border-color:var(--violet); color:var(--violet); background:var(--violet-wash);}
@@ -835,15 +799,6 @@ h1{
   border-radius:var(--r-sm);
   cursor:pointer;
   white-space:nowrap;
-}
-/* Largeur fixe : les glyphes emoji (⬇/⬆/🎬) n'ont pas la même largeur/
-   métrique naturelle, un simple espace après chacun les laissait désalignés
-   d'un bouton à l'autre — voir retour utilisateur. */
-.dropdown-menu-icon{
-  display:inline-flex;
-  justify-content:center;
-  width:16px;
-  flex:none;
 }
 .dropdown-menu button:hover{background:var(--surface-2); color:var(--violet);}
 @keyframes menuIn{from{opacity:0; transform:translateY(-4px);} to{opacity:1; transform:translateY(0);}}
@@ -1249,11 +1204,6 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   gap:16px;
   margin-top:24px;
 }
-.pagination-label{
-  font-family:var(--font-text); font-variant-numeric:tabular-nums;
-  font-size:var(--fs-sm);
-  color:var(--text-muted);
-}
 
 /* ============================================================
    Lignes de film (catalogue) — mode LISTE par défaut, mode GRILLE
@@ -1282,18 +1232,6 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 }
 .film-row:hover{border-color:var(--violet-dim); transform:translateY(-1px); box-shadow:0 10px 24px rgba(0,0,0,0.35);}
 .film-row:active{transform:translateY(0); box-shadow:none;}
-/* v2.8 : lueur or pendant l'inclinaison (voir js/ui.js, mousemove délégué)
-   — plus marquée que le survol simple, pour que "la carte réagit au
-   curseur" se voie aussi en couleur, pas juste en mouvement. */
-.film-row.tilting, .wl-row.tilting{
-  border-color:var(--gold-dim);
-  box-shadow:0 16px 32px rgba(0,0,0,0.4), 0 0 28px rgba(232,163,61,0.14);
-}
-/* Perforations façon pellicule à l'intérieur de chaque ligne : motif de
-   l'ancien thème cinéma, retiré en v2.0 (voir aussi les .sprockets des
-   bords, supprimées d'index.html/js/app.js). Élément gardé dans le DOM
-   généré par render() (skeleton de chargement inclus) — juste masqué. */
-.film-row .holes{display:none;}
 /* Case à cocher des actions groupées (retour utilisateur) — position:absolute
    plutôt qu'un 5e item de la grille nommée ci-dessus (.film-row a des
    grid-template-areas fixes à 4 zones, poster/main/star/counter, pareil en
@@ -1369,15 +1307,6 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   margin-top:3px;
   letter-spacing:0.03em;
 }
-/* v2.8 : le genre sort du gris muet — voir render() dans js/app.js. */
-/* Repasse (retour utilisateur, discipline des couleurs : "chaque couleur
-   un seul rôle") : le bronze redevient RARE (favori/palier), comme le
-   documente déjà .film-fav plus bas — il ne peut plus l'être s'il colore
-   aussi le genre sur CHAQUE ligne du catalogue, l'écran le plus vu de
-   toute l'app. Revient sur le choix explicite de v2.8 ("où est la
-   couleur ?") : la couleur reste bien là (cadran vert/or/corail, étoile
-   bronze, icônes de l'entête), juste plus diluée sur un simple libellé. */
-.film-sub-genre{color:var(--text-muted); font-weight:600;}
 .star-btn{
   grid-area:star;
   flex:none;
@@ -1489,23 +1418,6 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
    avant, sans médaille ni décor superflu. */
 .top-tabs{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px;}
 .top-tabs .btn.active{border-color:var(--violet); color:var(--violet);}
-.top-rank{
-  font-family:var(--font-text); font-variant-numeric:tabular-nums;
-  font-weight:700;
-  font-size:var(--fs-md);
-  color:var(--text-muted);
-  width:22px;
-  text-align:center;
-  flex:none;
-}
-.top-row:nth-child(-n+3) .top-rank{color:var(--gold); font-size:var(--fs-lg);}
-/* Cliquable vers la fiche film (v2.1, retour utilisateur) — voir
-   js/filmDetail.js et js/top.js. Chaque ligne du Top a forcément un
-   tmdb_id (get_global_top_films/get_friends_top_films les exclut sinon,
-   voir migrations/015), donc jamais besoin d'un garde-fou conditionnel
-   ici contrairement au catalogue d'un ami. */
-.top-row{cursor:pointer; transition:border-color .15s, transform .15s, box-shadow .15s;}
-.top-row:hover{border-color:var(--violet-dim); transform:translateY(-1px); box-shadow:0 10px 24px rgba(0,0,0,0.35);}
 
 .rewatch-badge{
   display:inline-block;
@@ -1676,7 +1588,6 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 @media (prefers-reduced-motion: reduce){
   .auth-pitch{animation:none;}
 }
-.auth-pitch .eyebrow{margin-bottom:10px;}
 .auth-headline{
   font-family:var(--font-display);
   font-weight:800;
@@ -1945,7 +1856,6 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   cursor:pointer;
 }
 .onboarding-link-btn:hover{color:var(--text);}
-.onboarding-actions{display:flex; align-items:center; gap:8px;}
 .onboarding-icon-badge{
   width:44px; height:44px; border-radius:50%;
   background:var(--violet-wash); color:var(--violet);
@@ -2256,16 +2166,6 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
    entre les deux pour qu'elles se lisent comme deux actions distinctes,
    pas un seul libellé qui déborde. */
 #tmdbViewFicheBtn{margin-right:16px;}
-
-/* La note manuelle est une échappatoire exceptionnelle (voir le commentaire
-   HTML au-dessus de #manualToggle) — séparée par un filet sous la grille
-   plutôt que d'occuper le haut de la modale. Même principe que
-   .profile-logout-row. */
-.manual-toggle-block{
-  margin-top:20px;
-  padding-top:16px;
-  border-top:1px solid var(--line);
-}
 .manual-toggle-label{
   display:flex;
   align-items:center;
@@ -2278,14 +2178,6 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   margin-top:4px;
 }
 .manual-toggle-label input{accent-color:var(--teal); cursor:pointer;}
-.manual-toggle-hint{
-  font-size:var(--fs-sm);
-  color:var(--text-muted);
-  font-style:italic;
-  line-height:1.5;
-  margin-top:4px;
-  margin-left:24px;
-}
 /* Lien du profil public (#publicProfileLinkHint) : même bloc que
    .manual-toggle-hint, plus une ligne lien + bouton Copier. */
 .public-profile-link-row{
@@ -2316,12 +2208,6 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
    pile verticale unique : la même info, sur environ la moitié de la
    hauteur. */
 .modal.film-modal{max-width:1080px;}
-.film-modal-layout{
-  display:grid;
-  grid-template-columns:220px 1fr;
-  gap:36px;
-  align-items:start;
-}
 /* .film-modal-poster réécrit width/height/border-radius de .film-poster
    (52×78px, pensé pour une vignette de ligne de catalogue) : cette classe
    vient après elle dans le fichier, donc l'emporte à spécificité égale.
@@ -2354,7 +2240,6 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   #criteriaWrap{grid-template-columns:1fr;}
 }
 @media (max-width:860px){
-  .film-modal-layout{grid-template-columns:1fr;}
   .film-modal-poster-col{width:140px; margin:0 auto;}
 }
 
@@ -2646,7 +2531,6 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
 }
 .mm-row + .mm-row, .mm-row + .pf-public-panel{border-top:1px solid var(--line);}
 .mm-row:hover{background:var(--surface-3);}
-.mm-row.mm-row-danger:hover{background:var(--coral-wash, rgba(255,107,87,0.08));}
 /* #moreMenuWrap (export/import, v3.2) : une ligne seule, hors .mm-card
    exprès (voir le commentaire dans index.html — overflow:hidden y aurait
    coupé .dropdown-menu à l'ouverture). Même fond/bord/coin que .mm-card
@@ -2661,7 +2545,6 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
 .mm-icon.ic-gold{background:var(--gold-wash); color:var(--gold);}
 .mm-icon.ic-teal{background:var(--teal-wash); color:var(--teal);}
 .mm-icon.ic-bronze{background:var(--bronze-wash); color:var(--bronze);}
-.mm-icon.ic-coral{background:rgba(255,107,87,0.12); color:var(--coral);}
 .mm-row-body{flex:1; min-width:0;}
 .mm-row-title{font-size:var(--fs-sm); font-weight:600;}
 .mm-row-sub{font-size:var(--fs-xs); color:var(--text-muted); margin-top:1px;}
@@ -2700,9 +2583,7 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
 }
 .pf-copy-link-btn:hover{background:var(--violet-dim); color:var(--text);}
 .pf-copy-link-btn svg{width:15px; height:15px; flex:none;}
-.pf-top-title{font-size:var(--fs-sm); font-weight:600; margin-bottom:2px;}
 .pf-top-sub{font-size:var(--fs-xs); color:var(--text-muted); margin-bottom:10px;}
-.pf-top-title{font-size:var(--fs-sm); font-weight:600; margin-bottom:2px;}
 .pf-top-sub{font-size:var(--fs-xs); color:var(--text-muted); margin-bottom:10px;}
 
 /* --- En-tête "Paramètres" avec flèche retour (au lieu du close-x) --- */
@@ -2716,12 +2597,6 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
 .modal-back-btn:hover{color:var(--text); border-color:var(--violet-dim);}
 .modal-back-btn svg{width:16px; height:16px;}
 .modal-footer .right{display:flex; gap:10px;}
-.live-score{
-  font-family:var(--font-text); font-variant-numeric:tabular-nums;
-  font-size:var(--fs-sm);
-  color:var(--text-muted);
-}
-.live-score b{color:var(--gold); font-size:var(--fs-md);}
 
 /* Tutoriel d'import Letterboxd (index.html #importLetterboxdTutoOverlay) —
    numéros en pastille plutôt qu'une simple liste : cohérent avec le
@@ -2762,31 +2637,6 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
   border:1px solid var(--line);
 }
 #downloadRecapBtn{width:100%;}
-/* Entête du profil public (#/u/:userId, voir js/publicProfile.js) : avatar
-   agrandi + pseudo, puis les mêmes .stat-tiles que Statistiques. */
-.public-profile-header{
-  display:flex;
-  align-items:center;
-  gap:16px;
-  margin-bottom:24px;
-}
-.public-profile-header img, .public-profile-header .avatar-fallback{
-  width:64px; height:64px;
-  border-radius:50%;
-  object-fit:cover;
-  border:1px solid var(--line);
-  flex:none;
-}
-.public-profile-header .avatar-fallback{
-  display:flex; align-items:center; justify-content:center;
-  background:var(--surface-2);
-  font-size:var(--fs-xl);
-}
-.public-profile-header h3{
-  font-family:var(--font-display);
-  font-weight:700;
-  font-size:var(--fs-lg);
-}
 /* Top films (v2.3) — vitrine façon Letterboxd, distincte de la liste
    .stats-section en dessous (triée par note) : ceux-ci sont un choix
    personnel, affichés dans l'ordre voulu par le propriétaire du profil.
@@ -2869,18 +2719,6 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
 .poster-wall-note.rate-low{color:var(--coral);}
 .poster-wall-note.rate-mid{color:var(--note-mid);}
 .poster-wall-note.rate-high{color:var(--green);}
-/* Comparaison de goûts élargie (retour utilisateur, js/groups.js) — une
-   pastille "Nom note" par membre ayant noté ce film, réutilisant
-   .rate-low/-mid/-high (noteColorClass()) au lieu de .counter : la
-   moyenne du film garde SA note en cadran juste à côté (voir "Goûts du
-   groupe" plus haut), ce détail par membre reste volontairement plus
-   discret, une simple pastille de texte. */
-.taste-comparison-notes{
-  display:flex;
-  flex-wrap:wrap;
-  gap:4px;
-  margin-top:5px;
-}
 .taste-note-pill{
   font-family:var(--font-text); font-variant-numeric:tabular-nums;
   font-size:var(--fs-xs);
@@ -2927,23 +2765,6 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
   color:var(--gold);
   font-variant-numeric:tabular-nums;
 }
-/* v2.7 : un accent par tuile plutôt que la même couleur partout — voir
-   renderStatsInto() (js/stats.js) et renderPublicProfilePage()
-   (js/publicProfile.js), qui posent .accent-violet/.accent-gold/
-   .accent-bronze en cycle. */
-.stat-tile.accent-violet .stat-value{color:var(--violet);}
-.stat-tile.accent-gold .stat-value{color:var(--gold);}
-.stat-tile.accent-bronze .stat-value{color:var(--bronze);}
-/* v2.9, "Halation" : la note moyenne EST un mélange (toutes les notes
-   confondues) — seul chiffre à mériter un dégradé plutôt qu'une teinte
-   unique, texte comme le reste de la règle "dégradé = ça parle
-   vraiment de couleur/mélange", pas décoratif au hasard. */
-.stat-tile.accent-gradient .stat-value{
-  background:linear-gradient(100deg, var(--violet), var(--gold));
-  -webkit-background-clip:text;
-  background-clip:text;
-  color:transparent;
-}
 .stat-label{
   font-family:var(--font-text); font-variant-numeric:tabular-nums;
   font-size:var(--fs-xs);
@@ -2983,17 +2804,6 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
    renderCollapsible() (js/ui.js) et le catalogue replié d'un profil d'ami
    (openFriendProfile(), js/friends.js), les deux mécanismes qui l'utilisent. */
 .list-toggle-btn{width:100%; margin-bottom:16px;}
-/* Bandeau "Séance élue" (js/proposals.js, migrations/020) — même famille
-   que .ach-summary (accent or) mais en bandeau plein-largeur plutôt qu'un
-   bloc centré, pour rester visible sans dominer la page. */
-.chosen-banner{
-  background:var(--ink-surface);
-  border:1px solid var(--gold-dim);
-  border-radius:var(--r-sm);
-  padding:12px 16px;
-  margin-bottom:20px;
-  font-size:var(--fs-sm);
-}
 /* Digest de retour (js/activityState.js) : même famille que .chosen-banner
    (accent or, bandeau plein-largeur) mais vit hors des pages à bascule
    (voir index.html) donc porte son propre espacement vertical plutôt que
@@ -3076,11 +2886,6 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
   font-size:var(--fs-md);
   margin-bottom:14px;
 }
-
-/* Prochainement > Bientôt : titre + bascule liste/calendrier côte à côte
-   (voir js/upcoming.js). */
-.upcoming-soon-head{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px;}
-.upcoming-soon-head .stats-section-title{margin-bottom:0;}
 
 /* Calendrier visuel de Prochainement (retour utilisateur : remplacer la
    simple liste triée par date par un vrai calendrier) — grille CSS pure,
@@ -4456,44 +4261,6 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
 }
 .wl-quick-form .btn{padding:6px 10px; font-size:var(--fs-xs);}
 
-/* Propositions de groupe : votes + discussion */
-.proposal-row .wl-actions{margin-left:0;}
-.vote-controls-inline{
-  display:flex;
-  align-items:center;
-  gap:6px;
-  flex:none;
-  font-family:var(--font-text); font-variant-numeric:tabular-nums;
-}
-.vote-controls{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  font-family:var(--font-text); font-variant-numeric:tabular-nums;
-  margin-bottom:20px;
-}
-.vote-btn{
-  background:var(--surface);
-  border:1px solid var(--line);
-  color:var(--text-muted);
-  border-radius:var(--r-sm);
-  width:30px;
-  height:30px;
-  font-size:var(--fs-sm);
-  cursor:pointer;
-  transition:border-color .15s, color .15s;
-}
-.vote-btn:hover{border-color:var(--violet-dim); color:var(--text);}
-.vote-btn.active{border-color:var(--violet); color:var(--violet);}
-.vote-count{min-width:22px; text-align:center; font-size:var(--fs-sm); color:var(--text);}
-
-.proposal-detail-film{
-  display:flex;
-  align-items:flex-start;
-  gap:14px;
-  margin-bottom:16px;
-}
-
 .comment-list{display:flex; flex-direction:column; gap:10px; margin-bottom:14px;}
 .comment-item{
   display:flex;
@@ -5253,21 +5020,6 @@ body[data-view-mode="grid"] #topList .wl-note{
    suivante plutôt que de déborder de la carte. */
 body[data-view-mode="grid"] #wlList .wl-actions{margin-top:2px; flex-wrap:wrap;}
 body[data-view-mode="grid"] #wlList .wl-actions .btn{flex:1 1 45%; white-space:nowrap;}
-/* Rang du top 3 (js/top.js, .top-row) : en carte il devient un badge posé
-   sur le coin de l'affiche plutôt qu'une ligne à part qui casserait la
-   carte — voir le mode liste plus bas pour son traitement en ligne. */
-body[data-view-mode="grid"] #topList .top-row{position:relative;}
-body[data-view-mode="grid"] #topList .top-rank{
-  position:absolute;
-  top:8px; left:8px;
-  width:24px; height:24px;
-  background:rgba(15,14,22,0.82);
-  border-radius:50%;
-  display:flex; align-items:center; justify-content:center;
-  font-size:var(--fs-sm);
-  z-index:1;
-}
-body[data-view-mode="grid"] #topList .top-row:nth-child(-n+3) .top-rank{background:rgba(232,163,61,0.22);}
 body[data-view-mode="grid"] #topList .counter{align-self:flex-end;}
 
 /* Mode LISTE : une bannière pleine largeur par film plutôt qu'une ligne
@@ -5314,7 +5066,6 @@ body[data-view-mode="list"] #topList .wl-title{
 }
 body[data-view-mode="list"] #wlList .wl-actions{flex:none;}
 body[data-view-mode="list"] #wlList .wl-actions .btn{flex:none;}
-body[data-view-mode="list"] #topList .top-rank{width:26px; font-size:var(--fs-md);}
 
 /* --- Détail d'une série (#/series/:id, js/series.js) et fiche film
    communautaire (#/film/:tmdbId, js/filmDetail.js, classe partagée) ---
@@ -5378,17 +5129,6 @@ body[data-view-mode="list"] #topList .top-rank{width:26px; font-size:var(--fs-md
   background:radial-gradient(130% 140% at 15% 10%, var(--surface-3) 0%, var(--surface-2) 55%, var(--ink-surface) 100%);
 }
 .detail-backdrop.is-placeholder img{display:none;}
-
-/* v3.2, retour utilisateur — reprend à la lettre la draft Scope
-   (.detail-text/.detail-title/.detail-meta/.fiche/.synopsis/.cta-row/
-   .btn-primary/.btn-secondary n'existaient que là-bas jusqu'ici). */
-.detail-text{
-  display:flex;
-  align-items:flex-start;
-  justify-content:space-between;
-  gap:16px;
-  margin-top:18px;
-}
 .detail-title{
   font-family:var(--font-display);
   font-weight:800;
@@ -5404,7 +5144,6 @@ body[data-view-mode="list"] #topList .top-rank{width:26px; font-size:var(--fs-md
   color:var(--violet);
   margin-top:8px;
 }
-.detail-text #seriesDetailRatingRing{text-decoration:none;}
 
 .fiche{margin-top:24px; border-top:1px solid var(--line);}
 .fiche-row{display:flex; gap:16px; padding:11px 0; border-bottom:1px solid var(--line);}
@@ -5431,49 +5170,6 @@ body[data-view-mode="list"] #topList .top-rank{width:26px; font-size:var(--fs-md
   max-width:68ch;
 }
 
-/* Rattaché visuellement à la liste des saisons juste au-dessus (retour
-   utilisateur : "bizarre que ce bouton soit en dehors du menu déroulant
-   par saison") — même registre que .season-header (texte nu, pas de
-   pastille colorée) plutôt qu'un gros bouton CTA qui romprait avec le
-   reste de l'accordéon. Reste un bouton global (pas un par saison) :
-   plus pratique, peu importe quelle saison contient le prochain épisode
-   non vu — voir markNextEpisodeWatched(), js/series.js. */
-.cta-row{
-  display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between;
-  gap:12px; margin-top:28px; padding-top:16px; border-top:1px solid var(--line);
-}
-.btn-primary{
-  background:none;
-  border:none;
-  padding:0;
-  display:flex;
-  align-items:center;
-  gap:8px;
-  font-family:var(--font-display);
-  font-weight:700;
-  font-size:var(--fs-md);
-  color:var(--text);
-  cursor:pointer;
-  text-align:left;
-  transition:color .15s ease;
-}
-.btn-primary::after{content:'→'; color:var(--violet); font-weight:400;}
-.btn-primary:hover{color:var(--violet);}
-.btn-primary:disabled{opacity:0.5; cursor:default;}
-.btn-primary:disabled::after{color:var(--text-muted);}
-.btn-secondary{
-  font-family:var(--font-text);
-  font-weight:600;
-  font-size:var(--fs-sm);
-  letter-spacing:0.03em;
-  text-transform:uppercase;
-  color:var(--text-muted);
-  border-bottom:1px solid var(--text-muted);
-  padding-bottom:3px;
-  transition:color .15s ease, border-color .15s ease;
-}
-.btn-secondary:hover{color:var(--violet); border-color:var(--violet);}
-
 /* Flèches "film/série d'à côté" (retour utilisateur : "j'aimerais naviguer
    à ceux d'à côté"). Dans l'entête de la fiche, à droite (audit C3 : fixées
    au milieu de l'écran, elles recouvraient le contenu). Boutons icône du
@@ -5497,38 +5193,8 @@ body[data-view-mode="list"] #topList .top-rank{width:26px; font-size:var(--fs-md
 @media (prefers-reduced-motion:reduce){
   .detail-nav-arrow{transition:none;}
 }
-
-.series-hero{
-  display:grid;
-  grid-template-columns:180px 1fr;
-  gap:28px;
-  align-items:start;
-  margin-bottom:28px;
-}
-.series-hero-poster{
-  width:100%;
-  aspect-ratio:2/3;
-  height:auto;
-  border-radius:var(--r-md);
-  object-fit:cover;
-  border:1px solid var(--line);
-  font-size:var(--fs-2xl);
-}
-/* Colonne flex plutôt qu'un simple bloc (retour utilisateur : un résumé
-   court à côté d'une affiche haute laissait un grand vide) — la progression
-   et "Où regarder" (ci-dessous) viennent occuper cet espace avec du contenu
-   réellement utile, pas juste pour "remplir". */
-.series-hero-info{min-width:0; padding-top:2px; display:flex; flex-direction:column; gap:16px;}
 @media (max-width:600px){
-  .series-hero{grid-template-columns:1fr;}
-  .series-hero-poster{width:140px; margin:0 auto;}
 }
-
-/* .series-hero-stats/.series-hero-stat/.series-hero-progress-pill (v3.2)
-   retirés : remplacés par le cadran .counter (dans .detail-text) et la
-   ligne "Épisodes" de .fiche — voir renderShowDetailHeader(),
-   js/series.js. Même info, langage déjà en place ailleurs dans l'app. */
-.series-hero-providers .eyebrow{margin-bottom:6px;}
 
 /* Où regarder (fiche film communautaire ET fiche série, retour
    utilisateur), voir renderWatchProvidersHtml()/watchProviderChipsHtml()
@@ -5638,13 +5304,6 @@ body[data-view-mode="list"] #topList .top-rank{width:26px; font-size:var(--fs-md
 @media (prefers-reduced-motion:reduce){
   .similar-card img, .similar-card .film-poster-placeholder{transition:none;}
 }
-
-/* Listes thématiques partageables (retour utilisateur, étude comparative
-   Letterboxd) — voir renderFriendsLists()/js/lists.js. Mosaïque de
-   jusqu'à 4 affiches en couverture (même esprit que le mur de posters du
-   profil public), plutôt qu'une ligne de texte façon .wl-row : une liste
-   se "vend" par son contenu visuel, pas juste son titre. */
-.list-cover-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(160px, 1fr)); gap:14px;}
 .list-cover-card{
   border:1px solid var(--line);
   border-radius:var(--r-md);
@@ -5669,43 +5328,10 @@ body[data-view-mode="list"] #topList .top-rank{width:26px; font-size:var(--fs-md
   color:var(--text-muted);
   font-size:var(--fs-xl);
 }
-.list-cover-info{padding:10px 12px;}
-.list-cover-title{
-  font-weight:600; font-size:var(--fs-sm); line-height:1.3;
-  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
-}
-.list-cover-meta{font-size:var(--fs-xs); color:var(--text-muted); margin-top:4px; font-family:var(--font-text); font-variant-numeric:tabular-nums;}
 @media (prefers-reduced-motion:reduce){
   .list-cover-card{transition:none;}
   .list-cover-card:hover{transform:none;}
 }
-.series-hero-meta{
-  display:flex;
-  flex-wrap:wrap;
-  align-items:center;
-  gap:8px;
-  margin-bottom:12px;
-}
-.series-hero-meta .wl-year{
-  font-family:var(--font-text); font-variant-numeric:tabular-nums;
-  font-size:var(--fs-sm);
-  color:var(--text-muted);
-}
-/* Fiche film (v2.1) — voir js/filmDetail.js et #filmDetailNotes,
-   index.html. Un .counter par ligne (note moyenne Kinet, puis "Ta note"
-   si tu l'as déjà notée) — même badge que partout ailleurs dans l'app. */
-.film-detail-note-row{
-  display:flex;
-  align-items:center;
-  gap:14px;
-  margin-bottom:10px;
-}
-.film-detail-note-row:last-child{margin-bottom:0;}
-.film-detail-note-row .counter{flex:none;}
-/* Renvoie vers openFilmReviewDetail() (js/stats.js) : cette fiche
-   communautaire n'affichait jusqu'ici que le chiffre de "Ta note", jamais
-   le détail par critère (retour utilisateur, backlog). */
-.film-detail-my-review-btn{width:100%; margin-top:2px;}
 #filmDetailLikeBtn.active{border-color:var(--coral-dim); color:var(--coral);}
 /* Statut TMDB, coloré comme .rate-* mais avec un vocabulaire différent :
    ici il ne s'agit pas d'un barème de qualité, juste de savoir si la
@@ -5801,12 +5427,6 @@ body[data-view-mode="grid"] #seriesList .new-episode-dot{display:block;}
 .season-block.open .season-caret{transform:rotate(180deg);}
 .season-episodes{display:none; padding:0;}
 .season-block.open .season-episodes{display:block;}
-.season-episodes-actions{
-  display:flex;
-  flex-wrap:wrap;
-  gap:8px;
-  margin:8px 0 12px;
-}
 /* .episode-row = la ligne entière (case à cocher + éventuels contrôles
    "note"/"vu ×N" ci-dessous, v2.39 — restructurée en <div> plutôt que
    <label> pour que ces contrôles additionnels ne soient pas eux-mêmes
@@ -5822,54 +5442,8 @@ body[data-view-mode="grid"] #seriesList .new-episode-dot{display:block;}
   border-top:1px solid var(--line-soft);
 }
 .episode-row:first-of-type{border-top:none;}
-.episode-row-main{
-  display:flex;
-  align-items:flex-start;
-  gap:10px;
-  flex:1;
-  min-width:200px;
-  cursor:pointer;
-}
-/* Case à cocher sur mesure (retour utilisateur : "le carré est un peu trop
-   petit", "une petite animation quand on le coche") — la case native
-   accent-color restait minuscule et sans retour visuel au clic. 22px (contre
-   16px avant) et une coche qui apparaît en rebondissant légèrement plutôt
-   qu'un remplissage instantané. checkbox-pop (js/ui.js, pulseCheckbox())
-   ajoute en plus un petit rebond sur la case elle-même à l'instant du clic,
-   AVANT même que l'écriture réseau n'ait répondu — sans ça, comme toute la
-   ligne est reconstruite après coup (renderSeasonEpisodes()), la coche
-   apparaîtrait déjà cochée au premier affichage, sans jamais s'animer. */
-.episode-row-main input[type="checkbox"]{
-  appearance:none;
-  -webkit-appearance:none;
-  margin-top:1px;
-  width:22px; height:22px;
-  border-radius:var(--r-sm);
-  border:2px solid var(--line);
-  background:var(--surface-2);
-  flex:none;
-  cursor:pointer;
-  position:relative;
-  transition:border-color .15s ease, background-color .15s ease;
-}
-.episode-row-main input[type="checkbox"]:hover{border-color:var(--violet-dim);}
-.episode-row-main input[type="checkbox"]:focus-visible{outline:2px solid var(--violet); outline-offset:2px;}
-.episode-row-main input[type="checkbox"]::after{
-  content:"";
-  position:absolute; inset:0;
-  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='4 12 10 18 20 6'/%3E%3C/svg%3E") center/65% no-repeat;
-  opacity:0;
-  transform:scale(.4);
-  transition:opacity .15s ease, transform .22s cubic-bezier(.34,1.56,.64,1);
-}
-.episode-row-main input[type="checkbox"]:checked{background:var(--violet); border-color:var(--violet);}
-.episode-row-main input[type="checkbox"]:checked::after{opacity:1; transform:scale(1);}
 @keyframes checkboxPop{0%{transform:scale(1);} 40%{transform:scale(1.22);} 100%{transform:scale(1);}}
-.episode-row-main input[type="checkbox"].checkbox-pop{animation:checkboxPop .32s cubic-bezier(.34,1.56,.64,1);}
 @media (prefers-reduced-motion: reduce){
-  .episode-row-main input[type="checkbox"]{transition:none;}
-  .episode-row-main input[type="checkbox"]::after{transition:none;}
-  .episode-row-main input[type="checkbox"].checkbox-pop{animation:none;}
 }
 .episode-num{
   font-family:var(--font-text); font-variant-numeric:tabular-nums;
@@ -5895,37 +5469,6 @@ body[data-view-mode="grid"] #seriesList .new-episode-dot{display:block;}
   flex:none;
   margin-left:auto;
 }
-.episode-note-input{
-  width:52px;
-  padding:4px 6px;
-  border-radius:var(--r-sm);
-  border:1px solid var(--line);
-  background:var(--surface-2);
-  color:var(--text);
-  font-family:var(--font-text); font-variant-numeric:tabular-nums;
-  font-size:var(--fs-sm);
-  text-align:center;
-}
-.episode-watch-count{
-  display:flex;
-  align-items:center;
-  gap:4px;
-  font-family:var(--font-text); font-variant-numeric:tabular-nums;
-  font-size:var(--fs-xs);
-  color:var(--text-muted);
-}
-.episode-count-btn{
-  width:20px; height:20px;
-  border-radius:var(--r-sm);
-  border:1px solid var(--line);
-  background:var(--surface-2);
-  color:var(--text);
-  cursor:pointer;
-  line-height:1;
-  padding:0;
-}
-.episode-count-btn:hover{border-color:var(--violet-dim); color:var(--violet);}
-.episode-count-val{min-width:22px; text-align:center;}
 
 /* Tablette (v2.1, retour utilisateur : recherche/filtre/grille doivent
    rester sur la même ligne) : .toolbar garde son flex-wrap de base
@@ -6126,11 +5669,8 @@ body[data-view-mode="grid"] #seriesList .new-episode-dot{display:block;}
      ligne, boutons alignés à droite (et capables de wrap à leur tour s'il
      y en a 3 : Supprimer/Annuler/Enregistrer). */
   .modal-footer{flex-wrap:wrap; gap:12px 16px;}
-  .live-score{flex:1 1 100%;}
   .modal-footer .right{flex:1 1 100%; flex-wrap:wrap; justify-content:flex-end;}
 }
-
-
 
 /* Admin : gestion des cartes (onglet Cartes) — voir js/admin.js. */
 .admin-override{color:var(--gold); font-weight:600;}
@@ -6184,7 +5724,6 @@ body[data-view-mode="grid"] :is(#filmList .film-sub, #seriesList .wl-note, #topL
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
   display:block; -webkit-line-clamp:unset;
 }
-body[data-view-mode="grid"] :is(#filmList .film-sub-genre){font-weight:400;}
 /* Ce que la grille ne montre pas (reste en vue liste et sur la fiche) */
 body[data-view-mode="grid"] :is(#seriesList, #topList, #wlList) .wl-year,
 body[data-view-mode="grid"] #filmList :is(.review-badge, .rewatch-badge),
@@ -6220,17 +5759,6 @@ body[data-view-mode="grid"] #filmList .star-btn.active{color:var(--accent);}
 @media (hover:none){
   body[data-view-mode="grid"] #filmList .star-btn:not(.active){opacity:0.6;}
 }
-/* Rang du top et pastille « nouvel épisode » : même surimpression, couleur neutre */
-body[data-view-mode="grid"] #topList .top-rank{
-  position:absolute; top:6px; left:6px; z-index:1;
-  width:auto; min-width:26px; height:26px; padding:0 6px;
-  display:flex; align-items:center; justify-content:center;
-  border-radius:var(--r-full);
-  background:rgba(var(--glass-rgb),0.78);
-  backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
-  font-size:var(--fs-sm); color:var(--text);
-}
-body[data-view-mode="grid"] #topList .top-row:nth-child(-n+3) .top-rank{background:rgba(var(--glass-rgb),0.78); color:var(--accent); font-size:var(--fs-sm);}
 body[data-view-mode="grid"] #seriesList .new-episode-dot{background:var(--accent); box-shadow:0 0 0 2px rgba(var(--glass-rgb),0.9);}
 /* À voir : le menu « ⋯ » en surimpression, en haut à droite de l'affiche */
 body[data-view-mode="grid"] #wlList .wl-actions{
@@ -6259,16 +5787,8 @@ body[data-view-mode="grid"] #wlList .wl-quick-form{margin-top:6px;}
   transition:color var(--dur-fast), border-color var(--dur-fast);
 }
 .load-more-btn:hover{color:var(--text); border-color:var(--text-2);}
-
-/* ==========================================================
-   LOT 4 DE L'AUDIT : fiche film alignée sur la fiche série.
-   ========================================================== */
-#filmDetailPage .cta-row{justify-content:flex-start; column-gap:28px; row-gap:14px;}
-button.btn-secondary{background:none; border:none; border-bottom:1px solid var(--text-muted); border-radius:0; cursor:pointer;}
-.btn-secondary.active{color:var(--accent); border-color:var(--accent);}
 #filmDetailRatingRing{cursor:pointer; transition:transform var(--dur-press) var(--ease-out);}
 #filmDetailRatingRing:active{transform:scale(0.97);}
-#filmDetailNotes .film-detail-my-review-btn{width:auto; display:inline-block; margin-top:var(--sp-3);}
 #filmDetailNotes .wl-note{margin-top:0;}
 
 /* ==========================================================
@@ -6482,15 +6002,6 @@ button.btn-secondary{background:none; border:none; border-bottom:1px solid var(-
 .pp-chev svg{width:16px; height:16px;}
 .pp-row:hover .pp-chev{color:var(--text-2);}
 .pp-row-link .pp-row-title{font-size:var(--fs-sm); font-weight:600; color:var(--accent);}
-.pp-disclosure > summary{list-style:none;}
-.pp-disclosure > summary::-webkit-details-marker{display:none;}
-.pp-disclosure[open] > summary .pp-chev{transform:rotate(90deg);}
-.pp-sub-rows{display:flex; flex-direction:column; padding:var(--sp-1) 0 var(--sp-2) var(--sp-4); border-bottom:1px solid var(--line);}
-.pp-sub-row{
-  padding:10px 0; border:0; background:none; text-align:left; cursor:pointer;
-  color:var(--text-2); font-family:var(--font-text); font-size:var(--fs-sm);
-}
-.pp-sub-row:hover{color:var(--text-1);}
 /* « Modifier le profil » : la fenêtre ne garde que photo, pseudo et films */
 .pf-hub{display:none !important;}
 
@@ -6529,7 +6040,6 @@ html:has(.overlay.as-page:is(.open, .closing)) header{
   .overlay.as-page .modal{padding:var(--sp-2) 18px calc(60px + var(--mobile-tabbar-h) + env(safe-area-inset-bottom, 0px));}
 }
 
-
 /* ==========================================================
    AUDIT D6 : un seul jeu de pictos au trait (uiIcon(), js/data.js) à la
    place des émojis et des glyphes de l'interface. Les émojis restent
@@ -6546,7 +6056,6 @@ body[data-view-mode="grid"] #filmList .star-btn .ui-icon{width:16px; height:16px
 .rewatch-badge .ui-icon{width:11px; height:11px;}
 .poster-wall-fav .ui-icon{filter:drop-shadow(0 1px 2px rgba(0,0,0,0.6));}
 .wl-title > .ui-icon:first-child{color:var(--text-2); margin-right:2px;}
-
 
 /* ==========================================================
    À VOIR : plateformes sur les affiches (draft du 15/10, option A) et
