@@ -3,154 +3,47 @@
 Ces actions touchent ta base Supabase, ton compte ou une décision que tu
 dois prendre. Tout le reste est fait dans le code, poussé sur `main`.
 
-## 0. État au 18/10/2026 (audit général)
-- [x] **Migration `supabase/migrations/067_fonctions_fermees_aux_visiteurs.sql`**,
-      lancée par Flix le 23/10. Vérifié sans session le même jour :
-      `mark_proposal_seen` et `delete_my_account` refusées (42501),
-      `get_public_profile` et `get_group_invite_preview` répondent toujours.
-      Plus aucune migration en attente.
-- Vérifié le 18/10, en lecture seule et sans session : les tables et colonnes
-  des migrations 048, 050, 051, 052 et 054 existent, la fonction de 049 aussi ;
-  056 à 066 sont en place (fonctionnalités en ligne, colonnes de 065 et 066
-  contrôlées). 053 (suppression de compte) confirmée par Flix le 23/10.
-- Les sections 1 et 5 ci-dessous datent d'avant : leurs cases sont cochées
-  quand c'est vérifié.
-- Note de version 4.1 : brouillon prêt (`note-v4.1-brouillon.md`, dossier
-  parent), à ne publier qu'avec ton accord.
+## 0. État au 23/10/2026
+- **Plus aucune migration en attente.** 048 à 067 sont en place : 067 lancée
+  le 23/10 et vérifiée sans session (fonctions fermées refusées en 42501,
+  profil partagé et aperçu d'invitation toujours ouverts), 053 confirmée par
+  toi le même jour.
+- Audit général du 16/10 : lots 1 à 7 et les cinq choix (I1, I2, I3, I7, I9,
+  tous en A) faits et en ligne (v293 à v303). Thème clair vérifié sur les 54
+  écrans (v304).
+- Anciennes listes (relevés de choix, décisions de la boucle du 14/10) : tout
+  ce qui avait été décidé est fait (comparaison avec un ami, lien de carte,
+  filtre par décennie, historique des notes, récap de l'année, suppression de
+  compte, sauvegarde proposée avant import, films privés, import Letterboxd
+  par titre et année, recalcul des raretés en procédure manuelle dans
+  `docs/recalcul-raretes.md`).
 
-## 1. Migrations SQL à appliquer (dans cet ordre, éditeur SQL Supabase)
-- [x] `supabase/migrations/056_add_annual_goal.sql` : objectif annuel chiffré
-      (nombre de films que tu te fixes pour l'année) + barre de progression sur
-      l'accueil — deux colonnes ajoutées à `profiles`. Tant qu'elle n'est pas
-      appliquée, le widget propose quand même de définir un objectif mais
-      l'enregistrement échoue avec un toast clair (pas de plantage).
-- [x] `supabase/migrations/057_add_film_friend_ratings.sql` : notes des amis
-      directement sur la fiche film (get_film_friend_ratings()). Tant qu'elle
-      n'est pas appliquée, le bloc "Amis" de la fiche film reste silencieux
-      (vide), pas de plantage.
-- [x] `supabase/migrations/058_add_lists.sql` : Listes thématiques partageables
-      (3 nouvelles tables + get_friends_lists()) — nouvelle page #/listes,
-      accès depuis la page Amis. Tant qu'elle n'est pas appliquée, la page
-      Listes affiche une erreur de chargement (tables inexistantes) mais le
-      reste de l'app n'est pas affecté.
-- [x] `supabase/migrations/059_add_film_note_distribution.sql` : histogramme
-      de répartition des notes sur la fiche film (get_film_note_distribution()).
-      Tant qu'elle n'est pas appliquée, la moyenne reste affichée normalement,
-      seul l'histogramme est absent.
-- [x] `supabase/migrations/060_widen_friend_activity.sql` : flux d'activité
-      amis élargi (watchlist_added + list_created, en plus de film_rated).
-      À appliquer APRÈS 058 (le trigger list_created a besoin de la table
-      `lists`). Sans elle, le fil continue de fonctionner comme avant,
-      juste sans ces deux nouveaux types d'événements.
-- [x] `supabase/migrations/048_tcg_pity.sql` : garantie d'une Légendaire après
-      N boosters sans elle (pity system). Vérifiée sur base simulée.
-- [x] `supabase/migrations/049_draft_classement_amis.sql` : BROUILLON. Classement
-      entre amis, ne renvoie que des compteurs (cartes, films notés), jamais les
-      notes. Testé sur base simulée. À relire puis appliquer si tu es d'accord.
-- [x] `supabase/migrations/050_draft_journal_raretes.sql` : BROUILLON. Journal
-      des changements de rareté (qui, quand, ancienne et nouvelle valeur), lisible
-      par l'admin seulement. Testé sur base simulée.
-- [ ] Les migrations 049 et 050 ne sont PAS dans `schema.sql` tant que tu ne les
-      as pas validées.
+## 1. Ce qui ne peut venir que de toi
+- [ ] **Note de version 4.1** : brouillon `note-v4.1-brouillon.md` (dossier
+      parent), à ne publier qu'avec ton accord.
+- [ ] **Sur un vrai téléphone** : la checklist `docs/checklist-mobile.md`, et
+      un point précis : pendant la notation, bouger un curseur ne doit plus
+      faire remonter le clavier (corrigé le 15/10, jamais vu sur un appareil).
+- [ ] **Avec ton compte** : les écrans sont vérifiés avec des données de
+      démonstration, jamais avec tes vraies données (le navigateur intégré
+      n'a pas ta session, et je ne me connecte pas à ta place).
 
-Après chaque migration : recharge le site (version bumpée à chaque lot).
+## 2. Idées encore ouvertes (rien n'est commencé, dis-moi si tu en veux)
+- Nouveautés classées par catégorie (cartes, séries, design…) dans la
+  fenêtre des nouveautés.
+- Petites bulles « ? » d'aide, seulement sur les écrans complexes (cartes,
+  notation).
+- Limite d'envoi sur le journal d'événements, qui reste ouvert en écriture
+  sans connexion (`docs/audit-rls.md`, point 2) : utile seulement si la table
+  se remplit anormalement.
 
-## 2. Un relevé de tes choix
-- [ ] Sets par saison : je propose une répartition par film (un set = un
-      film ou une franchise), tu confirmes ou tu me dis une autre règle.
-- [ ] Classement entre amis : brouillon 049 prêt, à valider (voir ci-dessus).
-- [ ] Historique des notes : je propose de garder une ligne par changement de
-      note (table dédiée). Dis-moi si tu veux ça, c'est une migration de plus.
-- [ ] Sauvegarde automatique avant import : je propose un téléchargement
-      proposé (pas automatique) avant tout import. Tu confirmes ?
-
-## 3. Hors de ma portée depuis ici
-- [ ] Recalcul périodique des raretés : demande un planificateur (cron
-      Supabase ou ta machine). Je fournis la commande, tu la lances.
-- [ ] Tests sur téléphone réel : checklist dans `docs/checklist-mobile.md`.
-- [ ] Audit des règles d'accès : fait en lecture seule, voir `docs/audit-rls.md`
-      (trois points à trancher : profils visibles entre comptes, journal ouvert
-      sans connexion, visibilité par film).
-- [ ] Suppression de compte, visibilité par film, journal de connexion : ce
-      sont des changements de données et de sécurité. Je les écris, mais ils
-      ne sont pas appliqués tant que tu ne les as pas relus.
-
-## 4. Décisions en attente (avec ma recommandation)
-Chaque point : réponds « oui », « non » ou donne une autre règle.
-- [ ] Sets par saison : je recommande de regrouper les cartes par décennie de
-      sortie du film (ex. « Années 90 »). Demande une colonne année sur les cartes.
-- [ ] Historique des notes : je recommande une table dédiée (une ligne par
-      changement de note). Oui ou non ?
-- [ ] Comparaison avec un ami : je recommande de n'afficher que les films notés
-      par les deux, avec l'écart de note. Nécessite la visibilité des notes entre amis.
-- [ ] Sauvegarde automatique avant import : je recommande un téléchargement
-      proposé (jamais automatique) avant tout import.
-- [ ] Import Letterboxd plus fiable : je recommande de demander l'année en cas
-      de titres ambigus. Je peux le faire sans ta décision.
-- [ ] Suppression de compte : je recommande un bouton dans Paramètres avec
-      confirmation et délai. Opération irréversible : il faut ton accord avant
-      d'écrire la fonction.
-- [ ] Visibilité par film : je recommande un réglage « privé » par film, à
-      appliquer dans la politique RLS. Points à trancher dans docs/audit-rls.md.
-- [ ] Journal de connexion : Supabase garde déjà ces traces ; je recommande de
-      ne pas les recopier dans l'app et de consulter le tableau de bord Supabase.
-- [ ] Lien de carte : je recommande une page /carte/:id en lecture seule, sans
-      données personnelles. Oui ?
-- [ ] Carte vidéo résumé : je recommande une animation de 10 secondes (style
-      récap annuel), générée dans le navigateur. Oui ou non ?
-- [ ] Recalcul périodique : je recommande un workflow GitHub manuel (lancé à la
-      main), sans planification, car le fichier IMDb pèse plusieurs centaines de Mo.
-- [x] Tests de bout en bout : Playwright est installé (`npm run test:e2e`).
-- [ ] Changelog plus lisible : publication gated, je ne publierai rien sans ton
-      accord explicite.
-- [ ] Thème clair : je ne peux pas le voir sans ton compte. Vérifie les écrans
-      en mode clair (Paramètres → Thème) et dis-moi ce qui ne va pas.
-- [ ] Aide contextuelle : je recommande des bulles « ? » seulement sur les écrans
-      complexes (cartes, notation). Oui ?
-
-## 5. Migrations validées (brouillons prêts, à appliquer dans cet ordre)
-Chaque migration est testée sur base simulée. Les appliquer dans Supabase, dans
-l'ordre, puis recharger le site.
-- [x] `051_draft_historique_notes.sql` : historique des notes (table + trigger).
-- [x] `052_draft_annee_cartes.sql` : année de sortie sur les cartes film. Une
-      fois appliquée, je pourrai ajouter le regroupement par décennie dans la
-      collection (je ne l'ai pas fait avant, pour ne pas casser l'affichage).
-- [x] `053_draft_suppression_compte.sql` : IRRÉVERSIBLE. Le bouton « Supprimer mon
-      compte » demande la saisie de SUPPRIMER et affiche un message clair tant que
-      la migration n'est pas appliquée.
-- [x] `054_draft_films_prives.sql` : films privés. Dès qu'elle est appliquée, la case
-      « Privé » du formulaire fonctionne pour les amis.
-- [x] `055_draft_profil_public_prive.sql` : à appliquer JUSTE APRÈS la 054. Sans
-      elle, un film privé peut encore apparaître sur le profil public (accessible
-      sans connexion). Testé : les films privés sont exclus de la liste et des films
-      mis en avant.
-
-## 6. Commandes utiles (après un changement)
+## 3. Commandes utiles (après un changement)
 - Tests unitaires : `npm test` (ou `node tests/run-all.js`).
 - Test de bout en bout (Chromium, serveur local automatique) : `npm run test:e2e`.
   Première fois : `npx playwright install chromium` (déjà fait sur ce poste).
 - Recalcul des raretés : voir `docs/recalcul-raretes.md`.
 
-## 7. Bilan de la boucle (état final)
-Faits et poussés : comparaison avec un ami, lien de carte, aide (revoir
-l'introduction), filtre par décennie, historique de note sur la fiche film,
-récap de l'année, suppression de compte (confirmation tapée), sauvegarde
-proposée avant import, films privés (formulaire), tests de bout en bout,
-confirmation avant changement de rareté (aperçu), contrôle du catalogue,
-badge d'échanges, son de demande d'ami.
-
-Restent pour toi :
-- Appliquer les migrations 051 à 055 (ordre dans la section 5). Tant qu'elles ne
-  le sont pas, les fonctions concernées restent silencieuses (rien ne casse).
-- Années des cartes films déjà générées : `annees-cartes.sql` est prêt (13 années
-  trouvées sur ton export, vérifiées sur 2 exemples). À coller dans Supabase APRÈS la
-  migration 052. Pour le refaire plus tard : `scripts/annees-cartes.js`.
-- Changelog plus lisible : non fait. Demande que chaque entrée ait une catégorie
-  (ex. « cartes », « assistant », « design »). Je ne publierai rien sans ton accord.
-- Thème clair : vérifié sur la page de connexion (capture dans test-results/),
-  à regarder sur les écrans connectés.
-
-## 8. Noms illisibles (alphabet d'origine)
+## 4. Noms illisibles (alphabet d'origine)
 Les cartes acteur/réalisateur dont le nom est en alphabet d'origine (ex. cyrillique,
 japonais, chinois) sont désormais traduites en lettres latines à la génération.
 Pour corriger celles qui existent déjà :
@@ -160,7 +53,7 @@ Pour corriger celles qui existent déjà :
 3. Relire `noms.sql` (une ligne par nom corrigé) puis le coller dans Supabase.
 Les noms sans version latine sur TMDB sont listés dans la console pour correction à la main.
 
-## 9. Export incomplet
+## 5. Export incomplet
 L'éditeur SQL Supabase n'affiche que 100 lignes par défaut. Les exports
 « Supabase Snippet Untitled query » du projet contiennent donc seulement les cartes
 1 à 100. Pour l'export complet, exécuter par tranches, par exemple :
