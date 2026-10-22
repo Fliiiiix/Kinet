@@ -12,8 +12,7 @@ dois prendre. Tout le reste est fait dans le code, poussé sur `main`.
 - Vérifié le 18/10, en lecture seule et sans session : les tables et colonnes
   des migrations 048, 050, 051, 052 et 054 existent, la fonction de 049 aussi ;
   056 à 066 sont en place (fonctionnalités en ligne, colonnes de 065 et 066
-  contrôlées). 053 (suppression de compte) ne se vérifie pas sans l'appeler :
-  à confirmer de ton côté si tu veux.
+  contrôlées). 053 (suppression de compte) confirmée par Flix le 23/10.
 - Les sections 1 et 5 ci-dessous datent d'avant : leurs cases sont cochées
   quand c'est vérifié.
 - Note de version 4.1 : brouillon prêt (`note-v4.1-brouillon.md`, dossier
@@ -116,7 +115,7 @@ l'ordre, puis recharger le site.
 - [x] `052_draft_annee_cartes.sql` : année de sortie sur les cartes film. Une
       fois appliquée, je pourrai ajouter le regroupement par décennie dans la
       collection (je ne l'ai pas fait avant, pour ne pas casser l'affichage).
-- [ ] `053_draft_suppression_compte.sql` : IRRÉVERSIBLE. Le bouton « Supprimer mon
+- [x] `053_draft_suppression_compte.sql` : IRRÉVERSIBLE. Le bouton « Supprimer mon
       compte » demande la saisie de SUPPRIMER et affiche un message clair tant que
       la migration n'est pas appliquée.
 - [x] `054_draft_films_prives.sql` : films privés. Dès qu'elle est appliquée, la case

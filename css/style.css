@@ -6045,6 +6045,9 @@ body[data-view-mode="grid"] #wlList .wl-quick-form{margin-top:6px;}
   background:var(--ink);
   backdrop-filter:none; -webkit-backdrop-filter:none;
 }
+/* --ink reste sombre en thème clair : le fond de page clair à la place
+   (audit du thème clair du 23/10, texte foncé sur fond noir sinon). */
+:root[data-theme="light"] .overlay.as-page{background:var(--ink-surface);}
 .overlay.as-page .modal{
   width:100%; max-width:none; min-height:100%; margin:0;
   padding:var(--sp-2) max(32px, calc((100% - 1080px) / 2 + 32px)) var(--sp-8);
