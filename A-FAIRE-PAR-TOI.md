@@ -4,11 +4,11 @@ Ces actions touchent ta base Supabase, ton compte ou une décision que tu
 dois prendre. Tout le reste est fait dans le code, poussé sur `main`.
 
 ## 0. État au 18/10/2026 (audit général)
-- [ ] **Seule migration à lancer : `supabase/migrations/067_fonctions_fermees_aux_visiteurs.sql`.**
-      Les fonctions de la base ne seront plus appelables sans session (sauf le
-      profil partagé, l'aperçu d'invitation et celles des règles d'accès). Rien
-      ne change pour un compte connecté. La dernière requête du fichier liste ce
-      qui reste ouvert aux visiteurs.
+- [x] **Migration `supabase/migrations/067_fonctions_fermees_aux_visiteurs.sql`**,
+      lancée par Flix le 23/10. Vérifié sans session le même jour :
+      `mark_proposal_seen` et `delete_my_account` refusées (42501),
+      `get_public_profile` et `get_group_invite_preview` répondent toujours.
+      Plus aucune migration en attente.
 - Vérifié le 18/10, en lecture seule et sans session : les tables et colonnes
   des migrations 048, 050, 051, 052 et 054 existent, la fonction de 049 aussi ;
   056 à 066 sont en place (fonctionnalités en ligne, colonnes de 065 et 066

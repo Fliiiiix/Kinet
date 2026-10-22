@@ -1,7 +1,9 @@
 // --- Bientôt (#/prochainement) ---
 // Audit et draft du 15/10, piste A « fil par échéance » validée avec « Au
 // cinéma ». Une liste qui se lit de haut en bas :
-//   Déjà là : épisodes sortis ces deux derniers mois et pas encore cochés,
+//   À rattraper : séries où tu as du retard, avec le prochain épisode à voir
+//     (le même que « À suivre » sur la fiche) ;
+//   Déjà là : épisodes sortis ces deux derniers mois alors que tu étais à jour,
 //     films d'À voir sortis depuis deux mois (avec la plateforme quand il y
 //     en a une) ;
 //   Cette semaine, Plus tard : prochains épisodes (TMDB
@@ -18,6 +20,7 @@
 
 let upcomingSoon = [];      // à venir, trié par date : [{ type, key, title, posterUrl, date, dateObj, sub, showId?, tmdbId? }]
 let upcomingNow = [];       // déjà là, le plus récent d'abord
+let upcomingLate = [];      // à rattraper : séries où tu as du retard, la plus récemment sortie d'abord
 let upcomingWaiting = [];   // séries en cours sans date
 let upcomingCinema = [];    // au cinéma : résultats TMDB + why
 let upcomingCinemaAdded = new Set(); // tmdb ids ajoutés à À voir depuis cette page
@@ -89,24 +92,60 @@ async function loadWatchedEpisodeKeys(){
   return byShow;
 }
 
-// Classe une série en cours à partir de sa fiche TMDB : déjà là (dernier
-// épisode récent pas coché), à venir (prochain épisode daté), en attente.
+// Retard sur une série : le premier épisode sorti pas coché (le même que
+// « À suivre » sur la fiche, nextEpisodeToWatch(), js/series.js) et le
+// nombre d'épisodes sortis pas cochés. Sorti = pas après last_episode_to_air.
+// null si tout ce qui est sorti est vu, ou si les épisodes cochés sont
+// inconnus (hors ligne).
+function showBacklog(details, watched){
+  const last = details.last_episode_to_air;
+  if(!last || !watched) return null;
+  const seasons = (details.seasons || []).filter(s => s.season_number > 0)
+    .sort((a, b) => a.season_number - b.season_number);
+  let next = null;
+  let count = 0;
+  seasons.forEach(s => {
+    for(let ep = 1; ep <= (s.episode_count || 0); ep++){
+      const aired = s.season_number < last.season_number || (s.season_number === last.season_number && ep <= last.episode_number);
+      if(!aired || watched.has(`${s.season_number}-${ep}`)) continue;
+      if(!next) next = { s: s.season_number, e: ep };
+      count++;
+    }
+  });
+  return next ? { next, count } : null;
+}
+
+// Classe une série en cours à partir de sa fiche TMDB : à rattraper (du
+// retard), déjà là (sorti récemment alors que tu étais à jour), à venir
+// (prochain épisode daté), en attente. Audit général du 16/10, I7 piste A :
+// Silo annonçait « Saison 3 en entier » quand la fiche disait « À suivre :
+// saison 2, épisode 1 ».
 function classifyShow(show, details, watched, today){
-  const out = { now: null, soon: null, waiting: null };
+  const out = { late: null, now: null, soon: null, waiting: null };
   const last = details.last_episode_to_air;
   const next = details.next_episode_to_air;
   const base = { showId: show.id, title: show.title, posterUrl: show.posterUrl };
-  if(last && last.air_date && watched){
+  const backlog = showBacklog(details, watched);
+  if(backlog && last.air_date){
     const d = upcomingParseDay(last.air_date);
     const ago = upcomingDaysBetween(d, today);
-    if(ago >= 0 && ago <= UPCOMING_RECENT_DAYS && !watched.has(`${last.season_number}-${last.episode_number}`)){
-      const season = (details.seasons || []).find(s => s.season_number === last.season_number);
-      const seasonDone = !!(season && season.episode_count && last.episode_number >= season.episode_count);
-      const seasonUnseen = seasonDone && ![...watched].some(k => k.startsWith(`${last.season_number}-`));
+    const season = (details.seasons || []).find(s => s.season_number === last.season_number);
+    const seasonDone = !!(season && season.episode_count && last.episode_number >= season.episode_count);
+    // À jour avant la dernière sortie : seul le dernier épisode manque, ou
+    // toute la dernière saison, sortie d'un coup et pas commencée.
+    const onlyLast = backlog.count === 1 && backlog.next.s === last.season_number && backlog.next.e === last.episode_number;
+    const seasonUnseen = seasonDone && backlog.next.s === last.season_number && backlog.next.e === 1 && backlog.count === season.episode_count;
+    if((onlyLast || seasonUnseen) && ago >= 0 && ago <= UPCOMING_RECENT_DAYS){
       out.now = Object.assign({ type: 'episode', key: `now-show-${show.id}`, dateObj: d,
         sub: seasonUnseen ? `Saison ${last.season_number} en entier, ${season.episode_count} épisode${season.episode_count > 1 ? 's' : ''}` : upcomingEpisodeLabel(last.season_number, last.episode_number),
         when: `${seasonUnseen ? 'Depuis le' : 'Sorti le'} ${upcomingPastLabel(d, today)}`,
         rel: seasonUnseen ? 'saison terminée' : upcomingRelPast(ago) }, base);
+    }else{
+      const started = watched.size > 0;
+      out.late = Object.assign({ type: 'episode', key: `late-show-${show.id}`, lastDate: d.getTime(),
+        sub: `${upcomingEpisodeLabel(backlog.next.s, backlog.next.e)} · ${started
+          ? `${backlog.count} épisode${backlog.count > 1 ? 's' : ''} de retard`
+          : 'pas encore commencée'}` }, base);
     }
   }
   if(next && next.air_date){
@@ -117,7 +156,7 @@ function classifyShow(show, details, watched, today){
       return out;
     }
   }
-  if(!out.now){
+  if(!out.now && !out.late){
     let sub = 'Pas encore de date';
     let lastDate = 0;
     if(last && last.air_date){
@@ -138,6 +177,7 @@ async function loadUpcoming(){
   if(watchlist.length === 0) await loadWatchlist();
   if(trackedShows.length === 0) await loadTrackedShows();
   const today = upcomingToday();
+  const late = [];
   const now = [];
   const soon = [];
   const waiting = [];
@@ -167,6 +207,7 @@ async function loadUpcoming(){
     }
     const watched = watchedByShow ? (watchedByShow.get(show.id) || new Set()) : null;
     const c = classifyShow(show, details, watched, today);
+    if(c.late) late.push(c.late);
     if(c.now) now.push(c.now);
     if(c.soon) soon.push(c.soon);
     if(c.waiting) waiting.push(c.waiting);
@@ -187,9 +228,11 @@ async function loadUpcoming(){
   }));
 
   soon.sort((a, b) => a.dateObj - b.dateObj);
+  late.sort((a, b) => b.lastDate - a.lastDate);
   now.sort((a, b) => b.dateObj - a.dateObj);
   waiting.sort((a, b) => b.lastDate - a.lastDate);
   upcomingSoon = soon;
+  upcomingLate = late;
   upcomingNow = now;
   upcomingWaiting = waiting;
 }
@@ -295,6 +338,7 @@ function upcomingSectionHtml(label, hint, rowsHtml, extraClass){
 function upcomingSummaryText(weekItems){
   const parts = [];
   if(upcomingNow.length) parts.push(`<b>${upcomingNow.length} ${upcomingNow.length > 1 ? 'choses' : 'chose'} à voir</b> dès maintenant`);
+  if(upcomingLate.length) parts.push(`${upcomingLate.length} série${upcomingLate.length > 1 ? 's' : ''} à rattraper`);
   if(weekItems.length){
     const allEpisodes = weekItems.every(i => i.type === 'episode');
     const allMovies = weekItems.every(i => i.type === 'movie');
@@ -329,7 +373,8 @@ function renderUpcoming(){
   }));
 
   document.getElementById('upcomingSummary').innerHTML = upcomingSummaryText(week);
-  let html = upcomingSectionHtml('Déjà là', '', rows(upcomingNow, { now: true }));
+  let html = upcomingSectionHtml('À rattraper', '', rows(upcomingLate));
+  html += upcomingSectionHtml('Déjà là', '', rows(upcomingNow, { now: true }));
   if(getUpcomingViewMode() === 'calendar'){
     html += `<section class="up-section"><h3 class="up-label">À venir</h3><div class="upcoming-calendar" id="upcomingCalendar"></div></section>`;
   }else{
@@ -349,7 +394,7 @@ function renderUpcoming(){
       when: upcomingFutureLabel(d, today)
     }, index, { add: `<button type="button" class="up-add${added ? ' is-added' : ''}" data-cinema-add="${movie.id}"${added ? ' disabled' : ''}>${added ? 'Dans À voir' : '+ À voir'}</button>` });
   }).join(''));
-  const empty = !upcomingNow.length && !upcomingSoon.length && !upcomingWaiting.length && !upcomingCinema.length;
+  const empty = !upcomingLate.length && !upcomingNow.length && !upcomingSoon.length && !upcomingWaiting.length && !upcomingCinema.length;
   const feed = document.getElementById('upcomingFeed');
   feed.innerHTML = empty
     ? `<div class="empty-state">Rien de prévu pour l’instant. Ajoute des films à À voir ou suis des séries encore en diffusion.</div>`
@@ -484,7 +529,6 @@ async function openUpcoming(){
 }
 
 document.getElementById('upcomingBtn').addEventListener('click', goToUpcoming);
-document.getElementById('upcomingPageBack').addEventListener('click', goHome);
 function syncUpcomingViewButtons(){
   const mode = getUpcomingViewMode();
   document.querySelectorAll('[data-upcoming-view-btn]').forEach(b => {

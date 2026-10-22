@@ -6270,7 +6270,6 @@ html:has(#authContainer:not([style*="none"])) #versionTag{display:none !importan
    encadrées : un filet par semaine, aujourd'hui en bleu.
    ========================================================== */
 #upcomingPage .page-header{align-items:center;}
-.up-view-toggle{margin-left:auto;}
 .up-summary{margin:0 0 var(--sp-5); font-size:var(--fs-sm); color:var(--text-2);}
 .up-summary b{color:var(--text-1); font-weight:600;}
 .up-summary:empty{display:none;}
@@ -7312,3 +7311,46 @@ body[data-view-mode="list"] #filmList .bulk-select-checkbox{flex:none;}
 @media (max-width:600px){
   .sx-where{display:grid; justify-items:start; gap:var(--sp-2);}
 }
+
+/* ==========================================================
+   AUDIT GÉNÉRAL, CHOIX DE FLIX DU 23/10 (I3 piste A) : du texte et une
+   fine ligne au lieu des boîtes.
+   ========================================================== */
+/* « N films à voir disponibles » */
+.wl-reminder{background:none; border:0; border-left:2px solid var(--accent); border-radius:0; padding:var(--sp-1) 0 var(--sp-1) var(--sp-3); margin-bottom:var(--sp-4); font-size:var(--fs-sm); color:var(--text-2);}
+/* Rappel d'inactivité (maybeShowInactivityReminder(), js/activityState.js) */
+.inactivity-reminder{margin-top:var(--sp-4); margin-bottom:var(--sp-2);}
+.ir-note{border-left:2px solid var(--accent); padding:var(--sp-1) 0 var(--sp-1) var(--sp-3);}
+.ir-title{font-size:var(--fs-sm); font-weight:600; color:var(--text-1);}
+.ir-sub{margin-top:2px; font-size:var(--fs-sm); color:var(--text-2);}
+.ir-actions{display:flex; flex-wrap:wrap; gap:var(--sp-4); margin-top:var(--sp-2);}
+.ir-link{min-height:32px; background:none; border:0; padding:0; cursor:pointer; font-family:var(--font-text); font-size:var(--fs-sm); font-weight:600; color:var(--text-2); transition:color var(--dur-fast);}
+.ir-link:hover{color:var(--text-1);}
+.ir-link.is-accent{color:var(--accent);}
+/* Cette année vs l'année dernière : deux colonnes séparées d'un filet */
+.year-compare-col{background:none; border:0; border-radius:0; padding:var(--sp-2) var(--sp-3);}
+.year-compare-col + .year-compare-col{border-left:1px solid var(--line);}
+.year-compare-genre{background:none; padding:0; color:var(--text-2);}
+/* Suggestions d'À voir : une rangée d'affiches qui défile de côté (js/suggestions.js) */
+.wls-strip{display:grid; grid-auto-flow:column; grid-auto-columns:128px; gap:var(--sp-3); overflow-x:auto; scrollbar-width:none; scroll-snap-type:x proximity; padding-bottom:var(--sp-1);}
+.wls-strip::-webkit-scrollbar{display:none;}
+.wls-item{display:flex; flex-direction:column; align-items:flex-start; gap:var(--sp-1); min-width:0; scroll-snap-align:start;}
+.wls-poster{display:block; width:100%; aspect-ratio:2/3; padding:0; border:0; border-radius:var(--r-sm); overflow:hidden; background:var(--surface-2); cursor:pointer;}
+.wls-poster img{width:100%; height:100%; object-fit:cover; display:block; transition:transform var(--dur-fast);}
+.wls-poster:hover img{transform:scale(1.03);}
+.wls-poster .film-poster-placeholder{width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:var(--text-3);}
+.wls-add{min-height:32px; white-space:nowrap; background:none; border:0; padding:0; cursor:pointer; font-family:var(--font-text); font-size:var(--fs-sm); font-weight:600; color:var(--accent); transition:color var(--dur-fast);}
+.wls-add:hover{color:var(--text-1);}
+.wls-add:disabled{opacity:0.5; cursor:default;}
+@media (max-width:600px){
+  .wls-strip{grid-auto-columns:100px;}
+}
+@media (prefers-reduced-motion:reduce){
+  .wls-poster img{transition:none;}
+}
+/* « Ton année » (I9 piste A) : un lien texte dans les Statistiques, et
+   l'image à partager au dernier écran du récap (openYearRecap(), js/stats.js). */
+.year-link{display:inline-block; min-height:32px; margin:0 0 var(--sp-5); padding:0; background:none; border:0; cursor:pointer; font-family:var(--font-text); font-size:var(--fs-md); font-weight:600; color:var(--accent); transition:color var(--dur-fast);}
+.year-link:hover{color:var(--text-1);}
+.recap-slide.active{pointer-events:auto;}
+.recap-share{margin-top:var(--sp-3);}

@@ -21,30 +21,34 @@ function pickSuggestionSeeds(){
     .slice(0, 5);
 }
 
-function suggestionRowHtml(r){
+// Une rangée d'affiches nues qui défile de côté, « + À voir » sous chacune
+// (audit général du 16/10, I3 piste A) : elles ressemblent à la liste juste
+// au-dessus. L'affiche ouvre la fiche du film.
+function suggestionItemHtml(r){
   const year = r.release_date ? r.release_date.slice(0, 4) : null;
   const poster = r.poster_path ? TMDB_IMG_BASE + r.poster_path : null;
+  const label = `${r.title}${year ? ` (${year})` : ''}`;
   return `
-    <div class="wl-row">
-      ${poster
-        ? `<img class="film-poster" src="${escapeHtml(poster)}" alt="" loading="lazy">`
-        : `<div class="film-poster film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
-      <div class="wl-main">
-        <div class="wl-title">${escapeHtml(r.title)}${year ? ` <span class="wl-year">(${year})</span>` : ''}</div>
-        <div class="wl-note">Parce que tu aimes des films similaires</div>
-      </div>
-      <div class="wl-actions">
-        <button class="btn secondary" data-action="add-watchlist" data-id="${r.id}" type="button">+ À voir</button>
-      </div>
+    <div class="wls-item">
+      <button class="wls-poster" type="button" data-action="open-film" data-id="${r.id}" title="${escapeHtml(label)}" aria-label="Voir la fiche de ${escapeHtml(label)}">
+        ${poster
+          ? `<img src="${escapeHtml(poster)}" alt="" loading="lazy" decoding="async">`
+          : `<span class="film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</span>`}
+      </button>
+      <button class="wls-add" data-action="add-watchlist" data-id="${r.id}" type="button" aria-label="Ajouter ${escapeHtml(label)} à À voir">+ À voir</button>
     </div>
   `;
 }
 
 function renderSuggestionsList(){
   const list = document.getElementById('suggestionsList');
-  list.innerHTML = suggestedFilms.map(suggestionRowHtml).join('');
+  list.innerHTML = suggestedFilms.map(suggestionItemHtml).join('');
   list.querySelectorAll('[data-action="add-watchlist"]').forEach(btn => {
     btn.addEventListener('click', withSubmitGuard(btn, () => addSuggestionToWatchlist(Number(btn.dataset.id))));
+  });
+  const navList = suggestedFilms.map(r => ({ tmdbId: r.id, title: r.title }));
+  list.querySelectorAll('[data-action="open-film"]').forEach(btn => {
+    btn.addEventListener('click', () => goToFilmDetail(Number(btn.dataset.id), navList));
   });
 }
 

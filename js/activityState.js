@@ -205,12 +205,15 @@ function maybeShowInactivityReminder(){
     banner.innerHTML = '';
     return;
   }
+  // Du texte et une fine ligne, plus de boîte (audit général du 16/10, I3).
   banner.innerHTML = `
-    <div class="digest-title">Ça fait ${days} jours que tu n'as rien noté</div>
-    <div class="wl-note" style="margin-bottom:14px;">Un film récemment vu à ajouter à ton catalogue ?</div>
-    <div style="display:flex; gap:10px; flex-wrap:wrap;">
-      <button class="btn" id="inactivityReminderAddBtn" type="button">+ Ajouter un film</button>
-      <button class="btn secondary" id="inactivityReminderDismissBtn" type="button">Plus tard</button>
+    <div class="ir-note">
+      <div class="ir-title">Ça fait ${days} jours que tu n'as rien noté</div>
+      <div class="ir-sub">Un film récemment vu à ajouter à ton catalogue ?</div>
+      <div class="ir-actions">
+        <button class="ir-link is-accent" id="inactivityReminderAddBtn" type="button">+ Ajouter un film</button>
+        <button class="ir-link" id="inactivityReminderDismissBtn" type="button">Plus tard</button>
+      </div>
     </div>
   `;
   banner.style.display = '';

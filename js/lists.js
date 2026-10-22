@@ -191,7 +191,6 @@ async function openLists(){
   await renderFriendsListsSection();
 }
 
-document.getElementById('listsPageBack').addEventListener('click', goHome);
 {
   const createListBtn = document.getElementById('createListBtn');
   createListBtn.addEventListener('click', withSubmitGuard(createListBtn, handleCreateList));

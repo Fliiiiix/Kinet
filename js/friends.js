@@ -674,7 +674,6 @@ async function openFriends(){
 }
 
 document.getElementById('friendsBtn').addEventListener('click', goToAmis);
-document.getElementById('amisPageBack').addEventListener('click', goHome);
 // Interrupteur Amis · Groupes · Listes dans le titre des trois pages (draft
 // Amis du 15/10), comme Films · Séries dans le catalogue. Flèches gauche et
 // droite comme un vrai groupe d'onglets.

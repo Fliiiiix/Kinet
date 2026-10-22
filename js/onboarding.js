@@ -69,7 +69,7 @@ const ONBOARDING_STEPS = [
     target:{ desktop:'userAvatarBtn', mobile:'mobileTabProfile' },
     place:{ desktop:'bottom', mobile:'top' },
     title:'Profil',
-    body:'Tes statistiques, ton bilan de l\'année, tes cartes, et les Paramètres, où tu peux revoir cette visite.'
+    body:'Tes statistiques, ton année, tes cartes, et les Paramètres, où tu peux revoir cette visite.'
   }
 ];
 

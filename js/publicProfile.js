@@ -73,7 +73,10 @@ async function publicProfileRelation(userId){
 async function renderPublicProfilePage(userId){
   const content = document.getElementById('publicProfileContent');
   content.innerHTML = `${skeletonRows(3)}`;
-  document.getElementById('publicProfileBack').textContent = currentUser ? '← Retour' : 'Se connecter';
+  // Connecté : le lien « ‹ Retour » des fiches ; visiteur : un vrai bouton.
+  const back = document.getElementById('publicProfileBack');
+  back.textContent = currentUser ? '‹ Retour' : 'Se connecter';
+  back.className = currentUser ? 'back-link' : 'btn secondary';
 
   const { data, error } = await supabaseClient.rpc('get_public_profile', { p_user_id: userId });
   // La fonction renvoie 0 ou 1 ligne (voir migrations/016) — rpc() sur une

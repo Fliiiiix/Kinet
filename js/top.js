@@ -215,6 +215,5 @@ document.getElementById('profileTopFilmsLinkBtn').addEventListener('click', () =
   closeProfileModal();
   goToTop();
 });
-document.getElementById('topPageBack').addEventListener('click', goHome);
 document.getElementById('topTabGlobal').addEventListener('click', () => setTopScope('global'));
 document.getElementById('topTabFriends').addEventListener('click', () => setTopScope('friends'));

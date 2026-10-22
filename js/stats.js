@@ -626,7 +626,7 @@ function rythmeAnnuel(s){
   return (total / mois.length).toFixed(1);
 }
 
-// Récap de l'année (roadmap « Carte vidéo résumé ») : quatre écrans animés,
+// « Ton année » (roadmap « Carte vidéo résumé ») : cinq écrans animés,
 // défilement automatique, avance au clic. Calcul sur les films notés cette année
 // uniquement ; aucune donnée n'est envoyée ni enregistrée.
 let recapTimer = null;
@@ -651,12 +651,19 @@ function openYearRecap(){
     genreFavori
       ? `<div class="recap-line">Ton genre le plus présent</div><div class="recap-big recap-title">${escapeHtml(genreFavori[0])}</div><div class="recap-line">${genreFavori[1]} film${genreFavori[1] > 1 ? 's' : ''}</div>`
       : `<div class="recap-line">Merci d'avoir noté tes films cette année.</div>`,
+    // Dernier écran : l'image à partager (#recapOverlay, js/recap.js).
+    `<div class="recap-big recap-title">Ton année ${annee}</div><div class="recap-line">${cetteAnnee.length} film${cetteAnnee.length > 1 ? 's' : ''} noté${cetteAnnee.length > 1 ? 's' : ''}${moyenne !== null ? `, ${moyenne.toFixed(1)} de moyenne` : ''}</div><button class="btn recap-share" id="recapShareImageBtn" type="button">Partager en image</button>`,
   ];
   const slides = document.getElementById('recapAnneeSlides');
   const dots = document.getElementById('recapAnneeDots');
   slides.innerHTML = ecrans.map((html, i) => `<div class="recap-slide${i === 0 ? ' active' : ''}" data-i="${i}">${html}</div>`).join('');
   dots.innerHTML = ecrans.map((_, i) => `<span class="recap-dot${i === 0 ? ' active' : ''}"></span>`).join('');
   openOverlay('recapAnneeOverlay');
+  slides.querySelector('#recapShareImageBtn').addEventListener('click', (e) => {
+    e.stopPropagation(); // un tap sur la fenêtre fait avancer les écrans
+    clearInterval(recapTimer);
+    closeOverlay('recapAnneeOverlay', () => openRecap());
+  });
 
   let courant = 0;
   const montrer = (i) => {
@@ -664,6 +671,8 @@ function openYearRecap(){
     slides.querySelectorAll('.recap-slide').forEach((el, k) => el.classList.toggle('active', k === courant));
     dots.querySelectorAll('.recap-dot').forEach((el, k) => el.classList.toggle('active', k === courant));
     if(courant === 0) animateCounters(slides);
+    // Arrêt sur le dernier écran, le temps de choisir « Partager en image ».
+    if(courant === ecrans.length - 1) clearInterval(recapTimer);
   };
   animateCounters(slides);
   clearInterval(recapTimer);
@@ -773,14 +782,18 @@ function renderStatsInto(content, list = films){
   wireLineChart(content);
   if(list === films) renderCatalogueControle(content, list);
   animateCounters(content.querySelector('.stat-tiles'));
-  const bouton = document.createElement('div');
-  bouton.className = 'tcg-card-detail-actions';
-  // Son propre identifiant (audit général du 16/10, B3) : il reprenait
-  // celui de « Mon bilan cinéphile » (#openRecapBtn, index.html), restait
-  // sans effet et ajoutait openYearRecap à l'autre bouton à chaque ouverture.
-  bouton.innerHTML = `<button class="btn secondary" id="openYearRecapBtn" type="button">Mon récap de l'année</button>`;
-  content.insertBefore(bouton, content.firstChild);
-  bouton.querySelector('#openYearRecapBtn').addEventListener('click', openYearRecap);
+  // « Ton année » (audit général du 16/10, I9 piste A) : un seul lien texte,
+  // le même qu'au Profil, à la place de « Mon bilan cinéphile » et « Mon
+  // récap de l'année ». L'image à partager est au dernier écran du récap.
+  if(list === films){
+    const lien = document.createElement('button');
+    lien.type = 'button';
+    lien.className = 'year-link';
+    lien.id = 'openYearRecapBtn';
+    lien.textContent = `Ton année ${new Date().getFullYear()} ›`;
+    content.insertBefore(lien, content.firstChild);
+    lien.addEventListener('click', openYearRecap);
+  }
 
   const genreByMonthEl = content.querySelector('#genreByMonthList');
   if(genreByMonthEl){

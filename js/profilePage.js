@@ -101,7 +101,7 @@ function renderProfilePageFavs(){
 }
 
 function renderProfilePageRows(){
-  document.getElementById('ppRecapLabel').textContent = `Bilan ${new Date().getFullYear()}`;
+  document.getElementById('ppRecapLabel').textContent = `Ton année ${new Date().getFullYear()}`;
 
   const a = computeAchievements();
   document.getElementById('ppAchVal').textContent =

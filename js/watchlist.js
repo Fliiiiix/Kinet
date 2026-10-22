@@ -1165,7 +1165,6 @@ async function handleWlTmdbSearch(query){
 }
 
 document.getElementById('watchlistBtn').addEventListener('click', goToWatchlist);
-document.getElementById('watchlistPageBack').addEventListener('click', goHome);
 {
   const wlAddBtn = document.getElementById('wlAddBtn');
   wlAddBtn.addEventListener('click', withSubmitGuard(wlAddBtn, handleAddToWatchlist));

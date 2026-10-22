@@ -59,27 +59,67 @@ test('série : épisode sorti il y a 5 jours pas coché -> Déjà là, et le sui
   assert.strictEqual(c.waiting, null);
 });
 
-test('série : saison entière sortie et pas commencée -> « Saison 2 en entier », pas en attente', () => {
+const season1 = ['1-1', '1-2', '1-3', '1-4', '1-5', '1-6', '1-7', '1-8'];
+
+test('série : saison entière sortie et pas commencée, saison d’avant finie -> « Saison 2 en entier », pas en attente', () => {
   const ctx = buildContext();
   const c = plain(ctx.classifyShow(show, {
     last_episode_to_air: { air_date: day(2026, 9, 3), season_number: 2, episode_number: 8 },
     next_episode_to_air: null,
     seasons: [{ season_number: 1, episode_count: 8 }, { season_number: 2, episode_count: 8 }],
-  }, new Set(['1-1', '1-8']), TODAY));
+  }, new Set(season1), TODAY));
   assert.strictEqual(c.now.sub, 'Saison 2 en entier, 8 épisodes');
   assert.strictEqual(c.now.when, 'Depuis le 3 sept.');
   assert.strictEqual(c.now.rel, 'saison terminée');
+  assert.strictEqual(c.late, null);
   assert.strictEqual(c.waiting, null);
 });
 
-test('série : dernier épisode déjà coché, pas de date -> En attente « Saison 1 finie le 29 juin »', () => {
+// Audit général du 16/10, I7 piste A : Silo annonçait « Saison 3 en entier »
+// quand la fiche disait « À suivre : saison 2, épisode 1 ».
+test('série : du retard -> À rattraper avec le même épisode que la fiche, pas Déjà là', () => {
+  const ctx = buildContext();
+  const c = plain(ctx.classifyShow(show, {
+    last_episode_to_air: { air_date: day(2026, 9, 3), season_number: 3, episode_number: 10 },
+    next_episode_to_air: null,
+    seasons: [{ season_number: 0, episode_count: 2 }, { season_number: 1, episode_count: 10 }, { season_number: 2, episode_count: 10 }, { season_number: 3, episode_count: 10 }, { season_number: 4, episode_count: 10 }],
+  }, new Set(['1-1', '1-2', '1-3', '1-4', '1-5', '1-6', '1-7', '1-8', '1-9', '1-10']), TODAY));
+  assert.strictEqual(c.now, null);
+  assert.strictEqual(c.late.sub, 'Saison 2, épisode 1 · 20 épisodes de retard');
+  assert.strictEqual(c.waiting, null, 'une seule ligne par série');
+});
+
+test('série : deux épisodes récents pas vus -> À rattraper, « 2 épisodes de retard »', () => {
+  const ctx = buildContext();
+  const c = plain(ctx.classifyShow(show, {
+    last_episode_to_air: { air_date: day(2026, 10, 10), season_number: 2, episode_number: 3 },
+    next_episode_to_air: { air_date: day(2026, 10, 17), season_number: 2, episode_number: 4 },
+    seasons: [{ season_number: 2, episode_count: 12 }],
+  }, new Set(['2-1']), TODAY));
+  assert.strictEqual(c.now, null);
+  assert.strictEqual(c.late.sub, 'Saison 2, épisode 2 · 2 épisodes de retard');
+  assert.strictEqual(c.soon.sub, 'Saison 2, épisode 4');
+});
+
+test('série : jamais commencée -> À rattraper « pas encore commencée »', () => {
+  const ctx = buildContext();
+  const c = plain(ctx.classifyShow(show, {
+    last_episode_to_air: { air_date: day(2026, 3, 1), season_number: 1, episode_number: 6 },
+    next_episode_to_air: null,
+    seasons: [{ season_number: 1, episode_count: 6 }],
+  }, new Set(), TODAY));
+  assert.strictEqual(c.late.sub, 'Saison 1, épisode 1 · pas encore commencée');
+});
+
+test('série : tout vu, pas de date -> En attente « Saison 1 finie le 29 juin »', () => {
   const ctx = buildContext();
   const c = plain(ctx.classifyShow(show, {
     last_episode_to_air: { air_date: day(2026, 6, 29), season_number: 1, episode_number: 13 },
     next_episode_to_air: null,
     seasons: [{ season_number: 1, episode_count: 13 }],
-  }, new Set(['1-13']), TODAY));
+  }, new Set(Array.from({ length: 13 }, (_, i) => `1-${i + 1}`)), TODAY));
   assert.strictEqual(c.now, null);
+  assert.strictEqual(c.late, null);
   assert.strictEqual(c.waiting.sub, 'Saison 1 finie le 29 juin');
 });
 

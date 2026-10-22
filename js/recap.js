@@ -205,7 +205,7 @@ function cssVar(name){
 // dupliquer un bloc de texte cliqué visuellement.
 function recapAriaLabel(recap){
   const parts = [
-    `Bilan cinéphile ${recap.year}`,
+    `Mon année ${recap.year}`,
     `${recap.total} ${recap.total > 1 ? 'films vus' : 'film vu'}`,
   ];
   if(recap.avgNote != null) parts.push(`note moyenne ${recap.avgNote.toFixed(1)} sur 5`);
@@ -256,7 +256,7 @@ async function renderRecapCanvas(recap){
   ctx.textAlign = 'left';
   ctx.fillStyle = gold;
   ctx.font = "700 26px 'Instrument Sans', sans-serif";
-  ctx.fillText('KINET · BILAN ' + recap.year, 70, y);
+  ctx.fillText('KINET · MON ANNÉE ' + recap.year, 70, y);
 
   y += 70;
   const displayName = (typeof currentProfile !== 'undefined' && currentProfile && currentProfile.display_name) || 'Cinéphile';
@@ -477,7 +477,6 @@ function closeRecap(){
   closeOverlay('recapOverlay');
 }
 
-document.getElementById('openRecapBtn').addEventListener('click', openRecap);
 document.getElementById('closeRecap').addEventListener('click', closeRecap);
 document.getElementById('recapOverlay').addEventListener('click', (e) => {
   if(e.target.id === 'recapOverlay') closeRecap();
@@ -525,7 +524,7 @@ document.getElementById('shareRecapBtn').addEventListener('click', withSubmitGua
     const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
     if(!blob) throw new Error('canvas.toBlob() a renvoyé null');
     const file = new File([blob], `kinet-bilan-${year}.png`, { type: 'image/png' });
-    await navigator.share({ files: [file], title: `Mon bilan cinéphile ${year}` });
+    await navigator.share({ files: [file], title: `Mon année ${year}` });
   }catch(e){
     // AbortError : l'utilisateur a juste fermé la feuille de partage sans
     // rien choisir — pas une erreur, aucun toast à afficher pour ça.

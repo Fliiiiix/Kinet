@@ -1135,7 +1135,3 @@ document.getElementById('adminPage').addEventListener('click', (e) => {
   }
 });
 document.getElementById('adminNavBtn').addEventListener('click', goToAdmin);
-document.getElementById('adminPageBack').addEventListener('click', () => {
-  if(window.matchMedia('(max-width: 600px)').matches) returnToProfile();
-  else goHome();
-});
