@@ -40,7 +40,7 @@ function buildContext(){
     watchlistProviders: {
       1: [{ provider_name: 'Netflix', logo_path: '/n.png' }],
       2: [{ provider_name: 'Netflix Standard with Ads' }, { provider_name: 'Amazon Prime Video', logo_path: '/p.png' }],
-      3: [{ provider_name: 'Amazon Prime Video' }],
+      3: [{ provider_name: 'Amazon Prime Video' }, { provider_name: 'Canal+' }],
     },
     watchlistProvidersReady: true,
   });
@@ -49,27 +49,61 @@ function buildContext(){
 
 const plain = (v) => JSON.parse(JSON.stringify(v));
 
-test('choix proposés : Toutes, Mes abonnements, puis les services, le plus fourni d\'abord', () => {
+const front = (ctx) => plain(ctx.surpriseServiceChoices()).filter(c => c.front).map(c => c.value);
+
+test('sans abonnement : Toutes et les deux plateformes les plus fournies devant', () => {
   const { ctx } = buildContext();
-  ctx.localStorage.setItem('kinetMyStreamingServices', JSON.stringify(['prime video']));
-  const choices = plain(ctx.surpriseServiceChoices()).map(c => [c.value, c.label, c.n]);
-  assert.deepStrictEqual(choices, [
-    ['', 'Toutes', 4],
-    ['__mine', 'Mes abonnements', 2],
-    ['netflix', 'Netflix', 2],
-    ['prime video', 'Prime Video', 2],
-  ]);
+  const choices = plain(ctx.surpriseServiceChoices()).map(c => [c.value, c.n]);
+  assert.deepStrictEqual(choices, [['', 4], ['netflix', 2], ['prime video', 2], ['canal+', 1]]);
+  assert.deepStrictEqual(front(ctx), ['', 'netflix', 'prime video']);
 });
 
-test('pastilles : celle du filtre actif cochée, « Mes abonnements » à 0 désactivée', () => {
+test('un abonnement : il passe devant, pas de « Mes abonnements » qui le répéterait', () => {
+  const { ctx } = buildContext();
+  ctx.localStorage.setItem('kinetMyStreamingServices', JSON.stringify(['prime video']));
+  assert.deepStrictEqual(front(ctx), ['', 'prime video']);
+  assert.ok(!plain(ctx.surpriseServiceChoices()).some(c => c.value === '__mine'));
+});
+
+test('deux abonnements : Toutes, Mes abonnements et les deux plateformes devant', () => {
+  const { ctx } = buildContext();
+  ctx.localStorage.setItem('kinetMyStreamingServices', JSON.stringify(['netflix', 'prime video', 'disney+']));
+  assert.deepStrictEqual(front(ctx), ['', '__mine', 'netflix', 'prime video']);
+  assert.strictEqual(plain(ctx.surpriseServiceChoices()).find(c => c.value === '__mine').n, 3);
+});
+
+test('pastilles : les autres plateformes derrière « + n autres », révélées au toucher', () => {
   const { ctx, els } = buildContext();
-  ctx.localStorage.setItem('kinetMyStreamingServices', JSON.stringify(['canal+']));
-  els.wlProviderFilter.value = 'netflix';
+  ctx.localStorage.setItem('kinetMyStreamingServices', JSON.stringify(['prime video']));
+  ctx.renderSurpriseServices();
+  let html = els.surpriseServices.innerHTML;
+  assert.ok(/aria-checked="true" data-surprise-service=""/.test(html), 'Toutes coché');
+  assert.ok(html.includes('data-surprise-service="prime video"'));
+  assert.ok(!html.includes('data-surprise-service="netflix"') && !html.includes('data-surprise-service="canal+"'));
+  assert.ok(html.includes('+ 2 autres'));
+  ctx.handleSurpriseServiceClick({ target: { closest: (sel) => sel === '[data-surprise-more]' ? {} : null } });
+  html = els.surpriseServices.innerHTML;
+  assert.ok(html.includes('data-surprise-service="netflix"') && html.includes('data-surprise-service="canal+"'));
+  assert.ok(!html.includes('autres'));
+});
+
+test('pastilles : un choix pris dans « + n autres » reste visible et coché', () => {
+  const { ctx, els } = buildContext();
+  ctx.localStorage.setItem('kinetMyStreamingServices', JSON.stringify(['prime video']));
+  els.wlProviderFilter.value = 'canal+';
   ctx.renderSurpriseServices();
   const html = els.surpriseServices.innerHTML;
-  assert.strictEqual(els.surpriseServices.style.display, '');
-  assert.ok(/aria-checked="true" data-surprise-service="netflix"/.test(html), 'Netflix coché');
-  assert.ok(/data-surprise-service="__mine" data-empty="1" disabled/.test(html), 'aucun film sur tes abonnements');
+  assert.ok(/aria-checked="true" data-surprise-service="canal\+"/.test(html));
+  assert.ok(html.includes('+ 1 autre<'));
+});
+
+test('« Mes abonnements » gardé avec un seul abonnement présent : devient cette plateforme', () => {
+  const { ctx, els, spins } = buildContext();
+  ctx.localStorage.setItem('kinetMyStreamingServices', JSON.stringify(['prime video']));
+  ctx.localStorage.setItem('kinetSurpriseService', '__mine');
+  ctx.openSurprise();
+  assert.strictEqual(els.wlProviderFilter.value, 'prime video');
+  assert.deepStrictEqual(spins, [[2, 3]]);
 });
 
 test('pastilles : en attente tant que les plateformes ne sont pas vérifiées', () => {
@@ -82,7 +116,7 @@ test('pastilles : en attente tant que les plateformes ne sont pas vérifiées', 
 test('choisir Netflix dans la fenêtre : filtre posé, choix gardé, tirage dans Netflix seulement', () => {
   const { ctx, els, spins } = buildContext();
   const chip = { disabled: false, dataset: { surpriseService: 'netflix' }, getAttribute: () => 'false' };
-  ctx.handleSurpriseServiceClick({ target: { closest: () => chip } });
+  ctx.handleSurpriseServiceClick({ target: { closest: (sel) => sel === '[data-surprise-service]' ? chip : null } });
   assert.strictEqual(els.wlProviderFilter.value, 'netflix');
   assert.strictEqual(ctx.localStorage.getItem('kinetSurpriseService'), 'netflix');
   assert.deepStrictEqual(spins, [[1, 2]]);
@@ -111,7 +145,7 @@ test('ouverture avant la vérification des plateformes : attend, puis tire sur l
 
 test('ouverture : un choix qui n\'existe plus retombe sur Toutes', () => {
   const { ctx, els, spins } = buildContext();
-  ctx.localStorage.setItem('kinetSurpriseService', 'canal+');
+  ctx.localStorage.setItem('kinetSurpriseService', 'disney+');
   ctx.openSurprise();
   assert.strictEqual(els.wlProviderFilter.value, '');
   assert.deepStrictEqual(spins, [[1, 2, 3, 4]]);
@@ -119,7 +153,7 @@ test('ouverture : un choix qui n\'existe plus retombe sur Toutes', () => {
 
 test('aucun film sur le choix : message, pas de tirage', () => {
   const { ctx, els, spins } = buildContext();
-  ctx.localStorage.setItem('kinetMyStreamingServices', JSON.stringify(['canal+']));
+  ctx.localStorage.setItem('kinetMyStreamingServices', JSON.stringify(['disney+']));
   els.wlProviderFilter.value = '__mine';
   ctx.startSurpriseDraw();
   assert.deepStrictEqual(spins, []);

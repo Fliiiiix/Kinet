@@ -740,15 +740,20 @@ let surpriseSpinning = false;
 
 // --- Plateforme du tirage (retour de Flix, 22/10 : « je ne veux que la
 // catégorie de film dans Netflix par ex ou Prime ») --- Choisie dans la
-// fenêtre elle-même : Toutes, Mes abonnements, puis chaque service présent
-// dans À voir. C'est le même filtre que la liste (#wlProviderFilter, seule
-// source de vérité, voir getFilteredWatchlist()) ; le dernier choix, fait ici
-// ou dans le filtre de la page, est gardé sur cet appareil pour le tirage
-// suivant.
+// fenêtre elle-même. Tes abonnements d'abord (2e retour, même jour : « trop
+// chargé ») : Toutes, Mes abonnements, tes plateformes, et les autres
+// derrière « + n autres ». C'est le même filtre que la liste
+// (#wlProviderFilter, seule source de vérité, voir getFilteredWatchlist()) ;
+// le dernier choix, fait ici ou dans le filtre de la page, est gardé sur cet
+// appareil pour le tirage suivant.
 const SURPRISE_SERVICE_KEY = 'kinetSurpriseService';
+// Sans abonnement coché : les plateformes les plus fournies restant devant.
+const SURPRISE_FRONT_WITHOUT_SUBS = 2;
 // Ouvert sur une plateforme avant la fin de loadWatchlistProviders() : le
 // tirage part dès qu'elle se termine (onSurpriseProvidersReady()).
 let surpriseWaitingProviders = false;
+// « + n autres » touché : toutes les plateformes, jusqu'à la fermeture.
+let surpriseServicesExpanded = false;
 
 function getSurpriseServicePref(){
   try{ return localStorage.getItem(SURPRISE_SERVICE_KEY) || ''; }catch(e){ return ''; }
@@ -761,19 +766,26 @@ function setSurpriseServicePref(value){
   }catch(e){}
 }
 
-// n : nombre de films tirables avec ce choix.
+// n : nombre de films tirables avec ce choix (jamais 0 : seules les
+// plateformes présentes dans À voir). front : visible sans « + n autres ».
+// « Mes abonnements » seulement à partir de deux plateformes cochées
+// présentes, sinon il répète l'unique pastille d'abonnement.
 function surpriseServiceChoices(){
   const mine = getMyStreamingServices();
-  const choices = [{ value: '', label: 'Toutes', n: watchlist.length }];
-  if(mine.size > 0){
+  const services = Array.from(watchlistServiceCounts().values())
+    .sort((a, b) => (mine.has(b.key) - mine.has(a.key)) || b.n - a.n || a.name.localeCompare(b.name, 'fr'));
+  const subscribed = services.filter(s => mine.has(s.key));
+  const choices = [{ value: '', label: 'Toutes', n: watchlist.length, front: true }];
+  if(subscribed.length > 1){
     choices.push({
-      value: MY_SERVICES_FILTER, label: 'Mes abonnements',
+      value: MY_SERVICES_FILTER, label: 'Mes abonnements', front: true,
       n: watchlist.filter(item => watchlistServices(item).some(s => mine.has(s.key))).length
     });
   }
-  Array.from(watchlistServiceCounts().values())
-    .sort((a, b) => b.n - a.n || a.name.localeCompare(b.name, 'fr'))
-    .forEach(s => choices.push({ value: s.key, label: s.name, logoPath: s.logoPath, n: s.n }));
+  services.forEach((s, i) => choices.push({
+    value: s.key, label: s.name, logoPath: s.logoPath, n: s.n,
+    front: subscribed.length > 0 ? mine.has(s.key) : i < SURPRISE_FRONT_WITHOUT_SUBS
+  }));
   return choices;
 }
 
@@ -797,9 +809,14 @@ function renderSurpriseServices(){
     return;
   }
   const current = document.getElementById('wlProviderFilter').value;
-  el.innerHTML = choices.map(c => `<button type="button" class="wl-sub-chip" role="radio" aria-checked="${c.value === current}" data-surprise-service="${escapeHtml(c.value)}"${c.n === 0 ? ' data-empty="1"' : ''}${c.n === 0 || surpriseSpinning ? ' disabled' : ''}>${
+  // Le choix en cours reste visible même s'il vient de « + n autres ».
+  const shown = surpriseServicesExpanded ? choices : choices.filter(c => c.front || c.value === current);
+  const hidden = choices.length - shown.length;
+  el.innerHTML = shown.map(c => `<button type="button" class="wl-sub-chip" role="radio" aria-checked="${c.value === current}" data-surprise-service="${escapeHtml(c.value)}" title="${c.n} film${c.n > 1 ? 's' : ''}"${surpriseSpinning ? ' disabled' : ''}>${
     c.logoPath ? `<img src="${escapeHtml(WATCHLIST_LOGO_BASE + c.logoPath)}" alt="" loading="lazy">` : ''
-  }${escapeHtml(c.label)}<span class="surprise-service-n">${c.n}</span></button>`).join('');
+  }${escapeHtml(c.label)}</button>`).join('') + (hidden > 0
+    ? `<button type="button" class="surprise-services-more" data-surprise-more aria-label="Voir ${hidden} autre${hidden > 1 ? 's' : ''} plateforme${hidden > 1 ? 's' : ''}">+ ${hidden} autre${hidden > 1 ? 's' : ''}</button>`
+    : '');
   el.style.display = '';
   // Au téléphone la rangée défile : le choix retenu reste en vue.
   const checked = el.querySelector('[aria-checked="true"]');
@@ -810,15 +827,22 @@ function renderSurpriseServices(){
 
 function setSurpriseServicesBusy(busy){
   document.getElementById('surpriseServices').querySelectorAll('[data-surprise-service]').forEach(b => {
-    b.disabled = busy || b.dataset.empty === '1';
+    b.disabled = busy;
   });
 }
 
 // Un choix qui n'existe plus (plateforme partie du catalogue, abonnements
-// décochés) retombe sur Toutes.
+// décochés) retombe sur Toutes. « Mes abonnements » avec une seule
+// plateforme cochée présente devient cette plateforme.
 function applySurpriseService(value){
-  const valid = surpriseServiceChoices().some(c => c.value === value);
-  document.getElementById('wlProviderFilter').value = valid ? value : '';
+  const choices = surpriseServiceChoices();
+  let wanted = value;
+  if(wanted === MY_SERVICES_FILTER && !choices.some(c => c.value === wanted)){
+    const mine = getMyStreamingServices();
+    const subscribed = choices.filter(c => c.value && mine.has(c.value));
+    wanted = subscribed.length === 1 ? subscribed[0].value : '';
+  }
+  document.getElementById('wlProviderFilter').value = choices.some(c => c.value === wanted) ? wanted : '';
   renderWatchlist();
 }
 
@@ -860,6 +884,16 @@ function onSurpriseProvidersReady(){
 }
 
 function handleSurpriseServiceClick(e){
+  if(e.target.closest('[data-surprise-more]')){
+    surpriseServicesExpanded = true;
+    renderSurpriseServices();
+    // Le bouton disparaît : le focus passe à la première plateforme révélée.
+    const first = surpriseServiceChoices().find(c => !c.front);
+    const chips = Array.from(document.getElementById('surpriseServices').querySelectorAll('[data-surprise-service]'));
+    const target = first && chips.find(b => b.dataset.surpriseService === first.value);
+    if(target) target.focus();
+    return;
+  }
   const chip = e.target.closest('[data-surprise-service]');
   if(!chip || chip.disabled || surpriseSpinning || chip.getAttribute('aria-checked') === 'true') return;
   const value = chip.dataset.surpriseService;
@@ -1029,6 +1063,7 @@ function openSurprise(){
     return;
   }
   surpriseWaitingProviders = false;
+  surpriseServicesExpanded = false;
   openOverlay('surpriseOverlay');
   const pref = getSurpriseServicePref();
   if(pref && !watchlistProvidersReady){
@@ -1037,7 +1072,7 @@ function openSurprise(){
     showSurpriseMessage('Vérification des plateformes…');
     return;
   }
-  if(pref) applySurpriseService(pref);
+  if(watchlistProvidersReady) applySurpriseService(pref || document.getElementById('wlProviderFilter').value);
   startSurpriseDraw();
 }
 

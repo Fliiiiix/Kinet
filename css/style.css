@@ -4139,7 +4139,14 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
 .surprise-services .wl-sub-chip:disabled{opacity:0.45; cursor:default;}
 .surprise-services .wl-sub-chip:disabled:hover{color:var(--text-2); border-color:var(--line);}
 .surprise-services .wl-sub-chip[aria-checked="true"]:disabled{opacity:1;}
-.surprise-service-n{font-weight:400; color:var(--text-3); font-variant-numeric:tabular-nums;}
+/* « + n autres » : les plateformes hors abonnements, en simple lien. */
+.surprise-services-more{
+  flex:none; height:32px; padding:0 var(--sp-2);
+  background:none; border:none; cursor:pointer;
+  font-family:var(--font-text); font-size:var(--fs-sm); font-weight:600; color:var(--text-2);
+  transition:color var(--dur-fast);
+}
+.surprise-services-more:hover{color:var(--text-1);}
 .surprise-services-wait{font-size:var(--fs-xs); color:var(--text-2); line-height:32px;}
 @media (max-width:600px){
   /* Fondu à droite : on voit qu'il y a d'autres plateformes plus loin. */
