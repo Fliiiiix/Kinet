@@ -15,7 +15,7 @@ const CHATBOT_GREETING = 'Salut ! Je peux te dire ce que tu as noté, te sortir 
 // Réponses sur l'app — une entrée par sujet. "mots" : mots-clés (sans
 // accents, minuscules) qui déclenchent la réponse.
 const CHATBOT_HELP_TOPICS = [
-  { mots: ['watchlist', 'a voir'], texte: 'À voir garde les films que tu veux regarder, avec les plateformes où ils sont disponibles. Un film que tu notes en sort tout seul, et « Surprends-moi » en tire un au hasard.' },
+  { mots: ['watchlist', 'a voir'], texte: 'À voir garde les films que tu veux regarder, avec les plateformes où ils sont disponibles. Un film que tu notes en sort tout seul, et « Surprends-moi » en tire un au hasard, sur la plateforme de ton choix.' },
   { mots: ['serie'], texte: 'Sur la fiche d\'une série, « À suivre » montre le prochain épisode et ses saisons se cochent en petits carrés (ou en liste). Bientôt annonce les prochains épisodes de tes séries.' },
   { mots: ['ami', 'groupe'], texte: 'Dans Amis, tu ajoutes des personnes par pseudo ou par email, ou tu partages ton profil. Un groupe sert à choisir votre prochaine séance : chacun propose des films, on se dit « Partant », et le créateur fixe la date.' },
   { mots: ['carte', 'booster', 'tcg'], texte: 'Les cartes viennent sans tirage : chaque film de ton catalogue donne sa carte, et réalisateurs et acteurs montent de rang avec tes films. Elles sont dans Profil, Cartes.' },

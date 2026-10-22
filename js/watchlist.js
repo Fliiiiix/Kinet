@@ -24,6 +24,10 @@ let watchlistFriendRatings = {};
 // que "Où regarder" sur la fiche film (js/tmdb.js, js/filmDetail.js) : la
 // disponibilité change sans prévenir.
 let watchlistProviders = {};
+// Vrai une fois le lot entier vérifié (loadWatchlistProviders()) : le tirage
+// « Surprends-moi » sur une plateforme attend ce moment plutôt que de
+// piocher dans une liste à moitié connue.
+let watchlistProvidersReady = false;
 
 // Ajoute un film TMDB brut (résultat de /search, /upcoming, /similar...) à
 // À voir et le place en tête de `watchlist`. Renvoie l'élément ajouté, ou
@@ -389,6 +393,7 @@ const WATCHLIST_PROVIDERS_CONCURRENCY = 6;
 
 async function loadWatchlistProviders(){
   watchlistProviders = {};
+  watchlistProvidersReady = false;
   const queue = watchlist.filter(item => item.tmdbId);
   const worker = async () => {
     while(queue.length > 0){
@@ -404,6 +409,7 @@ async function loadWatchlistProviders(){
   };
   const workers = Math.min(WATCHLIST_PROVIDERS_CONCURRENCY, queue.length);
   await Promise.all(Array.from({ length: workers }, worker));
+  watchlistProvidersReady = true;
   renderWatchlistReminder();
 }
 
@@ -533,6 +539,7 @@ async function openWatchlist(){
   loadWatchlistProviders().then(() => {
     buildWatchlistProviderFilterOptions();
     renderWatchlist();
+    onSurpriseProvidersReady();
   });
 }
 
@@ -731,6 +738,136 @@ function startRatingFromWatchlist(item){
 let currentSurpriseItem = null;
 let surpriseSpinning = false;
 
+// --- Plateforme du tirage (retour de Flix, 22/10 : « je ne veux que la
+// catégorie de film dans Netflix par ex ou Prime ») --- Choisie dans la
+// fenêtre elle-même : Toutes, Mes abonnements, puis chaque service présent
+// dans À voir. C'est le même filtre que la liste (#wlProviderFilter, seule
+// source de vérité, voir getFilteredWatchlist()) ; le dernier choix, fait ici
+// ou dans le filtre de la page, est gardé sur cet appareil pour le tirage
+// suivant.
+const SURPRISE_SERVICE_KEY = 'kinetSurpriseService';
+// Ouvert sur une plateforme avant la fin de loadWatchlistProviders() : le
+// tirage part dès qu'elle se termine (onSurpriseProvidersReady()).
+let surpriseWaitingProviders = false;
+
+function getSurpriseServicePref(){
+  try{ return localStorage.getItem(SURPRISE_SERVICE_KEY) || ''; }catch(e){ return ''; }
+}
+
+function setSurpriseServicePref(value){
+  try{
+    if(value) localStorage.setItem(SURPRISE_SERVICE_KEY, value);
+    else localStorage.removeItem(SURPRISE_SERVICE_KEY);
+  }catch(e){}
+}
+
+// n : nombre de films tirables avec ce choix.
+function surpriseServiceChoices(){
+  const mine = getMyStreamingServices();
+  const choices = [{ value: '', label: 'Toutes', n: watchlist.length }];
+  if(mine.size > 0){
+    choices.push({
+      value: MY_SERVICES_FILTER, label: 'Mes abonnements',
+      n: watchlist.filter(item => watchlistServices(item).some(s => mine.has(s.key))).length
+    });
+  }
+  Array.from(watchlistServiceCounts().values())
+    .sort((a, b) => b.n - a.n || a.name.localeCompare(b.name, 'fr'))
+    .forEach(s => choices.push({ value: s.key, label: s.name, logoPath: s.logoPath, n: s.n }));
+  return choices;
+}
+
+// Pastilles en choix unique, désactivées pendant que la bande tourne. Rien
+// tant qu'aucune plateforme n'est connue (liste sans fiche TMDB, ou aucun
+// film en streaming).
+function renderSurpriseServices(){
+  const el = document.getElementById('surpriseServices');
+  if(!watchlistProvidersReady){
+    // En attente d'un tirage sur une plateforme, la fenêtre le dit déjà en
+    // grand (showSurpriseMessage()) : pas deux fois.
+    const checking = !surpriseWaitingProviders && watchlist.some(item => item.tmdbId);
+    el.innerHTML = checking ? `<span class="surprise-services-wait">Vérification des plateformes…</span>` : '';
+    el.style.display = checking ? '' : 'none';
+    return;
+  }
+  const choices = surpriseServiceChoices();
+  if(choices.length === 1){
+    el.innerHTML = '';
+    el.style.display = 'none';
+    return;
+  }
+  const current = document.getElementById('wlProviderFilter').value;
+  el.innerHTML = choices.map(c => `<button type="button" class="wl-sub-chip" role="radio" aria-checked="${c.value === current}" data-surprise-service="${escapeHtml(c.value)}"${c.n === 0 ? ' data-empty="1"' : ''}${c.n === 0 || surpriseSpinning ? ' disabled' : ''}>${
+    c.logoPath ? `<img src="${escapeHtml(WATCHLIST_LOGO_BASE + c.logoPath)}" alt="" loading="lazy">` : ''
+  }${escapeHtml(c.label)}<span class="surprise-service-n">${c.n}</span></button>`).join('');
+  el.style.display = '';
+  // Au téléphone la rangée défile : le choix retenu reste en vue.
+  const checked = el.querySelector('[aria-checked="true"]');
+  if(checked && el.scrollWidth > el.clientWidth){
+    el.scrollLeft = checked.offsetLeft - (el.clientWidth - checked.offsetWidth) / 2;
+  }
+}
+
+function setSurpriseServicesBusy(busy){
+  document.getElementById('surpriseServices').querySelectorAll('[data-surprise-service]').forEach(b => {
+    b.disabled = busy || b.dataset.empty === '1';
+  });
+}
+
+// Un choix qui n'existe plus (plateforme partie du catalogue, abonnements
+// décochés) retombe sur Toutes.
+function applySurpriseService(value){
+  const valid = surpriseServiceChoices().some(c => c.value === value);
+  document.getElementById('wlProviderFilter').value = valid ? value : '';
+  renderWatchlist();
+}
+
+// Fenêtre ouverte sans tirage (plateformes en cours de vérification, aucun
+// film sur ce choix) : la bande est cachée et les boutons attendent.
+function showSurpriseMessage(text){
+  currentSurpriseItem = null;
+  document.getElementById('surpriseRoulette').style.display = 'none';
+  document.getElementById('surpriseRouletteTrack').innerHTML = '';
+  const content = document.getElementById('surpriseContent');
+  content.innerHTML = `<p class="surprise-message">${escapeHtml(text)}</p>`;
+  content.style.display = '';
+  document.getElementById('surpriseRerollBtn').disabled = true;
+  document.getElementById('surpriseRateBtn').disabled = true;
+}
+
+// Tire dans le lot du filtre actif. Appelée à l'ouverture, à « Encore un » et
+// à chaque changement de plateforme.
+function startSurpriseDraw(){
+  renderSurpriseServices();
+  const pool = getFilteredWatchlist();
+  if(pool.length === 0){
+    showSurpriseMessage('Aucun film à voir sur cette plateforme pour l\'instant. Choisis-en une autre.');
+    return;
+  }
+  spinSurpriseRoulette(pool);
+}
+
+function onSurpriseProvidersReady(){
+  const open = document.getElementById('surpriseOverlay').classList.contains('open');
+  if(!open){ surpriseWaitingProviders = false; return; }
+  if(surpriseWaitingProviders){
+    surpriseWaitingProviders = false;
+    applySurpriseService(getSurpriseServicePref());
+    startSurpriseDraw();
+    return;
+  }
+  renderSurpriseServices(); // tirage déjà fait dans toute la liste : les pastilles arrivent, sans relancer
+}
+
+function handleSurpriseServiceClick(e){
+  const chip = e.target.closest('[data-surprise-service]');
+  if(!chip || chip.disabled || surpriseSpinning || chip.getAttribute('aria-checked') === 'true') return;
+  const value = chip.dataset.surpriseService;
+  setSurpriseServicePref(value);
+  applySurpriseService(value);
+  startSurpriseDraw();
+}
+
 // Longueur de la bande et position de la case gagnante dedans — assez de
 // recul AVANT (le temps que la décélération se sente vraiment) et assez
 // d'images APRÈS (la bande ne s'arrête pas pile au bord du cadre, encore
@@ -768,9 +905,18 @@ function buildRouletteStripHtml(pool, winner){
 // déjà une vraie affiche, celle du tirage, en entier et sans ce problème —
 // pas la peine d'en remontrer une seconde, moins bonne, juste en dessous.
 function renderSurpriseContent(item){
+  // Où le regarder : tes abonnements et la plateforme choisie pour le tirage
+  // s'il y en a dessus, sinon toutes ses plateformes (même règle que les
+  // logos des affiches).
+  const services = watchlistServices(item);
+  const mine = getMyStreamingServices();
+  const picked = document.getElementById('wlProviderFilter').value;
+  const preferred = services.filter(s => mine.has(s.key) || s.key === picked);
+  const shown = preferred.length ? preferred : services;
   document.getElementById('surpriseContent').innerHTML = `
     <div class="surprise-info">
       <div class="wl-title">${escapeHtml(item.title)}${item.releaseYear ? ` <span class="wl-year">(${item.releaseYear})</span>` : ''}</div>
+      ${shown.length ? `<div class="surprise-on">Sur ${escapeHtml(shown.map(s => s.name).join(', '))}</div>` : ''}
       ${item.note ? `<div class="wl-note">${escapeHtml(item.note)}</div>` : ''}
     </div>
   `;
@@ -791,8 +937,10 @@ function spinSurpriseRoulette(pool){
   content.style.display = 'none';
   rerollBtn.disabled = true;
   rateBtn.disabled = true;
+  setSurpriseServicesBusy(true);
 
   const frame = document.getElementById('surpriseRoulette');
+  frame.style.display = ''; // cachée par showSurpriseMessage(), à remettre avant de mesurer
   const track = document.getElementById('surpriseRouletteTrack');
   track.innerHTML = buildRouletteStripHtml(pool, currentSurpriseItem);
 
@@ -835,6 +983,7 @@ function spinSurpriseRoulette(pool){
     rerollBtn.disabled = false;
     rateBtn.disabled = false;
     surpriseSpinning = false;
+    setSurpriseServicesBusy(false);
     playRouletteWin();
   };
 
@@ -875,27 +1024,30 @@ function spinSurpriseRoulette(pool){
 }
 
 function openSurprise(){
-  const pool = getFilteredWatchlist();
   if(watchlist.length === 0){
     showToast('Ta watchlist est vide. Ajoute un film d\'abord');
     return;
   }
-  if(pool.length === 0){
-    showToast('Rien sur cette plateforme pour l\'instant. Change le filtre');
+  surpriseWaitingProviders = false;
+  openOverlay('surpriseOverlay');
+  const pref = getSurpriseServicePref();
+  if(pref && !watchlistProvidersReady){
+    surpriseWaitingProviders = true;
+    renderSurpriseServices();
+    showSurpriseMessage('Vérification des plateformes…');
     return;
   }
-  openOverlay('surpriseOverlay');
-  spinSurpriseRoulette(pool);
+  if(pref) applySurpriseService(pref);
+  startSurpriseDraw();
 }
 
 document.getElementById('wlSurpriseBtn').addEventListener('click', openSurprise);
+document.getElementById('surpriseServices').addEventListener('click', handleSurpriseServiceClick);
 document.getElementById('closeSurprise').addEventListener('click', () => closeOverlay('surpriseOverlay'));
 document.getElementById('surpriseOverlay').addEventListener('click', (e) => {
   if(e.target.id === 'surpriseOverlay') closeOverlay('surpriseOverlay');
 });
-document.getElementById('surpriseRerollBtn').addEventListener('click', () => {
-  spinSurpriseRoulette(getFilteredWatchlist());
-});
+document.getElementById('surpriseRerollBtn').addEventListener('click', startSurpriseDraw);
 document.getElementById('surpriseRateBtn').addEventListener('click', () => {
   closeOverlay('surpriseOverlay', () => startRatingFromWatchlist(currentSurpriseItem));
 });
@@ -996,6 +1148,9 @@ document.getElementById('wlTitleInput').addEventListener('blur', () => {
   setTimeout(() => { document.getElementById('wlTmdbResults').innerHTML = ''; }, 150);
 });
 document.getElementById('wlTmdbClearBtn').addEventListener('click', clearWlTmdbSelection);
-document.getElementById('wlProviderFilter').addEventListener('change', renderWatchlist);
+document.getElementById('wlProviderFilter').addEventListener('change', (e) => {
+  setSurpriseServicePref(e.target.value); // le prochain « Surprends-moi » part de ce choix
+  renderWatchlist();
+});
 document.getElementById('wlSubsToggle').addEventListener('click', toggleMyServicesPanel);
 document.getElementById('wlSubsChips').addEventListener('click', handleMyServiceChipClick);

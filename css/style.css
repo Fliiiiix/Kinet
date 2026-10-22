@@ -4127,6 +4127,30 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
 .surprise-info{text-align:center;}
 .surprise-info .wl-title{font-size:var(--fs-lg);}
 .surprise-info .wl-note{margin-top:8px; max-width:44ch; margin-left:auto; margin-right:auto;}
+.surprise-on{margin-top:var(--sp-1); font-size:var(--fs-sm); color:var(--text-2);}
+.surprise-message{margin:var(--sp-5) 0; text-align:center; font-size:var(--fs-sm); color:var(--text-2);}
+
+/* Plateforme du tirage (retour de Flix, 22/10) : les pastilles de « Mes
+   abonnements » (.wl-sub-chip), en choix unique. Une seule ligne qui défile
+   au téléphone, pour garder la bande à sa place. */
+.surprise-services{position:relative; display:flex; flex-wrap:wrap; gap:var(--sp-2); margin:0 0 var(--sp-4);}
+.surprise-services .wl-sub-chip{flex:none;}
+.surprise-services .wl-sub-chip[aria-checked="true"]{color:var(--text-1); border-color:var(--accent); background:var(--accent-wash);}
+.surprise-services .wl-sub-chip:disabled{opacity:0.45; cursor:default;}
+.surprise-services .wl-sub-chip:disabled:hover{color:var(--text-2); border-color:var(--line);}
+.surprise-services .wl-sub-chip[aria-checked="true"]:disabled{opacity:1;}
+.surprise-service-n{font-weight:400; color:var(--text-3); font-variant-numeric:tabular-nums;}
+.surprise-services-wait{font-size:var(--fs-xs); color:var(--text-2); line-height:32px;}
+@media (max-width:600px){
+  /* Fondu à droite : on voit qu'il y a d'autres plateformes plus loin. */
+  .surprise-services{
+    flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; -webkit-overflow-scrolling:touch;
+    padding-right:var(--sp-5);
+    -webkit-mask-image:linear-gradient(90deg, black calc(100% - var(--sp-5)), transparent);
+    mask-image:linear-gradient(90deg, black calc(100% - var(--sp-5)), transparent);
+  }
+  .surprise-services::-webkit-scrollbar{display:none;}
+}
 
 /* ============================================================
    .wl-row — ligne compacte générique, réutilisée par de nombreuses
