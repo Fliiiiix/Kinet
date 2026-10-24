@@ -19,8 +19,8 @@ dois prendre. Tout le reste est fait dans le code, poussé sur `main`.
   `docs/recalcul-raretes.md`).
 
 ## 1. Ce qui ne peut venir que de toi
-- [ ] **Note de version 4.1** : brouillon `note-v4.1-brouillon.md` (dossier
-      parent), à ne publier qu'avec ton accord.
+- [x] **Note de version 4.1** : publiée le 24/10 avec ton accord (v283 à
+      v304), vérifiée en ligne.
 - [ ] **Sur un vrai téléphone** : la checklist `docs/checklist-mobile.md`, et
       un point précis : pendant la notation, bouger un curseur ne doit plus
       faire remonter le clavier (corrigé le 15/10, jamais vu sur un appareil).
