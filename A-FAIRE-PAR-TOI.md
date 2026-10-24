@@ -29,8 +29,8 @@ dois prendre. Tout le reste est fait dans le code, poussé sur `main`.
       n'a pas ta session, et je ne me connecte pas à ta place).
 
 ## 2. Idées encore ouvertes (rien n'est commencé, dis-moi si tu en veux)
-- Nouveautés classées par catégorie (cartes, séries, design…) dans la
-  fenêtre des nouveautés.
+(Faite le 24/10, v305 : les nouveautés classées par catégorie. Pour qu'une
+note se range bien, une ligne en MAJUSCULES par catégorie, puis ses « • ».)
 - Petites bulles « ? » d'aide, seulement sur les écrans complexes (cartes,
   notation).
 - Limite d'envoi sur le journal d'événements, qui reste ouvert en écriture
