@@ -438,7 +438,8 @@ function renderAdminChangelogTab(){
         </div>
         <div class="field">
           <label for="adminChangelogBody">Description</label>
-          <textarea id="adminChangelogBody" placeholder="Ce qui a changé…" rows="4" required>${editing ? escapeHtml(editing.body) : ''}</textarea>
+          <p class="cl-admin-hint" id="adminChangelogBodyHint">Une ligne en MAJUSCULES ouvre une catégorie (ex. SÉRIES, CARTES, DESIGN), chaque ligne « • » en dessous est une nouveauté.</p>
+          <textarea id="adminChangelogBody" placeholder="SÉRIES&#10;• Ce qui a changé…" rows="8" aria-describedby="adminChangelogBodyHint" required>${editing ? escapeHtml(editing.body) : ''}</textarea>
         </div>
         <button class="btn" type="submit">${editing ? 'Enregistrer' : 'Créer en brouillon'}</button>
         ${editing ? `<button class="btn secondary" id="adminChangelogCancelEdit" type="button">Annuler</button>` : ''}

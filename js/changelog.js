@@ -69,6 +69,64 @@ function changelogDateLabel(iso){
   return new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
 }
 
+// --- Nouveautés classées par catégorie (demande de Flix, 24/10) ---
+// Une note est découpée à ses lignes en MAJUSCULES (« NOTER UN FILM »,
+// « FICHE SÉRIE ET BIENTÔT »…, le format des notes depuis la 2.1) : une
+// catégorie repliable par titre, avec son nombre de nouveautés, et les « • »
+// en vraie liste. Rien à changer en base : le texte reste celui de l'onglet
+// Nouveautés de l'admin. Une note sans titre (les notes d'une ligne, 2.7 à
+// 3.4) reste un simple paragraphe.
+function isChangelogHeading(line){
+  const t = line.trim();
+  if(!t || t.length > 60 || /^[•\-*]/.test(t)) return false;
+  return t === t.toLocaleUpperCase('fr-FR') && t !== t.toLocaleLowerCase('fr-FR');
+}
+
+// [{ heading: 'CATALOGUE' | null, items: ['…'] }], dans l'ordre du texte.
+// Les lignes avant le premier titre forment une section sans titre.
+function parseChangelogBody(body){
+  const sections = [];
+  let current = null;
+  String(body || '').split(/\r?\n/).forEach(raw => {
+    const line = raw.trim();
+    if(!line) return;
+    if(isChangelogHeading(line)){
+      current = { heading: line, items: [] };
+      sections.push(current);
+      return;
+    }
+    if(!current){
+      current = { heading: null, items: [] };
+      sections.push(current);
+    }
+    current.items.push(line.replace(/^[•\-*]\s*/, ''));
+  });
+  return sections.filter(s => s.items.length > 0);
+}
+
+const CHANGELOG_CHEVRON_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg>';
+
+function changelogItemsHtml(items){
+  return `<ul class="cl-items">${items.map(i => `<li>${escapeHtml(i)}</li>`).join('')}</ul>`;
+}
+
+function changelogBodyHtml(body){
+  const sections = parseChangelogBody(body);
+  if(!sections.some(s => s.heading)){
+    const items = sections.flatMap(s => s.items);
+    return items.length === 1 ? `<p class="cl-text">${escapeHtml(items[0])}</p>` : changelogItemsHtml(items);
+  }
+  return sections.map(s => {
+    if(!s.heading) return changelogItemsHtml(s.items);
+    const n = s.items.length;
+    return `
+      <details class="cl-cat">
+        <summary aria-label="${escapeHtml(s.heading)}, ${n} nouveauté${n > 1 ? 's' : ''}"><span class="cl-cat-name">${escapeHtml(s.heading)}</span><span class="cl-cat-n">${n}</span><span class="cl-cat-chev">${CHANGELOG_CHEVRON_SVG}</span></summary>
+        ${changelogItemsHtml(s.items)}
+      </details>`;
+  }).join('');
+}
+
 function changelogEntryHtml(e){
   return `
     <div class="changelog-entry">
@@ -77,7 +135,7 @@ function changelogEntryHtml(e){
         <span class="changelog-date">${changelogDateLabel(e.publishedAt)}</span>
       </div>
       <div class="changelog-title">${escapeHtml(e.title)}</div>
-      <div class="changelog-body">${escapeHtml(e.body)}</div>
+      <div class="changelog-body">${changelogBodyHtml(e.body)}</div>
     </div>
   `;
 }

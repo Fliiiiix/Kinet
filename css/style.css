@@ -4477,8 +4477,30 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
   color:var(--text-muted);
   font-size:var(--fs-sm);
   line-height:1.55;
-  white-space:pre-line;
 }
+/* Classées par catégorie (changelogBodyHtml(), js/changelog.js) : une ligne
+   repliable par titre de la note, même filet et même étiquette en capitales
+   que les sections de Bientôt (.up-label). */
+.changelog-title + .changelog-body{margin-top:var(--sp-3);}
+.cl-cat{border-top:1px solid var(--line-soft);}
+.cl-cat:last-child{border-bottom:1px solid var(--line-soft);}
+/* Entre deux notes, le filet de .changelog-entry suffit. */
+.changelog-entry:not(:last-child) .cl-cat:last-child{border-bottom:0;}
+.cl-cat summary{display:flex; align-items:center; gap:var(--sp-2); min-height:44px; cursor:pointer; list-style:none;}
+.cl-cat summary::-webkit-details-marker{display:none;}
+.cl-cat summary:focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:var(--r-sm);}
+.cl-cat-name{flex:1; min-width:0; font-family:var(--font-text); font-size:var(--fs-xs); font-weight:600; letter-spacing:0.06em; color:var(--text-1);}
+.cl-cat-n{font-size:var(--fs-xs); color:var(--text-3); font-variant-numeric:tabular-nums;}
+.cl-cat-chev{display:flex; color:var(--text-3); transition:transform var(--dur-fast);}
+.cl-cat-chev svg{width:14px; height:14px;}
+.cl-cat[open] .cl-cat-chev{transform:rotate(90deg);}
+.cl-cat summary:hover .cl-cat-chev, .cl-cat[open] .cl-cat-n{color:var(--text-2);}
+.cl-items{display:grid; gap:var(--sp-2); padding:0 0 var(--sp-3) 1.1em;}
+.cl-cat .cl-items{padding-top:var(--sp-1);}
+.cl-items li{color:var(--text-2); font-size:var(--fs-sm); line-height:1.5;}
+.cl-items li::marker{color:var(--accent);}
+.cl-text{color:var(--text-2); font-size:var(--fs-sm); line-height:1.5;}
+@media (prefers-reduced-motion:reduce){ .cl-cat-chev{transition:none;} }
 
 /* Discrète par construction (v2.1, demande explicite) : même traitement
    visuel que .version-tag (Space Mono, petite taille, opacité réduite) —
@@ -7357,3 +7379,5 @@ body[data-view-mode="list"] #filmList .bulk-select-checkbox{flex:none;}
 .year-link:hover{color:var(--text-1);}
 .recap-slide.active{pointer-events:auto;}
 .recap-share{margin-top:var(--sp-3);}
+/* Format des Nouveautés, rappelé dans l'onglet de l'admin (js/admin.js). */
+.cl-admin-hint{margin:0 0 var(--sp-2); font-size:var(--fs-xs); color:var(--text-2);}
