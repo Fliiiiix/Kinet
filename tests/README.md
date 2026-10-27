@@ -21,6 +21,22 @@ pre-push). Chaque fichier `*.test.js` peut aussi se lancer seul :
 node tests/letterboxd-import.test.js
 ```
 
+## Tests d'écrans (`tests/e2e/ecrans.spec.js`)
+
+```
+npm run test:ecrans
+```
+
+Ouvre Kinet connecté avec des données de démonstration
+(`tests/e2e/donnees-demo.js`, une petite base en mémoire : rien n'atteint
+Supabase) et parcourt les pages et fenêtres principales sur PC et téléphone,
+en thème sombre et clair. Échoue sur une erreur JavaScript, une page plus
+large que l'écran, « undefined » ou « NaN » affiché, ou un texte sous 3:1 de
+contraste. Captures dans `test-results/ecrans/`. Environ 2 minutes ; les
+affiches viennent de TMDB, il faut donc du réseau. À lancer avant de pousser
+un changement visible. Une nouvelle page ou fenêtre s'ajoute aux listes
+`PAGES` / `FENETRES` en tête du fichier.
+
 ## Fichiers `*.live.js`
 
 `tests/tmdb-matching.live.js` interroge la VRAIE API TMDB (nécessite

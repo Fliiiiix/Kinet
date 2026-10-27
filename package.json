@@ -5,7 +5,8 @@
   "description": "Kinet : notation de films à critères fixes (app statique, sans build).",
   "scripts": {
     "test": "node tests/run-all.js",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:ecrans": "playwright test tests/e2e/ecrans.spec.js"
   },
   "license": "UNLICENSED",
   "devDependencies": {
