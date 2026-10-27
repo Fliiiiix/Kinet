@@ -7443,3 +7443,15 @@ body[data-view-mode="list"] #filmList .bulk-select-checkbox{flex:none;}
 /* Ta note prévue (fillFilmPrediction(), js/prediction.js) */
 .ff-predict{margin:var(--sp-2) 0 var(--sp-3); font-size:var(--fs-sm); color:var(--text-2);}
 .ff-predict[hidden]{display:none;}
+/* Ton ADN ciné (js/dna.js) : des lignes libellé / valeur, une fine ligne entre. */
+.dna-head{display:flex; align-items:baseline; justify-content:space-between; gap:var(--sp-3); flex-wrap:wrap; margin-bottom:var(--sp-2);}
+.dna-head .year-link{margin:0; font-size:var(--fs-sm);}
+.dna-row{display:grid; grid-template-columns:150px 1fr; gap:var(--sp-3); padding:var(--sp-2) 0; border-bottom:1px solid var(--line-soft); font-size:var(--fs-sm);}
+.dna-row:last-child{border-bottom:0;}
+.dna-label{color:var(--text-2);}
+.dna-val{color:var(--text-1);}
+.dna-wait{color:var(--text-2);}
+#dnaSection[hidden]{display:none;}
+@media (max-width:600px){
+  .dna-row{grid-template-columns:1fr; gap:2px;}
+}

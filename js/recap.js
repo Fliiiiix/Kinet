@@ -439,10 +439,20 @@ async function canShareFiles(){
   }
 }
 
+// La fenêtre sert aussi à l'image de l'ADN ciné (js/dna.js) : nom de fichier
+// et titre de partage posés sur le canvas, « Ton année » par défaut.
+function recapFileBase(year){
+  const canvas = document.getElementById('recapCanvas');
+  return (canvas && canvas.dataset.fileBase) || `kinet-bilan-${year}`;
+}
+
 async function openRecap(){
   closeOverlay('statsOverlay');
   const recap = computeRecap(new Date().getFullYear());
   const canvas = document.getElementById('recapCanvas');
+  canvas.dataset.fileBase = '';
+  canvas.dataset.shareTitle = '';
+  document.querySelector('#recapOverlay h2').textContent = 'Ton année en image';
   const downloadBtn = document.getElementById('downloadRecapBtn');
   const downloadPdfBtn = document.getElementById('downloadRecapPdfBtn');
   const shareBtn = document.getElementById('shareRecapBtn');
@@ -486,7 +496,7 @@ document.getElementById('downloadRecapBtn').addEventListener('click', () => {
   const year = new Date().getFullYear();
   try{
     const link = document.createElement('a');
-    link.download = `kinet-bilan-${year}.png`;
+    link.download = `${recapFileBase(year)}.png`;
     link.href = canvas.toDataURL('image/png');
     link.click();
   }catch(e){
@@ -505,7 +515,7 @@ document.getElementById('downloadRecapPdfBtn').addEventListener('click', () => {
     const blob = new Blob([pdfBytes], { type: 'application/pdf' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.download = `kinet-bilan-${year}.pdf`;
+    link.download = `${recapFileBase(year)}.pdf`;
     link.href = url;
     link.click();
     URL.revokeObjectURL(url);
@@ -523,8 +533,8 @@ document.getElementById('shareRecapBtn').addEventListener('click', withSubmitGua
   try{
     const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
     if(!blob) throw new Error('canvas.toBlob() a renvoyé null');
-    const file = new File([blob], `kinet-bilan-${year}.png`, { type: 'image/png' });
-    await navigator.share({ files: [file], title: `Mon année ${year}` });
+    const file = new File([blob], `${recapFileBase(year)}.png`, { type: 'image/png' });
+    await navigator.share({ files: [file], title: canvas.dataset.shareTitle || `Mon année ${year}` });
   }catch(e){
     // AbortError : l'utilisateur a juste fermé la feuille de partage sans
     // rien choisir — pas une erreur, aucun toast à afficher pour ça.

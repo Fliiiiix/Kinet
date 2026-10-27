@@ -728,6 +728,8 @@ function renderStatsInto(content, list = films){
 
     ${list === films ? renderYearComparison() : ''}
 
+    ${list === films ? '<div class="stats-section reveal" id="dnaSection" hidden></div>' : ''}
+
     <div class="stats-section stats-section-dist reveal">
       <div class="stats-section-title">Distribution des notes</div>
       ${renderBarChart(distItems, { clickable: true })}
@@ -781,6 +783,8 @@ function renderStatsInto(content, list = films){
   wireStatsDistribution(content, list, s.distribution);
   wireLineChart(content);
   if(list === films) renderCatalogueControle(content, list);
+  // Ton ADN ciné (js/dna.js, idée 7 du 28/10), sans être attendu.
+  if(list === films && typeof renderDnaSection === 'function') renderDnaSection();
   animateCounters(content.querySelector('.stat-tiles'));
   // « Ton année » (audit général du 16/10, I9 piste A) : un seul lien texte,
   // le même qu'au Profil, à la place de « Mon bilan cinéphile » et « Mon
