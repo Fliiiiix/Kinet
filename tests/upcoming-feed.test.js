@@ -17,6 +17,7 @@ function buildContext(){
     normalizeSearch(s){ return String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase(); },
     getDisplayNote(f){ return f.note != null ? f.note : null; },
     FILM_PLACEHOLDER_SVG: '', TV_PLACEHOLDER_SVG: '',
+    TextEncoder, // absent d'un contexte vm neuf (agenda, lignes pliées en octets)
   });
   loadFiles(ctx, ['js/upcoming.js']);
   setState(ctx, { films: [], watchlist: [] });
@@ -183,6 +184,36 @@ test('Au cinéma : sorties du pays choisi, nouvelle recherche quand le pays chan
   await ctx.loadUpcomingCinema();
   assert.strictEqual(urls.length, 4);
   assert.ok(urls[2].includes('region=ZA'));
+});
+
+// Bientôt dans ton agenda (28/10, idée 8) : un fichier .ics, un événement sur
+// la journée par sortie, identifiants stables, texte échappé et lignes pliées.
+test('agenda : un événement par sortie, sur la journée, identifiant stable', () => {
+  const ctx = buildContext();
+  const ics = ctx.buildUpcomingIcs([
+    { type: 'episode', key: 'show-28', title: 'Silo', sub: 'Saison 4, épisode 1', dateObj: new Date(2027, 6, 8) },
+    { type: 'movie', key: 'movie-401', title: 'Dune; Part Three', sub: 'Film à voir', dateObj: new Date(2026, 11, 18) },
+  ], new Date(Date.UTC(2026, 9, 28, 10, 0, 0)));
+  const lines = ics.split('\r\n');
+  assert.strictEqual(lines[0], 'BEGIN:VCALENDAR');
+  assert.strictEqual(lines.filter(l => l === 'BEGIN:VEVENT').length, 2);
+  assert.ok(lines.includes('UID:show-28@kinet'));
+  assert.ok(lines.includes('DTSTART;VALUE=DATE:20270708'));
+  assert.ok(lines.includes('DTEND;VALUE=DATE:20270709'));
+  assert.ok(lines.includes('SUMMARY:Silo · Saison 4\\, épisode 1'), 'virgule échappée');
+  assert.ok(lines.includes('SUMMARY:Dune\\; Part Three : sortie'), 'point-virgule échappé');
+  assert.ok(lines.includes('DTSTAMP:20261028T100000Z'));
+  assert.ok(ics.endsWith('END:VCALENDAR\r\n'));
+});
+
+test('agenda : une ligne trop longue est pliée en lignes de 75 octets au plus', () => {
+  const ctx = buildContext();
+  const long = 'SUMMARY:' + 'é'.repeat(80);
+  const folded = ctx.icsFold(long).split('\r\n');
+  assert.ok(folded.length > 1);
+  folded.forEach(l => assert.ok(Buffer.byteLength(l, 'utf8') <= 75));
+  assert.ok(folded.slice(1).every(l => l.startsWith(' ')));
+  assert.strictEqual(folded.map((l, i) => i ? l.slice(1) : l).join(''), long);
 });
 
 module.exports = run('upcoming-feed.test.js');

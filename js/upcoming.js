@@ -352,6 +352,68 @@ function upcomingSummaryText(weekItems){
   return `${parts.join(', ')}.`;
 }
 
+// --- Bientôt dans ton agenda (idée 8 du 28/10) --- Un fichier de calendrier
+// (.ics) avec ce qui arrive : prochains épisodes et sorties des films d'À voir,
+// un événement sur la journée chacun. Le téléphone et Google Agenda l'importent ;
+// l'identifiant de chaque événement est stable, un nouvel import met à jour au
+// lieu de doubler. Une photo du moment, pas un abonnement (il faudrait un
+// serveur) : à refaire quand de nouvelles dates arrivent.
+function icsEscape(text){
+  return String(text).replace(/\\/g, '\\\\').replace(/[,;]/g, m => '\\' + m).replace(/\r?\n/g, '\\n');
+}
+
+// Lignes de 75 octets au plus, la suite commence par une espace (RFC 5545).
+function icsFold(line){
+  const bytes = new TextEncoder().encode(line);
+  if(bytes.length <= 75) return line;
+  const out = [];
+  let current = '';
+  for(const ch of line){
+    if(new TextEncoder().encode(current + ch).length > (out.length ? 74 : 75)){
+      out.push(current);
+      current = '';
+    }
+    current += ch;
+  }
+  out.push(current);
+  return out.join('\r\n ');
+}
+
+const icsDate = (d) => `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
+
+function buildUpcomingIcs(items, now = new Date()){
+  const stamp = now.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+  const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Kinet//Bientot//FR', 'CALSCALE:GREGORIAN', 'X-WR-CALNAME:Kinet · Bientôt'];
+  items.forEach(item => {
+    const start = item.dateObj;
+    const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 1);
+    const what = item.type === 'movie' ? `${item.title} : sortie` : `${item.title} · ${item.sub}`;
+    lines.push('BEGIN:VEVENT',
+      `UID:${item.key}@kinet`,
+      `DTSTAMP:${stamp}`,
+      `DTSTART;VALUE=DATE:${icsDate(start)}`,
+      `DTEND;VALUE=DATE:${icsDate(end)}`,
+      `SUMMARY:${icsEscape(what)}`,
+      'TRANSP:TRANSPARENT',
+      'END:VEVENT');
+  });
+  lines.push('END:VCALENDAR');
+  return lines.map(icsFold).join('\r\n') + '\r\n';
+}
+
+function downloadUpcomingIcs(){
+  const blob = new Blob([buildUpcomingIcs(upcomingSoon)], { type: 'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'kinet-bientot.ics';
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  showToast(`${upcomingSoon.length} date${upcomingSoon.length > 1 ? 's' : ''} pour ton agenda`);
+}
+
 let upcomingRowActions = [];
 
 function renderUpcoming(){
@@ -375,7 +437,10 @@ function renderUpcoming(){
     when: upcomingFutureLabel(i.dateObj, today), rel: upcomingRelFuture(upcomingDaysBetween(today, i.dateObj))
   }));
 
-  document.getElementById('upcomingSummary').innerHTML = upcomingSummaryText(week);
+  document.getElementById('upcomingSummary').innerHTML = upcomingSummaryText(week)
+    + (upcomingSoon.length ? ` <button type="button" class="up-ics" id="upcomingIcsBtn">Ajouter à ton agenda</button>` : '');
+  const icsBtn = document.getElementById('upcomingIcsBtn');
+  if(icsBtn) icsBtn.addEventListener('click', downloadUpcomingIcs);
   let html = upcomingSectionHtml('À rattraper', '', rows(upcomingLate));
   html += upcomingSectionHtml('Déjà là', '', rows(upcomingNow, { now: true }));
   if(getUpcomingViewMode() === 'calendar'){
