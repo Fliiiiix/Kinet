@@ -187,6 +187,50 @@ const WATCH_PROVIDERS_TTL_MS = 12 * 60 * 60 * 1000;
 const WATCH_PROVIDERS_STORE_KEY = 'kinetWatchProviders';
 let watchProvidersCache = null;
 
+// --- Pays des plateformes (retour de Flix, 27/10) --- En Afrique du Sud,
+// « Once Upon a Time… in Hollywood » était annoncé sur Prime Video (vrai en
+// France, abonnement) alors que Prime ne le proposait qu'en location : les
+// catalogues dépendent du pays où l'on regarde. France par défaut, réglable
+// dans Paramètres, gardé sur cet appareil (même principe que le thème). Les
+// codes sont ceux que TMDB connaît (/watch/providers/regions, 139 pays).
+const WATCH_REGION_KEY = 'kinetWatchRegion';
+const DEFAULT_WATCH_REGION = 'FR';
+const WATCH_REGIONS = 'AD AE AG AL AO AR AT AU AZ BA BB BE BF BG BH BM BO BR BS BY BZ CA CD CH CI CL CM CO CR CU CV CY CZ DE DK DO DZ EC EE EG ES FI FJ FR GB GF GH GI GP GQ GR GT GY HK HN HR HU ID IE IL IN IQ IS IT JM JO JP KE KR KW LB LC LI LT LU LV LY MA MC MD ME MG MK ML MT MU MW MX MY MZ NE NG NI NL NO NZ OM PA PE PF PG PH PK PL PS PT PY QA RO RS RU SA SC SE SG SI SK SM SN SV TC TD TH TN TR TT TW TZ UA UG US UY VA VE XK YE ZA ZM ZW'.split(' ');
+
+function getWatchRegion(){
+  try{
+    const v = typeof localStorage !== 'undefined' && localStorage.getItem(WATCH_REGION_KEY);
+    return v && WATCH_REGIONS.includes(v) ? v : DEFAULT_WATCH_REGION;
+  }catch(e){
+    return DEFAULT_WATCH_REGION;
+  }
+}
+
+function setWatchRegion(code){
+  try{
+    if(code === DEFAULT_WATCH_REGION || !WATCH_REGIONS.includes(code)) localStorage.removeItem(WATCH_REGION_KEY);
+    else localStorage.setItem(WATCH_REGION_KEY, code);
+  }catch(e){}
+}
+
+function watchRegionName(code){
+  try{ return new Intl.DisplayNames(['fr'], { type: 'region' }).of(code) || code; }catch(e){ return code; }
+}
+
+// « en France » partout comme avant ; ailleurs, le pays entre parenthèses
+// (au, aux, en : la bonne préposition dépend du pays).
+function watchRegionPhrase(){
+  const code = getWatchRegion();
+  return code === 'FR' ? 'en France' : `dans ce pays (${watchRegionName(code)})`;
+}
+
+// Le seul rappel du pays hors Paramètres, et seulement hors de France : le
+// petit lien « Données JustWatch » sous « Où regarder ».
+function watchProvidersCreditLabel(){
+  const code = getWatchRegion();
+  return code === 'FR' ? 'Données JustWatch' : `Données JustWatch · ${watchRegionName(code)}`;
+}
+
 function watchProvidersCacheMap(){
   if(watchProvidersCache) return watchProvidersCache;
   watchProvidersCache = {};
@@ -215,7 +259,8 @@ function writeWatchProvidersCache(){
 }
 
 async function fetchWatchProviders(tmdbId, mediaType){
-  const key = `${mediaType}:${tmdbId}`;
+  const region = getWatchRegion();
+  const key = `${region}:${mediaType}:${tmdbId}`;
   const cached = watchProvidersCacheMap()[key];
   if(cached && Date.now() - cached.t < WATCH_PROVIDERS_TTL_MS) return cached.v;
 
@@ -232,7 +277,7 @@ async function fetchWatchProviders(tmdbId, mediaType){
     }
     if(!res.ok) throw new Error(`Erreur TMDB (${res.status})`);
     const data = await res.json();
-    const value = (data.results && data.results.FR) || null;
+    const value = (data.results && data.results[region]) || null;
     watchProvidersCacheMap()[key] = { t: Date.now(), v: value };
     saveWatchProvidersCache();
     return value;
@@ -269,7 +314,7 @@ function watchProviderChipsHtml(items){
 // l'app, où les données viennent directement de TMDB).
 function renderWatchProvidersHtml(providers){
   if(!providers || (!providers.flatrate && !providers.rent && !providers.buy)){
-    return `<div class="tmdb-empty">Pas d'info de disponibilité pour la France pour l'instant.</div>`;
+    return `<div class="tmdb-empty">Pas d'info de disponibilité ${escapeHtml(watchRegionPhrase())} pour l'instant.</div>`;
   }
   const flatrateHtml = providers.flatrate ? `
     <div class="watch-provider-row">
@@ -286,7 +331,7 @@ function renderWatchProvidersHtml(providers){
     <div class="watch-providers">
       ${flatrateHtml}
       ${buyRentHtml}
-      <a href="${escapeHtml(providers.link)}" target="_blank" rel="noopener" class="watch-provider-justwatch">Données JustWatch</a>
+      <a href="${escapeHtml(providers.link)}" target="_blank" rel="noopener" class="watch-provider-justwatch">${escapeHtml(watchProvidersCreditLabel())}</a>
     </div>
   `;
 }

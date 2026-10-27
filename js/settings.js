@@ -38,6 +38,20 @@ function renderSettingsSubs(){
     : 'Aucun : toutes les plateformes s’affichent sur tes affiches';
 }
 
+// Pays des plateformes (getWatchRegion(), js/tmdb.js) : les 139 pays de
+// TMDB, par nom français. La liste est construite une fois.
+function renderSettingsRegion(){
+  const sel = document.getElementById('settingsRegionSelect');
+  if(!sel.options.length){
+    sel.innerHTML = WATCH_REGIONS
+      .map(code => ({ code, name: watchRegionName(code) }))
+      .sort((a, b) => a.name.localeCompare(b.name, 'fr'))
+      .map(r => `<option value="${r.code}">${escapeHtml(r.name)}</option>`)
+      .join('');
+  }
+  sel.value = getWatchRegion();
+}
+
 function renderSettingsPublic(){
   const on = !!(currentProfile && currentProfile.public_profile);
   document.getElementById('settingsPublicToggle').checked = on;
@@ -53,6 +67,7 @@ function openSettingsPage(){
   document.getElementById('soundToggle').checked = getSoundEnabled();
   renderSettingsVolumeRow();
   renderSettingsSubs();
+  renderSettingsRegion();
   renderSettingsPublic();
   // Installation en app (js/pwa.js) : reconstruite à chaque ouverture, le
   // prompt natif peut être devenu disponible depuis la dernière fois.
@@ -85,6 +100,13 @@ document.getElementById('soundToggle').addEventListener('change', renderSettings
 document.getElementById('settingsSubsBtn').addEventListener('click', () => {
   goToWatchlist();
   if(typeof openMyServicesPanelWhenReady === 'function') openMyServicesPanelWhenReady();
+});
+
+// Pris en compte à la prochaine lecture des plateformes (À voir, fiche,
+// Bientôt) : le cache est rangé par pays (fetchWatchProviders(), js/tmdb.js).
+document.getElementById('settingsRegionSelect').addEventListener('change', (e) => {
+  setWatchRegion(e.target.value);
+  showToast(`Plateformes : ${watchRegionName(getWatchRegion())}`);
 });
 
 document.getElementById('settingsPublicToggle').addEventListener('change', async (e) => {

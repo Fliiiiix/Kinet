@@ -573,7 +573,7 @@ function filmProvidersHtml(providers){
   const rentBuy = [...((providers && providers.rent) || []), ...((providers && providers.buy) || [])];
   const rentNames = Array.from(new Set(rentBuy.map(p => (typeof streamingServiceName === 'function' ? streamingServiceName(p.provider_name) : p.provider_name))));
   if(!flat.length && !rentNames.length){
-    return `<div class="tmdb-empty">Pas d'info de disponibilité pour la France pour l'instant.</div>`;
+    return `<div class="tmdb-empty">Pas d'info de disponibilité ${escapeHtml(watchRegionPhrase())} pour l'instant.</div>`;
   }
   const mine = typeof getMyStreamingServices === 'function' ? getMyStreamingServices() : new Set();
   const mineNames = flat.filter(s => mine.has(s.key));
@@ -585,12 +585,12 @@ function filmProvidersHtml(providers){
     const note = mine.size && !mineNames.length ? ` · pas dans tes abonnements` : '';
     rows.push(`<div class="ff-prov">${others.map(logo).join('')}<span>${others.map(s => `<b>${escapeHtml(s.name)}</b>`).join(', ')}${note}</span></div>`);
   }
-  if(!flat.length) rows.push(`<div class="ff-prov"><span>Pas en abonnement en France.</span></div>`);
+  if(!flat.length) rows.push(`<div class="ff-prov"><span>Pas en abonnement ${escapeHtml(watchRegionPhrase())}.</span></div>`);
   if(rentNames.length){
     rows.push(`<button type="button" class="ff-rent-toggle" aria-expanded="false">${rentNames.length} plateforme${rentNames.length > 1 ? 's' : ''} en location ou achat ›</button>
       <p class="ff-rent-list" hidden>${rentNames.map(escapeHtml).join(', ')}.</p>`);
   }
-  if(providers && providers.link) rows.push(`<a href="${escapeHtml(providers.link)}" target="_blank" rel="noopener" class="watch-provider-justwatch">Données JustWatch</a>`);
+  if(providers && providers.link) rows.push(`<a href="${escapeHtml(providers.link)}" target="_blank" rel="noopener" class="watch-provider-justwatch">${escapeHtml(watchProvidersCreditLabel())}</a>`);
   return `<div class="ff-provs">${rows.join('')}</div>`;
 }
 

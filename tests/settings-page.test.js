@@ -17,6 +17,7 @@ function buildContext(opts = {}){
     settingsPublicSub: stubElement(),
     openSettingsBtn: stubEventTarget(),
     settingsPageBack: stubEventTarget(),
+    settingsRegionSelect: Object.assign(stubEventTarget(), { options: [], value: '' }),
   };
   const themeButtons = ['dark', 'light', 'auto'].map(choice => {
     const attrs = {};
@@ -40,8 +41,11 @@ function buildContext(opts = {}){
     getMyStreamingServices(){ return new Set(opts.subs || []); },
     updateInstallUI(){ calls.install++; },
     closeOverlay(){},
+    showToast(m){ calls.toast = m; },
+    escapeHtml(s){ return String(s); },
   });
-  loadFiles(ctx, ['js/settings.js']);
+  // js/tmdb.js pour le pays des plateformes (getWatchRegion(), WATCH_REGIONS).
+  loadFiles(ctx, ['js/tmdb.js', 'js/settings.js']);
   setState(ctx, { currentProfile: opts.profile || { public_profile: false } });
   return { ctx, els, themeButtons, calls };
 }
@@ -93,6 +97,27 @@ test('« Paramètres » depuis le Profil mène à #/parametres, « ← Profil »
   assert.strictEqual(calls.closeProfile, 1);
   els.settingsPageBack.dispatch('click', {});
   assert.strictEqual(calls.toProfile, 1);
+});
+
+// Pays des plateformes (retour de Flix, 27/10, en Afrique du Sud).
+test('Pays : la liste des pays en français, la France par défaut', () => {
+  const { ctx, els } = buildContext();
+  ctx.openSettingsPage();
+  const html = els.settingsRegionSelect.innerHTML;
+  assert.ok(html.includes('<option value="ZA">Afrique du Sud</option>'));
+  assert.ok(html.indexOf('value="ZA"') < html.indexOf('value="FR"'), 'trié par nom : Afrique du Sud avant France');
+  assert.strictEqual(els.settingsRegionSelect.value, 'FR');
+});
+
+test('Pays : le choix est gardé sur l’appareil, la France efface le réglage', () => {
+  const { ctx, els, calls } = buildContext();
+  els.settingsRegionSelect.dispatch('change', { target: { value: 'ZA' } });
+  assert.strictEqual(ctx.localStorage.getItem('kinetWatchRegion'), 'ZA');
+  assert.strictEqual(ctx.getWatchRegion(), 'ZA');
+  assert.strictEqual(calls.toast, 'Plateformes : Afrique du Sud');
+  els.settingsRegionSelect.dispatch('change', { target: { value: 'FR' } });
+  assert.strictEqual(ctx.localStorage.getItem('kinetWatchRegion'), null);
+  assert.strictEqual(ctx.getWatchRegion(), 'FR');
 });
 
 module.exports = run('settings-page.test.js');

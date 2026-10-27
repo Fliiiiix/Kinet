@@ -6498,6 +6498,13 @@ html:has(#authContainer:not([style*="none"])) #versionTag{display:none !importan
 .st-seg button:hover{color:var(--text-1);}
 .st-seg button[aria-checked="true"]{background:var(--accent); color:var(--accent-ink);}
 .st-range{flex:none; width:180px; accent-color:var(--accent);}
+/* Pays des plateformes : la valeur de la ligne, pas un champ encadré. */
+.st-select{flex:none; max-width:50%; padding:var(--sp-1) 0; border:0; background:transparent; cursor:pointer; font-family:var(--font-text); font-size:var(--fs-sm); color:var(--text-2); text-align:right; color-scheme:dark;}
+:root[data-theme="light"] .st-select{color-scheme:light;}
+.st-select:hover{color:var(--text-1);}
+.st-select:focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:var(--r-sm);}
+/* iPhone agrandit la page sur un champ sous 16 px. */
+@media (pointer:coarse){ .st-select{font-size:16px;} }
 .st-row-danger .pp-row-title{color:var(--note-low);}
 .st-install-body{font-size:var(--fs-sm); color:var(--text-2);}
 .st-install-body .wl-note{margin:2px 0 0; font-size:var(--fs-sm); color:var(--text-2);}
