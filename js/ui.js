@@ -1178,3 +1178,16 @@ if('ontouchstart' in window){
     });
   }
 }
+
+// --- Bulles d'aide « ? » (idée 12 du 28/10) --- Un « ? » à côté d'un titre
+// (Cartes, notation) déplie une courte explication juste en dessous, celle
+// que nomme son aria-controls ; un second toucher la replie.
+document.addEventListener('click', (e) => {
+  const q = e.target.closest && e.target.closest('.help-q');
+  if(!q) return;
+  const bubble = document.getElementById(q.getAttribute('aria-controls'));
+  if(!bubble) return;
+  const open = bubble.hidden;
+  bubble.hidden = !open;
+  q.setAttribute('aria-expanded', String(open));
+});

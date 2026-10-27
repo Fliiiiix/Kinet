@@ -184,7 +184,6 @@ function renderAlbum(){
   const total = albumTotal(a);
   el.innerHTML = `
     <div class="al-sum"><b>${total} carte${total > 1 ? 's' : ''}</b><span>${albumSummaryText(a)}</span></div>
-    <p class="al-rule">Chaque film de ton catalogue donne sa carte, son rang suit ta note (5 : Légende, 4.5 : Tête d’affiche, 4 : Second rôle, sinon Figurant). Un réalisateur ou un acteur arrive dès ton premier film avec lui, puis monte : 2 films Second rôle, 4 Tête d’affiche, 7 Légende.</p>
     <p class="al-status" id="albumStatus" aria-live="polite"></p>
     ${a.next.length ? `
       <div class="pp-label">Bientôt dans ta collection</div>

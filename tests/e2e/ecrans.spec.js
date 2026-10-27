@@ -24,6 +24,8 @@ const FENETRES = [
   ['notation-nouveau', 'openModal()'], ['notation-film', 'openModal(1)'], ['notation-sans-criteres', 'openModal(2)'],
   ['statistiques', 'openStats()'], ['succes', 'openAchievements()'], ['cartes', 'openTcgModal()'], ['journal', 'openJournal()'],
   ['nouveautes', 'openChangelogModal()'],
+  ['aide-cartes', "Promise.resolve(openTcgModal()).then(() => document.querySelector('#tcgOverlay .help-q').click())"],
+  ['aide-notation', "openModal(1); document.querySelector('.nt-head .help-q').click()"],
   // La roulette tourne encore pendant la vérification : seul l'affichage compte ici.
   ['surprends-moi', "location.hash = '#/watchlist'; new Promise(r => setTimeout(r, 2500)).then(() => openSurprise())"],
   ['surprends-moi-criteres', "location.hash = '#/watchlist'; new Promise(r => setTimeout(r, 2500)).then(() => { openSurprise(); toggleSurpriseCriteria(); })"],
