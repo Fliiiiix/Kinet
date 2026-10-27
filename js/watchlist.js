@@ -28,6 +28,9 @@ let watchlistProviders = {};
 // « Surprends-moi » sur une plateforme attend ce moment plutôt que de
 // piocher dans une liste à moitié connue.
 let watchlistProvidersReady = false;
+// Films dont la vérification a échoué (réseau) : [] dans watchlistProviders,
+// mais rien à en conclure pour « Arrivé sur tes abonnements ».
+let watchlistProvidersFailed = new Set();
 
 // Ajoute un film TMDB brut (résultat de /search, /upcoming, /similar...) à
 // À voir et le place en tête de `watchlist`. Renvoie l'élément ajouté, ou
@@ -394,6 +397,7 @@ const WATCHLIST_PROVIDERS_CONCURRENCY = 6;
 async function loadWatchlistProviders(){
   watchlistProviders = {};
   watchlistProvidersReady = false;
+  watchlistProvidersFailed = new Set();
   const queue = watchlist.filter(item => item.tmdbId);
   const worker = async () => {
     while(queue.length > 0){
@@ -404,6 +408,7 @@ async function loadWatchlistProviders(){
       }catch(e){
         console.error(e);
         watchlistProviders[item.tmdbId] = [];
+        watchlistProvidersFailed.add(item.tmdbId);
       }
     }
   };
@@ -444,6 +449,58 @@ function renderWatchlistReminder(){
   const meilleure = [...parPlateforme.values()].sort((a, b) => b.n - a.n)[0];
   el.textContent = `${filmsDispo} film${filmsDispo > 1 ? 's' : ''} à voir disponible${filmsDispo > 1 ? 's' : ''} en streaming. Le plus sur ${meilleure.nom} (${meilleure.n}).`;
   el.style.display = '';
+}
+
+// --- Arrivé sur tes abonnements (idée 4 du 28/10) --- À chaque vérification
+// des plateformes, on compare avec la fois précédente (gardée sur l'appareil,
+// par pays) : un film déjà dans À voir qui arrive sur un de tes abonnements
+// (ou en streaming, sans abonnement coché) est annoncé pendant 7 jours sous le
+// rappel. Rien la première fois ni pour un film tout juste ajouté : on ne sait
+// pas encore ce qui a changé.
+const WL_AVAILABILITY_KEY = 'kinetWlAvailability';
+const WL_ARRIVALS_KEY = 'kinetWlArrivals';
+const WL_ARRIVALS_DAYS = 7;
+
+function readStoredJson(key, fallback){
+  try{ const v = JSON.parse(localStorage.getItem(key) || 'null'); return v == null ? fallback : v; }catch(e){ return fallback; }
+}
+function writeStoredJson(key, value){
+  try{ localStorage.setItem(key, JSON.stringify(value)); }catch(e){}
+}
+
+function detectWatchlistArrivals(now = Date.now()){
+  const region = typeof getWatchRegion === 'function' ? getWatchRegion() : 'FR';
+  const mine = getMyStreamingServices();
+  const before = readStoredJson(WL_AVAILABILITY_KEY, null);
+  const known = before && before.region === region ? before.films || {} : null;
+  let arrivals = readStoredJson(WL_ARRIVALS_KEY, []).filter(a => now - a.t < WL_ARRIVALS_DAYS * 86400000 && a.region === region);
+  const snapshot = {};
+  watchlist.forEach(item => {
+    if(!item.tmdbId || !(item.tmdbId in watchlistProviders) || watchlistProvidersFailed.has(item.tmdbId)) return;
+    const services = watchlistServices(item);
+    snapshot[item.tmdbId] = services.map(s => s.key);
+    const previous = known && known[item.tmdbId];
+    if(!previous) return;
+    const fresh = services.filter(s => !previous.includes(s.key) && (mine.size === 0 || mine.has(s.key)));
+    if(!fresh.length) return;
+    arrivals = arrivals.filter(a => a.tmdbId !== item.tmdbId);
+    arrivals.push({ tmdbId: item.tmdbId, title: item.title, services: fresh.map(s => s.name), t: now, region });
+  });
+  writeStoredJson(WL_AVAILABILITY_KEY, { region, films: Object.assign({}, known || {}, snapshot) });
+  writeStoredJson(WL_ARRIVALS_KEY, arrivals);
+  return arrivals;
+}
+
+// Seulement ce qui est encore dans À voir.
+function renderWatchlistArrivals(arrivals){
+  const el = document.getElementById('wlArrivals');
+  if(!el) return;
+  const inList = new Set(watchlist.map(i => i.tmdbId));
+  const shown = arrivals.filter(a => inList.has(a.tmdbId)).sort((a, b) => b.t - a.t);
+  if(!shown.length){ el.hidden = true; el.innerHTML = ''; return; }
+  const where = getMyStreamingServices().size ? 'Arrivé sur tes abonnements' : 'Arrivé en streaming';
+  el.innerHTML = `${where} : ${shown.map(a => `<button type="button" class="wl-arrival" data-tmdb="${a.tmdbId}">${escapeHtml(a.title)}</button> sur ${escapeHtml(a.services.join(', '))}`).join(', ')}.`;
+  el.hidden = false;
 }
 
 // Options de #wlProviderFilter — même principe que buildGenreFilterOptions()
@@ -546,6 +603,7 @@ async function openWatchlist(){
     buildWatchlistProviderFilterOptions();
     renderWatchlist();
     onSurpriseProvidersReady();
+    renderWatchlistArrivals(detectWatchlistArrivals());
   });
 }
 
@@ -1357,3 +1415,7 @@ document.getElementById('wlProviderFilter').addEventListener('change', (e) => {
 });
 document.getElementById('wlSubsToggle').addEventListener('click', toggleMyServicesPanel);
 document.getElementById('wlSubsChips').addEventListener('click', handleMyServiceChipClick);
+document.getElementById('wlArrivals').addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-tmdb]');
+  if(btn) goToFilmDetail(Number(btn.dataset.tmdb));
+});

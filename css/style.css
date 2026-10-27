@@ -7425,3 +7425,8 @@ body[data-view-mode="list"] #filmList .bulk-select-checkbox{flex:none;}
 /* Bientôt dans ton agenda (downloadUpcomingIcs(), js/upcoming.js) */
 .up-ics{margin-left:var(--sp-1); padding:0; background:none; border:0; cursor:pointer; font-family:var(--font-text); font-size:var(--fs-sm); font-weight:600; color:var(--accent);}
 .up-ics:hover{color:var(--text-1);}
+/* Arrivé sur tes abonnements (renderWatchlistArrivals(), js/watchlist.js) */
+.wl-arrivals{margin-top:calc(-1 * var(--sp-2));}
+.wl-arrivals[hidden]{display:none;}
+.wl-arrival{padding:0; background:none; border:0; cursor:pointer; font:inherit; font-weight:600; color:var(--accent);}
+.wl-arrival:hover{color:var(--text-1);}
