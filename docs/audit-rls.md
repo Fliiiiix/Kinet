@@ -28,6 +28,8 @@ en interrogeant la base. Aucune règle n'a été modifiée.
 
 ## Recommandations
 - Garder les trois points ci-dessus dans la décision « visibilité par film ».
-- Ajouter une limite côté base ou une fonction serveur pour le journal
-  d'événements si le volume devient anormal.
+- Journal d'événements : limite posée le 28/10 par la migration 070
+  (`070_limite_journal.sql`) : user_id vide ou le sien, tailles maximales,
+  30 événements par minute par compte et 60 pour l'ensemble des visiteurs
+  sans compte, au-delà ignorés sans erreur.
 - Relire à chaque nouvelle table (ce document est à mettre à jour avec elle).
