@@ -30,6 +30,7 @@ function buildContext(initialFriendships){
   ctx.renderChosenBanner = () => calls.push('renderChosenBanner');
   ctx.loadGroupTopFilms = async () => [];
   ctx.loadGroupTasteComparison = async () => [];
+  ctx.loadGroupWatchlistOverlap = async () => []; // À voir en commun (migration 069)
   ctx.renderGroupTopFilms = () => {};
   ctx.renderGroupTasteComparison = () => {};
   return { ctx, calls };

@@ -133,6 +133,7 @@ window.__kinetDemo = async function(){
   supabaseClient.rpc = async (name, args) => {
     if(name === 'get_friends_lists') return { data: [{ id: 3, user_id: SAM, title: 'Mon top 2014', item_count: 3, like_count: 2, poster_urls: [D.Interstellar.poster, D.Her.poster, D['Ex Machina'].poster] }], error: null };
     if(name === 'get_top_films' || name === 'get_friends_top_films') return { data: ['Parasite', 'Arrival', 'Her', 'Moon', 'Whiplash'].map((t, i) => ({ tmdb_id: D[t].id, title: D[t].title, poster_url: D[t].poster, release_year: +D[t].year, avg_note: 4.6 - i * 0.3, note_count: 5 - i % 3 })), error: null };
+    if(name === 'get_group_watchlist_overlap') return { data: [{ tmdb_id: D.Solaris.id, title: D.Solaris.title, poster_url: D.Solaris.poster, release_year: +D.Solaris.year, member_ids: [ME, SAM], member_count: 2 }], error: null };
     if(name === 'get_public_profile') return { data: [{ user_id: SAM, display_name: 'Sam', avatar_url: null }], error: null };
     return { data: [], error: null };
   };

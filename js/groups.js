@@ -354,6 +354,7 @@ async function openGroupDetail(groupId){
   clearProposalTmdbSelection();
   document.getElementById('groupTasteComparisonList').innerHTML = skeletonRows(2);
   document.getElementById('groupElectionHistorySection').style.display = 'none';
+  document.getElementById('groupOverlapSection').style.display = 'none';
 
   // Audit G2 (16/10) : en arrivant ici sans passer par Amis ou Profil (lien,
   // rechargement, suggestion de la recherche), la liste d'amis n'était pas
@@ -374,13 +375,74 @@ async function openGroupDetail(groupId){
 
   // Goûts du groupe et comparaison ne font plus qu'une section (G6) ; l'ancien
   // fil d'activité disparaît de la page.
-  const [tasteComparison, electionHistory] = await Promise.all([
+  const [tasteComparison, electionHistory, overlap] = await Promise.all([
     loadGroupTasteComparison(groupId),
-    loadActivity({ scope: 'group', groupId, eventType: 'proposal_chosen', limit: 30 })
+    loadActivity({ scope: 'group', groupId, eventType: 'proposal_chosen', limit: 30 }),
+    loadGroupWatchlistOverlap(groupId)
   ]);
   renderGroupTasteComparison(tasteComparison);
   renderGroupSeenHistory(groupId, electionHistory);
+  groupOverlapRows = overlap || [];
+  renderGroupWatchlistOverlap(groupId);
 }
+
+// --- À voir en commun (idée 5 du 28/10) --- Les films présents dans les À
+// voir d'au moins deux membres, via get_group_watchlist_overlap() (migration
+// 069, qui ne répond qu'à un membre et ne montre jamais la liste entière de
+// quelqu'un). « Proposer » passe par handleProposeFilm() (js/proposals.js),
+// avec sa vérification de doublon. Sans la migration : section cachée.
+let groupOverlapRows = [];
+
+async function loadGroupWatchlistOverlap(groupId){
+  const { data, error } = await supabaseClient.rpc('get_group_watchlist_overlap', { p_group_id: groupId });
+  if(error){ console.error(error); return []; }
+  return data || [];
+}
+
+// « Sam, Navy et toi »
+function groupOverlapNames(ids){
+  const me = currentUser && currentUser.id;
+  const names = ids.filter(id => id !== me).map(id => friendDisplayName(id));
+  if(ids.includes(me)) names.push('toi');
+  return names.length > 1 ? `${names.slice(0, -1).join(', ')} et ${names[names.length - 1]}` : (names[0] || '');
+}
+
+function renderGroupWatchlistOverlap(groupId){
+  const section = document.getElementById('groupOverlapSection');
+  const list = document.getElementById('groupOverlapList');
+  if(!section || !list) return;
+  const rows = groupOverlapRows;
+  section.style.display = rows.length ? '' : 'none';
+  list.innerHTML = rows.map(r => {
+    const proposed = proposals.some(p => p.groupId === groupId && p.tmdbId === r.tmdb_id && !p.seenAt);
+    return `<div class="gp-taste">
+      <button type="button" class="gp-overlap-open" data-overlap-open="${r.tmdb_id}" aria-label="Voir la fiche de ${escapeHtml(r.title)}">${r.poster_url ? `<img src="${escapeHtml(r.poster_url)}" alt="" loading="lazy">` : `<span class="film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</span>`}</button>
+      <div class="gp-taste-main"><b>${escapeHtml(r.title)}</b><span class="gp-notes">dans les À voir de ${escapeHtml(groupOverlapNames(r.member_ids || []))}</span></div>
+      ${proposed ? `<span class="gp-notes">Déjà proposé</span>` : `<button type="button" class="ff-link" data-overlap-propose="${r.tmdb_id}">Proposer</button>`}
+    </div>`;
+  }).join('');
+}
+
+async function proposeOverlapFilm(groupId, tmdbId){
+  const r = groupOverlapRows.find(x => x.tmdb_id === tmdbId);
+  if(!r) return;
+  proposalTmdbSelected = { tmdb_id: r.tmdb_id, poster_url: r.poster_url || null, overview: null, release_year: r.release_year || null, original_title: null, title: r.title };
+  document.getElementById('proposalTitleInput').value = r.title;
+  await handleProposeFilm(groupId); // js/proposals.js
+  renderGroupWatchlistOverlap(groupId);
+}
+
+document.getElementById('groupOverlapList').addEventListener('click', (e) => {
+  const propose = e.target.closest('[data-overlap-propose]');
+  if(propose){
+    if(propose.disabled) return;
+    propose.disabled = true;
+    proposeOverlapFilm(currentGroupId, Number(propose.dataset.overlapPropose)).finally(() => { propose.disabled = false; });
+    return;
+  }
+  const open = e.target.closest('[data-overlap-open]');
+  if(open) goToFilmDetail(Number(open.dataset.overlapOpen));
+});
 
 // --- Goûts du groupe (v1.6, phase 4) : films notés par au moins 2 membres
 // (having count(*) >= 2 côté SQL, migrations/022) — jamais un seul, ça

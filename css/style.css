@@ -7455,3 +7455,6 @@ body[data-view-mode="list"] #filmList .bulk-select-checkbox{flex:none;}
 @media (max-width:600px){
   .dna-row{grid-template-columns:1fr; gap:2px;}
 }
+/* À voir en commun (renderGroupWatchlistOverlap(), js/groups.js) : l'affiche ouvre la fiche. */
+.gp-overlap-open{flex:none; padding:0; border:0; background:none; cursor:pointer; border-radius:var(--r-sm); overflow:hidden; line-height:0;}
+.gp-overlap-open img, .gp-overlap-open .film-poster-placeholder{display:block; width:40px; height:60px; object-fit:cover;}
