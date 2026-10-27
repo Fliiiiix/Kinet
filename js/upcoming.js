@@ -9,7 +9,8 @@
 //   Cette semaine, Plus tard : prochains épisodes (TMDB
 //     `next_episode_to_air`) et films d'À voir pas encore sortis ;
 //   En attente d'une date : séries en cours sans prochain épisode daté ;
-//   Au cinéma : sorties en salle en France (TMDB), avec « + À voir ».
+//   Au cinéma : sorties en salle dans le pays choisi (France par défaut,
+//     getWatchRegion(), js/tmdb.js), avec « + À voir ».
 // Le calendrier reste en option (bascule liste / calendrier) à la place de
 // « Cette semaine » et « Plus tard ». Les séries terminées vivent sur la
 // page Séries (renderTrackedShows(), js/series.js).
@@ -24,7 +25,7 @@ let upcomingLate = [];      // à rattraper : séries où tu as du retard, la pl
 let upcomingWaiting = [];   // séries en cours sans date
 let upcomingCinema = [];    // au cinéma : résultats TMDB + why
 let upcomingCinemaAdded = new Set(); // tmdb ids ajoutés à À voir depuis cette page
-let upcomingCinemaCache = null;      // { t, results } : /movie/upcoming, gardé une heure
+let upcomingCinemaCache = null;      // { t, region, results } : /movie/upcoming, gardé une heure
 
 const UPCOMING_RECENT_DAYS = 60;
 const UPCOMING_WEEK_DAYS = 7;
@@ -237,7 +238,8 @@ async function loadUpcoming(){
   upcomingWaiting = waiting;
 }
 
-// --- Au cinéma --- Sorties en salle en France dans les 45 jours, sans les
+// --- Au cinéma --- Sorties en salle dans le pays choisi (28/10 : plus
+// seulement la France) dans les 45 jours, sans les
 // films déjà chez toi. En tête, ceux qui partagent leur premier mot avec un
 // film que tu as noté 4 ou plus (« Godzilla Minus Zero » après « Godzilla
 // Minus One ») : la raison est écrite sous le titre.
@@ -275,15 +277,16 @@ function pickCinemaMovies(results, today){
 }
 
 async function loadUpcomingCinema(){
-  if(!upcomingCinemaCache || Date.now() - upcomingCinemaCache.t > UPCOMING_CINEMA_TTL_MS){
+  const region = getWatchRegion();
+  if(!upcomingCinemaCache || upcomingCinemaCache.region !== region || Date.now() - upcomingCinemaCache.t > UPCOMING_CINEMA_TTL_MS){
     const pages = await Promise.all([1, 2].map(async page => {
-      const res = await fetch(`https://api.themoviedb.org/3/movie/upcoming?language=fr-FR&region=FR&page=${page}`, {
+      const res = await fetch(`https://api.themoviedb.org/3/movie/upcoming?language=fr-FR&region=${region}&page=${page}`, {
         headers: { 'Authorization': `Bearer ${TMDB_API_KEY}`, 'Accept': 'application/json' }
       });
       if(!res.ok) throw new Error(`Erreur TMDB (${res.status})`);
       return (await res.json()).results || [];
     }));
-    upcomingCinemaCache = { t: Date.now(), results: pages.flat() };
+    upcomingCinemaCache = { t: Date.now(), region, results: pages.flat() };
   }
   upcomingCinema = pickCinemaMovies(upcomingCinemaCache.results, upcomingToday());
 }
@@ -382,7 +385,8 @@ function renderUpcoming(){
     html += upcomingSectionHtml('Plus tard', '', rows(future(later)));
   }
   html += upcomingSectionHtml('En attente d’une date', 'séries renouvelées ou en pause', rows(upcomingWaiting, { compact: true }), 'is-compact');
-  html += upcomingSectionHtml('Au cinéma', 'les prochaines sorties en salle', upcomingCinema.map(movie => {
+  const cinemaRegion = getWatchRegion();
+  html += upcomingSectionHtml('Au cinéma', `les prochaines sorties en salle${cinemaRegion === 'FR' ? '' : ` · ${escapeHtml(watchRegionName(cinemaRegion))}`}`, upcomingCinema.map(movie => {
     const index = actions.length;
     actions.push(() => goToFilmDetail(movie.id));
     const added = upcomingCinemaAdded.has(movie.id);

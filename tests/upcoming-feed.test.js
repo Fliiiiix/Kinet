@@ -162,4 +162,27 @@ test('résumé : « 4 choses à voir dès maintenant, 1 épisode cette semaine. 
   assert.strictEqual(ctx.upcomingSummaryText([]), 'Rien de prévu pour l’instant chez toi.');
 });
 
+// Au cinéma dans le pays choisi (28/10, idée 11) : la recherche TMDB suit
+// getWatchRegion() (js/tmdb.js), et changer de pays relance la recherche.
+test('Au cinéma : sorties du pays choisi, nouvelle recherche quand le pays change', async () => {
+  const urls = [];
+  const ctx = createContext({
+    document: stubDocument(),
+    goToUpcoming(){}, goHome(){}, observeReveal(){}, goToSeriesDetail(){}, goToFilmDetail(){}, goToWatchlist(){},
+    escapeHtml(s){ return s; }, normalizeSearch(s){ return String(s).toLowerCase(); }, getDisplayNote(){ return null; },
+    FILM_PLACEHOLDER_SVG: '', TV_PLACEHOLDER_SVG: '', TMDB_API_KEY: 'test',
+    fetch(url){ urls.push(url); return Promise.resolve({ ok: true, json: () => Promise.resolve({ results: [] }) }); },
+  });
+  loadFiles(ctx, ['js/tmdb.js', 'js/upcoming.js']);
+  setState(ctx, { films: [], watchlist: [] });
+  await ctx.loadUpcomingCinema();
+  assert.ok(urls[0].includes('region=FR'), 'la France par défaut');
+  await ctx.loadUpcomingCinema();
+  assert.strictEqual(urls.length, 2, 'deux pages, gardées une heure');
+  ctx.setWatchRegion('ZA');
+  await ctx.loadUpcomingCinema();
+  assert.strictEqual(urls.length, 4);
+  assert.ok(urls[2].includes('region=ZA'));
+});
+
 module.exports = run('upcoming-feed.test.js');
