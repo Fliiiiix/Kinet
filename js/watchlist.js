@@ -800,6 +800,8 @@ function surpriseServiceChoices(){
 // film en streaming).
 function renderSurpriseServices(){
   const el = document.getElementById('surpriseServices');
+  // « Les mieux notés » suivent déjà tes abonnements : pas de choix ici.
+  if(surpriseCriteria.source === 'top'){ el.innerHTML = ''; el.style.display = 'none'; return; }
   if(!watchlistProvidersReady){
     // En attente d'un tirage sur une plateforme, la fenêtre le dit déjà en
     // grand (showSurpriseMessage()) : pas deux fois.
@@ -835,6 +837,7 @@ function setSurpriseServicesBusy(busy){
   document.getElementById('surpriseServices').querySelectorAll('[data-surprise-service]').forEach(b => {
     b.disabled = busy;
   });
+  if(!document.getElementById('surpriseCriteria').hidden) renderSurpriseCriteria();
 }
 
 // Un choix qui n'existe plus (plateforme partie du catalogue, abonnements
@@ -869,9 +872,13 @@ function showSurpriseMessage(text){
 // à chaque changement de plateforme.
 function startSurpriseDraw(){
   renderSurpriseServices();
-  const pool = getFilteredWatchlist();
+  const pool = surprisePool();
   if(pool.length === 0){
-    showSurpriseMessage('Aucun film à voir sur cette plateforme pour l\'instant. Choisis-en une autre.');
+    showSurpriseMessage(surpriseCriteria.duration || surpriseCriteria.genre
+      ? 'Aucun film ne correspond à ces critères. Élargis-les.'
+      : surpriseCriteria.source === 'top'
+        ? 'Les mieux notés ne sont pas encore prêts. Réessaie dans un instant.'
+        : 'Aucun film à voir sur cette plateforme pour l\'instant. Choisis-en une autre.');
     return;
   }
   spinSurpriseRoulette(pool);
@@ -906,6 +913,144 @@ function handleSurpriseServiceClick(e){
   setSurpriseServicePref(value);
   applySurpriseService(value);
   startSurpriseDraw();
+}
+
+// --- Plus de critères (idée retenue par Flix le 28/10) --- Repliés derrière
+// un lien : d'où piocher (À voir, ou « Les mieux notés sur tes abonnements »,
+// js/streamingTop.js), la durée et le genre. Durées et genres viennent de
+// fetchFilmFactsMany() (js/tmdb.js), chargés à la première ouverture puis
+// gardés sur l'appareil. Le temps de la session, pas enregistrés.
+const SURPRISE_DURATIONS = [
+  { key: '', label: 'Toutes' },
+  { key: '105', label: 'Moins de 1 h 45' },
+  { key: '135', label: 'Moins de 2 h 15' },
+];
+const SURPRISE_MAX_GENRES = 6;
+let surpriseCriteria = { source: 'list', duration: '', genre: '' };
+let surpriseFactsState = 'idle'; // idle | loading | ready
+let surpriseFactsProgress = '';
+
+function surpriseCriteriaActive(){
+  return surpriseCriteria.source !== 'list' || !!surpriseCriteria.duration || !!surpriseCriteria.genre;
+}
+
+// « Les mieux notés » sous la forme d'un film d'À voir, pour la roulette.
+function streamingTopAsSurpriseItems(){
+  const top = typeof streamingTopFilms !== 'undefined' ? streamingTopFilms : [];
+  return top.map(r => ({
+    id: `top-${r.id}`, tmdbId: r.id, title: r.title, note: null, fromTop: true,
+    posterUrl: r.poster_path ? TMDB_IMG_BASE + r.poster_path : null,
+    releaseYear: r.release_date ? parseInt(r.release_date.slice(0, 4), 10) : null,
+  }));
+}
+
+// Le lot de la source choisie, avant durée et genre.
+function surpriseSourcePool(){
+  return surpriseCriteria.source === 'top' ? streamingTopAsSurpriseItems() : getFilteredWatchlist();
+}
+
+// Le lot du tirage. Un film dont on ne connaît pas la durée ou les genres
+// sort du lot dès qu'un de ces critères est choisi.
+function surprisePool(){
+  const { duration, genre } = surpriseCriteria;
+  const pool = surpriseSourcePool();
+  if(!duration && !genre) return pool;
+  return pool.filter(item => {
+    const f = item.tmdbId ? cachedFilmFacts(item.tmdbId) : null;
+    if(!f) return false;
+    if(duration && !(f.runtime && f.runtime <= Number(duration))) return false;
+    if(genre && !f.genres.includes(Number(genre))) return false;
+    return true;
+  });
+}
+
+// Les genres les plus présents dans la source choisie.
+function surpriseGenreChoices(){
+  const counts = new Map();
+  surpriseSourcePool().forEach(item => {
+    const f = item.tmdbId ? cachedFilmFacts(item.tmdbId) : null;
+    (f ? f.genres : []).forEach(g => { if(GENRE_MAP[g]) counts.set(g, (counts.get(g) || 0) + 1); });
+  });
+  return Array.from(counts.entries())
+    .sort((a, b) => b[1] - a[1] || GENRE_MAP[a[0]].localeCompare(GENRE_MAP[b[0]], 'fr'))
+    .slice(0, SURPRISE_MAX_GENRES)
+    .map(([id]) => id);
+}
+
+function surpriseChipsHtml(group, choices, current, disabled){
+  return choices.map(c => `<button type="button" class="wl-sub-chip" role="radio" data-criteria="${group}" data-value="${escapeHtml(c.key)}" aria-checked="${c.key === current}"${disabled ? ' disabled' : ''}>${escapeHtml(c.label)}</button>`).join('');
+}
+
+function renderSurpriseCriteria(){
+  const el = document.getElementById('surpriseCriteria');
+  const ready = surpriseFactsState === 'ready';
+  const hasTop = typeof streamingTopFilms !== 'undefined' && streamingTopFilms.length > 0;
+  const sources = [{ key: 'list', label: 'Dans À voir' }].concat(hasTop || surpriseCriteria.source === 'top' ? [{ key: 'top', label: 'Les mieux notés' }] : []);
+  const genres = ready ? [{ key: '', label: 'Tous' }].concat(surpriseGenreChoices().map(id => ({ key: String(id), label: GENRE_MAP[id] }))) : [];
+  el.innerHTML = `
+    ${sources.length > 1 ? `<div class="surprise-crit-row" role="radiogroup" aria-label="Où piocher"><span class="surprise-crit-label">Piocher</span>${surpriseChipsHtml('source', sources, surpriseCriteria.source, surpriseSpinning)}</div>` : ''}
+    <div class="surprise-crit-row" role="radiogroup" aria-label="Durée"><span class="surprise-crit-label">Durée</span>${surpriseChipsHtml('duration', SURPRISE_DURATIONS, surpriseCriteria.duration, !ready || surpriseSpinning)}</div>
+    ${ready ? `<div class="surprise-crit-row" role="radiogroup" aria-label="Genre"><span class="surprise-crit-label">Genre</span>${surpriseChipsHtml('genre', genres, surpriseCriteria.genre, surpriseSpinning)}</div>` : ''}
+    ${ready ? '' : `<p class="surprise-crit-wait">Préparation des durées et des genres${surpriseFactsProgress ? ` (${surpriseFactsProgress})` : ''}…</p>`}
+  `;
+}
+
+async function loadSurpriseFacts(){
+  if(surpriseFactsState !== 'idle') return;
+  surpriseFactsState = 'loading';
+  const ids = watchlist.map(i => i.tmdbId).concat(streamingTopAsSurpriseItems().map(i => i.tmdbId));
+  await fetchFilmFactsMany(ids, (done, total) => {
+    surpriseFactsProgress = `${done} / ${total}`;
+    if(!document.getElementById('surpriseCriteria').hidden) renderSurpriseCriteria();
+  });
+  surpriseFactsState = 'ready';
+  if(!document.getElementById('surpriseCriteria').hidden) renderSurpriseCriteria();
+}
+
+function toggleSurpriseCriteria(){
+  const panel = document.getElementById('surpriseCriteria');
+  const toggle = document.getElementById('surpriseCriteriaToggle');
+  panel.hidden = !panel.hidden;
+  toggle.setAttribute('aria-expanded', String(!panel.hidden));
+  if(!panel.hidden){
+    renderSurpriseCriteria();
+    loadSurpriseFacts().catch(e => { console.error(e); surpriseFactsState = 'ready'; renderSurpriseCriteria(); });
+  }
+}
+
+function handleSurpriseCriteriaClick(e){
+  const chip = e.target.closest('[data-criteria]');
+  if(!chip || chip.disabled || surpriseSpinning || chip.getAttribute('aria-checked') === 'true') return;
+  surpriseCriteria[chip.dataset.criteria] = chip.dataset.value;
+  // Une autre source : le genre choisi n'y existe peut-être pas.
+  if(chip.dataset.criteria === 'source') surpriseCriteria.genre = '';
+  renderSurpriseCriteria();
+  startSurpriseDraw();
+}
+
+// « Pourquoi ce film » (idée retenue par Flix le 28/10) : durée, genres, note
+// TMDB et ce qu'en pensent tes amis, pour décider en deux secondes.
+function surpriseWhyText(item, facts){
+  const parts = [];
+  if(facts){
+    if(facts.runtime) parts.push(formatRuntime(facts.runtime));
+    const g = facts.genres.map(id => GENRE_MAP[id]).filter(Boolean).slice(0, 2);
+    if(g.length) parts.push(g.join(', '));
+    if(facts.vote && facts.votes >= 50) parts.push(`TMDB ${facts.vote.toFixed(1).replace('.', ',')}`);
+  }
+  return parts.join(' · ');
+}
+
+function renderSurpriseWhy(item){
+  const el = document.getElementById('surpriseWhy');
+  if(!el) return;
+  const friends = !item.fromTop ? friendRatingsLabel(item.id) : null;
+  const facts = item.tmdbId ? cachedFilmFacts(item.tmdbId) : null;
+  const text = surpriseWhyText(item, facts);
+  el.innerHTML = `${text ? `<span>${escapeHtml(text)}</span>` : ''}${friends ? `<span class="surprise-why-friends">${escapeHtml(friends)}</span>` : ''}`;
+  if(!facts && item.tmdbId){
+    fetchFilmFacts(item.tmdbId).then(() => { if(currentSurpriseItem === item) renderSurpriseWhy(item); }).catch(e => console.error(e));
+  }
 }
 
 // Longueur de la bande et position de la case gagnante dedans — assez de
@@ -957,9 +1102,13 @@ function renderSurpriseContent(item){
     <div class="surprise-info">
       <div class="wl-title">${escapeHtml(item.title)}${item.releaseYear ? ` <span class="wl-year">(${item.releaseYear})</span>` : ''}</div>
       ${shown.length ? `<div class="surprise-on">Sur ${escapeHtml(shown.map(s => s.name).join(', '))}</div>` : ''}
+      <div class="surprise-why" id="surpriseWhy"></div>
       ${item.note ? `<div class="wl-note">${escapeHtml(item.note)}</div>` : ''}
     </div>
   `;
+  renderSurpriseWhy(item);
+  // Un film des « mieux notés » n'est pas encore dans À voir : on l'y ajoute.
+  document.getElementById('surpriseRateBtn').textContent = item.fromTop ? 'Ajouter à À voir' : 'Noter maintenant';
 }
 
 // Lance un tirage dans pool : construit la bande, l'anime jusqu'au repère
@@ -970,6 +1119,10 @@ function spinSurpriseRoulette(pool){
   if(surpriseSpinning) return; // anti double-lancement (boutons désactivés pendant le tirage, filet en plus)
   surpriseSpinning = true;
   currentSurpriseItem = pool[Math.floor(Math.random() * pool.length)];
+  // « Pourquoi ce film » prêt à l'arrivée de la bande.
+  if(currentSurpriseItem.tmdbId && !cachedFilmFacts(currentSurpriseItem.tmdbId)){
+    fetchFilmFacts(currentSurpriseItem.tmdbId).catch(e => console.error(e));
+  }
 
   const content = document.getElementById('surpriseContent');
   const rerollBtn = document.getElementById('surpriseRerollBtn');
@@ -1070,6 +1223,8 @@ function openSurprise(){
   }
   surpriseWaitingProviders = false;
   surpriseServicesExpanded = false;
+  document.getElementById('surpriseCriteria').hidden = true;
+  document.getElementById('surpriseCriteriaToggle').setAttribute('aria-expanded', 'false');
   openOverlay('surpriseOverlay');
   const pref = getSurpriseServicePref();
   if(pref && !watchlistProvidersReady){
@@ -1089,9 +1244,17 @@ document.getElementById('surpriseOverlay').addEventListener('click', (e) => {
   if(e.target.id === 'surpriseOverlay') closeOverlay('surpriseOverlay');
 });
 document.getElementById('surpriseRerollBtn').addEventListener('click', startSurpriseDraw);
-document.getElementById('surpriseRateBtn').addEventListener('click', () => {
-  closeOverlay('surpriseOverlay', () => startRatingFromWatchlist(currentSurpriseItem));
+document.getElementById('surpriseRateBtn').addEventListener('click', async () => {
+  const item = currentSurpriseItem;
+  if(item && item.fromTop){
+    await addStreamingTopToWatchlist(item.tmdbId); // js/streamingTop.js
+    closeOverlay('surpriseOverlay');
+    return;
+  }
+  closeOverlay('surpriseOverlay', () => startRatingFromWatchlist(item));
 });
+document.getElementById('surpriseCriteriaToggle').addEventListener('click', toggleSurpriseCriteria);
+document.getElementById('surpriseCriteria').addEventListener('click', handleSurpriseCriteriaClick);
 
 // --- Recherche TMDB pour le formulaire d'ajout rapide ---
 // Le champ "Titre du film" fait aussi office de recherche (debounce pendant

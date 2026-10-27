@@ -97,6 +97,102 @@ async function fetchMovieDetails(tmdbId){
   return res.json();
 }
 
+// --- L'essentiel d'un film, gardé sur l'appareil (28/10) --- Durée, genres,
+// note TMDB et réalisateurs en un seul appel (append_to_response=credits),
+// gardés 30 jours : ça ne change presque jamais. Partagé par les critères de
+// Surprends-moi (js/watchlist.js), la note prévue (js/filmDetail.js) et l'ADN
+// ciné (js/stats.js).
+const FILM_FACTS_KEY = 'kinetFilmFacts';
+const FILM_FACTS_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+let filmFactsCache = null;
+let filmFactsSaveTimer = null;
+
+function filmFactsMap(){
+  if(filmFactsCache) return filmFactsCache;
+  filmFactsCache = {};
+  try{
+    const raw = typeof localStorage !== 'undefined' && localStorage.getItem(FILM_FACTS_KEY);
+    if(raw) filmFactsCache = JSON.parse(raw) || {};
+  }catch(e){ filmFactsCache = {}; }
+  return filmFactsCache;
+}
+
+function saveFilmFacts(){
+  clearTimeout(filmFactsSaveTimer);
+  filmFactsSaveTimer = setTimeout(() => {
+    try{
+      const now = Date.now();
+      const map = filmFactsMap();
+      Object.keys(map).forEach(k => { if(now - map[k].t > FILM_FACTS_TTL_MS) delete map[k]; });
+      localStorage.setItem(FILM_FACTS_KEY, JSON.stringify(map));
+    }catch(e){ /* stockage plein ou bloqué : la mémoire suffit */ }
+  }, 500);
+}
+
+function filmFactsFromDetails(d){
+  const crew = (d.credits && d.credits.crew) || [];
+  return {
+    runtime: d.runtime || null,
+    genres: (d.genres || []).map(g => g.id),
+    vote: typeof d.vote_average === 'number' ? d.vote_average : null,
+    votes: d.vote_count || 0,
+    year: d.release_date ? parseInt(d.release_date.slice(0, 4), 10) : null,
+    directors: crew.filter(c => c.job === 'Director').map(c => ({ id: c.id, name: c.name })),
+  };
+}
+
+// Déjà connu sur l'appareil : sans attendre. null si inconnu.
+function cachedFilmFacts(tmdbId){
+  const hit = filmFactsMap()[tmdbId];
+  return hit && Date.now() - hit.t < FILM_FACTS_TTL_MS ? hit.v : null;
+}
+
+async function fetchFilmFacts(tmdbId){
+  const known = cachedFilmFacts(tmdbId);
+  if(known) return known;
+  for(let attempt = 0; ; attempt++){
+    const res = await fetch(`https://api.themoviedb.org/3/movie/${tmdbId}?language=fr-FR&append_to_response=credits`, {
+      headers: { 'Authorization': `Bearer ${TMDB_API_KEY}`, 'Accept': 'application/json' }
+    });
+    if(res.status === 429 && attempt < 3){
+      await new Promise(resolve => setTimeout(resolve, 800 * (attempt + 1)));
+      continue;
+    }
+    if(!res.ok) throw new Error(`Erreur TMDB (${res.status})`);
+    const v = filmFactsFromDetails(await res.json());
+    filmFactsMap()[tmdbId] = { t: Date.now(), v };
+    saveFilmFacts();
+    return v;
+  }
+}
+
+// Plusieurs films, six requêtes à la fois au plus (même limite que les
+// plateformes d'À voir, audit C2). onProgress(fait, total) facultatif.
+async function fetchFilmFactsMany(tmdbIds, onProgress){
+  const ids = Array.from(new Set(tmdbIds.filter(Boolean)));
+  const out = {};
+  const queue = ids.filter(id => { const c = cachedFilmFacts(id); if(c){ out[id] = c; return false; } return true; });
+  let done = ids.length - queue.length;
+  if(onProgress) onProgress(done, ids.length);
+  const worker = async () => {
+    while(queue.length){
+      const id = queue.shift();
+      try{ out[id] = await fetchFilmFacts(id); }catch(e){ console.error(e); }
+      done++;
+      if(onProgress) onProgress(done, ids.length);
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(6, queue.length) }, worker));
+  return out;
+}
+
+// « 1 h 56 »
+function formatRuntime(min){
+  if(!min) return '';
+  const h = Math.floor(min / 60), m = min % 60;
+  return h ? `${h} h${m ? ' ' + String(m).padStart(2, '0') : ''}` : `${m} min`;
+}
+
 // Films similaires (retour utilisateur, étude comparative
 // Letterboxd/Goodreads — "Readers also enjoyed") — voir
 // renderFilmDetailSimilar(), js/filmDetail.js. /recommendations plutôt que

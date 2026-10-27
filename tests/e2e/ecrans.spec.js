@@ -24,6 +24,9 @@ const FENETRES = [
   ['notation-nouveau', 'openModal()'], ['notation-film', 'openModal(1)'], ['notation-sans-criteres', 'openModal(2)'],
   ['statistiques', 'openStats()'], ['succes', 'openAchievements()'], ['cartes', 'openTcgModal()'], ['journal', 'openJournal()'],
   ['nouveautes', 'openChangelogModal()'],
+  // La roulette tourne encore pendant la vérification : seul l'affichage compte ici.
+  ['surprends-moi', "location.hash = '#/watchlist'; new Promise(r => setTimeout(r, 2500)).then(() => openSurprise())"],
+  ['surprends-moi-criteres', "location.hash = '#/watchlist'; new Promise(r => setTimeout(r, 2500)).then(() => { openSurprise(); toggleSurpriseCriteria(); })"],
   ['ajouter-a-une-liste', 'openAddToListSheet({ tmdbId: __demo.Dune.id, title: __demo.Dune.title, posterUrl: __demo.Dune.poster, releaseYear: 2021 })'],
 ];
 

@@ -27,9 +27,11 @@ function buildContext(){
     showToast(){},
     escapeHtml(s){ return String(s); },
     fetchWatchProviders(){ throw new Error('non utilisé par ce test'); },
+    fetch(){ return new Promise(() => {}); }, // « pourquoi ce film » : la réponse TMDB n'arrive jamais ici
+    TMDB_API_KEY: 'test', TMDB_IMG_BASE: '',
     supabaseClient: { rpc(){ throw new Error('non utilisé par ce test'); } },
   });
-  loadFiles(ctx, ['js/watchlist.js']);
+  loadFiles(ctx, ['js/tmdb.js', 'js/watchlist.js']);
   // La liste sous la fenêtre et la bande animée ne sont pas l'objet de ces
   // tests : on garde seulement le lot dans lequel chaque tirage pioche.
   const spins = [];

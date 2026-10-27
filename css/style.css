@@ -7400,3 +7400,25 @@ body[data-view-mode="list"] #filmList .bulk-select-checkbox{flex:none;}
 .wls-meta{display:flex; align-items:center; justify-content:space-between; gap:var(--sp-2); width:100%;}
 .wls-note{font-size:var(--fs-xs); font-weight:600; color:var(--text-2); font-variant-numeric:tabular-nums;}
 #streamingTopSection{margin-top:var(--sp-6);}
+/* Surprends-moi, plus de critères et « pourquoi ce film » (28/10) */
+.surprise-criteria-toggle{display:block; margin:calc(-1 * var(--sp-2)) 0 var(--sp-3); padding:var(--sp-1) 0; background:none; border:0; cursor:pointer; font-family:var(--font-text); font-size:var(--fs-xs); font-weight:600; color:var(--text-2);}
+.surprise-criteria-toggle::after{content:' ›'; display:inline-block; transition:transform var(--dur-fast);}
+.surprise-criteria-toggle[aria-expanded="true"]::after{transform:rotate(90deg);}
+.surprise-criteria-toggle:hover{color:var(--text-1);}
+.surprise-criteria{margin:0 0 var(--sp-4); display:flex; flex-direction:column; gap:var(--sp-2);}
+.surprise-criteria[hidden]{display:none;}
+.surprise-crit-row{display:flex; flex-wrap:wrap; align-items:center; gap:var(--sp-2);}
+.surprise-crit-label{width:56px; font-size:var(--fs-xs); color:var(--text-2);}
+.surprise-crit-row .wl-sub-chip{padding:0 var(--sp-3);}
+.surprise-crit-row .wl-sub-chip[aria-checked="true"]{color:var(--text-1); border-color:var(--accent); background:var(--accent-wash);}
+.surprise-crit-row .wl-sub-chip:disabled{opacity:0.45; cursor:default;}
+.surprise-crit-row .wl-sub-chip[aria-checked="true"]:disabled{opacity:1;}
+.surprise-crit-wait{font-size:var(--fs-xs); color:var(--text-2);}
+.surprise-why{display:flex; flex-wrap:wrap; justify-content:center; gap:var(--sp-1) var(--sp-3); margin-top:var(--sp-1); font-size:var(--fs-sm); color:var(--text-2);}
+.surprise-why:empty{display:none;}
+.surprise-why-friends{color:var(--accent);}
+@media (max-width:600px){
+  .surprise-crit-row{flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; padding-right:var(--sp-5); -webkit-mask-image:linear-gradient(90deg, black calc(100% - var(--sp-5)), transparent); mask-image:linear-gradient(90deg, black calc(100% - var(--sp-5)), transparent);}
+  .surprise-crit-row::-webkit-scrollbar{display:none;}
+  .surprise-crit-row .wl-sub-chip, .surprise-crit-label{flex:none;}
+}
