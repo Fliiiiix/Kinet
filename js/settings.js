@@ -38,18 +38,64 @@ function renderSettingsSubs(){
     : 'Aucun : toutes les plateformes s’affichent sur tes affiches';
 }
 
-// Pays des plateformes (getWatchRegion(), js/tmdb.js) : les 139 pays de
-// TMDB, par nom français. La liste est construite une fois.
-function renderSettingsRegion(){
-  const sel = document.getElementById('settingsRegionSelect');
-  if(!sel.options.length){
-    sel.innerHTML = WATCH_REGIONS
-      .map(code => ({ code, name: watchRegionName(code) }))
-      .sort((a, b) => a.name.localeCompare(b.name, 'fr'))
-      .map(r => `<option value="${r.code}">${escapeHtml(r.name)}</option>`)
-      .join('');
+// --- Pays des plateformes (getWatchRegion(), js/tmdb.js) --- Une ligne
+// « Pays · France › » ; au toucher, une recherche et quelques pays juste en
+// dessous, aux couleurs de Kinet (retour de Flix, 27/10 : la liste déroulante
+// du navigateur était illisible et ses 139 pays longs à parcourir).
+// Sans recherche : le pays choisi puis les plus probables pour Kinet.
+const SETTINGS_REGION_SUGGESTED = ['FR', 'BE', 'CH', 'CA', 'LU', 'ZA', 'GB', 'US'];
+const SETTINGS_REGION_MAX = 8;
+
+const regionSearchKey = (s) => String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+
+function settingsRegionMatches(query){
+  const q = regionSearchKey(query.trim());
+  const current = getWatchRegion();
+  if(!q){
+    return [current, ...SETTINGS_REGION_SUGGESTED.filter(c => c !== current)].slice(0, SETTINGS_REGION_MAX);
   }
-  sel.value = getWatchRegion();
+  return WATCH_REGIONS
+    .map(code => ({ code, key: regionSearchKey(watchRegionName(code)) }))
+    .filter(r => r.key.includes(q) || r.code.toLowerCase() === q)
+    // Le nom qui commence par la recherche d'abord (« su » : Suède avant Afrique du Sud).
+    .sort((a, b) => (b.key.startsWith(q) - a.key.startsWith(q)) || a.key.localeCompare(b.key, 'fr'))
+    .slice(0, SETTINGS_REGION_MAX)
+    .map(r => r.code);
+}
+
+function renderSettingsRegionList(){
+  const list = document.getElementById('settingsRegionList');
+  const codes = settingsRegionMatches(document.getElementById('settingsRegionSearch').value);
+  const current = getWatchRegion();
+  list.innerHTML = codes.length
+    ? codes.map(code => `<button type="button" class="st-region-opt" role="option" data-region="${code}" aria-selected="${code === current}">${escapeHtml(watchRegionName(code))}</button>`).join('')
+    : `<p class="st-region-empty">Aucun pays de ce nom.</p>`;
+}
+
+function renderSettingsRegion(){
+  document.getElementById('settingsRegionVal').textContent = watchRegionName(getWatchRegion());
+}
+
+function toggleSettingsRegionPanel(open){
+  const panel = document.getElementById('settingsRegionPanel');
+  const btn = document.getElementById('settingsRegionBtn');
+  const show = typeof open === 'boolean' ? open : panel.hidden;
+  panel.hidden = !show;
+  btn.setAttribute('aria-expanded', String(show));
+  if(show){
+    const search = document.getElementById('settingsRegionSearch');
+    search.value = '';
+    renderSettingsRegionList();
+    search.focus();
+  }
+}
+
+function chooseSettingsRegion(code){
+  setWatchRegion(code);
+  renderSettingsRegion();
+  toggleSettingsRegionPanel(false);
+  document.getElementById('settingsRegionBtn').focus();
+  showToast(`Plateformes : ${watchRegionName(getWatchRegion())}`);
 }
 
 function renderSettingsPublic(){
@@ -68,6 +114,7 @@ function openSettingsPage(){
   renderSettingsVolumeRow();
   renderSettingsSubs();
   renderSettingsRegion();
+  toggleSettingsRegionPanel(false);
   renderSettingsPublic();
   // Installation en app (js/pwa.js) : reconstruite à chaque ouverture, le
   // prompt natif peut être devenu disponible depuis la dernière fois.
@@ -104,9 +151,22 @@ document.getElementById('settingsSubsBtn').addEventListener('click', () => {
 
 // Pris en compte à la prochaine lecture des plateformes (À voir, fiche,
 // Bientôt) : le cache est rangé par pays (fetchWatchProviders(), js/tmdb.js).
-document.getElementById('settingsRegionSelect').addEventListener('change', (e) => {
-  setWatchRegion(e.target.value);
-  showToast(`Plateformes : ${watchRegionName(getWatchRegion())}`);
+document.getElementById('settingsRegionBtn').addEventListener('click', () => toggleSettingsRegionPanel());
+document.getElementById('settingsRegionSearch').addEventListener('input', renderSettingsRegionList);
+document.getElementById('settingsRegionSearch').addEventListener('keydown', (e) => {
+  if(e.key === 'Enter'){
+    e.preventDefault();
+    const first = settingsRegionMatches(e.target.value)[0];
+    if(first) chooseSettingsRegion(first);
+  }else if(e.key === 'Escape'){
+    e.preventDefault();
+    toggleSettingsRegionPanel(false);
+    document.getElementById('settingsRegionBtn').focus();
+  }
+});
+document.getElementById('settingsRegionList').addEventListener('click', (e) => {
+  const opt = e.target.closest('[data-region]');
+  if(opt) chooseSettingsRegion(opt.dataset.region);
 });
 
 document.getElementById('settingsPublicToggle').addEventListener('change', async (e) => {

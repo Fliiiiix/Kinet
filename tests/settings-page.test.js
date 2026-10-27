@@ -17,7 +17,11 @@ function buildContext(opts = {}){
     settingsPublicSub: stubElement(),
     openSettingsBtn: stubEventTarget(),
     settingsPageBack: stubEventTarget(),
-    settingsRegionSelect: Object.assign(stubEventTarget(), { options: [], value: '' }),
+    settingsRegionBtn: Object.assign(stubEventTarget(), { attrs: {}, setAttribute(k, v){ this.attrs[k] = v; }, focus(){} }),
+    settingsRegionVal: stubElement(),
+    settingsRegionPanel: stubElement({ hidden: true }),
+    settingsRegionSearch: Object.assign(stubEventTarget(), { value: '', focus(){} }),
+    settingsRegionList: Object.assign(stubEventTarget(), { innerHTML: '' }),
   };
   const themeButtons = ['dark', 'light', 'auto'].map(choice => {
     const attrs = {};
@@ -99,25 +103,54 @@ test('« Paramètres » depuis le Profil mène à #/parametres, « ← Profil »
   assert.strictEqual(calls.toProfile, 1);
 });
 
-// Pays des plateformes (retour de Flix, 27/10, en Afrique du Sud).
-test('Pays : la liste des pays en français, la France par défaut', () => {
+// Pays des plateformes (retour de Flix, 27/10, en Afrique du Sud). La liste
+// déroulante du navigateur (illisible, 139 pays) est remplacée par une ligne
+// « Pays · France › » qui ouvre une recherche et quelques pays dessous.
+test('Pays : la ligne montre le pays choisi, France par défaut, le choix replié', () => {
   const { ctx, els } = buildContext();
   ctx.openSettingsPage();
-  const html = els.settingsRegionSelect.innerHTML;
-  assert.ok(html.includes('<option value="ZA">Afrique du Sud</option>'));
-  assert.ok(html.indexOf('value="ZA"') < html.indexOf('value="FR"'), 'trié par nom : Afrique du Sud avant France');
-  assert.strictEqual(els.settingsRegionSelect.value, 'FR');
+  assert.strictEqual(els.settingsRegionVal.textContent, 'France');
+  assert.strictEqual(els.settingsRegionPanel.hidden, true);
 });
 
-test('Pays : le choix est gardé sur l’appareil, la France efface le réglage', () => {
+test('Pays : sans recherche, le pays choisi puis les plus probables, le choix coché', () => {
+  const { els } = buildContext();
+  els.settingsRegionBtn.dispatch('click', {});
+  assert.strictEqual(els.settingsRegionPanel.hidden, false);
+  assert.strictEqual(els.settingsRegionBtn.attrs['aria-expanded'], 'true');
+  const html = els.settingsRegionList.innerHTML;
+  const order = [...html.matchAll(/data-region="([A-Z]{2})"/g)].map(m => m[1]);
+  assert.deepStrictEqual(order, ['FR', 'BE', 'CH', 'CA', 'LU', 'ZA', 'GB', 'US']);
+  assert.ok(html.includes('data-region="FR" aria-selected="true">France<'));
+});
+
+test('Pays : la recherche ignore les accents et met en tête les noms qui commencent pareil', () => {
+  const { ctx } = buildContext();
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(ctx.settingsRegionMatches('afri'))), ['ZA']);
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(ctx.settingsRegionMatches('etats'))), ['US']);
+  const su = JSON.parse(JSON.stringify(ctx.settingsRegionMatches('su')));
+  assert.strictEqual(su[0], 'SE', 'Suède commence par « su »');
+  assert.ok(su.includes('ZA'), 'Afrique du Sud contient « su »');
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(ctx.settingsRegionMatches('zzz'))), []);
+});
+
+test('Pays : choisir l’Afrique du Sud la garde sur l’appareil et referme le choix ; la France efface le réglage', () => {
   const { ctx, els, calls } = buildContext();
-  els.settingsRegionSelect.dispatch('change', { target: { value: 'ZA' } });
+  els.settingsRegionBtn.dispatch('click', {});
+  els.settingsRegionList.dispatch('click', { target: { closest: () => ({ dataset: { region: 'ZA' } }) } });
   assert.strictEqual(ctx.localStorage.getItem('kinetWatchRegion'), 'ZA');
   assert.strictEqual(ctx.getWatchRegion(), 'ZA');
+  assert.strictEqual(els.settingsRegionVal.textContent, 'Afrique du Sud');
+  assert.strictEqual(els.settingsRegionPanel.hidden, true);
   assert.strictEqual(calls.toast, 'Plateformes : Afrique du Sud');
-  els.settingsRegionSelect.dispatch('change', { target: { value: 'FR' } });
+  ctx.chooseSettingsRegion('FR');
   assert.strictEqual(ctx.localStorage.getItem('kinetWatchRegion'), null);
-  assert.strictEqual(ctx.getWatchRegion(), 'FR');
+});
+
+test('Pays : Entrée prend le premier résultat de la recherche', () => {
+  const { ctx, els } = buildContext();
+  els.settingsRegionSearch.dispatch('keydown', { key: 'Enter', preventDefault(){}, target: { value: 'belg' } });
+  assert.strictEqual(ctx.getWatchRegion(), 'BE');
 });
 
 module.exports = run('settings-page.test.js');

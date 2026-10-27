@@ -6498,13 +6498,19 @@ html:has(#authContainer:not([style*="none"])) #versionTag{display:none !importan
 .st-seg button:hover{color:var(--text-1);}
 .st-seg button[aria-checked="true"]{background:var(--accent); color:var(--accent-ink);}
 .st-range{flex:none; width:180px; accent-color:var(--accent);}
-/* Pays des plateformes : la valeur de la ligne, pas un champ encadré. */
-.st-select{flex:none; max-width:50%; padding:var(--sp-1) 0; border:0; background:transparent; cursor:pointer; font-family:var(--font-text); font-size:var(--fs-sm); color:var(--text-2); text-align:right; color-scheme:dark;}
-:root[data-theme="light"] .st-select{color-scheme:light;}
-.st-select:hover{color:var(--text-1);}
-.st-select:focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:var(--r-sm);}
-/* iPhone agrandit la page sur un champ sous 16 px. */
-@media (pointer:coarse){ .st-select{font-size:16px;} }
+/* Pays des plateformes : recherche et quelques pays sous la ligne « Pays »
+   (renderSettingsRegionList(), js/settings.js). Le champ garde le style des
+   autres champs (16 px, sinon iPhone agrandit la page). */
+.st-region{padding:var(--sp-3) 0 var(--sp-2); border-bottom:1px solid var(--line);}
+#settingsRegionBtn[aria-expanded="true"] .pp-chev{transform:rotate(90deg);}
+.st-region input[type="text"]{width:100%; min-width:0;}
+.st-region-list{display:flex; flex-direction:column; margin-top:var(--sp-2);}
+.st-region-opt{display:flex; align-items:center; justify-content:space-between; gap:var(--sp-2); width:100%; min-height:40px; padding:0 var(--sp-1); background:none; border:0; border-radius:var(--r-sm); cursor:pointer; font-family:var(--font-text); font-size:var(--fs-sm); color:var(--text-1); text-align:left; transition:background-color var(--dur-fast), color var(--dur-fast);}
+.st-region-opt:hover{background:var(--surface-2);}
+.st-region-opt:focus-visible{outline:2px solid var(--accent); outline-offset:-2px;}
+.st-region-opt[aria-selected="true"]{color:var(--accent); font-weight:600;}
+.st-region-opt[aria-selected="true"]::after{content:'\2713'; font-weight:600;}
+.st-region-empty{padding:var(--sp-2) var(--sp-1); font-size:var(--fs-sm); color:var(--text-2);}
 .st-row-danger .pp-row-title{color:var(--note-low);}
 .st-install-body{font-size:var(--fs-sm); color:var(--text-2);}
 .st-install-body .wl-note{margin:2px 0 0; font-size:var(--fs-sm); color:var(--text-2);}
