@@ -24,6 +24,8 @@ const FENETRES = [
   ['notation-nouveau', 'openModal()'], ['notation-film', 'openModal(1)'], ['notation-sans-criteres', 'openModal(2)'],
   ['statistiques', 'openStats()'], ['succes', 'openAchievements()'], ['cartes', 'openTcgModal()'], ['journal', 'openJournal()'],
   ['nouveautes', 'openChangelogModal()'],
+  // Série : un épisode vu ouvert, avec sa note et son commentaire.
+  ['serie-episode', "location.hash = '#/series/28'; new Promise(r => setTimeout(r, 3000)).then(() => { const b = document.querySelector('[data-sq=\"1-1\"]'); if(b) b.click(); return new Promise(r => setTimeout(r, 500)); }).then(() => { const c = document.querySelector('[data-ep-comment-edit]'); if(c) c.click(); const p = document.querySelector('.sx-sel'); if(p) p.scrollIntoView({ block: 'center' }); })"],
   ['aide-cartes', "Promise.resolve(openTcgModal()).then(() => document.querySelector('#tcgOverlay .help-q').click())"],
   ['aide-notation', "openModal(1); document.querySelector('.nt-head .help-q').click()"],
   // La roulette tourne encore pendant la vérification : seul l'affichage compte ici.

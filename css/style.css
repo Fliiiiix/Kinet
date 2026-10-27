@@ -7458,3 +7458,19 @@ body[data-view-mode="list"] #filmList .bulk-select-checkbox{flex:none;}
 /* À voir en commun (renderGroupWatchlistOverlap(), js/groups.js) : l'affiche ouvre la fiche. */
 .gp-overlap-open{flex:none; padding:0; border:0; background:none; cursor:pointer; border-radius:var(--r-sm); overflow:hidden; line-height:0;}
 .gp-overlap-open img, .gp-overlap-open .film-poster-placeholder{display:block; width:40px; height:60px; object-fit:cover;}
+/* Séries, notes et commentaires d'épisode (28/10, js/series.js) :
+   un petit point sous un épisode noté ou commenté, le commentaire en une
+   ligne discrète, et l'anneau de la série en pointillés quand il suit la
+   moyenne des épisodes plutôt qu'une note posée à la main. */
+.sx-sq-btn{position:relative;}
+.sx-sq-btn.has-note::after{content:''; position:absolute; left:50%; bottom:3px; width:4px; height:4px; margin-left:-2px; border-radius:var(--r-full); background:currentColor; opacity:0.7;}
+.sx-comment{flex-basis:100%; margin:0; font-size:var(--fs-sm); color:var(--text-2);}
+.sx-comment span{font-style:italic;}
+.sx-comment-add{flex-basis:100%; text-align:left; font-size:var(--fs-sm);}
+.sx-comment-form{flex-basis:100%; display:flex; flex-direction:column; gap:var(--sp-2);}
+.sx-comment-input{width:100%; resize:vertical; min-height:56px;}
+.sx-comment-actions{display:flex; justify-content:flex-end; align-items:center; gap:var(--sp-3);}
+.counter.is-derived{border-style:dashed;}
+.sx-note-avg{margin-top:var(--sp-2);}
+.sx-note-avg[hidden]{display:none;}
+.sx-legend-hint{color:var(--text-3);}

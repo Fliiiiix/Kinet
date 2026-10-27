@@ -33,6 +33,12 @@ let watchedEpisodeSet = new Set(); // "saison-episode" vus, pour la série actue
 // globale) : "saison-episode" -> { note, timesWatched }, uniquement pour
 // les clés présentes dans watchedEpisodeSet ci-dessus.
 let watchedEpisodeExtras = {};
+// Notes d'épisode par saison, pour chaque série suivie : showId -> { saison:
+// [notes] }. Chargé avec la liste des séries, tenu à jour depuis la fiche.
+// Sert à la note de la série tirée de ses épisodes (showEpisodeAverage()).
+let showEpisodeNotes = {};
+let watchedEpisodesShowId = null; // série dont watchedEpisodeSet/Extras sont chargés
+let seriesEditingComment = null;  // "saison-épisode" dont le commentaire est en cours d'écriture
 let loadedSeasonEpisodes = {};  // season_number -> episodes[] (TMDB), alias courant de seasonUiCache[currentShowId].episodes
 // Saisons dépliées + épisodes déjà téléchargés, PAR SÉRIE (retour
 // utilisateur : "je déplie la saison 1, je change de page et je reviens,
@@ -110,7 +116,7 @@ async function loadTrackedShows(){
   if(trackedShows.length > 0){
     const { data: watched, error: watchedErr } = await supabaseClient
       .from('tv_episodes_watched')
-      .select('tv_show_id, note, times_watched, watched_at');
+      .select('tv_show_id, season_number, note, times_watched, watched_at');
     if(watchedErr){
       console.error(watchedErr);
     }else{
@@ -118,7 +124,12 @@ async function loadTrackedShows(){
       lastWatchedAtByShow = {};
       maxEpisodeTimesWatched = 0;
       notedEpisodeCount = 0;
+      showEpisodeNotes = {};
       (watched || []).forEach(row => {
+        if(row.note != null){
+          const bySeason = showEpisodeNotes[row.tv_show_id] = showEpisodeNotes[row.tv_show_id] || {};
+          (bySeason[row.season_number] = bySeason[row.season_number] || []).push(parseFloat(row.note));
+        }
         watchedEpisodeCounts[row.tv_show_id] = (watchedEpisodeCounts[row.tv_show_id] || 0) + 1;
         if(row.watched_at && row.watched_at > (lastWatchedAtByShow[row.tv_show_id] || 0)) lastWatchedAtByShow[row.tv_show_id] = row.watched_at;
         if(row.times_watched > maxEpisodeTimesWatched) maxEpisodeTimesWatched = row.times_watched;
@@ -302,7 +313,7 @@ function renderTrackedShows(){
              fallait ouvrir la série pour la voir) — même badge .counter que
              le catalogue films, même repli '—' tant qu'aucune note
              manuelle n'a été donnée (voir handleSaveSeriesNote()). -->
-        <div class="counter ${noteColorClass(show.manualNote)}">${show.manualNote !== null ? show.manualNote.toFixed(1) : '—'}</div>
+        ${(() => { const n = showDisplayNote(show); return `<div class="counter ${n == null ? '' : noteColorClass(n)}">${n != null ? n.toFixed(1) : '—'}</div>`; })()}
       </div>
     `;
   }).join('');
@@ -504,14 +515,74 @@ function renderShowDetailHeader(show){
 
   document.getElementById('seriesDetailOverview').textContent = show.overview || '';
 
-  // Ta note, dans le petit panneau ouvert par l'anneau (S7).
+  renderSeriesNotePop(show);
+}
+
+// Ta note, dans le petit panneau ouvert par l'anneau (S7). Sans note posée à
+// la main, la série suit la moyenne de tes épisodes (retour de Flix, 28/10).
+function renderSeriesNotePop(show){
   const hasNote = show.manualNote != null;
+  const avg = showEpisodeAverage(show.id);
   const slider = document.getElementById('seriesNoteSlider');
-  slider.value = hasNote ? show.manualNote : 2.5;
-  slider.classList.toggle('is-unset', !hasNote);
-  document.getElementById('seriesNoteVal').textContent = hasNote ? show.manualNote.toFixed(1) : 'Non notée';
+  slider.value = hasNote ? show.manualNote : (avg != null ? Math.round(avg * 2) / 2 : 2.5);
+  slider.classList.toggle('is-unset', !hasNote && avg == null);
+  document.getElementById('seriesNoteVal').textContent = hasNote ? show.manualNote.toFixed(1) : (avg != null ? avg.toFixed(1) : 'Non notée');
   const popTitle = document.getElementById('seriesNotePopTitle');
   if(popTitle) popTitle.textContent = `Ta note pour ${show.title}`;
+  const avgEl = document.getElementById('seriesNoteAvg');
+  if(avgEl){
+    avgEl.hidden = avg == null;
+    avgEl.innerHTML = avg == null ? '' : hasNote
+      ? `Moyenne de tes épisodes : ${avg.toFixed(1)}. <button type="button" class="ff-link" id="seriesFollowAvgBtn">La suivre</button>`
+      : 'Suit la moyenne de tes épisodes, saison par saison. Bouge le curseur pour poser ta propre note.';
+    const follow = document.getElementById('seriesFollowAvgBtn');
+    if(follow) follow.addEventListener('click', handleFollowEpisodeAverage);
+  }
+}
+
+// --- Note de la série tirée de ses épisodes (retour de Flix, 28/10) ---
+// Moyenne des saisons, chacune moyenne de ses épisodes notés : une saison de
+// 20 épisodes ne pèse pas plus qu'une de 6. null tant qu'aucun épisode n'est
+// noté. La note posée à la main (manual_note) reste prioritaire.
+function averageOfSeasons(bySeason){
+  const means = Object.values(bySeason || {}).filter(a => a.length).map(a => a.reduce((x, y) => x + y, 0) / a.length);
+  return means.length ? means.reduce((x, y) => x + y, 0) / means.length : null;
+}
+
+function showEpisodeAverage(showId){
+  return averageOfSeasons(showEpisodeNotes[showId]);
+}
+
+function showDisplayNote(show){
+  return show.manualNote != null ? show.manualNote : showEpisodeAverage(show.id);
+}
+
+// La fiche ouverte vient de changer une note ou une case : la moyenne de la
+// série suit, sur la fiche et dans la liste.
+function syncCurrentShowEpisodeNotes(){
+  if(watchedEpisodesShowId == null) return;
+  const bySeason = {};
+  watchedEpisodeSet.forEach(key => {
+    const extra = watchedEpisodeExtras[key];
+    if(!extra || extra.note == null) return;
+    const season = key.split('-')[0];
+    (bySeason[season] = bySeason[season] || []).push(extra.note);
+  });
+  showEpisodeNotes[watchedEpisodesShowId] = bySeason;
+  const show = trackedShows.find(x => x.id === watchedEpisodesShowId);
+  if(show && watchedEpisodesShowId === currentShowId){
+    renderRatingRing(show);
+    renderSeriesNotePop(show);
+  }
+}
+
+async function handleFollowEpisodeAverage(){
+  if(blockIfOffline()) return;
+  const { error } = await supabaseClient.from('tv_shows').update({ manual_note: null }).eq('id', currentShowId);
+  if(error){ showToast('Erreur, réessaie'); console.error(error); return; }
+  const show = trackedShows.find(x => x.id === currentShowId);
+  if(show){ show.manualNote = null; renderRatingRing(show); renderSeriesNotePop(show); }
+  showToast('La note suit maintenant tes épisodes');
 }
 
 // Même cadran que partout ailleurs (.counter, noteColorClass()) — voir le
@@ -519,12 +590,15 @@ function renderShowDetailHeader(show){
 function renderRatingRing(show){
   const el = document.getElementById('seriesDetailRatingRing');
   if(!el) return;
-  if(show.manualNote != null){
-    el.textContent = show.manualNote.toFixed(1);
-    el.className = `counter ${noteColorClass(show.manualNote)}`;
+  const note = showDisplayNote(show);
+  if(note != null){
+    el.textContent = note.toFixed(1);
+    el.className = `counter ${noteColorClass(note)}${show.manualNote == null ? ' is-derived' : ''}`;
+    el.title = show.manualNote == null ? 'Moyenne de tes épisodes' : 'Ta note';
   }else{
     el.textContent = '—';
     el.className = 'counter';
+    el.title = 'Ta note';
   }
 }
 
@@ -699,8 +773,15 @@ async function refreshShowMeta(show){
 async function loadWatchedEpisodes(showId){
   let { data, error } = await supabaseClient
     .from('tv_episodes_watched')
-    .select('season_number, episode_number, note, times_watched')
+    .select('season_number, episode_number, note, times_watched, comment')
     .eq('tv_show_id', showId);
+  if(error){
+    // Commentaire d'épisode : migration 071 peut-être pas encore lancée.
+    ({ data, error } = await supabaseClient
+      .from('tv_episodes_watched')
+      .select('season_number, episode_number, note, times_watched')
+      .eq('tv_show_id', showId));
+  }
   if(error){
     // Repli : la migration 036 (colonnes note/times_watched) n'a peut-être
     // pas encore été exécutée sur cette base -- ne jamais casser le statut
@@ -725,9 +806,13 @@ async function loadWatchedEpisodes(showId){
   (data || []).forEach(r => {
     watchedEpisodeExtras[`${r.season_number}-${r.episode_number}`] = {
       note: r.note != null ? parseFloat(r.note) : null,
-      timesWatched: r.times_watched || 1
+      timesWatched: r.times_watched || 1,
+      comment: r.comment || null
     };
   });
+  watchedEpisodesShowId = showId;
+  seriesEditingComment = null;
+  syncCurrentShowEpisodeNotes();
 }
 
 // --- Note de saison calculée (retour utilisateur) --- Jamais stockée :
@@ -793,7 +878,41 @@ function episodeExtrasHtml(key){
   return `<div class="sx-extra">
     <span class="sx-step">Ta note <button type="button" data-ep-note="${key}" data-dir="-" aria-label="Baisser la note">−</button><b class="num ${note == null ? '' : noteColorClass(note)}">${note == null ? '—' : Number(note).toFixed(1)}</b><button type="button" data-ep-note="${key}" data-dir="+" aria-label="Monter la note">+</button></span>
     <span class="sx-step">Vu <button type="button" data-ep-times="${key}" data-dir="-" aria-label="Retirer un visionnage">−</button><b class="num">${extra.timesWatched || 1} fois</b><button type="button" data-ep-times="${key}" data-dir="+" aria-label="Ajouter un visionnage">+</button></span>
+    ${episodeCommentHtml(key, extra)}
   </div>`;
+}
+
+// Commentaire d'un épisode (retour de Flix, 28/10) : un lien discret, un
+// champ court (500 caractères) seulement quand on le demande, puis le texte
+// en une ligne avec « Modifier ». Colonne comment, migration 071.
+const EPISODE_COMMENT_MAX = 500;
+function episodeCommentHtml(key, extra){
+  if(seriesEditingComment === key){
+    return `<div class="sx-comment-form">
+      <textarea class="sx-comment-input" data-ep-comment-input="${key}" maxlength="${EPISODE_COMMENT_MAX}" rows="2" placeholder="Ce que tu en as pensé…" aria-label="Ton commentaire sur cet épisode">${escapeHtml(extra.comment || '')}</textarea>
+      <div class="sx-comment-actions"><button type="button" class="ff-link" data-ep-comment-cancel="${key}">Annuler</button><button type="button" class="btn" data-ep-comment-save="${key}">Enregistrer</button></div>
+    </div>`;
+  }
+  return extra.comment
+    ? `<p class="sx-comment"><span>${escapeHtml(extra.comment)}</span> <button type="button" class="ff-link" data-ep-comment-edit="${key}">Modifier</button></p>`
+    : `<button type="button" class="ff-link sx-comment-add" data-ep-comment-edit="${key}">Commenter</button>`;
+}
+
+async function updateEpisodeComment(seasonNumber, episodeNumber, rawText){
+  if(blockIfOffline()) return false;
+  const key = `${seasonNumber}-${episodeNumber}`;
+  const comment = String(rawText || '').trim().slice(0, EPISODE_COMMENT_MAX) || null;
+  const { error } = await supabaseClient
+    .from('tv_episodes_watched')
+    .update({ comment })
+    .eq('tv_show_id', currentShowId).eq('season_number', seasonNumber).eq('episode_number', episodeNumber);
+  if(error){
+    console.error(error);
+    showToast(/comment/.test(error.message || '') ? 'Les commentaires d’épisode arrivent avec la migration 071' : 'Erreur, réessaie');
+    return false;
+  }
+  if(watchedEpisodeExtras[key]) watchedEpisodeExtras[key].comment = comment;
+  return true;
 }
 function seasonGridHtml(s){
   const n = s.season_number;
@@ -802,7 +921,9 @@ function seasonGridHtml(s){
     const key = `${n}-${ep}`;
     const aired = isEpisodeAired(n, ep);
     const on = watchedEpisodeSet.has(key);
-    squares.push(`<button type="button" class="sx-sq-btn${on ? ' on' : ''}${aired ? '' : ' future'}${seriesSelectedEp === key ? ' sel' : ''}" data-sq="${key}" aria-pressed="${on}" aria-label="Épisode ${ep}${aired ? '' : ', pas encore sorti'}">${ep}</button>`);
+    const ex = watchedEpisodeExtras[key];
+    const marked = on && ex && (ex.note != null || ex.comment);
+    squares.push(`<button type="button" class="sx-sq-btn${on ? ' on' : ''}${aired ? '' : ' future'}${seriesSelectedEp === key ? ' sel' : ''}${marked ? ' has-note' : ''}" data-sq="${key}" aria-pressed="${on}" aria-label="Épisode ${ep}${aired ? '' : ', pas encore sorti'}${marked ? ', noté ou commenté' : ''}">${ep}</button>`);
   }
   let sel = '';
   if(seriesSelectedEp && seriesSelectedEp.startsWith(`${n}-`)){
@@ -946,9 +1067,14 @@ function updateSeasonProgressUI(seasonNumber, episodeCount){
   const season = currentShowSeasons.find(s => s.season_number === seasonNumber);
   const aired = season ? airedEpisodesInSeason(season) : episodeCount;
   if(el) el.textContent = `${watchedInSeason(seasonNumber)} / ${aired || episodeCount}`;
+  // La barre de la saison suit aussi (retour de Flix, 28/10 : en liste, deux
+  // épisodes cochés et la barre restait vide, seul « 2 / 8 » changeait).
+  const bar = document.querySelector(`.season-block[data-season="${seasonNumber}"] .sx-bar b`);
+  if(bar && aired) bar.style.width = `${Math.round(watchedInSeason(seasonNumber) / aired * 100)}%`;
   const avgEl = document.getElementById(`seasonAvg-${seasonNumber}`);
   const avg = seasonAverageNote(seasonNumber);
   if(avgEl) avgEl.textContent = avg == null ? '' : avg.toFixed(1);
+  syncCurrentShowEpisodeNotes(); // la note de la série suit ses épisodes
   renderEpisodesFicheValue(trackedShows.find(s => s.id === currentShowId));
   renderSeriesNextBlock();
   renderSeriesProgress();
@@ -1037,6 +1163,7 @@ async function updateEpisodeNote(seasonNumber, episodeNumber, rawValue){
     return;
   }
   if(watchedEpisodeExtras[key]) watchedEpisodeExtras[key].note = note;
+  syncCurrentShowEpisodeNotes();
   // Note de saison calculée (retour utilisateur) : recalculée depuis les
   // notes d'épisode, voir seasonAverageNote() — sans cet appel, l'en-tête
   // de saison n'afficherait la nouvelle moyenne qu'au prochain repli/dépli
@@ -1423,6 +1550,16 @@ document.getElementById('seriesSeasonsList').addEventListener('click', async (e)
   const sq = t.closest('[data-sq]');
   if(sq){
     const [n, ep] = sq.dataset.sq.split('-').map(Number);
+    // Un épisode vu s'ouvre d'abord (note, commentaire) ; le toucher une
+    // seconde fois le décoche (retour de Flix, 28/10 : noter un épisode vu
+    // en grille le décochait). Un épisode pas vu se coche tout de suite.
+    if(watchedEpisodeSet.has(sq.dataset.sq) && seriesSelectedEp !== sq.dataset.sq){
+      seriesSelectedEp = sq.dataset.sq;
+      seriesEditingComment = null;
+      renderSeasonsList();
+      if(!loadedSeasonEpisodes[n]){ await ensureSeasonEpisodes(n); renderSeasonsList(); }
+      return;
+    }
     seriesSelectedEp = sq.dataset.sq;
     if(!isEpisodeAired(n, ep)){
       renderSeasonsList();
@@ -1449,6 +1586,31 @@ document.getElementById('seriesSeasonsList').addEventListener('click', async (e)
     const next = cur == null ? (up ? 3 : 2.5) : Math.min(5, Math.max(0.5, cur + (up ? 0.5 : -0.5)));
     await updateEpisodeNote(n, ep, String(next));
     renderSeasonEpisodes(n);
+    return;
+  }
+  const commentEdit = t.closest('[data-ep-comment-edit]');
+  if(commentEdit){
+    seriesEditingComment = commentEdit.dataset.epCommentEdit;
+    renderSeasonEpisodes(parseInt(seriesEditingComment.split('-')[0], 10));
+    const input = document.querySelector(`[data-ep-comment-input="${seriesEditingComment}"]`);
+    if(input) input.focus();
+    return;
+  }
+  const commentCancel = t.closest('[data-ep-comment-cancel]');
+  if(commentCancel){
+    seriesEditingComment = null;
+    renderSeasonEpisodes(parseInt(commentCancel.dataset.epCommentCancel.split('-')[0], 10));
+    return;
+  }
+  const commentSave = t.closest('[data-ep-comment-save]');
+  if(commentSave){
+    const key = commentSave.dataset.epCommentSave;
+    const [n, ep] = key.split('-').map(Number);
+    const input = document.querySelector(`[data-ep-comment-input="${key}"]`);
+    commentSave.disabled = true;
+    const ok = await updateEpisodeComment(n, ep, input ? input.value : '');
+    commentSave.disabled = false;
+    if(ok){ seriesEditingComment = null; syncCurrentShowEpisodeNotes(); renderSeasonEpisodes(n); }
     return;
   }
   const timesBtn = t.closest('[data-ep-times]');

@@ -4,7 +4,7 @@ Ces actions touchent ta base Supabase, ton compte ou une décision que tu
 dois prendre. Tout le reste est fait dans le code, poussé sur `main`.
 
 ## 0. État au 23/10/2026
-- **Deux migrations en attente (28/10) : 069 et 070, voir section 1.** 068 (réglages partagés) lancée le 28/10, vérifiée sans session. 048 à 067 sont en place : 067 lancée
+- **Une migration en attente : 071 (28/10), voir section 1.** 069 et 070 lancées le 28/10, vérifiées sans session. 068 (réglages partagés) lancée le 28/10, vérifiée sans session. 048 à 067 sont en place : 067 lancée
   le 23/10 et vérifiée sans session (fonctions fermées refusées en 42501,
   profil partagé et aperçu d'invitation toujours ouverts), 053 confirmée par
   toi le même jour.
@@ -19,10 +19,12 @@ dois prendre. Tout le reste est fait dans le code, poussé sur `main`.
   `docs/recalcul-raretes.md`).
 
 ## 1. Ce qui ne peut venir que de toi
-- [ ] **Migration `supabase/migrations/069_a_voir_en_commun.sql`** (28/10) :
-      « À voir en commun » dans les groupes. Sans elle, la section reste cachée.
-- [ ] **Migration `supabase/migrations/070_limite_journal.sql`** (28/10) :
-      limite d’envoi du journal d’événements. Rien ne change pour l’appli.
+- [ ] **Migration `supabase/migrations/071_commentaire_episode.sql`** (28/10) :
+      commentaire par épisode. Sans elle, « Commenter » dit qu’il arrive avec
+      elle ; les notes d’épisode et la note de série marchent déjà.
+- [x] Migrations 069 (À voir en commun) et 070 (limite du journal), lancées
+      le 28/10 : 069 refuse les visiteurs, 070 refuse un événement au nom d’un
+      autre compte ou trop long.
 - [ ] **Tests automatiques sur GitHub** : `.github/workflows/tests.yml` est prêt
       mais pas envoyé, le jeton GitHub de ce PC n’a pas l’autorisation
       « workflow ». Lance `gh auth refresh -h github.com -s workflow` (une page
