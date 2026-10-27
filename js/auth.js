@@ -70,6 +70,8 @@ async function showApp(){
   // Mes abonnements partagés entre appareils (js/watchlist.js) : pas
   // attendu, À voir se recale tout seul si la base en sait plus.
   if(typeof syncMyStreamingServices === 'function') syncMyStreamingServices().catch(e => console.error(e));
+  // Thème, sons, pays... partagés entre appareils (js/prefsSync.js, migration 068).
+  if(typeof syncPrefs === 'function') syncPrefs().catch(e => console.error(e));
   render();
   await renderRoute(); // gère un lien direct vers une page Groupes (F5, etc.)
   // Après renderRoute() : un lien d'invitation ouvert sans session (voir

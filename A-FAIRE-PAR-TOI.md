@@ -4,7 +4,7 @@ Ces actions touchent ta base Supabase, ton compte ou une décision que tu
 dois prendre. Tout le reste est fait dans le code, poussé sur `main`.
 
 ## 0. État au 23/10/2026
-- **Plus aucune migration en attente.** 048 à 067 sont en place : 067 lancée
+- **Une migration en attente : 068 (28/10), voir section 1.** 048 à 067 sont en place : 067 lancée
   le 23/10 et vérifiée sans session (fonctions fermées refusées en 42501,
   profil partagé et aperçu d'invitation toujours ouverts), 053 confirmée par
   toi le même jour.
@@ -19,6 +19,10 @@ dois prendre. Tout le reste est fait dans le code, poussé sur `main`.
   `docs/recalcul-raretes.md`).
 
 ## 1. Ce qui ne peut venir que de toi
+- [ ] **Migration `supabase/migrations/068_reglages_partages.sql`** (28/10) :
+      tes réglages (thème, sons, pays, affichages, ordre de l’entête,
+      Surprends-moi) suivent ton compte sur tous tes appareils. Sans elle,
+      chaque appareil garde les siens, comme avant.
 - [x] **Note de version 4.1** : publiée le 24/10 avec ton accord (v283 à
       v304), vérifiée en ligne.
 - [ ] **Sur un vrai téléphone** : la checklist `docs/checklist-mobile.md`, et
