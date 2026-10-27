@@ -7394,3 +7394,9 @@ body[data-view-mode="list"] #filmList .bulk-select-checkbox{flex:none;}
 .recap-share{margin-top:var(--sp-3);}
 /* Format des Nouveautés, rappelé dans l'onglet de l'admin (js/admin.js). */
 .cl-admin-hint{margin:0 0 var(--sp-2); font-size:var(--fs-xs); color:var(--text-2);}
+/* Les mieux notés sur tes abonnements (js/streamingTop.js) : la rangée des
+   suggestions, avec la note TMDB à gauche de « + À voir ». */
+.wls-hint{margin-left:var(--sp-2); font-family:var(--font-text); font-size:var(--fs-xs); font-weight:400; color:var(--text-2);}
+.wls-meta{display:flex; align-items:center; justify-content:space-between; gap:var(--sp-2); width:100%;}
+.wls-note{font-size:var(--fs-xs); font-weight:600; color:var(--text-2); font-variant-numeric:tabular-nums;}
+#streamingTopSection{margin-top:var(--sp-6);}

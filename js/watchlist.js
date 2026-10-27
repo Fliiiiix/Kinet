@@ -523,7 +523,12 @@ function handleMyServiceChipClick(e){
   buildWatchlistProviderFilterOptions();
   renderWatchlistReminder();
   renderWatchlist();
+  // « Les mieux notés sur tes abonnements » suit les pastilles, une fois
+  // qu'on a fini de cocher (js/streamingTop.js).
+  clearTimeout(myServicesTopTimer);
+  myServicesTopTimer = setTimeout(() => { if(typeof loadStreamingTop === 'function') loadStreamingTop(); }, 700);
 }
+let myServicesTopTimer = null;
 
 // Page watchlist — appelée par le routeur (#/watchlist).
 async function openWatchlist(){
@@ -535,6 +540,7 @@ async function openWatchlist(){
   // compléments, qui se posent tout seuls une fois prêts (même principe
   // que refreshActivityBadge()/maybeShowDigest(), js/auth.js).
   loadSuggestions();
+  loadStreamingTop(); // js/streamingTop.js
   loadWatchlistFriendRatings().then(renderWatchlist);
   loadWatchlistProviders().then(() => {
     buildWatchlistProviderFilterOptions();
