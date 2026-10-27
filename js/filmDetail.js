@@ -453,8 +453,11 @@ function renderFilmDetailAvis(){
     el.innerHTML = `
       <div class="stats-section-title">Ton avis</div>
       <p class="tmdb-empty">${myFilm ? 'Tu as vu ce film mais tu ne l\'as pas encore noté.' : 'Tu n\'as pas encore noté ce film.'}</p>
+      <p class="ff-predict" id="filmPredict" hidden></p>
       <button type="button" class="ff-btn-main" data-avis-rate>Noter ce film</button>`;
     el.querySelector('[data-avis-rate]').addEventListener('click', handleFilmDetailRate);
+    // Ta note prévue (js/prediction.js, idée 6 du 28/10).
+    if(typeof fillFilmPrediction === 'function') fillFilmPrediction(currentFilmTmdbId, null);
     return;
   }
   const note = getDisplayNote(myFilm);
@@ -475,9 +478,12 @@ function renderFilmDetailAvis(){
         return `<div class="ff-crit"><span>${escapeHtml(critShortLabel(c.key))}</span><i><b style="width:${Math.round(v * 100)}%"></b></i><span class="num">${critLabel(v)}</span></div>`;
       }).join('')}</div>` : ''}
     </div>
+    <p class="ff-predict" id="filmPredict" hidden></p>
     ${myFilm.review ? `<p class="ff-quote">${escapeHtml(myFilm.review)}</p>` : ''}
     <div class="ff-seen">${seenText ? `<span>${escapeHtml(seenText)}</span>` : ''}<button type="button" class="ff-link" data-avis-rewatch>+ Je l'ai revu</button></div>`;
   el.querySelectorAll('[data-avis-rate]').forEach(b => b.addEventListener('click', handleFilmDetailRate));
+  // Ce que Kinet aurait prévu sans ce film, et l'écart (js/prediction.js).
+  if(typeof fillFilmPrediction === 'function') fillFilmPrediction(currentFilmTmdbId, note);
   el.querySelector('[data-avis-rewatch]').addEventListener('click', async (e) => {
     if(blockIfOffline()) return;
     e.currentTarget.disabled = true;
