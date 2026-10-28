@@ -345,10 +345,10 @@ async function deleteShowRow(id){
 
 async function handleRemoveShow(id, fromDetail){
   if(blockIfOffline()) return;
-  if(!confirm('Retirer cette série suivie ? Les épisodes cochés seront perdus.')) return;
+  if(!confirm('Ne plus suivre cette série ? Tes épisodes cochés, leurs notes et leurs commentaires seront perdus.')) return;
   const ok = await deleteShowRow(id);
   if(!ok) return;
-  showToast('Série retirée');
+  showToast('Tu ne suis plus cette série');
   if(fromDetail) goToSeries();
   else renderTrackedShows();
 }
@@ -1522,6 +1522,25 @@ document.getElementById('seriesNoteSlider').addEventListener('input', (e) => {
 });
 document.getElementById('seriesNoteSlider').addEventListener('change', handleSaveSeriesNote);
 document.getElementById('seriesRemoveBtn').addEventListener('click', () => handleRemoveShow(currentShowId, true));
+// Menu ⋯ posé sur le bandeau : « Ne plus suivre » (retour de Flix, 28/10).
+function closeSeriesMenu(){
+  document.getElementById('seriesMenu').hidden = true;
+  document.getElementById('seriesMoreBtn').setAttribute('aria-expanded', 'false');
+}
+document.getElementById('seriesMoreBtn').addEventListener('click', (e) => {
+  e.stopPropagation();
+  const menu = document.getElementById('seriesMenu');
+  menu.hidden = !menu.hidden;
+  e.currentTarget.setAttribute('aria-expanded', String(!menu.hidden));
+});
+document.getElementById('seriesMenuUnfollow').addEventListener('click', () => {
+  closeSeriesMenu();
+  handleRemoveShow(currentShowId, true);
+});
+document.addEventListener('click', (e) => {
+  if(!e.target.closest || !e.target.closest('#seriesDetailPage .ff-more')) closeSeriesMenu();
+});
+document.addEventListener('keydown', (e) => { if(e.key === 'Escape') closeSeriesMenu(); });
 // Saisons (piste D) : un seul écouteur pour la grille, la liste et les menus ⋯.
 document.getElementById('seriesSeasonsList').addEventListener('click', async (e) => {
   const t = e.target;
