@@ -70,7 +70,7 @@ function buildWatchlistContext(){
       },
     },
   });
-  loadFiles(ctx, ['js/offlineQueue.js', 'js/watchlist.js']);
+  loadFiles(ctx, ['js/watchlist.js']);
   setState(ctx, {
     watchlist: [
       { id: 7, title: 'Paprika', note: null, tmdbId: 42, posterUrl: null, overview: null, releaseYear: 2006, originalTitle: null, added: 111 },
@@ -116,20 +116,6 @@ test('handleRemoveFromWatchlist() : hors ligne, la suppression optimiste + le to
   ctx.handleRemoveFromWatchlist(7);
   assert.strictEqual(calls.length, 1, 'le toast d\'annulation doit être proposé même hors ligne');
   assert.deepStrictEqual(getState(ctx, 'watchlist').map(w => w.id), [8], 'retiré de l\'écran tout de suite, comme en ligne');
-});
-
-test('handleRemoveFromWatchlist() : onCommit hors ligne met en file plutôt que d\'appeler Supabase', async () => {
-  const { ctx, deletedIds, calls } = buildWatchlistContext();
-  setState(ctx, { isOfflineMode: true, offlineQueue: [] });
-  ctx.handleRemoveFromWatchlist(7);
-  await calls[0].onCommit();
-  assert.strictEqual(deletedIds.length, 0, 'aucun appel réseau hors ligne');
-  const queue = JSON.parse(JSON.stringify(getState(ctx, 'offlineQueue')));
-  assert.strictEqual(queue.length, 1);
-  assert.strictEqual(queue[0].table, 'watchlist');
-  assert.strictEqual(queue[0].op, 'delete');
-  assert.deepStrictEqual(queue[0].match, { id: 7 });
-  assert.strictEqual(getState(ctx, 'watchlist').length, 1, 'rien ne doit avoir bougé');
 });
 
 // --- js/journal.js : removeViewingWithUndo() ---

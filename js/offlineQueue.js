@@ -1,44 +1,43 @@
-// --- File d'attente hors ligne (retour utilisateur) ---
-// Complète le mode hors ligne lecture seule (js/offline.js) : plutôt que
-// bloquer TOUTE écriture avec blockIfOffline(), les actions à faible
-// risque déjà identifiées par l'audit confirmations (v2.7 — toggle
-// favori, épisode vu/pas vu, retirer un item de la watchlist/du journal)
-// restent possibles hors ligne : mutées localement tout de suite comme
-// d'habitude, la VRAIE écriture Supabase est mise en file et rejouée au
-// retour de connexion (voir le listener 'online', js/offline.js).
+// --- File d'attente hors ligne ---
+// Les écritures faites sans réseau (js/offlineNet.js), rangées sur l'appareil
+// et rejouées dans l'ordre au retour de la connexion. Une création porte un
+// numéro provisoire jusqu'à ce que la base donne le vrai : idMap fait le lien,
+// pour que noter un film puis le modifier en vol arrive bien sur la même ligne.
 //
-// Portée volontairement limitée à des écritures qui ciblent un id DÉJÀ
-// CONNU (update/delete) ou une clé NATURELLE (upsert sur tv_show_id +
-// saison + épisode) — jamais une CRÉATION dont le résultat serait un id
-// généré par le serveur (bigint identity) : nouveau film, nouvel item
-// watchlist, nouveau commentaire, mais aussi une réaction rapide sur un
-// commentaire (js/filmDetail.js) — même retirer sa PROPRE réaction cible
-// un id qu'on n'aurait pas encore si elle avait été posée hors ligne. Il
-// faudrait réconcilier après coup tout l'état local une fois la vraie
-// ligne créée, un risque de bug bien plus élevé pour un gain plus
-// incertain : on note rarement un film SANS vérifier au moins son
-// titre/affiche sur TMDB, un geste qui suppose déjà le réseau. Ces
-// créations restent bloquées par blockIfOffline() comme avant cette
-// version.
-//
-// Chaque entrée est rejouable SANS connaître le résultat des précédentes
-// (aucune ne dépend d'un id que le serveur vient d'attribuer) : delete/
-// update ciblent un id déjà connu, upsert (épisode vu) s'appuie sur une
-// clé naturelle (tv_show_id, saison, épisode) — la file peut donc être
-// rejouée dans l'ordre, une par une, sans jamais bloquer sur un échec
-// individuel (voir replayOfflineQueue()).
+// Une écriture quitte la file une fois envoyée, une par une : si la page se
+// ferme au milieu, la suite repart de là. Sans réponse du réseau, on s'arrête et
+// on garde tout pour plus tard : une note posée dans l'avion ne se perd pas.
+// Refusée pour de bon par la base, elle est mise de côté (offlineFailed_).
 
 let offlineQueue = [];
 
 function offlineQueueKey(){
-  return `offlineQueue_${currentUser.id}`;
+  return `offlineQueue_${offlineUserId()}`;
+}
+function offlineIdMapKey(){
+  return `offlineIdMap_${offlineUserId()}`;
+}
+
+// Les files d'avant le 01/11 décrivaient { table, op, match, payload }.
+function offlineWriteFromLegacy(entry){
+  const filters = Object.entries(entry.match || {}).map(([col, val]) => [col, `eq.${val}`]);
+  const params = filters.map(([col, expr]) => `${col}=${expr}`);
+  const upsert = entry.op === 'upsert';
+  if(upsert) params.push('on_conflict=user_id,tv_show_id,season_number,episode_number');
+  return {
+    method: upsert ? 'POST' : entry.op === 'update' ? 'PATCH' : 'DELETE',
+    table: entry.table, url: `${SUPABASE_URL}/rest/v1/${entry.table}?${params.join('&')}`,
+    prefer: upsert ? 'resolution=ignore-duplicates' : '', body: entry.payload || null,
+    filters, onConflict: upsert ? 'user_id,tv_show_id,season_number,episode_number' : null,
+    ignoreDuplicates: upsert, rows: upsert ? [Object.assign({}, entry.payload)] : undefined,
+    queuedAt: entry.queuedAt,
+  };
 }
 
 function loadOfflineQueue(){
-  if(!currentUser){ offlineQueue = []; return; }
   try{
     const raw = localStorage.getItem(offlineQueueKey());
-    offlineQueue = raw ? JSON.parse(raw) : [];
+    offlineQueue = (raw ? JSON.parse(raw) : []).map(e => e.op ? offlineWriteFromLegacy(e) : e);
   }catch(e){
     console.error(e);
     offlineQueue = [];
@@ -46,53 +45,127 @@ function loadOfflineQueue(){
 }
 
 function saveOfflineQueueToStorage(){
-  if(!currentUser) return;
   try{ localStorage.setItem(offlineQueueKey(), JSON.stringify(offlineQueue)); }
-  catch(e){ console.error(e); } // quota dépassé/stockage désactivé : la file ne persistera juste pas au rechargement, pas la peine de bloquer le reste
+  catch(e){ console.error(e); } // stockage plein : la file ne survivra pas à un rechargement
 }
 
-// entry : { table, op: 'update'|'delete'|'upsert', match (delete/update —
-// paires colonne/valeur à passer en .eq()), payload (update/upsert),
-// upsertOptions (upsert seulement, ex. onConflict/ignoreDuplicates) }.
-function enqueueOfflineWrite(entry){
-  offlineQueue.push(Object.assign({ queuedAt: Date.now() }, entry));
+function enqueueOfflineWrite(write){
+  loadOfflineQueue(); // un autre onglet a pu écrire entre-temps
+  offlineQueue.push(write);
   saveOfflineQueueToStorage();
+  if(typeof updateOfflineBanner === 'function') updateOfflineBanner();
 }
 
-// Appelée au retour de connexion (js/offline.js) — AVANT de recharger
-// films/viewings depuis le serveur, pour que la vraie source de vérité
-// relue ensuite reflète déjà ce qui vient d'être synchronisé plutôt que
-// de risquer un état intermédiaire.
-async function replayOfflineQueue(){
-  loadOfflineQueue(); // une session précédente restée hors ligne (page fermée puis rouverte) a pu accumuler une file jamais rejouée
-  if(offlineQueue.length === 0) return;
-  const queue = offlineQueue;
-  offlineQueue = [];
-  saveOfflineQueueToStorage(); // vidée tout de suite : jamais rejouée deux fois même si la page se ferme pendant la boucle ci-dessous
-  let synced = 0;
-  for(const entry of queue){
-    try{
-      let query = supabaseClient.from(entry.table);
-      if(entry.op === 'delete'){
-        query = query.delete();
-        Object.entries(entry.match).forEach(([col, val]) => { query = query.eq(col, val); });
-        const { error } = await query;
-        if(error) console.error(error); else synced++;
-      }else if(entry.op === 'update'){
-        query = query.update(entry.payload);
-        Object.entries(entry.match).forEach(([col, val]) => { query = query.eq(col, val); });
-        const { error } = await query;
-        if(error) console.error(error); else synced++;
-      }else if(entry.op === 'upsert'){
-        const { error } = await query.upsert(entry.payload, entry.upsertOptions || {});
-        if(error) console.error(error); else synced++;
+function pendingOfflineWrites(table){
+  loadOfflineQueue();
+  return offlineQueue.filter(w => w.table === table);
+}
+
+// Le même film noté ailleurs pendant le vol : la note de l'avion le met à jour
+// plutôt que de créer un doublon. Même chose pour À voir.
+async function findExistingOfflineTwin(write, headers){
+  const row = write.method === 'POST' && !write.onConflict ? write.rows[0] : null;
+  if(!row || !row.tmdb_id || (write.table !== 'films' && write.table !== 'watchlist')) return null;
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${write.table}?select=id&user_id=eq.${encodeURIComponent(row.user_id)}&tmdb_id=eq.${row.tmdb_id}&limit=1`, { headers });
+  if(!res.ok) return null;
+  const rows = await res.json();
+  return rows[0] || null;
+}
+
+function offlineWriteHeaders(write, token){
+  const prefer = write.method === 'POST'
+    ? [...write.prefer.split(',').filter(p => p && !p.startsWith('return=')), 'return=representation'].join(',')
+    : write.prefer;
+  const headers = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', Accept: 'application/json' };
+  if(prefer) headers.Prefer = prefer;
+  return headers;
+}
+
+// 'sent' (arrivée ou déjà là), 'refused' (refus définitif) ou 'retry'.
+async function sendOfflineWrite(write, token, idMap, done){
+  const swap = (text) => text.replace(/-\d{13,}/g, m => (idMap[m] != null ? String(idMap[m]) : m));
+  const headers = offlineWriteHeaders(write, token);
+  let res;
+  try{
+    const twin = await findExistingOfflineTwin(write, headers);
+    if(twin){
+      idMap[write.rows[0].id] = twin.id;
+      if(write.table === 'watchlist') return 'sent';
+      const { fav, added, ...fields } = JSON.parse(swap(JSON.stringify(write.body)));
+      res = await fetch(`${SUPABASE_URL}/rest/v1/films?id=eq.${twin.id}&user_id=eq.${encodeURIComponent(write.rows[0].user_id)}`, { method: 'PATCH', headers, body: JSON.stringify(fields) });
+    }else{
+      res = await fetch(swap(write.url), { method: write.method, headers, body: write.body == null ? undefined : swap(JSON.stringify(write.body)) });
+    }
+  }catch(e){
+    return 'retry';
+  }
+  if(res.ok){
+    let rows = null;
+    if(write.method === 'POST'){
+      rows = await res.json().catch(() => null);
+      if(Array.isArray(rows) && !write.onConflict) write.rows.forEach((row, i) => { if(rows[i]) idMap[row.id] = rows[i].id; });
+      done.push({ table: write.table, row: write.rows[0], saved: rows && rows[0] });
+    }
+    const sent = Object.assign({}, write, { url: swap(write.url), filters: parseRestUrl(swap(write.url)).filters, body: write.body == null ? null : JSON.parse(swap(JSON.stringify(write.body))) });
+    if(write.method === 'POST') sent.rows = rows || [];
+    patchCachedRestReads(sent);
+    return 'sent';
+  }
+  if(res.status === 409 || res.status === 400){
+    const error = await res.clone().json().catch(() => ({}));
+    if(error.code === '23505'){
+      // Déjà là (épisode coché ailleurs, série suivie ailleurs).
+      const row = write.rows && write.rows[0];
+      if(write.table === 'tv_shows' && row && row.tmdb_id){
+        const found = await fetch(`${SUPABASE_URL}/rest/v1/tv_shows?select=id&tmdb_id=eq.${row.tmdb_id}&limit=1`, { headers }).then(r => r.json()).catch(() => []);
+        if(found[0]) idMap[row.id] = found[0].id;
       }
-    }catch(e){
-      // Best-effort (voir le commentaire en tête de fichier) : une entrée
-      // qui échoue ne bloque pas les suivantes, jamais remise en file pour
-      // retenter indéfiniment — ce sont déjà des actions à faible risque.
-      console.error(e);
+      return 'sent';
     }
   }
-  if(synced > 0) showToast(`${synced} action${synced > 1 ? 's' : ''} synchronisée${synced > 1 ? 's' : ''}`);
+  if(res.status === 401 || res.status === 408 || res.status === 429 || res.status >= 500) return 'retry';
+  console.error('Écriture hors ligne refusée', res.status, await res.text().catch(() => ''));
+  return 'refused';
+}
+
+function saveRefusedOfflineWrite(write){
+  try{
+    const key = `offlineFailed_${offlineUserId()}`;
+    const list = JSON.parse(localStorage.getItem(key) || '[]');
+    list.push(write);
+    localStorage.setItem(key, JSON.stringify(list.slice(-50)));
+  }catch(e){ console.error(e); }
+}
+
+async function runOfflineReplay(){
+  loadOfflineQueue();
+  if(offlineQueue.length === 0) return null;
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  if(!session) return null;
+  let idMap = {};
+  try{ idMap = JSON.parse(localStorage.getItem(offlineIdMapKey()) || '{}'); }catch(e){ console.error(e); }
+  const result = { sent: 0, refused: 0, created: [], idMap };
+  while(offlineQueue.length > 0){
+    const write = offlineQueue[0];
+    const verdict = await sendOfflineWrite(write, session.access_token, idMap, result.created);
+    if(verdict === 'retry') break;
+    if(verdict === 'sent') result.sent++;
+    else{ result.refused++; saveRefusedOfflineWrite(write); }
+    offlineQueue.shift();
+    saveOfflineQueueToStorage();
+    try{ localStorage.setItem(offlineIdMapKey(), JSON.stringify(idMap)); }catch(e){ console.error(e); }
+  }
+  if(offlineQueue.length === 0) localStorage.removeItem(offlineIdMapKey());
+  return result;
+}
+
+// Un seul envoi à la fois, même avec deux onglets ouverts.
+let offlineReplayRunning = null;
+function replayOfflineQueue(){
+  if(offlineReplayRunning) return offlineReplayRunning;
+  const run = (typeof navigator !== 'undefined' && navigator.locks)
+    ? navigator.locks.request('kinet-sync', { ifAvailable: true }, lock => (lock ? runOfflineReplay() : null))
+    : runOfflineReplay();
+  offlineReplayRunning = Promise.resolve(run).finally(() => { offlineReplayRunning = null; });
+  return offlineReplayRunning;
 }

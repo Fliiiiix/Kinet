@@ -44,6 +44,7 @@ function buildContext(opts = {}){
     getSoundEnabled(){ return opts.sound !== false; },
     getMyStreamingServices(){ return new Set(opts.subs || []); },
     updateInstallUI(){ calls.install++; },
+    renderSettingsOffline(){},
     closeOverlay(){},
     showToast(m){ calls.toast = m; },
     escapeHtml(s){ return String(s); },

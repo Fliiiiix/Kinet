@@ -6,7 +6,8 @@
   "scripts": {
     "test": "node tests/run-all.js",
     "test:e2e": "playwright test",
-    "test:ecrans": "playwright test tests/e2e/ecrans.spec.js"
+    "test:ecrans": "playwright test tests/e2e/ecrans.spec.js",
+    "test:hors-ligne": "playwright test tests/e2e/hors-ligne.spec.js"
   },
   "license": "UNLICENSED",
   "devDependencies": {

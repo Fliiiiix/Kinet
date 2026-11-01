@@ -51,6 +51,9 @@ async function showApp(){
   document.getElementById('userBar').style.display = '';
   document.getElementById('mobileTabbar').style.display = '';
   document.getElementById('primaryTabs').style.display = '';
+  // Ce qui attend depuis le dernier vol part avant tout chargement : les
+  // listes relues juste après en tiennent déjà compte (js/offline.js).
+  await syncOfflineWrites();
   // Chargement plus rapide au démarrage (retour utilisateur) : ces 4
   // requêtes sont indépendantes (profil, films, visionnages, écarts admin —
   // aucune ne lit ce qu'une autre écrit), les lancer en parallèle plutôt
@@ -103,6 +106,7 @@ async function showApp(){
   // déjà chargé pour les deux au moment où l'un ou l'autre s'exécute, peu
   // importe l'ordre exact des deux appels.
   maybeStartOnboarding();
+  scheduleOfflinePrep(); // js/offlinePrep.js
 }
 
 // Supabase revérifie/rafraîchit la session toute seule (notamment à chaque
@@ -117,6 +121,10 @@ async function showApp(){
 // supabaseClient : currentUser n'a besoin que d'être à jour pour les
 // requêtes qui filtrent par user_id, pas de recharger quoi que ce soit.
 function handleSession(session){
+  // Sans réseau, un jeton expiré ne peut pas se renouveler et la librairie
+  // annonce « plus de session » : Flix est toujours connecté, voir
+  // storedOfflineSession() (js/offlineNet.js).
+  if(!session && isOfflineMode && storedOfflineSession()) return;
   const user = session ? session.user : null;
   const memeCompteDejaAffiche = currentUser && user && currentUser.id === user.id;
   currentUser = user;
@@ -194,6 +202,7 @@ async function signInWithGoogle(){
 }
 
 async function handleLogout(){
+  if(blockIfOffline()) return;
   // Le bouton vit dans Paramètres (voir js/settings.js) — on referme les
   // deux modales (idempotent si l'une des deux est déjà fermée) avant de
   // couper la session, sinon l'une resterait ouverte par-dessus l'écran de
@@ -201,6 +210,7 @@ async function handleLogout(){
   closeProfileModal();
   closeOverlay('settingsOverlay');
   await supabaseClient.auth.signOut();
+  if(typeof clearOfflineData === 'function') clearOfflineData(); // js/offlineNet.js
 }
 
 document.getElementById('authSendBtn').addEventListener('click', handleSendMagicLink);

@@ -2829,13 +2829,13 @@ input[type="range"].is-unset::-moz-range-thumb{background:var(--surface-3); bord
    (bandeau plein-largeur hors des pages à bascule) mais accent --coral
    plutôt qu'or — c'est un état dégradé à signaler, pas une bonne nouvelle
    à consulter. */
+/* Une ligne discrète : sans réseau, l'app marche, rien à expliquer. */
 .offline-banner{
-  background:var(--surface);
-  border:1px solid var(--coral-dim);
-  border-radius:var(--r-sm);
-  padding:14px 32px;
-  margin:16px auto;
-  font-size:var(--fs-sm);
+  padding:var(--sp-1) var(--sp-5);
+  margin:0 auto;
+  text-align:center;
+  font-size:var(--fs-xs);
+  color:var(--text-2);
 }
 /* .install-banner (js/pwa.js) retiré en v3.2, retour utilisateur : "le
    rectangle pour télécharger l'app... franchement pas beau" — même

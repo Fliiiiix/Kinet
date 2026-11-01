@@ -37,7 +37,6 @@ let watchlistProvidersFailed = new Set();
 // null (hors ligne, erreur déjà signalée). Partagée par les suggestions
 // (js/suggestions.js) et « Au cinéma » (js/upcoming.js).
 async function addTmdbMovieToWatchlist(r){
-  if(blockIfOffline()) return null; // js/offline.js : lecture seule hors ligne
   const payload = {
     title: r.title,
     note: null,
@@ -71,17 +70,6 @@ async function loadWatchlist(){
     .select('*')
     .order('added', { ascending: false });
   if(error){
-    // Repli hors ligne (js/offline.js) : contrairement à loadFilms()/
-    // loadViewings() (appelées au démarrage, avant même que l'utilisateur
-    // choisisse une page), celle-ci n'est appelée qu'en ouvrant #/watchlist
-    // — donc la seule à avoir une chance de détecter le hors ligne si
-    // l'utilisateur y arrive par un lien direct sans passer par l'accueil.
-    const cached = loadOfflineCache('watchlist');
-    if(cached){
-      watchlist = cached.data;
-      enterOfflineMode(cached.savedAt);
-      return;
-    }
     showToast('Erreur de chargement d\'À voir');
     console.error(error);
     watchlist = [];
@@ -103,7 +91,6 @@ async function loadWatchlist(){
     originalTitle: row.original_title || null,
     added: row.added
   }));
-  saveOfflineCache('watchlist', watchlist);
 }
 
 // Alerte "un ami a noté un film de ta watchlist" (retour utilisateur) —
@@ -608,7 +595,6 @@ async function openWatchlist(){
 }
 
 async function handleAddToWatchlist(){
-  if(blockIfOffline()) return; // js/offline.js — lecture seule hors ligne
   const title = document.getElementById('wlTitleInput').value.trim();
   if(!title){
     showToast('Ajoute un titre avant d\'enregistrer');
@@ -682,10 +668,6 @@ async function removeSeenFromWatchlist(tmdbId, watchlistId){
 // Toast d'annulation (v2.8) plutôt qu'un confirm() bloquant — voir
 // showUndoToast() (js/ui.js) : l'item disparaît tout de suite de l'écran,
 // la suppression réelle en base n'a lieu qu'à l'expiration du délai.
-// Pas de blockIfOffline() ici (retour utilisateur, file d'attente hors
-// ligne, js/offlineQueue.js) : retirer un item cible un id déjà connu,
-// rejouable sans réconciliation — voir le onCommit ci-dessous, qui met en
-// file plutôt que d'attempter un appel réseau voué à échouer hors ligne.
 function handleRemoveFromWatchlist(id){
   const idx = watchlist.findIndex(w => w.id === id);
   if(idx === -1) return;
@@ -694,10 +676,6 @@ function handleRemoveFromWatchlist(id){
   showUndoToast(
     `« ${removed.title} » retiré d'À voir`,
     async () => {
-      if(isOfflineMode){
-        enqueueOfflineWrite({ table: 'watchlist', op: 'delete', match: { id } });
-        return;
-      }
       const { error } = await supabaseClient.from('watchlist').delete().eq('id', id);
       if(error){
         console.error(error);
@@ -721,7 +699,6 @@ function handleRemoveFromWatchlist(id){
 // symétrique de la branche création de handleSave() (js/app.js) mais sans
 // passer par le formulaire/la modale : un seul champ, un seul clic.
 async function handleQuickRate(item, rawValue, confirmBtn, inputEl){
-  if(blockIfOffline()) return; // js/offline.js — lecture seule hors ligne
   // Garde anti double-soumission : le clic "OK" et la touche Entrée
   // appellent tous les deux cette fonction, et rien ne retire la ligne de
   // l'écran avant la fin de l'await ci-dessous (renderWatchlist() n'arrive

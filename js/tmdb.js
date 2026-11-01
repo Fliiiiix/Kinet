@@ -33,13 +33,20 @@ function tmdbRelevanceScore(r, queryNorm){
 // le mapping à chaque site d'appel. searchTmdb(query) (films, ci-dessous)
 // et searchTmdbTv(query) (js/series.js) ne sont que des raccourcis dessus.
 async function searchTmdbGeneric(query, mediaType){
+  // Sans réseau : le catalogue gardé sur l'appareil, voir js/offlinePrep.js.
+  if(isOfflineMode) return searchOfflineCatalogue(query, mediaType);
   const url = `https://api.themoviedb.org/3/search/${mediaType}?language=fr-FR&query=${encodeURIComponent(query)}`;
-  const res = await fetch(url, {
-    headers: {
-      'Authorization': `Bearer ${TMDB_API_KEY}`,
-      'Accept': 'application/json'
-    }
-  });
+  let res;
+  try{
+    res = await fetch(url, {
+      headers: {
+        'Authorization': `Bearer ${TMDB_API_KEY}`,
+        'Accept': 'application/json'
+      }
+    });
+  }catch(e){
+    return searchOfflineCatalogue(query, mediaType);
+  }
   if(!res.ok){
     throw new Error(res.status === 401 ? 'Clé TMDB invalide ou non configurée (voir js/tmdbConfig.js)' : `Erreur TMDB (${res.status})`);
   }

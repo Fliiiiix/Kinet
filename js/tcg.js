@@ -101,6 +101,7 @@ async function linkTcgCard(filmCardId, personCardId){
 // accepté comme compromis simple plutôt qu'un cache client à maintenir
 // pour un appel qui reste rare (un film par ajout, pas une boucle).
 async function generateTcgCardsForFilm(tmdbId){
+  if(isOfflineMode) return; // refait à la reconnexion, voir afterOfflineSync() (js/offline.js)
   try{
     const details = await fetchMovieDetails(tmdbId);
     const filmImg = details.poster_path ? TMDB_IMG_BASE + details.poster_path : null;

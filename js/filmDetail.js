@@ -485,7 +485,6 @@ function renderFilmDetailAvis(){
   // Ce que Kinet aurait prévu sans ce film, et l'écart (js/prediction.js).
   if(typeof fillFilmPrediction === 'function') fillFilmPrediction(currentFilmTmdbId, note);
   el.querySelector('[data-avis-rewatch]').addEventListener('click', async (e) => {
-    if(blockIfOffline()) return;
     e.currentTarget.disabled = true;
     const v = await addViewing(myFilm.id, Date.now());
     if(v){
@@ -515,7 +514,6 @@ function handleFilmDetailRate(){
 }
 
 async function handleFilmDetailAddWatchlist(){
-  if(blockIfOffline()) return;
   // Déjà dans À voir : le même bouton l'en retire, avec « Annuler » (F1).
   const existing = watchlist.find(w => w.tmdbId === currentFilmTmdbId);
   if(existing){
@@ -752,16 +750,18 @@ async function openFilmDetail(tmdbId){
   document.getElementById('filmDetailCommentsList').innerHTML = `${skeletonRows(3)}`;
   document.getElementById('filmDetailCommentInput').value = '';
 
-  let details;
   try{
-    details = await fetchMovieDetails(tmdbId);
+    currentFilmData = normalizeMovieDetails(await fetchMovieDetails(tmdbId));
   }catch(e){
-    showToast('Film introuvable sur TMDB');
-    console.error(e);
-    goHome();
-    return;
+    // Sans réseau : ce que l'appareil sait du film (js/offlinePrep.js).
+    currentFilmData = isOfflineMode ? await offlineFilmData(tmdbId) : null;
+    if(!currentFilmData){
+      showToast('Film introuvable sur TMDB');
+      console.error(e);
+      goHome();
+      return;
+    }
   }
-  currentFilmData = normalizeMovieDetails(details);
   renderFilmDetailHeader();
   updateFilmDetailActionButtons();
 

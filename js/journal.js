@@ -11,15 +11,6 @@ async function loadViewings(){
     .select('*')
     .order('watched_at', { ascending: false });
   if(error){
-    // Repli hors ligne (js/offline.js) : mêmes principes que loadFilms()
-    // dans js/app.js — pas de toast ici, celui de loadFilms() (chargée EN
-    // PARALLÈLE depuis showApp(), voir js/auth.js) suffit à prévenir
-    // l'utilisateur.
-    const cached = loadOfflineCache('viewings');
-    if(cached){
-      viewings = cached.data;
-      return;
-    }
     showToast('Erreur de chargement du journal');
     console.error(error);
     viewings = [];
@@ -31,7 +22,6 @@ async function loadViewings(){
     watchedAt: row.watched_at,
     note: row.note || null
   }));
-  saveOfflineCache('viewings', viewings);
 }
 
 // Insère un visionnage — utilisé à la création d'un film (premier
@@ -67,12 +57,6 @@ function removeViewingWithUndo(id, filmId){
   showUndoToast(
     'Visionnage retiré du journal',
     async () => {
-      // File d'attente hors ligne (retour utilisateur, js/offlineQueue.js) :
-      // cible un id déjà connu, rejouable sans réconciliation.
-      if(isOfflineMode){
-        enqueueOfflineWrite({ table: 'viewings', op: 'delete', match: { id } });
-        return;
-      }
       const { error } = await supabaseClient.from('viewings').delete().eq('id', id);
       if(error){
         console.error(error);
@@ -124,7 +108,6 @@ function renderViewingsSection(filmId){
 
 // Changer la date d'un visionnage (notation en pas à pas, « Changer la date »).
 async function updateViewingDate(id, watchedAt){
-  if(blockIfOffline()) return false;
   const { error } = await supabaseClient.from('viewings').update({ watched_at: watchedAt }).eq('id', id);
   if(error){
     showToast('Erreur, réessaie');

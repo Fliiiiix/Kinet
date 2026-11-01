@@ -929,6 +929,7 @@ function withSubmitGuard(btn, handler){
 // lignes à afficher — 4-6 selon la place disponible, assez pour remplir le
 // premier écran sans en dessiner des dizaines pour rien.
 function skeletonRows(count = 5){
+  if(typeof settleOfflineSkeletonsSoon === 'function') settleOfflineSkeletonsSoon();
   let html = '';
   for(let i = 0; i < count; i++){
     html += `

@@ -267,7 +267,6 @@ function ntCloseMenu(){
       return;
     }
     if(e.target.closest('[data-nt-rewatch]')){
-      if(blockIfOffline()) return;
       const v = await addViewing(editingId, Date.now());
       if(v){ showToast('Visionnage ajouté, daté d’aujourd’hui'); renderViewingsSection(editingId); ntRender(); if(typeof render === 'function') render(); }
       return;

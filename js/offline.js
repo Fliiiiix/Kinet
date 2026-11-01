@@ -1,110 +1,130 @@
 // --- Mode hors ligne ---
-// Repose sur trois mécanismes complémentaires :
-// 1. Un service worker (sw.js, enregistré plus bas) qui met en cache l'app
-//    shell (HTML/CSS/JS) au fil des visites en ligne, pour que la page
-//    elle-même s'ouvre encore sans réseau — sans lui, le cache de données
-//    ci-dessous ne servirait à rien puisque le navigateur ne pourrait même
-//    pas charger index.html/js/*.js en premier lieu.
-// 2. Un cache localStorage des dernières listes chargées avec succès
-//    (films/watchlist/viewings), utilisé en repli quand une requête
-//    Supabase échoue — voir loadFilms()/loadViewings()/loadWatchlist().
-// 3. File d'attente hors ligne (retour utilisateur, js/offlineQueue.js) :
-//    les écritures à faible risque qui ciblent un id déjà connu ou une clé
-//    naturelle (toggle favori, épisode vu/pas vu, retirer un item
-//    watchlist/journal) restent possibles hors ligne, mises en file et
-//    rejouées au retour du réseau (voir le listener 'online' plus bas).
-//
-// Le RESTE reste bloqué tant que le réseau n'est pas revenu
-// (blockIfOffline(), toujours appelé depuis les CRÉATIONS — nouveau film,
-// nouvel item watchlist, nouveau commentaire... — dont le résultat
-// dépendrait d'un id généré par le serveur, jamais réconciliable après
-// coup sans risque). Les fonctionnalités sociales (amis/groupes/
-// propositions...) ne sont pas couvertes par la file non plus : elles
-// supposent du réseau par nature (synchroniser avec quelqu'un d'autre),
-// échouent proprement avec le toast d'erreur déjà en place si le réseau
-// manque, comme avant cette version.
+// Dans l'avion, Kinet marche comme au sol : voir, noter, chercher, À voir, cocher
+// ses épisodes (retour de Flix, 01/11). Quatre pièces :
+// - sw.js : l'app elle-même, les fiches TMDB et les affiches ;
+// - js/offlineNet.js : les données Supabase, gardées et corrigées par la file ;
+// - js/offlineQueue.js : les écritures, envoyées au retour du réseau ;
+// - js/offlinePrep.js : la recherche sans réseau et ce qui est gardé d'avance.
+// Ce fichier fait le lien avec l'écran. Ce qui suppose les autres (amis, groupes,
+// commentaires, listes, cartes) reste bloqué par blockIfOffline(), ou échoue avec
+// le message d'erreur habituel.
 
-let isOfflineMode = false;
-
-function offlineCacheKey(name){
-  // Une clé par compte : pas de fuite d'un catalogue vers un autre si
-  // plusieurs comptes se sont connectés sur le même navigateur.
-  return `offlineCache_${name}_${currentUser.id}`;
-}
-
-function saveOfflineCache(name, value){
-  if(!currentUser) return;
-  try{
-    localStorage.setItem(offlineCacheKey(name), JSON.stringify({ savedAt: Date.now(), data: value }));
-  }catch(e){
-    // Quota dépassé ou stockage désactivé (navigation privée...) : le mode
-    // hors ligne ne marchera juste pas pour cette liste, pas la peine de
-    // bloquer le reste de l'appli pour ça.
-    console.error(e);
-  }
-}
-
-function loadOfflineCache(name){
-  if(!currentUser) return null;
-  try{
-    const raw = localStorage.getItem(offlineCacheKey(name));
-    return raw ? JSON.parse(raw) : null;
-  }catch(e){
-    console.error(e);
-    return null;
-  }
-}
-
-function formatOfflineTimestamp(ms){
-  return new Date(ms).toLocaleString('fr-FR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
-}
-
-// savedAt : celui du catalogue (source principale) — passé par loadFilms()
-// quand il bascule en repli, seul appelant qui a cette info sous la main.
-function enterOfflineMode(savedAt){
-  isOfflineMode = true;
-  // File d'attente hors ligne (js/offlineQueue.js) : recharge une file
-  // laissée par une session précédente restée hors ligne (page fermée
-  // sans être jamais revenue en ligne) — sans ça, une nouvelle action mise
-  // en file cette session écraserait silencieusement celles d'avant au
-  // premier saveOfflineQueueToStorage().
-  loadOfflineQueue();
+function updateOfflineBanner(){
   const banner = document.getElementById('offlineBanner');
-  banner.textContent = `Hors ligne, dernières données synchronisées le ${formatOfflineTimestamp(savedAt)}. Tu peux quand même cocher/décocher, marquer un favori, retirer un élément : ce sera synchronisé au retour du réseau. Le reste (ajouter, commenter…) attend la reconnexion.`;
-  banner.style.display = '';
+  if(!banner) return;
+  const pending = offlineQueue.length;
+  const parts = [];
+  if(isOfflineMode) parts.push('Hors ligne');
+  if(pending) parts.push(`${pending} action${pending > 1 ? 's' : ''} à envoyer`);
+  banner.textContent = parts.join(' · ');
+  banner.style.display = parts.length ? '' : 'none';
 }
 
-function exitOfflineMode(){
-  if(!isOfflineMode) return;
-  isOfflineMode = false;
-  document.getElementById('offlineBanner').style.display = 'none';
-  showToast('De retour en ligne');
+// Le service worker cesse d'attendre TMDB : sans réseau, il répond tout de suite.
+function tellServiceWorkerNetwork(){
+  const sw = navigator.serviceWorker && navigator.serviceWorker.controller;
+  if(sw) sw.postMessage({ kinetOffline: isOfflineMode });
 }
 
-// Garde partagée pour les points d'entrée d'écriture du catalogue/
-// watchlist (voir js/app.js, js/watchlist.js) — retourne true (et prévient
-// l'utilisateur) si l'action doit être bloquée.
+function onOfflineChange(){
+  loadOfflineQueue();
+  updateOfflineBanner();
+  tellServiceWorkerNetwork();
+}
+
+// Garde des actions qui supposent le réseau : renvoie true (et prévient) si
+// l'action doit être bloquée.
 function blockIfOffline(){
   if(!isOfflineMode) return false;
-  showToast('Hors ligne, reconnecte-toi pour modifier');
+  showToast('Hors ligne, reconnecte-toi pour ça');
   return true;
 }
 
-// Retente un chargement complet quand le navigateur signale un retour de
-// connexion — sans ça, l'utilisateur devrait recharger la page à la main
-// pour sortir du mode hors ligne même une fois le réseau revenu.
-// navigator.onLine n'est qu'un indice (peut rester true sur un réseau
-// captif sans vraie sortie internet) : c'est loadFilms() qui tranche pour
-// de vrai en retentant une requête réelle.
-window.addEventListener('online', async () => {
-  if(!isOfflineMode || !currentUser) return;
-  // File d'attente hors ligne (retour utilisateur, js/offlineQueue.js) :
-  // rejouée AVANT de recharger films/viewings, pour que la vraie source de
-  // vérité relue juste après reflète déjà ce qui vient d'être synchronisé.
-  await replayOfflineQueue();
-  loadFilms().then(() => { render(); });
-  loadViewings();
-});
+// Ce qui n'a pas pu se faire sans réseau : résumé et saisons (le catalogue gardé
+// n'en a pas), cartes à collectionner.
+async function completeOfflineCreation({ table, row, saved }){
+  if(!saved || !row.tmdb_id) return;
+  try{
+    if(table === 'tv_shows'){
+      const d = await fetchTvDetails(row.tmdb_id);
+      await supabaseClient.from('tv_shows').update({
+        overview: d.overview || null, status: d.status || null, in_production: !!d.in_production,
+        number_of_seasons: d.number_of_seasons || null, number_of_episodes: d.number_of_episodes || null,
+      }).eq('id', saved.id);
+    }else if(table === 'films' || table === 'watchlist'){
+      generateTcgCardsForFilm(row.tmdb_id);
+      if(saved.overview) return;
+      const d = await fetchMovieDetails(row.tmdb_id);
+      const fields = { overview: d.overview || null };
+      if(table === 'watchlist') fields.release_date = d.release_date || null; // le catalogue n'a que l'année
+      await supabaseClient.from(table).update(fields).eq('id', saved.id);
+    }
+  }catch(e){
+    console.error(e);
+  }
+}
+
+// Envoie ce qui attend. Renvoie le bilan, ou null si rien n'est parti.
+async function syncOfflineWrites(){
+  loadOfflineQueue();
+  updateOfflineBanner();
+  if(isOfflineMode) return null;
+  const result = await replayOfflineQueue();
+  updateOfflineBanner();
+  if(!result) return null;
+  if(result.sent) showToast(`${result.sent} action${result.sent > 1 ? 's' : ''} envoyée${result.sent > 1 ? 's' : ''}`);
+  if(result.refused) showToast(`${result.refused} action${result.refused > 1 ? 's' : ''} refusée${result.refused > 1 ? 's' : ''} par le serveur`);
+  result.created.forEach(c => { completeOfflineCreation(c); });
+  return result;
+}
+
+// Une série suivie en vol porte un numéro provisoire jusque dans l'adresse.
+function offlineRouteAfterSync(hash, idMap){
+  const m = hash.match(/^#\/series\/(-\d{13,})/);
+  return m && idMap[m[1]] != null ? `#/series/${idMap[m[1]]}` : hash;
+}
+
+// Appelée par probeNetwork() (js/offlineNet.js) : le réseau répond de nouveau.
+async function onBackOnline(){
+  updateOfflineBanner();
+  tellServiceWorkerNetwork();
+  if(!currentUser) return;
+  const stale = servedFromDevice;
+  servedFromDevice = false;
+  const result = await syncOfflineWrites();
+  if(!result && !stale) return; // simple raté de quelques secondes
+  await Promise.all([loadFilms(), loadViewings(), loadWatchlist(), loadTrackedShows()]);
+  const route = offlineRouteAfterSync(location.hash, result ? result.idMap : {});
+  if(route !== location.hash) location.hash = route;
+  render();
+  renderRoute();
+  if(!result) showToast('De retour en ligne');
+}
+
+// Sans réseau, ce qui suppose les autres (amis, groupes, listes, commentaires)
+// n'arrive jamais : une phrase plutôt que des lignes grises sans fin.
+// Appelée par skeletonRows() (js/ui.js), le seul endroit qui les crée.
+const OFFLINE_SKELETON_WAIT_MS = 1500;
+function settleOfflineSkeletonsSoon(){
+  if(!isOfflineMode) return;
+  setTimeout(() => {
+    document.querySelectorAll('.skeleton-row:first-child').forEach(row => {
+      row.parentElement.innerHTML = '<div class="tmdb-empty">Disponible au retour du réseau.</div>';
+    });
+  }, OFFLINE_SKELETON_WAIT_MS);
+}
+
+// Une affiche jamais vue n'est pas sur l'appareil : un cadre vide plutôt que
+// l'icône d'image cassée du navigateur.
+document.addEventListener('error', (e) => {
+  if(isOfflineMode && e.target && e.target.tagName === 'IMG') e.target.style.visibility = 'hidden';
+}, true);
+
+// Anciennes copies, remplacées par js/offlineNet.js : elles occupaient le
+// localStorage pour rien.
+try{
+  Object.keys(localStorage).filter(k => k.startsWith('offlineCache_')).forEach(k => localStorage.removeItem(k));
+}catch(e){ /* stockage indisponible */ }
 
 // --- Service worker (app shell) ---
 // register() peut échouer silencieusement (navigation privée, navigateur
@@ -115,6 +135,7 @@ if('serviceWorker' in navigator){
     navigator.serviceWorker.register('sw.js')
       .then(reg => watchForUpdate(reg))
       .catch(err => console.error('Échec de l\'enregistrement du service worker', err));
+    navigator.serviceWorker.ready.then(tellServiceWorkerNetwork);
   });
 }
 

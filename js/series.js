@@ -90,19 +90,12 @@ async function loadTrackedShows(){
     .select('*')
     .order('added', { ascending: false });
   if(error){
-    const cached = loadOfflineCache('tv_shows');
-    if(cached){
-      trackedShows = cached.data;
-      enterOfflineMode(cached.savedAt);
-      return;
-    }
     showToast('Erreur de chargement des séries');
     console.error(error);
     trackedShows = [];
     return;
   }
   trackedShows = data.map(rowToShow);
-  saveOfflineCache('tv_shows', trackedShows);
 
   // Progression de chaque série (X/Y épisodes vus) : un seul select groupé
   // plutôt qu'une requête par série — table de jointure légère, comptée
@@ -344,7 +337,6 @@ async function deleteShowRow(id){
 }
 
 async function handleRemoveShow(id, fromDetail){
-  if(blockIfOffline()) return;
   if(!confirm('Ne plus suivre cette série ? Tes épisodes cochés, leurs notes et leurs commentaires seront perdus.')) return;
   const ok = await deleteShowRow(id);
   if(!ok) return;
@@ -398,7 +390,6 @@ function updateSeriesTmdbSelectedUI(){
 // saisons/épisodes sur lequel repose tout le suivi ci-dessous — sans ça,
 // rien à cocher.
 async function handleAddShow(){
-  if(blockIfOffline()) return;
   if(!seriesTmdbSelected){
     showToast('Choisis une série dans les résultats de recherche pour pouvoir suivre ses épisodes');
     return;
@@ -412,9 +403,14 @@ async function handleAddShow(){
   try{
     details = await fetchTvDetails(seriesTmdbSelected.tmdb_id);
   }catch(e){
-    showToast('Erreur TMDB, réessaie');
-    console.error(e);
-    return;
+    // Sans réseau : suivie quand même, ses saisons arrivent à la reconnexion
+    // (afterOfflineSync(), js/offline.js).
+    if(!isOfflineMode){
+      showToast('Erreur TMDB, réessaie');
+      console.error(e);
+      return;
+    }
+    details = {};
   }
 
   const payload = {
@@ -577,7 +573,6 @@ function syncCurrentShowEpisodeNotes(){
 }
 
 async function handleFollowEpisodeAverage(){
-  if(blockIfOffline()) return;
   const { error } = await supabaseClient.from('tv_shows').update({ manual_note: null }).eq('id', currentShowId);
   if(error){ showToast('Erreur, réessaie'); console.error(error); return; }
   const show = trackedShows.find(x => x.id === currentShowId);
@@ -758,7 +753,9 @@ async function refreshShowMeta(show){
     number_of_episodes: details.number_of_episodes || null,
     in_production: !!details.in_production
   };
-  const { error } = await supabaseClient.from('tv_shows').update(updates).eq('id', show.id);
+  // Sans réseau, rien de neuf à écrire : ces chiffres viennent de la dernière
+  // réponse gardée, et la file d'attente ne doit porter que les gestes de Flix.
+  const { error } = isOfflineMode ? { error: null } : await supabaseClient.from('tv_shows').update(updates).eq('id', show.id);
   if(error) console.error(error);
   else Object.assign(show, {
     status: updates.status,
@@ -770,10 +767,13 @@ async function refreshShowMeta(show){
   return show;
 }
 
+// Aussi lue d'avance pour le hors ligne, voir prepareShowForOffline().
+const WATCHED_EPISODES_SELECT = 'season_number, episode_number, note, times_watched, comment';
+
 async function loadWatchedEpisodes(showId){
   let { data, error } = await supabaseClient
     .from('tv_episodes_watched')
-    .select('season_number, episode_number, note, times_watched, comment')
+    .select(WATCHED_EPISODES_SELECT)
     .eq('tv_show_id', showId);
   if(error){
     // Commentaire d'épisode : migration 071 peut-être pas encore lancée.
@@ -899,7 +899,6 @@ function episodeCommentHtml(key, extra){
 }
 
 async function updateEpisodeComment(seasonNumber, episodeNumber, rawText){
-  if(blockIfOffline()) return false;
   const key = `${seasonNumber}-${episodeNumber}`;
   const comment = String(rawText || '').trim().slice(0, EPISODE_COMMENT_MAX) || null;
   const { error } = await supabaseClient
@@ -948,7 +947,7 @@ function renderSeasonsList(){
   if(legend) legend.hidden = view !== 'grid' || currentShowSeasons.length === 0;
   renderSeriesUndo();
   if(currentShowSeasons.length === 0){
-    wrap.innerHTML = `<div class="tmdb-empty">Aucune saison référencée sur TMDB pour cette série.</div>`;
+    wrap.innerHTML = `<div class="tmdb-empty">${isOfflineMode ? 'Les saisons de cette série arriveront au retour du réseau.' : 'Aucune saison référencée sur TMDB pour cette série.'}</div>`;
     return;
   }
   const expanded = (seasonUiCache[currentShowId] && seasonUiCache[currentShowId].expanded) || new Set();
@@ -1087,30 +1086,6 @@ function updateSeasonProgressUI(seasonNumber, episodeCount){
 // constaté à la vérification). On la remet dans son état réel ici.
 async function toggleEpisodeWatched(seasonNumber, episodeNumber, watched, checkboxEl){
   const key = `${seasonNumber}-${episodeNumber}`;
-  // File d'attente hors ligne (retour utilisateur, js/offlineQueue.js) :
-  // épisode vu/pas vu s'appuie sur une clé naturelle (tv_show_id, saison,
-  // épisode), jamais un id généré par le serveur — rejouable sans
-  // réconciliation au retour du réseau, contrairement à une création.
-  if(isOfflineMode){
-    if(watched){
-      enqueueOfflineWrite({
-        table: 'tv_episodes_watched', op: 'upsert',
-        payload: { tv_show_id: currentShowId, season_number: seasonNumber, episode_number: episodeNumber, watched_at: Date.now() },
-        upsertOptions: { onConflict: 'user_id,tv_show_id,season_number,episode_number', ignoreDuplicates: true }
-      });
-      watchedEpisodeSet.add(key);
-      watchedEpisodeExtras[key] = { note: null, timesWatched: 1 };
-    }else{
-      enqueueOfflineWrite({ table: 'tv_episodes_watched', op: 'delete', match: { tv_show_id: currentShowId, season_number: seasonNumber, episode_number: episodeNumber } });
-      watchedEpisodeSet.delete(key);
-      delete watchedEpisodeExtras[key];
-    }
-    const seasonOffline = currentShowSeasons.find(s => s.season_number === seasonNumber);
-    if(seasonOffline) updateSeasonProgressUI(seasonNumber, seasonOffline.episode_count);
-    watchedEpisodeCounts[currentShowId] = watchedEpisodeSet.size;
-    renderSeasonEpisodes(seasonNumber);
-    return;
-  }
   if(watched){
     const { error } = await supabaseClient
       .from('tv_episodes_watched')
@@ -1149,7 +1124,6 @@ async function toggleEpisodeWatched(seasonNumber, episodeNumber, watched, checkb
 
 // --- Note par épisode (v2.39, retour utilisateur, optionnelle) ---
 async function updateEpisodeNote(seasonNumber, episodeNumber, rawValue){
-  if(blockIfOffline()) return;
   const key = `${seasonNumber}-${episodeNumber}`;
   const value = rawValue.trim();
   const note = value === '' ? null : Math.max(0, Math.min(5, parseFloat(value)));
@@ -1178,7 +1152,6 @@ async function updateEpisodeNote(seasonNumber, episodeNumber, rawValue){
 // visionnage : sans effet plutôt que de finir à 0 en gardant la case
 // cochée, ce qui serait incohérent).
 async function changeEpisodeTimesWatched(seasonNumber, episodeNumber, delta){
-  if(blockIfOffline()) return;
   const key = `${seasonNumber}-${episodeNumber}`;
   const current = (watchedEpisodeExtras[key] && watchedEpisodeExtras[key].timesWatched) || 1;
   const next = Math.max(1, current + delta);
@@ -1209,7 +1182,6 @@ function ensureEpisodeExtras(key){
 // sans risque même si certains épisodes de la saison sont déjà cochés,
 // pas besoin de vérifier au préalable ce qui l'est déjà.
 async function markSeasonWatched(seasonNumber, episodeCount){
-  if(blockIfOffline()) return;
   const rows = [];
   for(let ep = 1; ep <= episodeCount; ep++){
     // Seulement les épisodes déjà sortis (S1).
@@ -1239,7 +1211,6 @@ async function markSeasonWatched(seasonNumber, episodeCount){
 // lignes retirées (avec leur note et leurs revisionnages) sont gardées le
 // temps de proposer « Annuler », qui les remet telles quelles.
 async function unmarkSeasonWatched(seasonNumber){
-  if(blockIfOffline()) return;
   const { data: removedRows, error: readErr } = await supabaseClient
     .from('tv_episodes_watched')
     .select('season_number, episode_number, watched_at, note, times_watched')
@@ -1293,7 +1264,6 @@ async function undoUnmarkSeason(){
 // avoir à déplier son accordéon — un seul upsert groupé couvrant toutes
 // les saisons plutôt que N appels réseau (un par saison).
 async function markAllSeasonsWatched(){
-  if(blockIfOffline()) return;
   if(currentShowSeasons.length === 0) return;
   if(!confirm('Marquer comme vus tous les épisodes déjà sortis ?')) return;
   const rows = [];
@@ -1323,7 +1293,6 @@ async function markAllSeasonsWatched(){
 }
 
 async function unmarkAllSeasonsWatched(){
-  if(blockIfOffline()) return;
   if(!confirm('Retirer tous les épisodes vus de cette série ?')) return;
   const { error } = await supabaseClient
     .from('tv_episodes_watched')
@@ -1365,7 +1334,6 @@ async function markNextEpisodeWatched(){
 // base (show.review reste chargé par rowToShow() mais n'est plus affiché
 // ni réécrit ici).
 async function handleSaveSeriesNote(){
-  if(blockIfOffline()) return;
   const note = parseFloat(document.getElementById('seriesNoteSlider').value);
   const { error } = await supabaseClient
     .from('tv_shows')

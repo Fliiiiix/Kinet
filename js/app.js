@@ -83,25 +83,12 @@ async function loadFilms(){
     .eq('user_id', currentUser.id)
     .order('added', { ascending: false });
   if(error){
-    // Repli hors ligne (js/offline.js) : dernier catalogue chargé avec
-    // succès plutôt qu'un catalogue vide qui donnerait l'impression que
-    // tout a disparu. Ce chemin fait aussi office de "source de vérité"
-    // pour isOfflineMode — voir le listener 'online' dans offline.js, qui
-    // retente cette même fonction pour en sortir.
-    const cached = loadOfflineCache('films');
-    if(cached){
-      films = cached.data;
-      enterOfflineMode(cached.savedAt);
-      return;
-    }
     showToast('Erreur de chargement, réessaie');
     console.error(error);
     films = [];
     return;
   }
   films = data.map(rowToFilm);
-  saveOfflineCache('films', films);
-  exitOfflineMode();
 }
 
 function showToast(msg){
@@ -249,20 +236,11 @@ function startUnratedQueue(){
 }
 
 // Extrait du click .star-btn (voir render() plus bas) pour rester testable
-// isolément (tests/favorite-offline.test.js) — renvoie true si l'état
-// local a effectivement changé (succès en ligne, ou mis en file hors
-// ligne), false sur une erreur réseau (l'appelant sait alors qu'il n'y a
+// isolément — renvoie true si l'état local a effectivement changé, false
+// sur une erreur réseau (l'appelant sait alors qu'il n'y a
 // rien à re-render/pulser, l'erreur étant déjà signalée ici par toast).
 async function toggleFilmFavorite(f){
   const newFav = !f.fav;
-  // File d'attente hors ligne (retour utilisateur, js/offlineQueue.js) :
-  // toggle favori mis en file plutôt que bloqué — met à jour un id déjà
-  // connu, rejouable sans réconciliation au retour du réseau.
-  if(isOfflineMode){
-    f.fav = newFav;
-    enqueueOfflineWrite({ table: 'films', op: 'update', match: { id: f.id, user_id: currentUser.id }, payload: { fav: newFav } });
-    return true;
-  }
   const { error } = await supabaseClient.from('films').update({ fav: newFav }).eq('id', f.id).eq('user_id', currentUser.id);
   if(error){
     showToast('Erreur de sauvegarde, réessaie');
@@ -536,7 +514,6 @@ function renderBulkActionsBar(){
 }
 
 async function handleBulkFavorite(fav){
-  if(blockIfOffline()) return; // js/offline.js — lecture seule hors ligne
   if(selectedFilmIds.size === 0) return;
   const ids = Array.from(selectedFilmIds);
   const { error } = await supabaseClient.from('films').update({ fav }).in('id', ids).eq('user_id', currentUser.id);
@@ -556,7 +533,6 @@ async function handleBulkFavorite(fav){
 // lourd que les cas visés par le toast (un seul item de watchlist/journal),
 // une fenêtre de quelques secondes pour annuler serait un filet trop faible.
 async function handleBulkDelete(){
-  if(blockIfOffline()) return;
   if(selectedFilmIds.size === 0) return;
   const n = selectedFilmIds.size;
   if(!confirm(`Supprimer définitivement ${n} film${n > 1 ? 's' : ''} et leur historique de visionnages ?`)) return;
@@ -778,7 +754,6 @@ function champPrive(){
 }
 
 function openModal(id, prefillTmdb){
-  if(blockIfOffline()) return; // js/offline.js — lecture seule hors ligne
   editingId = id || null;
   // Repart d'une conversion watchlist propre à chaque ouverture — seule
   // startRatingFromWatchlist() (js/watchlist.js) la positionne ensuite.

@@ -1,11 +1,10 @@
-// Service worker minimal : met en cache au fil de l'eau ce qui a été
-// chargé avec succès (stratégie "réseau, puis repli sur le cache"), pour
-// que l'app s'ouvre encore sans réseau après une 1re visite en ligne. Pas
-// de liste de fichiers à pré-charger ni à maintenir à la main : chaque
-// ?v=N (voir index.html) est une URL différente, donc se met en cache
-// tout seul dès la 1re visite après un déploiement. Voir js/offline.js
-// pour l'enregistrement et le cache des DONNÉES (films/watchlist/
-// viewings) ; ce fichier ne s'occupe que de l'app shell (HTML/CSS/JS).
+// Service worker : ce qui permet à Kinet de s'ouvrir et de tourner sans réseau.
+// - L'app elle-même (HTML/CSS/JS) : gardée d'un coup à l'installation, la liste
+//   se lit dans index.html, rien à maintenir à la main.
+// - TMDB (fiches, saisons, épisodes) : réseau d'abord, sinon la dernière réponse.
+// - Affiches et polices : gardées au premier affichage.
+// - Catalogue de recherche (data/) : gardé jusqu'à la version suivante.
+// Les données Supabase et les écritures vivent côté page, voir js/offlineNet.js.
 
 // IMPORTANT — à bumper à CHAQUE déploiement, en même temps que ?v=N dans
 // index.html (retour utilisateur, v2.1.x : l'app restait bloquée sur une
@@ -17,14 +16,44 @@
 // (voir watchForUpdate() dans js/offline.js). Il purge aussi le cache
 // ci-dessous à chaque déploiement plutôt que de le laisser grossir sans
 // fin (chaque ?v=N étant une URL distincte, jamais réutilisée).
-const CACHE_NAME = 'critique-films-shell-v320';
+const CACHE_NAME = 'critique-films-shell-v321';
+const TMDB_CACHE = 'kinet-tmdb-v1';
+const IMAGE_CACHE = 'kinet-images-v1';
+const FONT_CACHE = 'kinet-polices-v1';
+const CATALOGUE_CACHE = 'kinet-catalogue-v1';
+// Survivent aux déploiements, contrairement à CACHE_NAME.
+const KEPT_CACHES = [TMDB_CACHE, IMAGE_CACHE, FONT_CACHE, CATALOGUE_CACHE, 'kinet-donnees-v1'];
+const TMDB_MAX_ENTRIES = 4000;
+const IMAGE_MAX_ENTRIES = 2500;
+const NAVIGATION_WAIT_MS = 3000;
+const TMDB_WAIT_MS = 4000;
+const TMDB_GIVE_UP_MS = 8000;
+// La page sait, elle, que le réseau ne répond plus (js/offlineNet.js) : plus la
+// peine d'attendre, surtout sur un Wi-Fi d'avion qui ne répond jamais.
+let pageOffline = false;
+
+// Tout ce que index.html charge, gardé dès l'installation : sinon la toute
+// première visite, faite avant que ce fichier ne prenne la main, ne garde rien.
+async function precacheShell(){
+  const cache = await caches.open(CACHE_NAME);
+  const res = await fetch('index.html', { cache: 'no-store' });
+  if(!res.ok) return;
+  const html = await res.clone().text();
+  await cache.put('index.html', res);
+  const urls = [...html.matchAll(/(?:src|href)="((?:js|css|icons)\/[^"]+|manifest\.json[^"]*)"/g)].map(m => m[1]);
+  await Promise.all(urls.map(url => cache.add(url).catch(() => {})));
+}
+
+self.addEventListener('install', (event) => {
+  event.waitUntil(precacheShell().catch(e => console.error(e)));
+});
 
 self.addEventListener('activate', (event) => {
   // Nettoie le cache de toute version antérieure (voir CACHE_NAME
   // ci-dessus, désormais bumpé à chaque déploiement).
   event.waitUntil(
     caches.keys().then(keys => Promise.all(
-      keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
+      keys.filter(k => k !== CACHE_NAME && !KEPT_CACHES.includes(k)).map(k => caches.delete(k))
     ))
   );
   self.clients.claim();
@@ -36,17 +65,92 @@ self.addEventListener('activate', (event) => {
 // tous les onglets de l'ancienne version se ferment d'eux-mêmes.
 self.addEventListener('message', (event) => {
   if(event.data === 'skipWaiting') self.skipWaiting();
+  if(event.data && typeof event.data.kinetOffline === 'boolean') pageOffline = event.data.kinetOffline;
 });
+
+// Les plus anciennes entrées partent quand un cache devient trop gros.
+const trimCounts = {};
+async function trimCache(name, max){
+  trimCounts[name] = (trimCounts[name] || 0) + 1;
+  if(trimCounts[name] % 50 !== 0) return;
+  const cache = await caches.open(name);
+  const keys = await cache.keys();
+  for(let i = 0; i < keys.length - max; i++) await cache.delete(keys[i]);
+}
+
+const wait = (ms, value) => new Promise(resolve => setTimeout(() => resolve(value), ms));
+
+// Réseau d'abord, mais pas plus de quelques secondes si on a de quoi répondre :
+// le Wi-Fi d'un avion accepte les requêtes sans jamais y répondre.
+async function tmdbResponse(event){
+  const url = event.request.url;
+  const cache = await caches.open(TMDB_CACHE);
+  const hit = await cache.match(url, { ignoreVary: true });
+  if(pageOffline) return hit || Response.error();
+  const stop = new AbortController();
+  const giveUp = setTimeout(() => stop.abort(), TMDB_GIVE_UP_MS);
+  const network = fetch(event.request, { signal: stop.signal }).then(res => {
+    if(res.ok){
+      event.waitUntil(cache.put(url, res.clone()).then(() => trimCache(TMDB_CACHE, TMDB_MAX_ENTRIES)).catch(() => {}));
+    }
+    return res;
+  }).finally(() => clearTimeout(giveUp));
+  if(!hit) return network;
+  return Promise.race([network.catch(() => hit), wait(TMDB_WAIT_MS, hit)]);
+}
+
+// Gardé au premier passage. En mode cors : Chrome compte une réponse opaque
+// plusieurs Mo dans le quota, quelques centaines d'affiches le rempliraient.
+async function crossOriginCacheFirst(event, cacheName, max){
+  const url = event.request.url;
+  const cache = await caches.open(cacheName);
+  const hit = await cache.match(url, { ignoreVary: true });
+  if(hit) return hit;
+  if(pageOffline) return Response.error();
+  const res = await fetch(url, { mode: 'cors', credentials: 'omit' });
+  if(res.ok) event.waitUntil(cache.put(url, res.clone()).then(() => trimCache(cacheName, max)).catch(() => {}));
+  return res;
+}
+
+async function catalogueResponse(event){
+  const cache = await caches.open(CATALOGUE_CACHE);
+  const hit = await cache.match(event.request);
+  if(hit) return hit;
+  const res = await fetch(event.request);
+  if(res.ok){
+    const url = new URL(event.request.url);
+    for(const key of await cache.keys()){
+      if(new URL(key.url).pathname === url.pathname) await cache.delete(key); // version précédente
+    }
+    await cache.put(event.request, res.clone());
+  }
+  return res;
+}
+
+// La page : réseau d'abord, sinon la dernière gardée. Quelle que soit l'adresse
+// d'ouverture (./, index.html, ?source=pwa), c'est toujours index.html.
+async function navigationResponse(event){
+  const cache = await caches.open(CACHE_NAME);
+  const hit = await cache.match('index.html');
+  const network = fetch(event.request, { cache: 'no-store' }).then(res => {
+    if(res.ok) event.waitUntil(cache.put('index.html', res.clone()).catch(() => {}));
+    return res;
+  });
+  if(!hit) return network;
+  return Promise.race([network.catch(() => hit), wait(NAVIGATION_WAIT_MS, hit)]);
+}
 
 self.addEventListener('fetch', (event) => {
   if(event.request.method !== 'GET') return; // jamais les écritures (Supabase POST/PATCH/DELETE...)
   const url = new URL(event.request.url);
-  // Seulement l'app elle-même (même origine) : jamais Supabase/TMDB
-  // (données vivantes, aucun sens à les servir depuis un cache statique —
-  // c'est le rôle du cache localStorage de js/offline.js) ni le CDN
-  // supabase-js (déjà mis en cache HTTP par le navigateur comme n'importe
-  // quelle ressource externe).
-  if(url.origin !== self.location.origin) return;
+  if(url.origin !== self.location.origin){
+    if(url.hostname === 'api.themoviedb.org') event.respondWith(tmdbResponse(event));
+    else if(url.hostname === 'image.tmdb.org') event.respondWith(crossOriginCacheFirst(event, IMAGE_CACHE, IMAGE_MAX_ENTRIES));
+    else if(url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com') event.respondWith(crossOriginCacheFirst(event, FONT_CACHE, IMAGE_MAX_ENTRIES));
+    return; // Supabase passe par js/offlineNet.js
+  }
+  if(url.pathname.includes('/data/catalogue-')){ event.respondWith(catalogueResponse(event)); return; }
+  if(event.request.mode === 'navigate'){ event.respondWith(navigationResponse(event)); return; }
 
   // Fichiers numérotés (?v=N, voir index.html) : servis tout de suite depuis
   // le cache, puis revérifiés en arrière-plan (audit général du 16/10, T1 :

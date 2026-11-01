@@ -113,6 +113,7 @@ function openSettingsPage(){
   document.getElementById('soundToggle').checked = getSoundEnabled();
   renderSettingsVolumeRow();
   renderSettingsSubs();
+  renderSettingsOffline(); // js/offlinePrep.js
   renderSettingsRegion();
   toggleSettingsRegionPanel(false);
   renderSettingsPublic();
