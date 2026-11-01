@@ -116,7 +116,10 @@ function ntStepHtml(){
   return `
     <div class="nt-steps" aria-hidden="true">${CRITERIA.map((x, i) => `<i class="${i <= ntStep ? 'on' : ''}"></i>`).join('')}</div>
     <div class="nt-step">
-      <span class="nt-step-count">Critère ${ntStep + 1} sur ${CRITERIA.length}</span>
+      <div class="nt-step-top">
+        <span class="nt-step-count">Critère ${ntStep + 1} sur ${CRITERIA.length}</span>
+        <button type="button" class="ff-link" data-nt-direct>Note directe</button>
+      </div>
       <h3 class="nt-step-label">${escapeHtml(c.label)}</h3>
       <p class="nt-step-def">${escapeHtml(c.def)}</p>
       <div class="nt-step-val num ${neutral ? '' : noteColorClass(v * CRIT_DISPLAY_SCALE)}" id="ntStepVal">${critLabel(v)}</div>
@@ -187,7 +190,6 @@ function ntRender(){
   document.getElementById('ntSeenLine').innerHTML = ntSeenLineHtml();
   const show = (id, on) => { const el = document.getElementById(id); if(el) el.hidden = !on; };
   const inStep = ntScreen === 'step';
-  show('ntDirectBtn', inStep);
   show('ntPrevBtn', inStep && ntStep > 0);
   show('ntNextBtn', inStep);
   show('saveBtn', ntScreen === 'summary' || ntScreen === 'direct');
@@ -249,7 +251,6 @@ function ntCloseMenu(){
     else ntGo('summary');
   });
   document.getElementById('ntPrevBtn').addEventListener('click', () => ntGo('step', Math.max(0, ntStep - 1)));
-  document.getElementById('ntDirectBtn').addEventListener('click', () => ntGo('direct'));
 
   // Visionnages
   const seenLine = document.getElementById('ntSeenLine');

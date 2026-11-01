@@ -248,11 +248,14 @@ html.scroll-locked, html.scroll-locked body{overflow:hidden;}
    - overscroll-behavior:none sur html/body : empêche le rebond natif du
      navigateur ET le pull-to-refresh natif d'Android Chrome de se
      déclencher EN PLUS du geste tirer-pour-rafraîchir déjà posé à la main
-     (js/ui.js) — sans ça, les deux peuvent se chevaucher. */
+     (js/ui.js) — sans ça, les deux peuvent se chevaucher.
+   - touch-action : plus de zoom à deux doigts ni au double tap (retour de
+     Flix, 28/10), iOS ignorant le user-scalable=no du viewport. */
 html{
   -webkit-tap-highlight-color:transparent;
   -webkit-text-size-adjust:100%;
   overscroll-behavior:none;
+  touch-action:pan-x pan-y;
 }
 body{overscroll-behavior:none;}
 
@@ -6938,9 +6941,15 @@ body[data-view-mode="list"] #filmList .bulk-select-checkbox{flex:none;}
   .ff-under{display:block;}
   .film-page .detail-title{font-size:var(--fs-xl);}
   .ff-label{display:none;}
-  .ff-btn-text{width:40px; padding:0; justify-content:center;}
+  /* Icônes seules sur téléphone : Favori et Bande-annonce de la fiche film,
+     pas les autres boutons texte (Précédent, Inviter, Modifier…). */
+  #filmDetailActions .ff-btn-text{width:40px; padding:0; justify-content:center;}
   .ff-btn-main{height:44px;}
   .ff-avis-grid, .ff-crits{grid-template-columns:1fr;}
+  /* Menu ⋯ posé sous toute la rangée : sinon il part du bouton et sort à droite. */
+  .ff-actions{position:relative;}
+  .ff-actions .ff-more{position:static;}
+  .ff-actions .ff-menu{left:0; right:0; min-width:0;}
 }
 
 /* ==========================================================
@@ -6962,6 +6971,7 @@ body[data-view-mode="list"] #filmList .bulk-select-checkbox{flex:none;}
 .nt-steps i{flex:1; height:4px; border-radius:var(--r-full); background:var(--surface-2);}
 .nt-steps i.on{background:var(--accent);}
 .nt-step{display:grid; gap:10px; padding:var(--sp-4) 0 var(--sp-2);}
+.nt-step-top{display:flex; align-items:center; justify-content:space-between; gap:var(--sp-3);}
 .nt-step-count{font-size:var(--fs-xs); color:var(--text-2);}
 .nt-step-label{font-family:var(--font-display); font-size:var(--fs-xl); font-weight:800; letter-spacing:-0.02em; margin:0;}
 .nt-step-def{margin:0; font-size:var(--fs-sm); color:var(--text-2); max-width:56ch;}
@@ -7015,7 +7025,7 @@ body[data-view-mode="list"] #filmList .bulk-select-checkbox{flex:none;}
 .nt-seen-date[hidden], #viewingsList[hidden], .viewings-add-row[hidden]{display:none;}
 .nt-extras #viewingsSection{margin:var(--sp-2) 0 0;}
 .nt-foot{display:flex; align-items:center; justify-content:space-between; gap:12px; flex:none; padding:14px 0 18px; border-top:1px solid var(--line);}
-.nt-foot-r{display:flex; align-items:center; gap:6px 12px; flex-wrap:wrap; justify-content:flex-end;}
+.nt-foot-r{display:flex; align-items:center; gap:6px 12px; flex-wrap:wrap; justify-content:flex-end; white-space:nowrap;}
 .nt-foot-r [hidden]{display:none;}
 .nt-more{position:relative;}
 .nt-menu{top:auto; bottom:calc(100% + 6px);}
@@ -7154,6 +7164,12 @@ body[data-view-mode="list"] #filmList .bulk-select-checkbox{flex:none;}
 .gp-head h1{font-family:var(--font-display); font-size:var(--fs-xl); font-weight:800; letter-spacing:-0.02em; margin:0;}
 .gp-meta{display:flex; align-items:center; gap:10px; margin-top:var(--sp-2); font-size:var(--fs-xs); color:var(--text-2);}
 .gp-actions{display:flex; align-items:center; gap:4px; position:relative;}
+/* Groupes et listes : même menu ⋯ posé sous l'en-tête que sur la fiche film. */
+@media (max-width:600px){
+  .gp-head{position:relative;}
+  .gp-actions, .gp-actions .ff-more{position:static;}
+  .gp-actions .ff-menu{left:0; right:0; min-width:0;}
+}
 .gp-menu{left:auto; right:0;}
 .gp-desc{margin:var(--sp-3) 0 0; color:var(--text-2); font-size:var(--fs-sm); max-width:65ch;}
 .gp-manage{margin-top:var(--sp-5); padding:var(--sp-4) 0; border-top:1px solid var(--line); border-bottom:1px solid var(--line);}

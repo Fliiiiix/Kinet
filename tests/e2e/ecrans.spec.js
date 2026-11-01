@@ -22,6 +22,14 @@ const PAGES = [
 ];
 const FENETRES = [
   ['notation-nouveau', 'openModal()'], ['notation-film', 'openModal(1)'], ['notation-sans-criteres', 'openModal(2)'],
+  // Dernier critère : le pied porte son texte le plus long (Précédent, Voir le résumé).
+  ['notation-etape', "openModal(1); ntGo('step', CRITERIA.length - 1)"],
+  // Menus ⋯ ouverts : ils doivent tenir dans l'écran.
+  ['menu-film', "location.hash = '#/film/' + __demo.Arrival.id; new Promise(r => setTimeout(r, 2500)).then(() => document.getElementById('filmDetailMoreBtn').click())"],
+  ['menu-serie', "location.hash = '#/series/28'; new Promise(r => setTimeout(r, 2500)).then(() => document.getElementById('seriesMoreBtn').click())"],
+  ['menu-saison', "location.hash = '#/series/28'; new Promise(r => setTimeout(r, 3000)).then(() => { const b = document.querySelector('[data-season-menu]'); if(b) b.click(); })"],
+  ['menu-groupe', "location.hash = '#/groupes/5'; new Promise(r => setTimeout(r, 2500)).then(() => document.getElementById('groupMoreBtn').click())"],
+  ['menu-liste', "location.hash = '#/listes/1'; new Promise(r => setTimeout(r, 2500)).then(() => document.getElementById('listMoreBtn').click())"],
   ['statistiques', 'openStats()'], ['succes', 'openAchievements()'], ['cartes', 'openTcgModal()'], ['journal', 'openJournal()'],
   ['nouveautes', 'openChangelogModal()'],
   // Série : un épisode vu ouvert, avec sa note et son commentaire.
@@ -49,6 +57,18 @@ function verifierEcran(){
   const soucis = [];
   const deborde = document.documentElement.scrollWidth - innerWidth;
   if(deborde > 1) soucis.push(`déborde de ${deborde} px`);
+  [...document.querySelectorAll('.ff-menu')].filter(visible).forEach(m => {
+    const r = m.getBoundingClientRect();
+    if(r.left < 0 || r.right > innerWidth) soucis.push(`menu hors de l'écran (${Math.round(r.left)} à ${Math.round(r.right)} px)`);
+  });
+  // Bouton trop étroit pour son texte, ou boutons voisins qui se touchent.
+  [...portee.querySelectorAll('.ff-btn-text, .ff-btn-main, .ff-btn-line')].filter(visible).forEach(b => {
+    if(b.scrollWidth > b.clientWidth + 1) soucis.push(`bouton écrasé : « ${b.textContent.trim().slice(0, 30)} »`);
+  });
+  const pied = [...portee.querySelectorAll('.nt-foot button')].filter(b => visible(b) && !b.closest('.ff-menu')).map(b => b.getBoundingClientRect());
+  pied.forEach((a, i) => pied.slice(i + 1).forEach(b => {
+    if(a.right + 2 > b.left && b.right + 2 > a.left && a.bottom > b.top && b.bottom > a.top) soucis.push('boutons collés dans le pied de la notation');
+  }));
   const lignes = (portee.innerText || '').split('\n').map(s => s.trim()).filter(Boolean);
   lignes.filter(l => /\bundefined\b|\bNaN\b|\[object |&#39;|&quot;|&amp;|&lt;|&gt;/.test(l)).slice(0, 3)
     .forEach(l => soucis.push(`texte suspect : « ${l.slice(0, 60)} »`));
