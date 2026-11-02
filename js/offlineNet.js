@@ -326,7 +326,11 @@ async function probeNetwork(){
       up = res.status < 500;
     }catch(e){ /* toujours rien */ }
   }
-  if(!up){ scheduleNetProbe(NET_PROBE_MS); return; }
+  if(!up){
+    if(typeof tellServiceWorkerNetwork === 'function') tellServiceWorkerNetwork();
+    scheduleNetProbe(NET_PROBE_MS);
+    return;
+  }
   isOfflineMode = false;
   if(typeof onBackOnline === 'function') onBackOnline();
 }

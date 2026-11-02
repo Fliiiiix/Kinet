@@ -16,7 +16,7 @@
 // (voir watchForUpdate() dans js/offline.js). Il purge aussi le cache
 // ci-dessous à chaque déploiement plutôt que de le laisser grossir sans
 // fin (chaque ?v=N étant une URL distincte, jamais réutilisée).
-const CACHE_NAME = 'critique-films-shell-v321';
+const CACHE_NAME = 'critique-films-shell-v322';
 const TMDB_CACHE = 'kinet-tmdb-v1';
 const IMAGE_CACHE = 'kinet-images-v1';
 const FONT_CACHE = 'kinet-polices-v1';
@@ -29,8 +29,14 @@ const NAVIGATION_WAIT_MS = 3000;
 const TMDB_WAIT_MS = 4000;
 const TMDB_GIVE_UP_MS = 8000;
 // La page sait, elle, que le réseau ne répond plus (js/offlineNet.js) : plus la
-// peine d'attendre, surtout sur un Wi-Fi d'avion qui ne répond jamais.
-let pageOffline = false;
+// peine d'attendre, surtout sur un Wi-Fi d'avion qui ne répond jamais. Elle le
+// redit à chaque essai : une page fermée entre-temps ne laisse pas tout coupé.
+const PAGE_OFFLINE_MEMORY_MS = 60000;
+let pageOfflineUntil = 0;
+const isPageOffline = () => Date.now() < pageOfflineUntil;
+// La v321 cassait toutes les affiches déjà vues : qui l'a reçue passe tout de
+// suite à la correction, sans attendre le bandeau « Actualiser ».
+const VERSION_A_REPARER = 'critique-films-shell-v321';
 
 // Tout ce que index.html charge, gardé dès l'installation : sinon la toute
 // première visite, faite avant que ce fichier ne prenne la main, ne garde rien.
@@ -45,7 +51,10 @@ async function precacheShell(){
 }
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(precacheShell().catch(e => console.error(e)));
+  event.waitUntil((async () => {
+    await precacheShell().catch(e => console.error(e));
+    if(await caches.has(VERSION_A_REPARER)) await self.skipWaiting();
+  })());
 });
 
 self.addEventListener('activate', (event) => {
@@ -65,7 +74,9 @@ self.addEventListener('activate', (event) => {
 // tous les onglets de l'ancienne version se ferment d'eux-mêmes.
 self.addEventListener('message', (event) => {
   if(event.data === 'skipWaiting') self.skipWaiting();
-  if(event.data && typeof event.data.kinetOffline === 'boolean') pageOffline = event.data.kinetOffline;
+  if(event.data && typeof event.data.kinetOffline === 'boolean'){
+    pageOfflineUntil = event.data.kinetOffline ? Date.now() + PAGE_OFFLINE_MEMORY_MS : 0;
+  }
 });
 
 // Les plus anciennes entrées partent quand un cache devient trop gros.
@@ -86,7 +97,7 @@ async function tmdbResponse(event){
   const url = event.request.url;
   const cache = await caches.open(TMDB_CACHE);
   const hit = await cache.match(url, { ignoreVary: true });
-  if(pageOffline) return hit || Response.error();
+  if(isPageOffline()) return hit || Response.error();
   const stop = new AbortController();
   const giveUp = setTimeout(() => stop.abort(), TMDB_GIVE_UP_MS);
   const network = fetch(event.request, { signal: stop.signal }).then(res => {
@@ -101,15 +112,23 @@ async function tmdbResponse(event){
 
 // Gardé au premier passage. En mode cors : Chrome compte une réponse opaque
 // plusieurs Mo dans le quota, quelques centaines d'affiches le rempliraient.
+// cache: 'reload' est indispensable : le cache du navigateur garde les images
+// déjà affichées sans leur autorisation cors (un <img> ne la demande pas), et une
+// requête cors qui tombe dessus échoue (retour de Flix du 02/11 : toutes les
+// affiches déjà vues cassées en v321). En dernier recours, le <img> d'origine.
 async function crossOriginCacheFirst(event, cacheName, max){
   const url = event.request.url;
   const cache = await caches.open(cacheName);
   const hit = await cache.match(url, { ignoreVary: true });
   if(hit) return hit;
-  if(pageOffline) return Response.error();
-  const res = await fetch(url, { mode: 'cors', credentials: 'omit' });
-  if(res.ok) event.waitUntil(cache.put(url, res.clone()).then(() => trimCache(cacheName, max)).catch(() => {}));
-  return res;
+  if(isPageOffline()) return Response.error();
+  try{
+    const res = await fetch(url, { mode: 'cors', credentials: 'omit', cache: 'reload' });
+    if(res.ok) event.waitUntil(cache.put(url, res.clone()).then(() => trimCache(cacheName, max)).catch(() => {}));
+    return res;
+  }catch(e){
+    return fetch(event.request);
+  }
 }
 
 async function catalogueResponse(event){
