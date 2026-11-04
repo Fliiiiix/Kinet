@@ -1,11 +1,13 @@
 // --- Suggestions sous la recherche (draft du 15/10, option A validée) ---
 // La recherche du catalogue (et celle des séries) ouvre une liste sous la
-// pilule dès 2 lettres : en tête le meilleur résultat, quel que soit son
-// type, puis des rubriques dans un ordre fixe (3 lignes chacune) : tes
-// films, À voir, séries, amis, groupes, et enfin les films (ou séries) à
+// pilule dès 2 lettres : en tête le meilleur résultat, puis des rubriques
+// dans un ordre fixe (3 lignes chacune), et enfin les films (ou séries) à
 // ajouter depuis TMDB, à partir de 3 lettres. Barre vide : les 3 derniers
 // résultats ouverts. Remplace les rubriques sous la grille et la case
 // « Ajouter « … » » (audit M2) : un seul endroit pour les suggestions.
+// Chaque page reste chez elle (retour de Flix, 04/11) : que des films sur
+// Films, que des séries sur Séries, récents compris. Amis et groupes, ni l'un
+// ni l'autre, restent des deux côtés.
 //
 // Données déjà en mémoire (films chargé dès la connexion, voir js/auth.js) ;
 // trackedShows/friendships/groups/watchlist chargés à la première recherche
@@ -37,21 +39,27 @@ const SUGGEST_PER_SECTION = 3;
 const SUGGEST_TMDB_MIN = 3;
 const SUGGEST_TMDB_DELAY_MS = 300;
 const SUGGEST_RECENTS_KEY = 'kinetRecentResults';
-const SUGGEST_RECENTS_MAX = 3;
+const SUGGEST_RECENTS_MAX = 3; // affichés sur une page
+const SUGGEST_RECENTS_KEPT = 12; // gardés, films et séries mêlés, pour en avoir 3 de chaque côté
 
-// Une page = sa pilule, son panneau, le type qu'elle liste déjà, ses rubriques.
+// Une page = sa pilule, son panneau, le type qu'elle liste déjà, ses rubriques
+// (rien d'autre n'y apparaît).
 const SUGGEST_PAGES = {
   films: {
     input: 'search', panel: 'searchSuggest', own: 'film',
-    sections: [['film', 'Tes films'], ['avoir', 'À voir'], ['serie', 'Séries'], ['ami', 'Amis'], ['groupe', 'Groupes']],
+    sections: [['film', 'Tes films'], ['avoir', 'À voir'], ['ami', 'Amis'], ['groupe', 'Groupes']],
     tmdbLabel: 'À ajouter, depuis TMDB'
   },
   series: {
     input: 'seriesTitleInput', panel: 'seriesSuggest', own: 'serie',
-    sections: [['serie', 'Tes séries'], ['film', 'Films'], ['avoir', 'À voir'], ['ami', 'Amis'], ['groupe', 'Groupes']],
+    sections: [['serie', 'Tes séries'], ['ami', 'Amis'], ['groupe', 'Groupes']],
     tmdbLabel: 'À suivre, depuis TMDB'
   }
 };
+
+function suggestTypesOf(kind){
+  return new Set(SUGGEST_PAGES[kind].sections.map(([type]) => type));
+}
 
 // Pertinence : début du nom 3, début d'un mot 2, ailleurs 1, absent 0.
 // nq est déjà normalisé (normalizeSearch(), js/app.js).
@@ -166,7 +174,8 @@ function buildSuggestions(kind, rawQuery, tmdbResults){
   const cfg = SUGGEST_PAGES[kind];
   const nq = normalizeSearch((rawQuery || '').trim());
   if(nq.length < 2) return { sections: [], ownCount: 0 };
-  const own = collectOwnSuggestions(nq);
+  const types = suggestTypesOf(kind);
+  const own = collectOwnSuggestions(nq).filter(it => types.has(it.type));
   let best = null;
   own.forEach(it => {
     if(!best || it.s > best.s || (it.s === best.s && it.type === cfg.own && best.type !== cfg.own)) best = it;
@@ -187,13 +196,18 @@ function buildSuggestions(kind, rawQuery, tmdbResults){
 }
 
 // --- Derniers résultats ouverts (barre vide) --- Gardés sur cet appareil.
-function getRecentResults(){
+// kind : ceux de cette page seulement ; sans lui, toute la liste gardée.
+function getRecentResults(kind){
+  let list = [];
   try{
     const parsed = JSON.parse(localStorage.getItem(SUGGEST_RECENTS_KEY) || '[]');
-    return Array.isArray(parsed) ? parsed : [];
+    list = Array.isArray(parsed) ? parsed : [];
   }catch(e){
     return [];
   }
+  if(!kind) return list;
+  const types = suggestTypesOf(kind);
+  return list.filter(it => types.has(it.type)).slice(0, SUGGEST_RECENTS_MAX);
 }
 
 function rememberRecentResult(item){
@@ -202,7 +216,7 @@ function rememberRecentResult(item){
   const entry = { type: item.type === 'tmdb' ? 'film' : item.type, title: item.title, posterUrl: item.posterUrl || null, sub: item.sub || '',
     ref: item.type === 'tmdb' ? { id: null, tmdbId: item.ref.tmdb.id } : item.ref };
   const same = (a) => a.type === entry.type && JSON.stringify(a.ref) === JSON.stringify(entry.ref);
-  const next = [entry, ...getRecentResults().filter(a => !same(a))].slice(0, SUGGEST_RECENTS_MAX);
+  const next = [entry, ...getRecentResults().filter(a => !same(a))].slice(0, SUGGEST_RECENTS_KEPT);
   try{ localStorage.setItem(SUGGEST_RECENTS_KEY, JSON.stringify(next)); }catch(e){}
 }
 
@@ -260,7 +274,7 @@ function renderSuggestPanel(kind){
   let html = '';
 
   if(nq.length === 0){
-    const recents = getRecentResults();
+    const recents = getRecentResults(kind);
     if(recents.length === 0){ closeSuggestPanel(); return; }
     html += `<div class="sg-label">Récents</div>`;
     recents.forEach(item => { html += suggestRowHtml(item, '', rows.length); rows.push({ item }); });

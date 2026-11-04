@@ -89,12 +89,22 @@ test('« god » : Godzilla en tête, Le Parrain trouvé par son titre d\'origine
   assert.strictEqual(built.ownCount, 2);
 });
 
-test('à pertinence égale, le type de la page passe devant (film sur Films, série sur Séries)', () => {
+// Retour de Flix (04/11) : sur Séries, pas de films ; sur Films, pas de séries.
+test('chaque page reste chez elle : que des films sur Films, que des séries sur Séries', () => {
   const { ctx } = buildContext();
-  assert.strictEqual(ctx.buildSuggestions('films', 'sil').sections[0].items[0].title, 'Silent Voice');
+  const films = ctx.buildSuggestions('films', 'sil');
+  assert.deepStrictEqual(titles(films.sections[0]), ['Silent Voice']);
+  assert.deepStrictEqual(labels(films), ['Meilleur résultat'], 'la série Silo n\'apparaît pas');
   const series = ctx.buildSuggestions('series', 'sil');
-  assert.strictEqual(series.sections[0].items[0].title, 'Silo');
-  assert.deepStrictEqual(labels(series), ['Meilleur résultat', 'Films']);
+  assert.deepStrictEqual(titles(series.sections[0]), ['Silo']);
+  assert.deepStrictEqual(labels(series), ['Meilleur résultat'], 'le film Silent Voice n\'apparaît pas');
+  assert.deepStrictEqual(labels(ctx.buildSuggestions('series', 'god')), [], 'ni un film noté, ni un film d\'À voir');
+});
+
+test('amis et groupes, ni films ni séries, restent des deux côtés', () => {
+  const { ctx } = buildContext();
+  assert.deepStrictEqual(titles(ctx.buildSuggestions('series', 'fam').sections[0]), ['Famille']);
+  assert.deepStrictEqual(titles(ctx.buildSuggestions('films', 'fam').sections[0]), ['Famille']);
 });
 
 test('« fam » : le groupe en tête, le film d\'À voir dans sa rubrique', () => {
@@ -162,18 +172,26 @@ test('suggestHighlight() : les lettres tapées en gras, accents ignorés', () =>
   assert.strictEqual(ctx.suggestHighlight('Silo', 'xyz'), 'Silo');
 });
 
-test('derniers résultats ouverts : 3 au plus, sans doublon, un film TMDB revient comme film', () => {
+test('derniers résultats ouverts : 3 au plus par page, ceux de la page, sans doublon, un film TMDB revient comme film', () => {
   const { ctx } = buildContext();
+  const recents = (kind) => JSON.parse(JSON.stringify(ctx.getRecentResults(kind))).map(r => r.title);
   ctx.rememberRecentResult({ type: 'ami', title: 'boulonbill', ref: { userId: 'u1' } });
   ctx.rememberRecentResult({ type: 'tmdb', title: 'Only God Forgives', posterUrl: 'x', sub: '2013', ref: { tmdb: { id: 77987 } } });
   ctx.rememberRecentResult({ type: 'groupe', title: 'Famille', ref: { id: 30 } });
   ctx.rememberRecentResult({ type: 'ami', title: 'boulonbill', ref: { userId: 'u1' } });
   ctx.rememberRecentResult({ type: 'serie', title: 'Silo', ref: { id: 20 } });
-  const recents = JSON.parse(JSON.stringify(ctx.getRecentResults()));
-  assert.deepStrictEqual(recents.map(r => r.title), ['Silo', 'boulonbill', 'Famille']);
+  assert.deepStrictEqual(recents('series'), ['Silo', 'boulonbill', 'Famille']);
+  assert.deepStrictEqual(recents('films'), ['boulonbill', 'Famille', 'Only God Forgives'], 'la série vue en dernier ne prend pas la place d\'un film');
+  assert.deepStrictEqual(recents(), ['Silo', 'boulonbill', 'Famille', 'Only God Forgives'], 'tout reste gardé');
   ctx.rememberRecentResult({ type: 'tmdb', title: 'Only God Forgives', ref: { tmdb: { id: 77987 } } });
-  const first = JSON.parse(JSON.stringify(ctx.getRecentResults()))[0];
+  const first = JSON.parse(JSON.stringify(ctx.getRecentResults('films')))[0];
   assert.deepStrictEqual([first.type, first.ref.tmdbId], ['film', 77987]);
+});
+
+test('derniers résultats ouverts : 12 gardés au plus', () => {
+  const { ctx } = buildContext();
+  for(let i = 0; i < 15; i++) ctx.rememberRecentResult({ type: 'serie', title: `Série ${i}`, ref: { id: i } });
+  assert.strictEqual(ctx.getRecentResults().length, 12);
 });
 
 test('openSuggestion() : chaque type ouvre le bon écran', () => {
@@ -225,6 +243,15 @@ test('panneau : barre vide avec des récents -> « Récents »', () => {
   ctx.renderSuggestPanel('films');
   assert.ok(elements.searchSuggest.innerHTML.includes('Récents'));
   assert.ok(elements.searchSuggest.innerHTML.includes('Famille'));
+});
+
+test('panneau Séries : des films récents seulement -> rien à montrer, la liste reste fermée', () => {
+  const { ctx, elements } = buildContext();
+  ctx.rememberRecentResult({ type: 'film', title: 'Le Droit de tuer ?', ref: { id: 5, tmdbId: 1645 } });
+  elements.seriesTitleInput.value = '';
+  ctx.renderSuggestPanel('series');
+  assert.strictEqual(elements.seriesSuggest.hidden, true);
+  assert.ok(!elements.seriesSuggest.innerHTML.includes('Le Droit de tuer'));
 });
 
 test('clavier : flèche bas puis Entrée ouvre le meilleur résultat ; Entrée sans choix ferme la liste', () => {
