@@ -16,7 +16,7 @@
 // (voir watchForUpdate() dans js/offline.js). Il purge aussi le cache
 // ci-dessous à chaque déploiement plutôt que de le laisser grossir sans
 // fin (chaque ?v=N étant une URL distincte, jamais réutilisée).
-const CACHE_NAME = 'critique-films-shell-v324';
+const CACHE_NAME = 'critique-films-shell-v325';
 const TMDB_CACHE = 'kinet-tmdb-v1';
 const IMAGE_CACHE = 'kinet-images-v1';
 const FONT_CACHE = 'kinet-polices-v1';

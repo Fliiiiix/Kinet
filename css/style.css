@@ -259,6 +259,17 @@ html{
 }
 body{overscroll-behavior:none;}
 
+/* Une app ne surligne pas ses affiches et ses titres quand on glisse la souris
+   (retour de Flix, 04/11). Le texte qu'on peut vouloir copier le reste : champs,
+   résumés, critiques, commentaires, notes du journal. Les images ne se
+   traînent plus non plus. */
+body{-webkit-user-select:none; user-select:none;}
+input, textarea, select, [contenteditable="true"],
+.synopsis, .ff-quote, .comment-body, .sx-comment, .crit-review-comment, .gp-desc, .journal-note, .viewing-note{
+  -webkit-user-select:text; user-select:text;
+}
+img{-webkit-user-drag:none;}
+
 body{
   background:var(--ink);
   background-attachment:fixed;
