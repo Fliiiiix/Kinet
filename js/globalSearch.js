@@ -227,7 +227,9 @@ function openSuggestion(item){
   if(item.type === 'film'){ if(ref.tmdbId) goToFilmDetail(ref.tmdbId); else openModal(ref.id); return; }
   if(item.type === 'avoir'){ if(ref.tmdbId) goToFilmDetail(ref.tmdbId); else goToWatchlist(); return; }
   if(item.type === 'tmdb'){ goToFilmDetail(ref.tmdb.id); return; }
-  if(item.type === 'tmdbtv'){ selectSeriesTmdbResult(ref.tmdb); return; }
+  // Le « + » d'une série suit tout de suite (retour de Flix, 04/11 : choisir puis
+  // toucher « Suivre », deux gestes pour un seul).
+  if(item.type === 'tmdbtv'){ selectSeriesTmdbResult(ref.tmdb); handleAddShow(); return; }
   if(item.type === 'serie'){ goToSeriesDetail(ref.id); return; }
   if(item.type === 'ami'){ openFriendProfile(ref.userId); return; }
   if(item.type === 'groupe'){ goToGroup(ref.id); }

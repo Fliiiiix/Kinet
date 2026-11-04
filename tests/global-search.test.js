@@ -202,7 +202,8 @@ test('openSuggestion() : chaque type ouvre le bon écran', () => {
     goToSeriesDetail(id){ opened.push(['série', id]); },
     goToFilmDetail(id){ opened.push(['fiche', id]); },
     openModal(id){ opened.push(['notation', id]); },
-    selectSeriesTmdbResult(r){ opened.push(['suivre', r.id]); },
+    selectSeriesTmdbResult(r){ opened.push(['choisie', r.id]); },
+    handleAddShow(){ opened.push(['suivie']); },
   });
   ctx.openSuggestion({ type: 'ami', ref: { userId: 'u1' } });
   ctx.openSuggestion({ type: 'groupe', ref: { id: 30 } });
@@ -211,7 +212,7 @@ test('openSuggestion() : chaque type ouvre le bon écran', () => {
   ctx.openSuggestion({ type: 'film', ref: { id: 9, tmdbId: null } }); // entrée manuelle sans fiche TMDB
   ctx.openSuggestion({ type: 'tmdb', ref: { tmdb: { id: 77987 } } });
   ctx.openSuggestion({ type: 'tmdbtv', ref: { tmdb: { id: 5 } } });
-  assert.deepStrictEqual(opened, [['ami', 'u1'], ['groupe', 30], ['série', 20], ['fiche', 238], ['notation', 9], ['fiche', 77987], ['suivre', 5]]);
+  assert.deepStrictEqual(opened, [['ami', 'u1'], ['groupe', 30], ['série', 20], ['fiche', 238], ['notation', 9], ['fiche', 77987], ['choisie', 5], ['suivie']]);
 });
 
 test('panneau : « boul » ouvre la liste, meilleur résultat en gras, lien vers la grille', () => {

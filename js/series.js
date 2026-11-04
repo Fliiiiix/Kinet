@@ -347,7 +347,9 @@ async function handleRemoveShow(id, fromDetail){
 
 // --- Ajout : recherche TMDB (séries), voir js/tmdb.js --- Les séries à
 // suivre sont proposées dans la liste sous la recherche (« À suivre »,
-// js/globalSearch.js), qui appelle selectSeriesTmdbResult() au choix.
+// js/globalSearch.js), qui la suit dès le choix : selectSeriesTmdbResult() puis
+// handleAddShow(). Le bouton « + Suivre » ne reste visible qu'après un échec
+// (réseau, erreur TMDB), pour réessayer.
 
 function selectSeriesTmdbResult(r){
   seriesTmdbSelected = {
