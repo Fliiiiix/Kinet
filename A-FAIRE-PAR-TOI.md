@@ -55,8 +55,10 @@ note se range bien, une ligne en MAJUSCULES par catégorie, puis ses « • ».)
   se remplit anormalement.
 
 ## 3. Commandes utiles (après un changement)
+- Site en local : `npm run dev`. Mise en ligne : `npm run deploy` (pousser main ne suffit plus, voir README).
 - Tests unitaires : `npm test` (ou `node tests/run-all.js`).
-- Test de bout en bout (Chromium, serveur local automatique) : `npm run test:e2e`.
+- Test de bout en bout (Chromium, serveur local automatique) : `npm run test:e2e`, et
+  `npm run test:dist` pour les mêmes sur le site construit, celui qui part en ligne.
   Première fois : `npx playwright install chromium` (déjà fait sur ce poste).
 - Recalcul des raretés : voir `docs/recalcul-raretes.md`.
 

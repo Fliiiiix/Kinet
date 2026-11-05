@@ -62,20 +62,24 @@ critique-films/
 
 ## Lancer le projet
 
-Aucune installation nécessaire, c'est du HTML/CSS/JS pur, sans build — mais il
-faut un projet Supabase configuré (voir section suivante) pour que la
-connexion et la sauvegarde fonctionnent.
-
-Ouvrir `index.html` directement dans un navigateur, ou pour éviter les soucis de
-CORS avec certains navigateurs, servir le dossier en local :
+HTML/CSS/JS sans framework. Depuis le 05/11, Vite construit le site avant la
+mise en ligne (étape 1 du passage progressif à React : modules ensuite, puis
+React écran par écran). Il faut aussi un projet Supabase configuré (voir
+section suivante) pour que la connexion et la sauvegarde fonctionnent.
 
 ```bash
-python3 -m http.server 8000
-# puis ouvrir http://localhost:8000
+npm install
+npm run dev      # le site en local, rechargé à chaque modification
+npm run build    # le site construit, dans dist/
+npm run deploy   # construit puis met en ligne (branche gh-pages)
 ```
 
-En ligne : https://fliiiiix.github.io/Kinet/ (GitHub Pages, déployé
-depuis la branche `main`).
+`npm run build` compacte les scripts et le CSS sans rien renommer à l'intérieur
+et donne à chaque fichier un nom qui suit son contenu : plus de `?v=N` à monter
+à la main (voir `vite.config.mjs`).
+
+En ligne : https://fliiiiix.github.io/Kinet/ (GitHub Pages, branche `gh-pages`,
+publiée par `npm run deploy` ; pousser `main` ne met plus rien en ligne).
 
 ### Tests
 

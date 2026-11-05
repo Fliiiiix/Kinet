@@ -12,7 +12,7 @@ const path = require('path');
 const { test, expect } = require('@playwright/test');
 
 const DONNEES = path.join(__dirname, 'donnees-demo.js');
-const CAPTURES = path.join(__dirname, '..', '..', 'test-results', 'ecrans');
+const CAPTURES = path.join(__dirname, '..', '..', 'test-results', process.env.KINET_DIST ? 'ecrans-dist' : 'ecrans');
 
 const PAGES = [
   ['catalogue', '#/'], ['series', '#/series'], ['serie', '#/series/28'], ['film', 'FILM'], ['a-voir', '#/watchlist'],

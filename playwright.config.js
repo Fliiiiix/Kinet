@@ -10,6 +10,7 @@ module.exports = defineConfig({
   webServer: {
     command: 'node tests/e2e/static-server.js',
     url: 'http://localhost:8765',
-    reuseExistingServer: true,
+    // Sur dist/, jamais un serveur déjà lancé sur les sources.
+    reuseExistingServer: !process.env.KINET_DIST,
   },
 });

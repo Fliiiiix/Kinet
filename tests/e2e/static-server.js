@@ -1,9 +1,10 @@
 // Petit serveur statique pour les tests de bout en bout (aucune dépendance) :
 // sert la racine du projet sur le port 8765, comme GitHub Pages le ferait.
+// KINET_DIST=1 : sert dist/, le site tel que construit par Vite et mis en ligne.
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const RACINE = path.join(__dirname, '..', '..');
+const RACINE = path.join(__dirname, '..', '..', process.env.KINET_DIST ? 'dist' : '');
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.svg': 'image/svg+xml' };
 
 http.createServer((req, res) => {

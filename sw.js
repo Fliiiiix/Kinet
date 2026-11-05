@@ -6,16 +6,13 @@
 // - Catalogue de recherche (data/) : gardé jusqu'à la version suivante.
 // Les données Supabase et les écritures vivent côté page, voir js/offlineNet.js.
 
-// IMPORTANT — à bumper à CHAQUE déploiement, en même temps que ?v=N dans
-// index.html (retour utilisateur, v2.1.x : l'app restait bloquée sur une
-// vieille version tant qu'on ne faisait pas ctrl+maj+r à la main). Un
-// sw.js dont les octets n'ont pas changé n'est jamais redétecté comme
-// "nouveau" par le navigateur (le fichier lui-même ne référence aucun
-// ?v=N) — ce numéro EST le seul signal qui déclenche l'installation d'un
-// nouveau service worker, et donc la détection de mise à jour côté client
-// (voir watchForUpdate() dans js/offline.js). Il purge aussi le cache
-// ci-dessous à chaque déploiement plutôt que de le laisser grossir sans
-// fin (chaque ?v=N étant une URL distincte, jamais réutilisée).
+// Le nom de ce cache change à chaque mise en ligne : un sw.js identique au
+// précédent n'est jamais redétecté par le navigateur, et c'est ce nom qui
+// déclenche l'installation d'une nouvelle version, donc le bandeau
+// « Actualiser » (watchForUpdate(), js/offline.js). Il purge aussi l'ancien
+// cache. La construction le remplace par une empreinte du site
+// (vite.config.mjs) : rien à monter à la main. Ce v325 ne sert qu'en
+// développement, et à reconnaître les caches d'avant Vite.
 const CACHE_NAME = 'critique-films-shell-v325';
 const TMDB_CACHE = 'kinet-tmdb-v1';
 const IMAGE_CACHE = 'kinet-images-v1';
@@ -46,7 +43,7 @@ async function precacheShell(){
   if(!res.ok) return;
   const html = await res.clone().text();
   await cache.put('index.html', res);
-  const urls = [...html.matchAll(/(?:src|href)="((?:js|css|icons)\/[^"]+|manifest\.json[^"]*)"/g)].map(m => m[1]);
+  const urls = [...html.matchAll(/(?:src|href)="(?:\.\/)?((?:assets|js|css|icons)\/[^"]+|manifest\.json[^"]*)"/g)].map(m => m[1]);
   await Promise.all(urls.map(url => cache.add(url).catch(() => {})));
 }
 
@@ -171,14 +168,12 @@ self.addEventListener('fetch', (event) => {
   if(url.pathname.includes('/data/catalogue-')){ event.respondWith(catalogueResponse(event)); return; }
   if(event.request.mode === 'navigate'){ event.respondWith(navigationResponse(event)); return; }
 
-  // Fichiers numérotés (?v=N, voir index.html) : servis tout de suite depuis
-  // le cache, puis revérifiés en arrière-plan (audit général du 16/10, T1 :
-  // chaque visite retéléchargeait les 49 fichiers de l'app, 900 Ko). La
-  // revérification passe par le cache HTTP normal : le plus souvent une
-  // petite réponse 304. Elle corrige aussi, dès la visite suivante, un
-  // fichier que GitHub Pages aurait encore servi dans son ancienne version
-  // juste après un déploiement.
-  if(url.searchParams.has('v')){
+  // Fichiers nommés selon leur contenu (assets/, voir vite.config.mjs) ou
+  // numérotés (?v=N) : servis tout de suite depuis le cache, puis revérifiés en
+  // arrière-plan (audit général du 16/10, T1 : chaque visite retéléchargeait
+  // les 49 fichiers de l'app, 900 Ko). La revérification passe par le cache
+  // HTTP normal : le plus souvent une petite réponse 304.
+  if(url.pathname.includes('/assets/') || url.searchParams.has('v')){
     event.respondWith(caches.open(CACHE_NAME).then(async (cache) => {
       const cached = await cache.match(event.request);
       const network = fetch(event.request)
