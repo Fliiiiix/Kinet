@@ -1,0 +1,1680 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
+<title>Kinet</title>
+<link rel="manifest" href="manifest.json?v=1" >
+<meta name="theme-color" content="#0a0a0a">
+<link rel="icon" type="image/png" sizes="32x32" href="./assets/favicon-32-o0ovsXey.png?v=2">
+<link rel="apple-touch-icon" href="./assets/apple-touch-icon-ConmrOmz.png?v=2">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Kinet">
+<link rel="preconnect" href="https://ethhacnngepckeakhsch.supabase.co">
+<link rel="preconnect" href="https://image.tmdb.org">
+<link rel="preconnect" href="https://api.themoviedb.org">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,500&display=swap">
+  <link rel="stylesheet" crossorigin href="./assets/index-BJNlDGnK.css">
+</head>
+<body>
+
+<a href="#" class="skip-link" id="skipToContentLink">Aller au contenu</a>
+
+<header>
+  <div class="container" style="padding:0;">
+        <div class="header-top">
+      <div class="title-row">
+        <div class="brand-link" id="homeLink" role="link" tabindex="0" title="Retour à l'accueil">
+                    <h1>Kinet</h1>
+        </div>
+                <div class="version-tag" id="versionTag" style="display:none;">v<b id="versionTagValue"></b></div>
+      </div>
+      <div class="user-bar" id="userBar" style="display:none;">
+                                <nav class="header-nav">
+          <button class="header-nav-btn" id="watchlistBtn" type="button" title="À voir" aria-label="À voir"><span class="nav-pip nav-pip-violet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3.5h12a.5.5 0 01.5.5v16.2a.5.5 0 01-.77.42L12 16.2l-5.73 4.42a.5.5 0 01-.77-.42V4a.5.5 0 01.5-.5z"></path></svg></span><span>À voir</span></button>
+          <button class="header-nav-btn" id="upcomingBtn" type="button" title="Prochainement" aria-label="Prochainement"><span class="nav-pip nav-pip-gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5.5" width="17" height="15" rx="2"></rect><path d="M3.5 10h17"></path><path d="M8 3.5v4"></path><path d="M16 3.5v4"></path></svg></span><span>Bientôt</span></button>
+          <button class="header-nav-btn" id="friendsBtn" type="button" title="Amis" aria-label="Amis"><span class="nav-pip nav-pip-teal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9.3" cy="8" r="3.3"></circle><path d="M16 3.8c1.5.7 2.5 2.2 2.5 4S17.5 11.1 16 11.8"></path><path d="M14.5 20.3c0-3-2.3-5-5.2-5s-5.2 2-5.2 5"></path><path d="M19 20c0-2.5-1.7-4.3-4-4.8"></path></svg></span><span>Amis</span></button>
+          <button class="header-nav-btn" id="topBtn" type="button" title="Top films" aria-label="Top films"><span class="nav-pip nav-pip-bronze"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4h8v4a4 4 0 01-8 0V4z"></path><path d="M8 5H5.5a2.5 2.5 0 002.5 2.5"></path><path d="M16 5h2.5A2.5 2.5 0 0116 7.5"></path><path d="M12 12v3.5"></path><path d="M9.5 20h5"></path><path d="M10.3 15.5h3.4l.8 4.5H9.5l.8-4.5z"></path></svg></span><span>Top films</span></button>
+                    <button class="header-nav-btn" id="adminNavBtn" type="button" title="Admin" aria-label="Admin" hidden><span>Admin</span><span class="nav-count" id="adminNavCount" hidden></span></button>
+                    <button class="header-nav-btn header-nav-action" id="installHeaderBtn" type="button" title="Installer l'app" aria-label="Installer l'app" style="display:none;"><span class="nav-pip nav-pip-bronze"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2" width="10" height="20" rx="2"></rect><path d="M11 18h2"></path></svg></span><span>Installer</span></button>
+        </nav>
+                <div style="display:none" aria-hidden="true">
+          <button id="feedbackBtn" type="button" tabindex="-1"></button>
+          <button id="changelogBtn" type="button" tabindex="-1"></button>
+        </div>
+                <div class="user-identity">
+          <button class="user-avatar-btn" id="userAvatarBtn" type="button" title="Ton profil" aria-label="Ton profil">
+            <img id="userAvatar" class="user-avatar" alt="">
+            <span id="userAvatarFallback" class="user-avatar-fallback"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8.5" r="3.8"></circle><path d="M4.5 20c0-4.1 3.4-6.8 7.5-6.8s7.5 2.7 7.5 6.8"></path></svg></span>
+          </button>
+          <span id="userDisplayName"></span>
+        </div>
+      </div>
+    </div>
+                <nav class="primary-tabs" id="primaryTabs" style="display:none;" role="tablist" aria-label="Films ou séries">
+      <button class="primary-tab" id="primaryTabFilms" type="button" role="tab" aria-selected="true">Films</button>
+      <span class="primary-tab-sep" aria-hidden="true">·</span>
+      <button class="primary-tab" id="primaryTabSeries" type="button" role="tab" aria-selected="false">Séries</button>
+    </nav>
+  </div>
+</header>
+
+<div class="container header-edit-banner" id="headerEditBanner" style="display:none;">
+  <span>Maintiens une icône puis glisse-la pour changer l'ordre de l'entête.</span>
+  <button class="btn secondary" id="exitHeaderEditBtn" type="button">Terminé</button>
+</div>
+
+<div class="container digest-banner" id="activityDigestBanner" style="display:none;"></div>
+
+<div class="container inactivity-reminder" id="inactivityReminderBanner" style="display:none;"></div>
+
+<div class="container offline-banner" id="offlineBanner" style="display:none;"></div>
+
+
+<div class="update-banner" id="updateBanner" style="display:none;">
+  <span>Une nouvelle version de Kinet est prête.</span>
+  <button class="btn" id="updateBannerBtn" type="button">Actualiser</button>
+</div>
+
+<div class="onboarding-layer" id="onboardingLayer"></div>
+
+<nav class="mobile-tabbar" id="mobileTabbar" aria-label="Navigation principale" style="display:none;">
+  <button class="mobile-tab" id="mobileTabHome" type="button">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11.5 12 4l8 7.5"></path><path d="M6 10v9.5a1 1 0 001 1h3.5v-6h3v6H17a1 1 0 001-1V10"></path></svg>
+    <span>Catalogue</span>
+  </button>
+  <button class="mobile-tab" id="mobileTabWatchlist" type="button">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3.5h12a.5.5 0 01.5.5v16.2a.5.5 0 01-.77.42L12 16.2l-5.73 4.42a.5.5 0 01-.77-.42V4a.5.5 0 01.5-.5z"></path></svg>
+    <span>À voir</span>
+  </button>
+  <button class="mobile-tab" id="mobileTabUpcoming" type="button">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5.5" width="17" height="15" rx="2"></rect><path d="M3.5 10h17"></path><path d="M8 3.5v4"></path><path d="M16 3.5v4"></path></svg>
+    <span>Bientôt</span>
+  </button>
+  <button class="mobile-tab" id="mobileTabFriends" type="button">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9.3" cy="8" r="3.3"></circle><path d="M16 3.8c1.5.7 2.5 2.2 2.5 4S17.5 11.1 16 11.8"></path><path d="M14.5 20.3c0-3-2.3-5-5.2-5s-5.2 2-5.2 5"></path><path d="M19 20c0-2.5-1.7-4.3-4-4.8"></path></svg>
+    <span>Amis</span>
+  </button>
+  <button class="mobile-tab" id="mobileTabProfile" type="button">
+    <img id="mobileTabAvatar" class="mobile-tab-avatar" alt="">
+    <span id="mobileTabAvatarFallback" class="mobile-tab-avatar-fallback"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8.5" r="3.8"></circle><path d="M4.5 20c0-4.1 3.4-6.8 7.5-6.8s7.5 2.7 7.5 6.8"></path></svg></span>
+    <span>Profil</span>
+  </button>
+</nav>
+
+<div class="container" id="maintenanceContainer" style="display:none;">
+  <div class="auth-card">
+    <h2>En maintenance</h2>
+    <p class="auth-intro" id="maintenanceMessage">Le site est en pause le temps de quelques réglages, de retour très vite.</p>
+  </div>
+</div>
+
+<div class="container" id="authContainer" style="display:none;">
+    <div class="auth-wall" id="authWall" aria-hidden="true"></div>
+  <div class="auth-hero">
+    <div class="auth-pitch">
+      <h2 class="auth-headline">Ta grille, tes films, tes séries.</h2>
+      <p class="auth-pitch-sub">Note chaque film sur 7 critères, suis tes séries épisode par épisode, compare avec tes amis.</p>
+    </div>
+    <div class="auth-form" id="authForm">
+      <h3 class="auth-form-title">Connecte-toi ou crée ton compte</h3>
+      <button class="btn google-btn" id="googleSignInBtn" type="button">
+        <svg class="google-icon" viewBox="0 0 48 48" aria-hidden="true">
+          <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
+          <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.9-2.26 5.36-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>
+          <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path>
+          <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
+        </svg>
+        Continuer avec Google
+      </button>
+      <div class="auth-divider"><span>ou</span></div>
+      <input type="email" id="authEmail" class="auth-email" placeholder="ton@email.fr" aria-label="Ton email" autocomplete="email">
+      <button class="btn" id="authSendBtn" type="button">Recevoir mon lien de connexion</button>
+      <div class="auth-status" id="authStatus" role="status"></div>
+      <p class="auth-card-foot">Gratuit, sans mot de passe, sans pub.</p>
+    </div>
+        <div class="auth-sent" id="authSent" role="status" hidden>
+      <span class="auth-sent-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="m4 7 8 6 8-6"></path></svg></span>
+      <h3 class="auth-sent-title">Regarde tes mails</h3>
+      <p class="auth-sent-text">Un lien de connexion vient de partir à <b id="authSentEmail"></b>. Ouvre-le sur cet appareil. Pense à regarder dans les indésirables.</p>
+      <div class="auth-sent-links">
+        <button type="button" id="authResendBtn">Renvoyer le lien</button>
+        <button type="button" id="authChangeEmailBtn">Changer d'email</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="pull-refresh-indicator" id="pullRefreshIndicator" aria-hidden="true">↓</div>
+
+<div class="container" id="appContainer" role="main" tabindex="-1" style="display:none;">
+    <div class="catalog-head">
+    <div class="catalog-switch" role="tablist" aria-label="Films ou séries">
+      <button type="button" role="tab" class="catalog-switch-btn is-active" aria-selected="true" data-catalog="films">Films</button>
+      <button type="button" role="tab" class="catalog-switch-btn" aria-selected="false" data-catalog="series">Séries</button>
+    </div>
+    <div id="annualGoalWidget"></div>
+  </div>
+  <div class="toolbar">
+    <div class="toolbar-search">
+      <svg class="toolbar-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+      <input type="text" id="search" placeholder="Rechercher ou ajouter un film…" aria-label="Rechercher dans ton catalogue ou ajouter un film" autocomplete="off">
+            <div class="search-suggest" id="searchSuggest" role="listbox" aria-label="Suggestions" hidden></div>
+            <button type="button" class="btn secondary icon-only" id="filtersToggleBtn" title="Trier et filtrer" aria-label="Trier et filtrer" aria-haspopup="true" aria-expanded="false" aria-controls="toolbarFilters">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"></path></svg>
+      </button>
+                  <div class="toolbar-filters" id="toolbarFilters">
+        <div class="toolbar-filters-sheet" role="dialog" aria-label="Trier et filtrer">
+          <div class="toolbar-filters-head">
+            <span>Trier et filtrer</span>
+            <button type="button" class="close-x" id="closeToolbarFilters" aria-label="Fermer">✕</button>
+          </div>
+          <div class="filter-chips" id="filterChips"></div>
+          <div class="filter-foot">
+            <button type="button" class="filter-clear" id="clearFiltersBtn">Tout effacer</button>
+            <button type="button" class="btn filter-apply" id="applyFiltersBtn">Voir les films</button>
+          </div>
+        </div>
+      </div>
+            <div class="view-toggle" role="group" aria-label="Mode d'affichage">
+        <button class="view-toggle-btn is-active" type="button" data-view-btn="grid" title="Grille ou liste" aria-label="Affichage en grille, passer en liste" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1.5"></rect><rect x="13" y="4" width="7" height="7" rx="1.5"></rect><rect x="4" y="13" width="7" height="7" rx="1.5"></rect><rect x="13" y="13" width="7" height="7" rx="1.5"></rect></svg></button>
+        <button class="view-toggle-btn" type="button" data-view-btn="list" title="Grille ou liste" aria-label="Affichage en liste, passer en grille" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"></path><circle cx="4.5" cy="6" r="1"></circle><circle cx="4.5" cy="12" r="1"></circle><circle cx="4.5" cy="18" r="1"></circle></svg></button>
+      </div>
+    </div>
+    <div class="toolbar-actions">
+            <div class="count-line" id="countLine"></div>
+            <div class="films-views" role="tablist" aria-label="Affichage de tes films">
+        <button class="top-tab" type="button" role="tab" data-films-view="grid" aria-selected="false">Grille</button>
+        <button class="top-tab" type="button" role="tab" data-films-view="list" aria-selected="false">Liste</button>
+        <button class="top-tab" type="button" role="tab" data-films-view="journal" aria-selected="false">Journal</button>
+      </div>
+            <button class="btn secondary icon-only" id="bulkSelectBtn" type="button" title="Sélectionner plusieurs films" aria-label="Sélectionner plusieurs films" aria-pressed="false" style="display:none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4"></rect><path d="M7.5 12.5l3 3 6-6"></path></svg>
+      </button>
+      <input type="file" id="importFile" accept="application/json,.json" style="display:none;">
+      <input type="file" id="importLetterboxdFile" accept="text/csv,.csv" style="display:none;">
+            <button class="btn magnetic" id="openAddBtn" style="display:none;">+ Ajouter un film</button>
+    </div>
+  </div>
+    <div class="active-filters" id="activeFilters" hidden></div>
+  <div class="catalog-notice" id="catalogNotice" hidden></div>
+    <div id="filmList">
+    <div class="film-row skeleton"><div class="skeleton-block skeleton-poster"></div><div class="film-main"><div class="skeleton-block skeleton-line" style="width:55%;"></div><div class="skeleton-block skeleton-line" style="width:30%; margin-top:8px;"></div></div><div class="skeleton-block skeleton-counter"></div></div>
+    <div class="film-row skeleton"><div class="skeleton-block skeleton-poster"></div><div class="film-main"><div class="skeleton-block skeleton-line" style="width:70%;"></div><div class="skeleton-block skeleton-line" style="width:40%; margin-top:8px;"></div></div><div class="skeleton-block skeleton-counter"></div></div>
+    <div class="film-row skeleton"><div class="skeleton-block skeleton-poster"></div><div class="film-main"><div class="skeleton-block skeleton-line" style="width:45%;"></div><div class="skeleton-block skeleton-line" style="width:32%; margin-top:8px;"></div></div><div class="skeleton-block skeleton-counter"></div></div>
+    <div class="film-row skeleton"><div class="skeleton-block skeleton-poster"></div><div class="film-main"><div class="skeleton-block skeleton-line" style="width:62%;"></div><div class="skeleton-block skeleton-line" style="width:28%; margin-top:8px;"></div></div><div class="skeleton-block skeleton-counter"></div></div>
+    <div class="film-row skeleton"><div class="skeleton-block skeleton-poster"></div><div class="film-main"><div class="skeleton-block skeleton-line" style="width:50%;"></div><div class="skeleton-block skeleton-line" style="width:36%; margin-top:8px;"></div></div><div class="skeleton-block skeleton-counter"></div></div>
+  </div>
+    <div class="film-journal" id="filmJournal" style="display:none;"></div>
+  <div class="pagination" id="pagination"></div>
+</div>
+
+<div class="container" id="publicProfilePage" role="main" tabindex="-1" style="display:none;">
+  <div class="detail-topbar">
+    <button class="back-link" id="publicProfileBack" type="button">‹ Retour</button>
+  </div>
+  <div class="page-header">
+    <h2>Profil</h2>
+  </div>
+  <div id="publicProfileContent"></div>
+</div>
+
+<div class="container page" id="invitePage" role="main" tabindex="-1" style="display:none;">
+  <div class="detail-topbar">
+    <button class="back-link" id="invitePageBack" type="button">‹ Retour</button>
+  </div>
+  <div class="page-header">
+    <h2>Invitation</h2>
+  </div>
+  <div id="inviteContent"></div>
+</div>
+
+<div class="container page" id="watchlistPage" role="main" tabindex="-1" style="display:none;">
+  <div class="page-header">
+    <h2>À voir</h2>
+        <div class="films-views page-views" role="group" aria-label="Affichage">
+      <button class="top-tab is-active" type="button" data-view-btn="grid" aria-pressed="true">Grille</button>
+      <button class="top-tab" type="button" data-view-btn="list" aria-pressed="false">Liste</button>
+    </div>
+  </div>
+
+    <details class="create-disclosure" id="wlAddDisclosure">
+  <summary>+ Ajouter un film à voir</summary>
+  <div class="wl-add-form">
+    <div class="field tmdb-search-field">
+      <label for="wlTitleInput">Titre du film</label>
+      <input type="text" id="wlTitleInput" placeholder="Ex. Paprika" autocomplete="off">
+      <div id="wlTmdbResults" class="tmdb-results"></div>
+      <div id="wlTmdbSelected" class="tmdb-selected" style="display:none;">
+        <img id="wlTmdbSelectedPoster" alt="Affiche">
+        <div class="tmdb-selected-info">
+          <div id="wlTmdbSelectedTitle"></div>
+          <button class="crit-help-toggle" id="wlTmdbClearBtn" type="button">Retirer la fiche TMDB</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="wlNoteInput">Note</label>
+      <textarea id="wlNoteInput" placeholder="Optionnel…" rows="2" title="Pourquoi je veux le voir, qui me l'a conseillé…"></textarea>
+    </div>
+
+    <button class="btn" id="wlAddBtn" type="button">Ajouter à À voir</button>
+  </div>
+  </details>
+
+    <div class="toolbar" style="margin-bottom:16px;">
+    <button class="btn secondary" id="wlSurpriseBtn" type="button">Surprends-moi</button>
+        <select id="wlProviderFilter" aria-label="Filtrer par plateforme" style="display:none;">
+      <option value="">Toutes les plateformes</option>
+    </select>
+        <button class="wl-subs-toggle" id="wlSubsToggle" type="button" aria-expanded="false" aria-controls="wlSubsPanel" style="display:none;">Mes abonnements</button>
+  </div>
+  <div class="wl-subs" id="wlSubsPanel" style="display:none;">
+    <p class="wl-subs-hint">Coche tes abonnements : seules ces plateformes restent sur les affiches. Gardé sur cet appareil.</p>
+    <div class="wl-subs-chips" id="wlSubsChips" role="group" aria-label="Tes abonnements"></div>
+  </div>
+
+  <div class="wl-reminder" id="wlReminder" role="status" style="display:none;"></div>
+    <div class="wl-reminder wl-arrivals" id="wlArrivals" role="status" hidden></div>
+        <div class="wl-list" id="wlList"></div>
+
+      <div class="stats-section" id="streamingTopSection" style="display:none;">
+    <div class="stats-section-title"><span id="streamingTopTitle">Les mieux notés sur tes abonnements</span><span class="wls-hint" id="streamingTopHint"></span></div>
+    <div class="wls-strip" id="streamingTopList"></div>
+  </div>
+
+  <div class="stats-section" id="suggestionsSection" style="display:none;">
+    <div class="stats-section-title">Suggestions pour toi</div>
+    <div class="wls-strip" id="suggestionsList"></div>
+  </div>
+</div>
+
+<div class="overlay" id="surpriseOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>Surprends-moi</h2>
+      <button class="close-x" id="closeSurprise" aria-label="Fermer">✕</button>
+    </div>
+        <div class="surprise-services" id="surpriseServices" role="radiogroup" aria-label="Plateforme du tirage" style="display:none;"></div>
+        <button type="button" class="surprise-criteria-toggle" id="surpriseCriteriaToggle" aria-expanded="false" aria-controls="surpriseCriteria">Plus de critères</button>
+    <div class="surprise-criteria" id="surpriseCriteria" hidden></div>
+        <div class="surprise-roulette" id="surpriseRoulette" aria-hidden="true">
+      <div class="surprise-roulette-track" id="surpriseRouletteTrack"></div>
+      <div class="surprise-roulette-marker"></div>
+    </div>
+    <div id="surpriseContent" aria-live="polite"></div>
+    <div class="modal-footer">
+      <button class="btn secondary" id="surpriseRerollBtn" type="button">Encore un</button>
+      <div class="right"><button class="btn" id="surpriseRateBtn" type="button">Noter maintenant</button></div>
+    </div>
+  </div>
+</div>
+
+<div class="container page" id="seriesPage" role="main" tabindex="-1" style="display:none;">
+        <div class="catalog-head">
+    <div class="catalog-switch" role="tablist" aria-label="Films ou séries">
+      <button type="button" role="tab" class="catalog-switch-btn" aria-selected="false" data-catalog="films">Films</button>
+      <button type="button" role="tab" class="catalog-switch-btn is-active" aria-selected="true" data-catalog="series">Séries</button>
+    </div>
+  </div>
+  <div class="toolbar">
+    <div class="toolbar-search">
+      <svg class="toolbar-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+      <input type="text" id="seriesTitleInput" placeholder="Rechercher ou suivre une série…" aria-label="Rechercher une série à suivre" autocomplete="off">
+      <div class="search-suggest" id="seriesSuggest" role="listbox" aria-label="Suggestions" hidden></div>
+      <div class="view-toggle" role="group" aria-label="Mode d'affichage">
+        <button class="view-toggle-btn is-active" type="button" data-view-btn="grid" title="Grille ou liste" aria-label="Affichage en grille, passer en liste" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1.5"></rect><rect x="13" y="4" width="7" height="7" rx="1.5"></rect><rect x="4" y="13" width="7" height="7" rx="1.5"></rect><rect x="13" y="13" width="7" height="7" rx="1.5"></rect></svg></button>
+        <button class="view-toggle-btn" type="button" data-view-btn="list" title="Grille ou liste" aria-label="Affichage en liste, passer en grille" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"></path><circle cx="4.5" cy="6" r="1"></circle><circle cx="4.5" cy="12" r="1"></circle><circle cx="4.5" cy="18" r="1"></circle></svg></button>
+      </div>
+    </div>
+    <div class="toolbar-actions">
+      <div class="count-line" id="seriesCountLine"></div>
+            <button class="btn" id="seriesAddBtn" type="button" style="display:none;">+ Suivre</button>
+    </div>
+  </div>
+  <div id="seriesTmdbSelected" class="tmdb-selected" style="display:none;">
+    <img id="seriesTmdbSelectedPoster" alt="Affiche">
+    <div class="tmdb-selected-info">
+      <div id="seriesTmdbSelectedTitle"></div>
+      <button class="crit-help-toggle" id="seriesTmdbClearBtn" type="button">Retirer la fiche TMDB</button>
+    </div>
+  </div>
+
+  <div class="wl-list" id="seriesList"></div>
+    <details class="create-disclosure ended-disclosure" id="seriesEndedDisclosure" hidden>
+    <summary>Séries terminées <span id="seriesEndedCount"></span></summary>
+    <div class="wl-list" id="seriesEndedList"></div>
+  </details>
+</div>
+
+<div class="container page film-page series-page" id="seriesDetailPage" role="main" tabindex="-1" style="display:none;">
+    <div class="detail-topbar">
+    <button class="detail-back" id="seriesDetailBack" type="button" aria-label="Retour" title="Retour"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14.5 6-6 6 6 6"></path></svg></button>
+    <div class="detail-nav">
+      <button class="detail-nav-arrow" id="seriesDetailPrevBtn" type="button" style="display:none;" aria-label="Série précédente">‹</button>
+      <button class="detail-nav-arrow" id="seriesDetailNextBtn" type="button" style="display:none;" aria-label="Série suivante">›</button>
+            <div class="ff-more">
+        <button class="detail-nav-arrow detail-more-btn" id="seriesMoreBtn" type="button" aria-label="Plus d'actions" aria-haspopup="true" aria-expanded="false"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="19" cy="12" r="1.8"></circle></svg></button>
+        <div class="ff-menu" id="seriesMenu" role="menu" hidden>
+          <button type="button" role="menuitem" class="nt-danger" id="seriesMenuUnfollow">Ne plus suivre</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="detail-backdrop is-fade" id="seriesDetailBackdrop">
+    <img id="seriesDetailBackdropImg" alt="">
+  </div>
+
+  <div class="ff-top">
+    <img class="ff-poster" id="seriesDetailPoster" alt="" hidden>
+    <div class="ff-id">
+      <h1 class="detail-title" id="seriesDetailTitle"></h1>
+      <div class="detail-meta" id="seriesDetailMeta"></div>
+    </div>
+        <div class="sx-ring-wrap">
+      <button class="counter" id="seriesDetailRatingRing" type="button" aria-haspopup="true" aria-expanded="false" title="Ta note">—</button>
+      <div class="ff-menu sx-note-pop" id="seriesNotePop" hidden>
+        <b class="sx-note-title" id="seriesNotePopTitle">Ta note</b>
+        <div class="sx-note-row">
+          <input type="range" min="0" max="5" step="0.5" value="2.5" id="seriesNoteSlider" class="nt-range is-unset" aria-label="Ta note pour cette série">
+          <span class="num" id="seriesNoteVal">Non notée</span>
+        </div>
+        <p class="nt-hint">Enregistrée dès que tu lâches le curseur.</p>
+                <p class="nt-hint sx-note-avg" id="seriesNoteAvg" hidden></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="ff-under">
+    <div class="ff-col">
+      <div class="fiche">
+        <div class="fiche-row" id="seriesDetailCreatorsRow"><span class="fiche-label">Création</span><span class="fiche-value" id="seriesDetailCreators"></span></div>
+        <div class="fiche-row"><span class="fiche-label">Épisodes</span><span class="fiche-value mono" id="seriesDetailEpisodes">—</span></div>
+        <div class="fiche-row"><span class="fiche-label">Statut</span><span class="fiche-value" id="seriesDetailStatus">—</span></div>
+      </div>
+
+      <p class="synopsis" id="seriesDetailOverview"></p>
+
+      <div class="sx-where">
+        <div id="seriesDetailWatchProviders"><div class="tmdb-empty">Chargement…</div></div>
+        <a class="ff-btn-text" id="seriesTrailerBtn" href="#" target="_blank" rel="noopener noreferrer" style="display:none;">Bande-annonce</a>
+      </div>
+
+            <div class="sx-next" id="seriesNextBlock"></div>
+      <div class="sx-prog" id="seriesProgress"></div>
+
+      <div class="stats-section">
+        <div class="sx-sec-head">
+          <span class="stats-section-title">Saisons</span>
+          <div class="sx-views" role="tablist" aria-label="Affichage des saisons">
+            <button class="top-tab" type="button" role="tab" data-sx-view="grid">Grille</button>
+            <button class="top-tab" type="button" role="tab" data-sx-view="list">Liste</button>
+          </div>
+        </div>
+        <div class="catalog-strip sx-undo" id="seriesUndo" hidden></div>
+        <div id="seriesSeasonsList"></div>
+        <div class="sx-legend" id="seriesLegend"><span><i class="on"></i>Vu</span><span><i></i>Pas vu</span><span><i class="future"></i>Pas encore sorti</span><span class="sx-legend-hint">Touche un épisode vu pour le noter ou le commenter</span></div>
+      </div>
+
+      <div class="stats-section sx-end">
+        <button class="back-link" id="seriesRemoveBtn" type="button">Ne plus suivre cette série</button>
+      </div>
+
+            <div hidden>
+        <button id="seriesMarkAllBtn" type="button"></button>
+        <button id="seriesUnmarkAllBtn" type="button"></button>
+        <button id="seriesNextEpisodeBtn" type="button"></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container page film-page" id="filmDetailPage" role="main" tabindex="-1" style="display:none;">
+    <div class="detail-topbar">
+        <button class="detail-back" id="filmDetailBack" type="button" aria-label="Retour" title="Retour"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14.5 6-6 6 6 6"></path></svg></button>
+        <div class="detail-nav">
+      <button class="detail-nav-arrow" id="filmDetailPrevBtn" type="button" style="display:none;" aria-label="Film précédent">‹</button>
+      <button class="detail-nav-arrow" id="filmDetailNextBtn" type="button" style="display:none;" aria-label="Film suivant">›</button>
+    </div>
+  </div>
+
+  <div class="detail-backdrop is-fade" id="filmDetailBackdrop">
+    <img id="filmDetailBackdropImg" alt="">
+  </div>
+
+  <div class="ff-top">
+    <img class="ff-poster" id="filmDetailPoster" alt="" hidden>
+    <div class="ff-id">
+      <h1 class="detail-title" id="filmDetailTitle">Film</h1>
+      <div class="detail-meta" id="filmDetailMeta"></div>
+    </div>
+    <button class="counter ff-ring" id="filmDetailRatingRing" type="button" title="Noter ce film" aria-label="Noter ce film">—</button>
+  </div>
+
+  <div class="ff-under">
+    <div class="ff-col">
+      <div class="ff-actions" id="filmDetailActions">
+        <button class="ff-btn-main" id="filmDetailRateBtn" type="button">Noter ce film</button>
+        <button class="ff-btn-line" id="filmDetailWatchlistBtn" type="button">+ À voir</button>
+        <button class="ff-btn-text" id="filmDetailFavBtn" type="button" style="display:none;" aria-pressed="false">Favori</button>
+                <a class="ff-btn-text" id="filmDetailTrailerBtn" href="#" target="_blank" rel="noopener noreferrer" style="display:none;"></a>
+        <div class="ff-more">
+          <button class="ff-btn-icon" id="filmDetailMoreBtn" type="button" aria-label="Plus d'actions" aria-haspopup="true" aria-expanded="false"></button>
+          <div class="ff-menu" id="filmDetailMenu" role="menu" hidden>
+            <button type="button" role="menuitem" id="filmDetailLikeBtn">Aimer</button>
+            <button type="button" role="menuitem" id="filmDetailAddToListBtn">Ajouter à une liste</button>
+            <button type="button" role="menuitem" id="filmDetailRemoveWlBtn" hidden>Retirer d'À voir</button>
+          </div>
+        </div>
+      </div>
+
+      <p class="synopsis" id="filmDetailOverview"></p>
+
+      <div class="fiche">
+        <div class="fiche-row" id="filmDetailDirectorRow" style="display:none;"><span class="fiche-label">Réalisation</span><span class="fiche-value" id="filmDetailDirector"></span></div>
+        <div class="fiche-row"><span class="fiche-label">Note Kinet</span><span class="fiche-value mono" id="filmDetailAvg">—</span></div>
+      </div>
+
+            <div class="stats-section ff-avis" id="filmDetailAvis"></div>
+      <div class="wl-note ff-history" id="filmDetailHistory" aria-live="polite"></div>
+
+      <div class="stats-section">
+        <div class="stats-section-title">Où regarder</div>
+        <div id="filmDetailWatchProviders"><div class="tmdb-empty">Chargement…</div></div>
+      </div>
+
+            <div class="stats-section" id="filmDetailFriendsSection" hidden>
+        <div class="stats-section-title">Tes amis</div>
+        <div class="friend-rating-strip" id="filmDetailFriendRatings"></div>
+        <div class="wl-note" id="filmDetailLikesSummary"></div>
+      </div>
+
+            <div class="stats-section" id="filmDetailNotesSection" hidden>
+        <div class="stats-section-title">Sur Kinet</div>
+        <div id="filmDetailNotes"></div>
+      </div>
+
+      <div class="stats-section">
+        <div class="stats-section-title">Casting</div>
+        <div class="cast-strip" id="filmDetailCast"><div class="tmdb-empty">Chargement…</div></div>
+      </div>
+
+      <div class="stats-section" id="filmDetailSimilarSection" style="display:none;">
+        <div class="stats-section-title">Films similaires</div>
+        <div class="similar-strip" id="filmDetailSimilar"></div>
+      </div>
+
+      <div class="stats-section">
+        <div class="stats-section-title">Commentaires</div>
+        <div class="comment-list" id="filmDetailCommentsList"></div>
+        <div class="comment-input-row">
+          <textarea id="filmDetailCommentInput" placeholder="Écrire un commentaire…" rows="2"></textarea>
+          <button class="btn" id="filmDetailCommentBtn" type="button">Envoyer</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container page reveal-stagger" id="upcomingPage" role="main" tabindex="-1" style="display:none;">
+    <div class="page-header">
+    <h2>Bientôt</h2>
+    <div class="films-views page-views" role="group" aria-label="Affichage de Bientôt">
+      <button class="top-tab is-active" type="button" data-upcoming-view-btn="list" aria-pressed="true">Liste</button>
+      <button class="top-tab" type="button" data-upcoming-view-btn="calendar" aria-pressed="false">Calendrier</button>
+    </div>
+  </div>
+  <p class="up-summary" id="upcomingSummary"></p>
+  <div class="up-feed" id="upcomingFeed"></div>
+</div>
+
+<div class="container page" id="amisPage" role="main" tabindex="-1" style="display:none;">
+    <div class="page-header">
+    <div class="catalog-switch social-switch" role="tablist" aria-label="Amis, groupes ou listes">
+      <button type="button" role="tab" class="catalog-switch-btn is-active" aria-selected="true" data-social="amis">Amis</button>
+      <button type="button" role="tab" class="catalog-switch-btn" aria-selected="false" data-social="groupes">Groupes</button>
+      <button type="button" role="tab" class="catalog-switch-btn" aria-selected="false" data-social="listes">Listes</button>
+    </div>
+  </div>
+
+    <div class="fr-requests" id="friendRequestsInSection" style="display:none;">
+    <div id="friendRequestsIn"></div>
+  </div>
+
+  <section class="fr-section">
+    <h3 class="fr-label">Tes amis <span id="friendsCount"></span></h3>
+    <div class="fr-list" id="friendsList"></div>
+  </section>
+
+  <section class="fr-section">
+    <h3 class="fr-label">Ce qu’ils regardent</h3>
+    <div class="fr-list" id="friendActivityList"></div>
+  </section>
+
+  <section class="fr-section">
+    <h3 class="fr-label">Recommandé par tes amis <span>films que tu n’as pas notés</span></h3>
+    <div class="fr-posters" id="friendRecommendationsList"></div>
+  </section>
+
+    <details class="create-disclosure fr-add" id="friendAddDisclosure">
+    <summary>+ Ajouter un ami</summary>
+    <div class="fr-add-field">
+      <input type="text" id="friendSearchInput" placeholder="Pseudo ou email exact" aria-label="Pseudo ou email de ton ami" autocomplete="off">
+      <div id="friendSearchResults" class="tmdb-results"></div>
+    </div>
+    <div id="friendRequestsOutSection" style="display:none;">
+      <h3 class="fr-label">Demandes envoyées</h3>
+      <div class="fr-list" id="friendRequestsOut"></div>
+    </div>
+    <h3 class="fr-label">Suggestions <span>amis d’amis</span></h3>
+    <div class="fr-list" id="friendSuggestionsList"></div>
+  </details>
+</div>
+
+<div class="container page gp-page" id="groupsListPage" role="main" tabindex="-1" style="display:none;">
+    <div class="gp-list-head">
+    <div class="catalog-switch social-switch" role="tablist" aria-label="Amis, groupes ou listes">
+      <button type="button" role="tab" class="catalog-switch-btn" aria-selected="false" data-social="amis">Amis</button>
+      <button type="button" role="tab" class="catalog-switch-btn is-active" aria-selected="true" data-social="groupes">Groupes</button>
+      <button type="button" role="tab" class="catalog-switch-btn" aria-selected="false" data-social="listes">Listes</button>
+    </div>
+    <button class="ff-link" id="groupCreateToggle" type="button" aria-expanded="false">+ Créer un groupe</button>
+  </div>
+  <div class="gp-create" id="groupCreateRow" hidden>
+    <input type="text" id="groupNameInput" placeholder="Nom du groupe, par exemple Soirées ciné du dimanche" autocomplete="off" aria-label="Nom du groupe">
+    <textarea id="groupDescInput" hidden></textarea>
+    <button class="ff-btn-main" id="createGroupBtn" type="button">Créer</button>
+  </div>
+  <div class="gp-list" id="groupsList"></div>
+</div>
+
+<div class="container page gp-page" id="groupDetailPage" role="main" tabindex="-1" style="display:none;">
+  <div class="detail-topbar">
+    <button class="back-link" id="groupDetailBack" type="button">‹ Retour</button>
+  </div>
+  <div class="gp-head">
+    <div class="gp-id">
+      <h1 id="groupDetailTitle">Groupe</h1>
+      <div class="gp-meta" id="groupDetailMeta"></div>
+    </div>
+    <div class="gp-actions">
+      <button class="ff-btn-text" id="groupInviteBtn" type="button" hidden>Inviter</button>
+      <div class="ff-more">
+        <button class="ff-btn-icon" id="groupMoreBtn" type="button" aria-label="Plus d'actions" aria-haspopup="true" aria-expanded="false"></button>
+        <div class="ff-menu gp-menu" id="groupMenu" role="menu" hidden>
+          <button type="button" role="menuitem" id="groupMenuMembers">Membres</button>
+          <button type="button" role="menuitem" id="groupMenuAdd" hidden>Ajouter un ami</button>
+          <button type="button" role="menuitem" id="groupMenuInvite" hidden>Lien d'invitation</button>
+          <button type="button" role="menuitem" class="nt-danger" id="groupMenuDanger">Quitter le groupe</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="gp-desc" id="groupDetailDesc" style="display:none;"></p>
+
+    <div class="gp-manage" id="groupManagePanel" hidden>
+    <div class="gp-manage-head"><b id="groupManageTitle">Membres</b><button class="close-x" id="groupManageClose" type="button" aria-label="Fermer">✕</button></div>
+    <div id="groupMembersSection"><div class="wl-list" id="groupMembersList"></div></div>
+    <div id="groupAddFriendSection" style="display:none;"><div class="wl-list" id="groupAddFriendList"></div></div>
+    <div id="groupInviteSection" style="display:none;"><div id="groupInviteBox"></div></div>
+  </div>
+
+    <div class="gp-next-wrap" id="chosenBanner" style="display:none;"></div>
+
+  <div class="stats-section">
+    <div class="gp-sec-head"><span class="stats-section-title">Propositions</span><small>triées par partants</small><button class="ff-link" id="groupProposeToggle" type="button" aria-expanded="false">+ Proposer un film</button></div>
+    <div class="gp-propose" id="groupProposeRow" hidden>
+      <div class="field tmdb-search-field">
+        <input type="text" id="proposalTitleInput" placeholder="Chercher un film à proposer…" autocomplete="off" aria-label="Chercher un film à proposer">
+        <div id="proposalTmdbResults" class="tmdb-results"></div>
+        <div id="proposalTmdbSelected" class="tmdb-selected" style="display:none;">
+          <img id="proposalTmdbSelectedPoster" alt="Affiche">
+          <div class="tmdb-selected-info">
+            <div id="proposalTmdbSelectedTitle"></div>
+            <button class="crit-help-toggle" id="proposalTmdbClearBtn" type="button">Retirer la fiche TMDB</button>
+          </div>
+        </div>
+      </div>
+      <button class="btn" id="proposeFilmBtn" type="button" hidden>+ Proposer au groupe</button>
+    </div>
+    <div class="gp-props" id="groupProposalsList"></div>
+  </div>
+
+    <div class="stats-section" id="groupOverlapSection" style="display:none;">
+    <div class="gp-sec-head"><span class="stats-section-title">À voir en commun</span><small>dans les À voir d'au moins 2 d'entre vous</small></div>
+    <div class="gp-tastes" id="groupOverlapList"></div>
+  </div>
+
+  <div class="stats-section">
+    <div class="gp-sec-head"><span class="stats-section-title">Ce que vous en pensez</span><small>films notés par au moins 2 d'entre vous</small></div>
+    <div class="gp-tastes" id="groupTasteComparisonList"></div>
+  </div>
+
+  <div class="stats-section" id="groupElectionHistorySection" style="display:none;">
+    <div class="stats-section-title">Déjà vus ensemble</div>
+    <div class="gp-tastes" id="groupElectionHistoryList"></div>
+  </div>
+
+    <div hidden>
+    <div id="groupTopFilmsList"></div>
+    <div id="groupActivityList"></div>
+    <div id="groupDetailFooter"></div>
+  </div>
+</div>
+
+<div class="container page gp-page" id="proposalDetailPage" role="main" tabindex="-1" style="display:none;">
+  <div class="detail-topbar">
+    <button class="back-link" id="proposalDetailBack" type="button">‹ Retour</button>
+  </div>
+  <div class="gp-next gp-prop-head" id="proposalDetailFilm"></div>
+  <div class="stats-section">
+    <div class="gp-sec-head"><span class="stats-section-title">Partants</span><small id="proposalVotersCount"></small></div>
+    <div class="gp-voters-list" id="proposalDetailVotes"></div>
+  </div>
+  <div class="stats-section">
+    <div class="stats-section-title">Discussion</div>
+    <div class="comment-list" id="proposalCommentsList"></div>
+    <div class="comment-input-row">
+      <textarea id="proposalCommentInput" placeholder="Écrire un message…" rows="2"></textarea>
+      <button class="btn" id="proposalCommentBtn" type="button">Envoyer</button>
+    </div>
+  </div>
+  <div class="stats-section" id="proposalDetailFooter"></div>
+</div>
+
+<div class="container page ls-page" id="listsPage" role="main" tabindex="-1" style="display:none;">
+    <div class="gp-list-head">
+    <div class="catalog-switch social-switch" role="tablist" aria-label="Amis, groupes ou listes">
+      <button type="button" role="tab" class="catalog-switch-btn" aria-selected="false" data-social="amis">Amis</button>
+      <button type="button" role="tab" class="catalog-switch-btn" aria-selected="false" data-social="groupes">Groupes</button>
+      <button type="button" role="tab" class="catalog-switch-btn is-active" aria-selected="true" data-social="listes">Listes</button>
+    </div>
+  </div>
+  <div class="stats-section">
+    <div class="stats-section-title">Tes listes</div>
+    <div class="ls-grid" id="myListsList"></div>
+    <div class="gp-create" id="listCreateRow" hidden>
+      <input type="text" id="listTitleInput" placeholder="Titre, par exemple Mes comédies préférées" autocomplete="off" aria-label="Titre de la liste">
+      <textarea id="listDescInput" hidden></textarea>
+      <button class="ff-btn-main" id="createListBtn" type="button">Créer</button>
+    </div>
+  </div>
+  <div class="stats-section">
+    <div class="stats-section-title">Listes de tes amis</div>
+    <div class="ls-grid" id="friendsListsList"></div>
+  </div>
+</div>
+
+<div class="container page ls-page" id="listDetailPage" role="main" tabindex="-1" style="display:none;">
+  <div class="detail-topbar">
+    <button class="back-link" id="listDetailBack" type="button">‹ Retour</button>
+  </div>
+  <div class="gp-head">
+    <div class="gp-id" id="listHeadView">
+      <h1 id="listDetailTitle">Liste</h1>
+      <p class="gp-desc" id="listDetailDesc" style="display:none;"></p>
+      <div class="gp-meta" id="listDetailMeta"></div>
+    </div>
+    <div class="gp-id ls-edit-fields" id="listHeadEdit" hidden>
+      <input type="text" id="listEditTitle" aria-label="Titre de la liste" autocomplete="off">
+      <input type="text" id="listEditDesc" placeholder="Une phrase pour dire ce qu'elle rassemble (facultatif)" aria-label="Description de la liste" autocomplete="off">
+    </div>
+    <div class="gp-actions">
+      <button class="ff-btn-text" id="listLikeBtn" type="button" hidden>Aimer</button>
+      <button class="ff-btn-text" id="listEditBtn" type="button" hidden>Modifier</button>
+      <button class="ff-btn-main" id="listDoneBtn" type="button" hidden>Terminé</button>
+      <div class="ff-more" id="listMoreWrap" hidden>
+        <button class="ff-btn-icon" id="listMoreBtn" type="button" aria-label="Plus d'actions" aria-haspopup="true" aria-expanded="false"></button>
+        <div class="ff-menu gp-menu" id="listMenu" role="menu" hidden>
+          <button type="button" role="menuitem" id="listMenuShare">Qui la voit : tes amis</button>
+          <button type="button" role="menuitem" class="nt-danger" id="listDeleteBtn">Supprimer la liste</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="wl-note" id="listLikesSummary"></div>
+  <div class="ls-progress" id="listProgress"></div>
+  <div class="ls-edit-bar" id="listEditBar" hidden>
+    <label class="nt-switch"><span>Numérotée<small>Pour un top : chaque film garde son rang</small></span><input type="checkbox" id="listNumbered" class="nt-switch-input"></label>
+    <div class="ls-add" id="listAddItemSection" style="display:none;">
+      <button class="ff-link" id="listAddToggle" type="button" aria-expanded="false" aria-controls="listAddSearch">+ Ajouter un film</button>
+      <div class="field tmdb-search-field gp-propose" id="listAddSearch" hidden>
+        <input type="text" id="listItemTitleInput" placeholder="Tape un titre…" autocomplete="off" aria-label="Ajouter un film à la liste">
+        <div id="listItemTmdbResults" class="tmdb-results"></div>
+      </div>
+    </div>
+    <p class="nt-hint ls-drag-hint">Glisse un film par sa poignée pour changer l'ordre.</p>
+  </div>
+  <div class="ls-items" id="listItemsList"></div>
+</div>
+
+<div class="overlay" id="addToListOverlay">
+  <div class="modal ls-sheet" role="dialog" aria-labelledby="addToListTitle">
+    <div class="nt-head">
+      <div class="nt-ht"><b id="addToListTitle">Ajouter à une liste</b></div>
+      <button class="close-x" id="addToListClose" type="button" aria-label="Fermer">✕</button>
+    </div>
+    <div class="ls-check-list" id="addToListRows"></div>
+    <div class="ls-new-row">
+      <input type="text" id="addToListNewTitle" placeholder="Titre de la nouvelle liste" autocomplete="off" aria-label="Titre de la nouvelle liste" hidden>
+      <button class="ff-link" id="addToListNewBtn" type="button">+ Nouvelle liste</button>
+    </div>
+    <div class="nt-foot">
+      <span class="nt-hint">Coche une ou plusieurs listes</span>
+      <button class="ff-btn-main" id="addToListDone" type="button">Terminé</button>
+    </div>
+  </div>
+</div>
+
+<div class="container page" id="topPage" role="main" tabindex="-1" style="display:none;">
+  <div class="page-header">
+    <h2>Top films</h2>
+    <div class="top-tabs" role="tablist" aria-label="Classement">
+      <button class="top-tab is-active" id="topTabGlobal" type="button" role="tab" aria-selected="true">Tout le monde</button>
+      <button class="top-tab" id="topTabFriends" type="button" role="tab" aria-selected="false">Mes amis</button>
+    </div>
+    <div class="view-toggle" role="group" aria-label="Mode d'affichage" hidden>
+      <button class="view-toggle-btn is-active" type="button" data-view-btn="grid" title="Grille" aria-label="Vue en grille" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1.5"></rect><rect x="13" y="4" width="7" height="7" rx="1.5"></rect><rect x="4" y="13" width="7" height="7" rx="1.5"></rect><rect x="13" y="13" width="7" height="7" rx="1.5"></rect></svg></button>
+      <button class="view-toggle-btn" type="button" data-view-btn="list" title="Liste" aria-label="Vue en liste" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"></path><circle cx="4.5" cy="6" r="1"></circle><circle cx="4.5" cy="12" r="1"></circle><circle cx="4.5" cy="18" r="1"></circle></svg></button>
+    </div>
+  </div>
+
+    <p class="top-how" id="topHow">Classé par note moyenne, à partir de 2 notes. Les films notés par une seule personne sont à part, en dessous.</p>
+
+  <div class="top-board" id="topBoard"></div>
+</div>
+
+<div class="container page" id="profilePage" role="main" tabindex="-1" style="display:none;">
+    <div class="pp-rows pp-admin-rows">
+    <button class="pp-row" type="button" data-proxy="adminBtn" id="ppAdminRow" data-mobile-only hidden><span class="pp-row-main"><span class="pp-row-title">Admin</span><span class="pp-row-sub" id="ppAdminSub">Avis, nouveautés, santé du site</span></span><span class="pp-count" id="ppAdminCount" hidden></span><span class="pp-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg></span></button>
+  </div>
+  <div class="pp-head">
+    <div class="pp-avatar" aria-hidden="true">
+      <img id="ppAvatarImg" alt="" style="display:none;">
+      <span class="user-avatar-fallback" id="ppAvatarFallback"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.5" r="3.8"></circle><path d="M4.5 20c0-4.1 3.4-6.8 7.5-6.8s7.5 2.7 7.5 6.8"></path></svg></span>
+    </div>
+    <div class="pp-id">
+      <h2 class="pp-name" id="ppName"></h2>
+      <div class="pp-sub" id="ppSub"></div>
+    </div>
+    <div class="pp-actions">
+      <button class="pp-edit" type="button" id="ppEditBtn">Modifier le profil</button>
+            <button class="pp-edit" type="button" id="ppShareBtn" aria-expanded="false" aria-controls="ppShareSheet">Partager</button>
+    </div>
+  </div>
+  <div class="pp-share" id="ppShareSheet" hidden>
+    <b class="pp-share-title">Ton profil, avec un lien</b>
+    <p class="pp-share-text">Ton pseudo, ta photo, tes films préférés et tes films notés, sans tes films privés ni tes commentaires. Qui ouvre le lien peut rejoindre Kinet et t’aura déjà en ami.</p>
+    <div class="pp-share-acts">
+      <button class="btn" type="button" id="ppShareCopyBtn">Copier le lien</button>
+      <button class="btn secondary" type="button" id="ppShareCloseBtn">Fermer</button>
+    </div>
+    <p class="pp-share-note" id="ppShareNote"></p>
+  </div>
+
+  <div class="pp-figures" id="ppFigures"></div>
+
+  <div class="pp-label" id="ppFavsLabel">Tes films préférés</div>
+  <div class="pp-favs" id="ppFavs"></div>
+
+  <div class="pp-label">Ton parcours</div>
+  <div class="pp-rows">
+    <button class="pp-row" type="button" data-proxy="statsBtn"><span class="pp-row-main"><span class="pp-row-title">Statistiques</span><span class="pp-row-sub">Répartition de tes notes, genres, année par année</span></span><span class="pp-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg></span></button>
+    <button class="pp-row" type="button" id="ppRecapBtn"><span class="pp-row-main"><span class="pp-row-title"><span id="ppRecapLabel">Ton année</span></span></span><span class="pp-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg></span></button>
+    <button class="pp-row" type="button" data-proxy="achievementsBtn"><span class="pp-row-main"><span class="pp-row-title">Succès</span></span><span class="pp-val" id="ppAchVal"></span><span class="pp-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg></span></button>
+    <button class="pp-row" type="button" data-proxy="tcgBtn"><span class="pp-row-main"><span class="pp-row-title">Cartes <span class="tcg-trade-badge" id="ppTcgBadge" hidden aria-label="Échanges reçus en attente"></span></span><span class="pp-row-sub">Une carte par film vu, sans tirage</span></span><span class="pp-val" id="ppTcgVal"></span><span class="pp-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg></span></button>
+    <button class="pp-row" type="button" data-proxy="journalBtn" hidden><span class="pp-row-main"><span class="pp-row-title">Journal</span></span><span class="pp-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg></span></button>
+    <button class="pp-row" type="button" data-proxy="profileTopFilmsLinkBtn" data-mobile-only><span class="pp-row-main"><span class="pp-row-title">Top films</span><span class="pp-row-sub">Le classement de tout le monde et de tes amis</span></span><span class="pp-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg></span></button>
+  </div>
+
+  <div class="pp-label">Kinet</div>
+  <div class="pp-rows">
+    <button class="pp-row" type="button" data-proxy="chatbotBtn"><span class="pp-row-main"><span class="pp-row-title">Assistant</span><span class="pp-row-sub">Conseils ciné, aide dans l'app</span></span><span class="pp-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg></span></button>
+    <button class="pp-row" type="button" data-proxy="profileFeedbackLinkBtn"><span class="pp-row-main"><span class="pp-row-title">Donner un avis</span><span class="pp-row-sub" id="ppAvisSub" hidden>Une réponse t'attend</span></span><span class="pp-count" id="ppAvisCount" hidden></span><span class="pp-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg></span></button>
+    <button class="pp-row" type="button" data-proxy="profileChangelogLinkBtn" id="ppChangelogRow" hidden><span class="pp-row-main"><span class="pp-row-title">Nouveautés</span></span><span class="pp-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg></span></button>
+    <button class="pp-row" type="button" data-proxy="openSettingsBtn"><span class="pp-row-main"><span class="pp-row-title">Paramètres</span><span class="pp-row-sub">Apparence, sons, abonnements, données, compte</span></span><span class="pp-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg></span></button>
+        <label class="pp-row" for="ppPublicToggle" hidden>
+      <span class="pp-row-main"><span class="pp-row-title">Profil public</span><span class="pp-row-sub">Pseudo, photo et films notés visibles avec le lien</span></span>
+      <input type="checkbox" id="ppPublicToggle" class="mm-switch-input">
+      <span class="mm-switch" aria-hidden="true"></span>
+    </label>
+    <button class="pp-row pp-row-link" type="button" id="ppCopyLinkBtn" hidden><span class="pp-row-main"><span class="pp-row-title">Copier le lien de ton profil</span></span></button>
+  </div>
+</div>
+
+<div class="container page" id="settingsPage" role="main" tabindex="-1" style="display:none;">
+  <div class="detail-topbar">
+    <button class="back-link" id="settingsPageBack" type="button">‹ Retour</button>
+  </div>
+  <div class="page-header">
+    <h2>Paramètres</h2>
+  </div>
+
+  <div class="pp-label">Apparence</div>
+  <div class="pp-rows">
+    <div class="pp-row st-row-static">
+      <span class="pp-row-main"><span class="pp-row-title">Thème</span><span class="pp-row-sub">Auto suit le réglage de ton appareil</span></span>
+      <div class="st-seg" role="radiogroup" aria-label="Thème">
+        <button type="button" role="radio" data-theme-choice="dark" aria-checked="true">Sombre</button>
+        <button type="button" role="radio" data-theme-choice="light" aria-checked="false">Clair</button>
+        <button type="button" role="radio" data-theme-choice="auto" aria-checked="false">Auto</button>
+      </div>
+    </div>
+    <label class="pp-row" for="reduceMotionToggle">
+      <span class="pp-row-main"><span class="pp-row-title">Réduire les animations</span><span class="pp-row-sub">S'ajoute au réglage de ton appareil</span></span>
+      <input type="checkbox" id="reduceMotionToggle" class="mm-switch-input">
+      <span class="mm-switch" aria-hidden="true"></span>
+    </label>
+  </div>
+
+  <div class="pp-label">Sons</div>
+  <div class="pp-rows">
+    <label class="pp-row" for="soundToggle">
+      <span class="pp-row-main"><span class="pp-row-title">Effets sonores</span><span class="pp-row-sub">Notes, cartes, roulette, assistant</span></span>
+      <input type="checkbox" id="soundToggle" class="mm-switch-input" checked>
+      <span class="mm-switch" aria-hidden="true"></span>
+    </label>
+    <label class="pp-row st-row-static" for="soundVolume" id="settingsVolumeRow">
+      <span class="pp-row-main"><span class="pp-row-title">Volume</span></span>
+      <input type="range" id="soundVolume" class="st-range" min="0" max="100" step="5" value="100" aria-label="Volume des effets sonores">
+    </label>
+  </div>
+
+  <div class="pp-label">À voir</div>
+  <div class="pp-rows">
+    <button class="pp-row" type="button" id="settingsSubsBtn"><span class="pp-row-main"><span class="pp-row-title">Mes abonnements</span><span class="pp-row-sub" id="settingsSubsSub"></span></span><span class="pp-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg></span></button>
+        <button class="pp-row" type="button" id="settingsRegionBtn" aria-expanded="false" aria-controls="settingsRegionPanel"><span class="pp-row-main"><span class="pp-row-title">Pays</span><span class="pp-row-sub">Les catalogues changent d’un pays à l’autre</span></span><span class="pp-val" id="settingsRegionVal">France</span><span class="pp-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg></span></button>
+        <div class="st-region" id="settingsRegionPanel" hidden>
+      <input type="text" id="settingsRegionSearch" placeholder="Chercher un pays" autocomplete="off" aria-label="Chercher un pays" aria-controls="settingsRegionList">
+      <div class="st-region-list" id="settingsRegionList" role="listbox" aria-label="Pays"></div>
+    </div>
+  </div>
+
+  <div class="pp-label">Confidentialité</div>
+  <div class="pp-rows">
+    <label class="pp-row" for="settingsPublicToggle">
+      <span class="pp-row-main"><span class="pp-row-title">Profil partagé</span><span class="pp-row-sub" id="settingsPublicSub"></span></span>
+      <input type="checkbox" id="settingsPublicToggle" class="mm-switch-input">
+      <span class="mm-switch" aria-hidden="true"></span>
+    </label>
+  </div>
+
+  <div class="pp-label">Données</div>
+  <div class="pp-rows">
+    <button class="pp-row" type="button" id="settingsOfflineBtn"><span class="pp-row-main"><span class="pp-row-title">Préparer le hors ligne</span><span class="pp-row-sub" id="settingsOfflineSub"></span></span><span class="pp-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg></span></button>
+    <button class="pp-row" type="button" id="settingsBackupBtn"><span class="pp-row-main"><span class="pp-row-title">Tout sauvegarder</span><span class="pp-row-sub">Films, séries, À voir, journal et listes, dans un fichier</span></span><span class="pp-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg></span></button>
+    <button class="pp-row" type="button" id="settingsRestoreBtn"><span class="pp-row-main"><span class="pp-row-title">Restaurer une sauvegarde</span><span class="pp-row-sub">Ajoute ce qui manque, sans doublon</span></span><span class="pp-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg></span></button>
+    <button class="pp-row" type="button" data-proxy="importLetterboxdBtn"><span class="pp-row-main"><span class="pp-row-title">Importer depuis Letterboxd</span><span class="pp-row-sub">Avec le pas-à-pas en cinq étapes</span></span><span class="pp-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg></span></button>
+    <button class="pp-row" type="button" data-proxy="exportLetterboxdBtn"><span class="pp-row-main"><span class="pp-row-title">Exporter pour Letterboxd</span><span class="pp-row-sub">Tes films notés, au format d'import de Letterboxd</span></span><span class="pp-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg></span></button>
+    <input type="file" id="restoreFile" accept="application/json,.json" hidden>
+  </div>
+
+  <div class="pp-label">Aide</div>
+  <div class="pp-rows">
+    <button class="pp-row" id="replayOnboardingBtn" type="button"><span class="pp-row-main"><span class="pp-row-title">Revoir la visite</span><span class="pp-row-sub">Cinq étapes : recherche, À voir, Bientôt, Amis, Profil</span></span><span class="pp-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg></span></button>
+        <div class="pp-row st-row-static st-install" id="installSection">
+      <span class="pp-row-main"><span class="pp-row-title">Installer l'application</span><span class="st-install-body" id="installSectionContent"></span></span>
+    </div>
+  </div>
+
+  <div class="pp-label">Compte</div>
+  <div class="pp-rows">
+    <button class="pp-row" id="logoutBtn" type="button"><span class="pp-row-main"><span class="pp-row-title">Se déconnecter</span></span><span class="pp-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg></span></button>
+    <button class="pp-row st-row-danger" id="deleteAccountBtn" type="button"><span class="pp-row-main"><span class="pp-row-title">Supprimer mon compte</span><span class="pp-row-sub">Efface tout : films, amis, cartes. Irréversible.</span></span><span class="pp-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg></span></button>
+  </div>
+</div>
+
+<div class="overlay" id="deleteAccountOverlay">
+  <div class="modal st-confirm" role="dialog" aria-modal="true" aria-labelledby="deleteAccountTitle">
+    <div class="modal-head">
+      <h2 id="deleteAccountTitle">Supprimer ton compte ?</h2>
+      <button class="close-x" id="deleteAccountCloseBtn" type="button" aria-label="Fermer">✕</button>
+    </div>
+    <p class="st-confirm-text">Tes films, tes séries, ta liste À voir, tes amis et tes cartes seront effacés. Ça ne se rattrape pas.</p>
+    <div class="field">
+      <label for="deleteAccountInput">Pour confirmer, tape SUPPRIMER</label>
+      <input type="text" id="deleteAccountInput" autocomplete="off" autocapitalize="characters" spellcheck="false">
+    </div>
+    <div class="modal-footer">
+      <button class="btn secondary" id="deleteAccountCancelBtn" type="button">Annuler</button>
+      <div class="right">
+        <button class="btn danger" id="deleteAccountConfirmBtn" type="button" disabled>Supprimer mon compte</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container page" id="avisPage" role="main" tabindex="-1" style="display:none;">
+  <div class="detail-topbar">
+    <button class="back-link" id="avisPageBack" type="button">‹ Retour</button>
+  </div>
+  <div class="page-header">
+    <h2>Donner un avis</h2>
+  </div>
+  <div class="av-form">
+    <div class="av-kinds" role="radiogroup" aria-label="Type d'avis">
+      <button type="button" role="radio" class="av-kind" data-avis-kind="bug" aria-checked="true">Un bug</button>
+      <button type="button" role="radio" class="av-kind" data-avis-kind="idee" aria-checked="false">Une idée</button>
+      <button type="button" role="radio" class="av-kind" data-avis-kind="autre" aria-checked="false">Autre chose</button>
+    </div>
+    <textarea id="avisMessage" class="av-message" rows="4" aria-label="Ton message"></textarea>
+    <label class="pp-row av-ctx" for="avisCtxToggle">
+      <span class="pp-row-main"><span class="pp-row-title">Joindre la page et l'appareil</span><span class="pp-row-sub" id="avisCtxSub"></span></span>
+      <input type="checkbox" id="avisCtxToggle" class="mm-switch-input" checked>
+      <span class="mm-switch" aria-hidden="true"></span>
+    </label>
+    <button class="btn" id="avisSendBtn" type="button">Envoyer</button>
+  </div>
+  <div class="pp-label av-mine-label">Tes avis</div>
+  <div class="av-mine" id="avisMine"></div>
+</div>
+
+<div class="container page" id="adminPage" role="main" tabindex="-1" style="display:none;">
+  <div class="page-header">
+    <h2>Admin</h2>
+    <div class="adm-tabs" role="tablist" aria-label="Admin">
+      <button class="top-tab is-active" type="button" role="tab" data-adm-view="todo" aria-selected="true">À traiter</button>
+      <button class="top-tab" type="button" role="tab" data-adm-view="avis" aria-selected="false">Avis</button>
+      <button class="top-tab" type="button" role="tab" data-adm-view="news" aria-selected="false">Nouveautés</button>
+      <button class="top-tab" type="button" role="tab" data-adm-view="health" aria-selected="false">Santé du site</button>
+    </div>
+  </div>
+  <div class="adm-content" id="adminContent"></div>
+</div>
+
+<button class="fab magnetic" id="fabAddBtn" title="Ajouter un film" aria-label="Ajouter un film">+</button>
+
+<div class="overlay" id="overlay">
+  <div class="modal film-modal nt-modal" role="dialog" aria-labelledby="ntTitle">
+        <div class="nt-head">
+      <img class="nt-thumb" id="tmdbSelectedPoster" alt="" style="display:none;">
+      <div class="nt-thumb film-poster-placeholder" id="filmModalPosterPlaceholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="14" rx="2"></rect><path d="M3.5 9h17M8 5v4M16 5v4"></path></svg></div>
+      <div class="nt-ht"><b id="ntTitle">Noter un film</b><span id="ntSub"></span></div>
+      <button type="button" class="help-q" aria-expanded="false" aria-controls="helpNotation" aria-label="Comment marche la notation ?">?</button>
+      <button class="close-x" id="closeModal" aria-label="Fermer">✕</button>
+    </div>
+        <p class="help-bubble" id="helpNotation" hidden>Sept critères, un à la fois, de 0 à 5, avec trois repères pour te situer. Ta note sur 5 est leur moyenne, arrondie au demi-point. Au résumé, touche un critère pour y revenir, ou choisis « Note directe » pour donner une seule note.</p>
+
+    <div class="nt-scroll" id="ntScroll">
+            <div class="nt-pick" id="ntPick">
+        <div class="field tmdb-search-field">
+          <label for="titleInput">Quel film ?</label>
+          <input type="text" id="titleInput" placeholder="Ex. Paprika" autocomplete="off">
+          <div id="tmdbResults" class="tmdb-results"></div>
+          <div id="tmdbSelected" style="display:none;">
+            <div id="tmdbSelectedTitle"></div>
+            <button class="crit-help-toggle" id="tmdbViewFicheBtn" type="button">Voir la fiche du film</button>
+            <button class="crit-help-toggle" id="tmdbClearBtn" type="button">Retirer la fiche TMDB</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="nt-body" id="ntBody"></div>
+
+            <div class="nt-extras" id="ntExtras">
+        <div class="nt-field">
+          <label class="nt-field-label" for="reviewInput">Commentaire</label>
+          <textarea id="reviewInput" placeholder="Tes impressions sur ce film…" rows="3"></textarea>
+        </div>
+        <label class="nt-switch">
+          <span>Privé<small>Tes amis ne voient pas ce film</small></span>
+          <input type="checkbox" id="filmPrivate" class="nt-switch-input">
+        </label>
+        <div class="nt-field">
+          <span class="nt-field-label">Visionnages</span>
+          <div class="nt-seen" id="ntSeenLine"></div>
+          <input type="date" id="ntSeenDate" class="nt-seen-date" aria-label="Date du visionnage" hidden>
+          <div class="field" id="viewingsSection" style="display:none;">
+            <div id="viewingsList" class="viewings-list" hidden></div>
+            <div class="viewings-add-row" hidden>
+              <input type="date" id="viewingDateInput">
+              <input type="text" id="viewingNoteInput" placeholder="Mémo (facultatif)…">
+              <button class="btn secondary" id="addViewingBtn" type="button">+ Je l'ai revu</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+            <div class="nt-legacy" hidden>
+        <span id="modalTitle"></span>
+        <div class="crit-dial-hero">
+          <div class="counter crit-dial-hero-counter" id="critDialHero">—</div>
+          <div class="crit-dial-hero-text">
+            <div class="crit-dial-hero-label" id="critDialHeroLabel">Note calculée</div>
+            <div class="crit-dial-hero-hint" id="critDialHeroHint"></div>
+          </div>
+        </div>
+        <div id="criteriaWrap"></div>
+        <input type="checkbox" id="manualToggle">
+        <div id="manualScoreRow">
+          <input type="range" min="0.5" max="5" step="0.5" value="2.5" id="manualScoreSlider">
+          <div id="manualScoreVal">2.5</div>
+        </div>
+        <span id="liveScoreLabel"></span><b id="liveScore"></b>
+      </div>
+    </div>
+
+    <div class="nt-foot">
+      <div class="nt-more">
+        <button type="button" class="ff-btn-icon" id="ntMoreBtn" aria-label="Plus" aria-haspopup="true" aria-expanded="false"></button>
+        <div class="ff-menu nt-menu" id="ntMenu" role="menu" hidden>
+          <button type="button" role="menuitem" id="modalOpenFilmDetailBtn" style="display:none;">Voir la fiche du film</button>
+          <button type="button" role="menuitem" id="ntChangeFilmBtn">Changer de film</button>
+          <button type="button" role="menuitem" class="nt-danger" id="deleteBtn" style="display:none;">Supprimer ce film</button>
+        </div>
+      </div>
+      <div class="nt-foot-r">
+        <button type="button" class="ff-btn-text" id="ntPrevBtn">Précédent</button>
+        <button type="button" class="ff-btn-main" id="ntNextBtn">Suivant</button>
+        <button type="button" class="ff-btn-text" id="cancelBtn">Annuler</button>
+        <button type="button" class="ff-btn-main" id="saveBtn">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="profileOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>Modifier le profil</h2>
+      <button class="close-x" id="closeProfile" aria-label="Fermer">✕</button>
+    </div>
+
+        <div class="pf-header">
+      <div class="pf-avatar-wrap">
+        <img id="profileAvatarPreview" alt="" style="display:none;">
+        <span class="user-avatar-fallback" id="profileAvatarFallback"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8.5" r="3.8"></circle><path d="M4.5 20c0-4.1 3.4-6.8 7.5-6.8s7.5 2.7 7.5 6.8"></path></svg></span>
+        <button class="pf-avatar-edit" type="button" id="toggleAvatarPanelBtn" title="Changer l'avatar" aria-label="Changer l'avatar" aria-expanded="false" aria-controls="avatarPanel">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15.5 4.5l4 4L8 20l-4.5 1L4.5 16.5 15.5 4.5z"></path></svg>
+        </button>
+      </div>
+      <input type="text" id="displayNameInput" class="pf-name-input" placeholder="Ton pseudo">
+      <div class="pf-name-hint">Clique sur le crayon pour changer de photo</div>
+    </div>
+
+    <div class="pf-avatar-panel" id="avatarPanel">
+            <div class="avatar-source-tabs" role="tablist">
+        <button type="button" class="avatar-source-tab active" data-avatar-tab="file" role="tab" aria-selected="true">Depuis cet appareil</button>
+        <button type="button" class="avatar-source-tab" data-avatar-tab="url" role="tab" aria-selected="false">URL ou un de tes films</button>
+      </div>
+
+      <div class="avatar-source-pane" id="avatarPaneFile">
+                <input type="file" id="avatarFileInput" accept="image/png,image/jpeg,image/webp,image/gif">
+        <div class="avatar-upload-status" id="avatarUploadStatus"></div>
+      </div>
+
+      <div class="avatar-source-pane" id="avatarPaneUrl" style="display:none;">
+        <input type="text" id="avatarUrlInput" placeholder="https://…">
+        <input type="text" id="avatarFilmSearch" placeholder="…ou chercher l'affiche d'un film déjà noté" style="margin-top:8px;">
+        <div class="tmdb-results" id="avatarFilmResults"></div>
+      </div>
+    </div>
+
+        <div class="mm-section">
+      <div class="mm-section-title">Tes meilleurs films</div>
+      <div class="mm-card" style="padding:14px;">
+        <p class="pf-top-sub" id="topFilmsVisibilityNote" style="margin-bottom:12px;"></p>
+        <div class="top-films-picker" id="topFilmsPicker"></div>
+        <input type="text" id="topFilmsSearch" placeholder="Chercher un film déjà noté…" style="margin-top:8px;">
+        <div class="tmdb-results" id="topFilmsResults"></div>
+      </div>
+    </div>
+
+        <div class="mm-section pf-hub">
+      <div class="mm-section-title">Mon activité</div>
+      <div class="mm-card">
+        <button class="mm-row" id="statsBtn" type="button">
+          <span class="mm-icon ic-teal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M12 20V4M20 20v-7"></path></svg></span>
+          <span class="mm-row-body"><span class="mm-row-title">Statistiques</span><span class="mm-row-sub">Répartition de tes notes, genres, évolution.</span></span>
+          <span class="mm-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg></span>
+        </button>
+        <button class="mm-row" id="achievementsBtn" type="button">
+          <span class="mm-icon ic-gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5l2.6 5.4 5.9.7-4.3 4.1 1 5.9L12 16.6l-5.2 2.9 1-5.9-4.3-4.1 5.9-.7L12 3.5z"></path></svg></span>
+          <span class="mm-row-body"><span class="mm-row-title">Succès</span><span class="mm-row-sub">Paliers débloqués et secrets trouvés.</span></span>
+          <span class="mm-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg></span>
+        </button>
+                <button class="mm-row" id="tcgBtn" type="button">
+          <span class="mm-icon ic-bronze"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="13" height="18" rx="2" transform="rotate(-8 10 13.5)"></rect><rect x="7.5" y="2.5" width="13" height="18" rx="2"></rect></svg></span>
+          <span class="mm-row-body"><span class="mm-row-title">Cartes <span class="tcg-trade-badge" id="tcgTradeBadge" hidden aria-label="Échanges reçus en attente"></span></span><span class="mm-row-sub">Films, acteurs, réalisateurs à collectionner.</span></span>
+          <span class="mm-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg></span>
+        </button>
+        <button class="mm-row" id="journalBtn" type="button">
+          <span class="mm-icon ic-violet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5.5" width="17" height="15" rx="2"></rect><path d="M3.5 10h17"></path><path d="M8 3.5v4"></path><path d="M16 3.5v4"></path></svg></span>
+          <span class="mm-row-body"><span class="mm-row-title">Journal</span><span class="mm-row-sub">Historique de tes visionnages.</span></span>
+          <span class="mm-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg></span>
+        </button>
+                <button class="mm-row" id="chatbotBtn" type="button">
+          <span class="mm-icon ic-teal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4.5h16a1 1 0 011 1V16a1 1 0 01-1 1H9l-4.5 4V17H4a1 1 0 01-1-1V5.5a1 1 0 011-1z"></path><circle cx="8.3" cy="10.5" r="1"></circle><circle cx="12" cy="10.5" r="1"></circle><circle cx="15.7" cy="10.5" r="1"></circle></svg></span>
+          <span class="mm-row-body"><span class="mm-row-title">Assistant</span><span class="mm-row-sub">Conseils ciné, discussion, aide dans l'app.</span></span>
+          <span class="mm-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg></span>
+        </button>
+                <button class="mm-row profile-mobile-only" id="profileTopFilmsLinkBtn" type="button">
+          <span class="mm-icon ic-bronze"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4h8v4a4 4 0 01-8 0V4z"></path><path d="M8 5H5.5a2.5 2.5 0 002.5 2.5"></path><path d="M16 5h2.5A2.5 2.5 0 0116 7.5"></path><path d="M12 12v3.5"></path><path d="M9.5 20h5"></path><path d="M10.3 15.5h3.4l.8 4.5H9.5l.8-4.5z"></path></svg></span>
+          <span class="mm-row-body"><span class="mm-row-title">Top films</span></span>
+          <span class="mm-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg></span>
+        </button>
+                <button class="mm-row" id="profileFeedbackLinkBtn" type="button">
+          <span class="mm-icon ic-violet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H8l-4 4V5z"></path></svg></span>
+          <span class="mm-row-body"><span class="mm-row-title">Donner un avis</span></span>
+          <span class="mm-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg></span>
+        </button>
+        <button class="mm-row" id="profileChangelogLinkBtn" type="button">
+          <span class="mm-icon ic-gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 11 18-5v12L3 14v-3z"></path><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"></path></svg></span>
+          <span class="mm-row-body"><span class="mm-row-title">Nouveautés</span></span>
+          <span class="mm-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg></span>
+        </button>
+      </div>
+    </div>
+
+        <div class="mm-section pf-hub">
+      <div class="mm-section-title">Données</div>
+      <div class="menu-wrap" id="moreMenuWrap">
+        <button class="mm-row" id="moreMenuBtn" type="button" aria-haspopup="true" aria-expanded="false">
+          <span class="mm-icon ic-teal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 17v3a2 2 0 002 2h12a2 2 0 002-2v-3"></path><path d="M7 10l5 5 5-5"></path><path d="M12 15V3"></path></svg></span>
+          <span class="mm-row-body"><span class="mm-row-title">Exporter / importer</span><span class="mm-row-sub">JSON, ou CSV Letterboxd.</span></span>
+          <span class="mm-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg></span>
+        </button>
+        <div class="dropdown-menu" id="moreMenu">
+          <button id="exportBtn">Exporter (JSON)</button>
+          <button id="importBtn">Importer (JSON)</button>
+                    <button id="exportLetterboxdBtn">Exporter vers Letterboxd (CSV)</button>
+                    <button id="importLetterboxdBtn">Importer depuis Letterboxd (CSV)</button>
+        </div>
+      </div>
+    </div>
+
+        <div class="mm-section pf-hub">
+      <div class="mm-card">
+        <label class="mm-row" for="publicProfileToggle">
+          <span class="mm-icon ic-violet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18M12 3c2.5 2.7 3.8 6 3.8 9s-1.3 6.3-3.8 9c-2.5-2.7-3.8-6-3.8-9s1.3-6.3 3.8-9z"></path></svg></span>
+          <span class="mm-row-body">
+            <span class="mm-row-title">Profil public</span>
+            <span class="mm-row-sub">Visible de tous, lien à partager.</span>
+          </span>
+          <input type="checkbox" id="publicProfileToggle" class="mm-switch-input">
+          <span class="mm-switch" aria-hidden="true"></span>
+        </label>
+        <div class="pf-public-panel" id="publicProfileLinkHint">
+          <p class="pf-public-note">Pseudo, avatar et tes films notés seront visibles par quiconque a le lien, jamais ton email ni tes commentaires.</p>
+          <button class="pf-copy-link-btn" id="copyPublicProfileLink" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 007.5.5l2-2a5 5 0 00-7-7l-1 1"></path><path d="M14 11a5 5 0 00-7.5-.5l-2 2a5 5 0 007 7l1-1"></path></svg>
+            Copier le lien à partager
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="mm-section pf-hub">
+      <div class="mm-section-title">Compte</div>
+      <div class="mm-card">
+                <button class="mm-row" id="adminBtn" type="button" style="display:none;">
+          <span class="mm-icon ic-bronze"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a4 4 0 00-5.4 5.4L4 17v3h3l5.3-5.3a4 4 0 005.4-5.4l-2.6 2.6-2-2 2.6-2.6z"></path></svg></span>
+          <span class="mm-row-body"><span class="mm-row-title">Admin</span><span class="mm-row-sub">Succès, happenings, avis, statistiques du site.</span></span>
+          <span class="mm-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg></span>
+        </button>
+                <button class="mm-row" id="openSettingsBtn" type="button">
+          <span class="mm-icon ic-violet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 13a7.7 7.7 0 000-2l2-1.5-2-3.5-2.4 1a7.5 7.5 0 00-1.7-1L15 3h-4l-.3 2.5a7.5 7.5 0 00-1.7 1l-2.4-1-2 3.5L6.6 11a7.7 7.7 0 000 2l-2 1.5 2 3.5 2.4-1a7.5 7.5 0 001.7 1L11 21h4l.3-2.5a7.5 7.5 0 001.7-1l2.4 1 2-3.5-2-1.5z"></path></svg></span>
+          <span class="mm-row-body"><span class="mm-row-title">Paramètres</span><span class="mm-row-sub">Thème, entête, accessibilité, aide.</span></span>
+          <span class="mm-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg></span>
+        </button>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn secondary" id="cancelProfileBtn">Annuler</button>
+      <div class="right">
+        <button class="btn" id="saveProfileBtn">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="settingsOverlay">
+  <div class="modal">
+    <div class="modal-head-back">
+      <button class="modal-back-btn" id="closeSettings" aria-label="Retour au profil">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg>
+      </button>
+      <h2>Paramètres</h2>
+    </div>
+
+    <div class="mm-section" style="margin-top:0;">
+      <div class="mm-section-title">Apparence</div>
+      <div class="mm-card">
+                <label class="mm-row" for="lightThemeToggle">
+          <span class="mm-icon ic-gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 3v2M12 19v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M3 12h2M19 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"></path></svg></span>
+          <span class="mm-row-body"><span class="mm-row-title">Thème clair</span><span class="mm-row-sub">Sombre par défaut, à toi de choisir.</span></span>
+          <input type="checkbox" id="lightThemeToggle" class="mm-switch-input">
+          <span class="mm-switch" aria-hidden="true"></span>
+        </label>
+      </div>
+    </div>
+
+    <div class="mm-section">
+      <div class="mm-section-title">Entête</div>
+      <div class="mm-card">
+                <button class="mm-row" id="openHeaderOrderBtn" type="button">
+          <span class="mm-icon ic-violet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 15l5 5 5-5M7 9l5-5 5 5"></path></svg></span>
+          <span class="mm-row-body"><span class="mm-row-title">Réorganiser l'entête</span><span class="mm-row-sub">Change l'ordre des liens en les faisant glisser.</span></span>
+          <span class="mm-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg></span>
+        </button>
+      </div>
+    </div>
+
+      </div>
+</div>
+
+<div class="overlay as-page" id="statsOverlay">
+  <div class="modal stats-modal">
+    <div class="detail-topbar">
+      <button class="back-link" id="closeStats" type="button">‹ Retour</button>
+    </div>
+    <div class="page-header">
+      <h2>Statistiques</h2>
+    </div>
+    <div id="statsContent"></div>
+  </div>
+</div>
+
+<div class="overlay" id="recapOverlay">
+  <div class="modal recap-modal">
+    <div class="modal-head">
+      <h2>Ton année en image</h2>
+      <button class="close-x" id="closeRecap" aria-label="Fermer">✕</button>
+    </div>
+    <div id="recapBody">
+      <canvas id="recapCanvas" width="1080" height="1350"></canvas>
+    </div>
+    <div class="modal-footer">
+            <button class="btn secondary" id="shareRecapBtn" type="button" style="display:none;">Partager</button>
+            <button class="btn secondary" id="downloadRecapPdfBtn" type="button">Télécharger en PDF</button>
+      <button class="btn" id="downloadRecapBtn" type="button">Télécharger l'image</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay as-page" id="achievementsOverlay">
+  <div class="modal stats-modal achievements-modal">
+    <div class="detail-topbar">
+      <button class="back-link" id="closeAchievements" type="button">‹ Retour</button>
+    </div>
+    <div class="page-header">
+      <h2>Succès</h2>
+    </div>
+    <div id="achievementsContent"></div>
+  </div>
+</div>
+
+<div class="overlay as-page" id="tcgOverlay">
+  <div class="modal stats-modal tcg-modal">
+    <div class="detail-topbar">
+      <button class="back-link" id="closeTcg" type="button">‹ Retour</button>
+    </div>
+    <div class="page-header">
+      <h2>Cartes <button type="button" class="help-q" aria-expanded="false" aria-controls="helpCartes" aria-label="Comment marchent les cartes ?">?</button></h2>
+      <div class="adm-tabs al-tabs" role="tablist" aria-label="Cartes">
+        <button class="top-tab is-active" type="button" role="tab" data-album-tab="films" aria-selected="true">Films</button>
+        <button class="top-tab" type="button" role="tab" data-album-tab="directors" aria-selected="false">Réalisateurs</button>
+        <button class="top-tab" type="button" role="tab" data-album-tab="actors" aria-selected="false">Acteurs</button>
+      </div>
+    </div>
+            <p class="help-bubble" id="helpCartes" hidden>Chaque film de ton catalogue donne sa carte, et son rang suit ta note : Figurant sans note ou sous 4, Second rôle à 4, Tête d’affiche à 4,5, Légende à 5. Un réalisateur ou un acteur arrive avec ton premier film avec lui, puis monte de rang à 2, 4 et 7 films. « Bientôt dans ta collection » montre les cartes près de monter grâce à ton À voir.</p>
+    <div class="al-album" id="tcgAlbum"></div>
+    <div class="tcg-legacy" hidden>
+    <div class="avatar-source-tabs" role="tablist" id="tcgTabs">
+      <button type="button" class="avatar-source-tab active" data-tcg-tab="collection" role="tab" aria-selected="true">Collection</button>
+      <button type="button" class="avatar-source-tab" data-tcg-tab="craft" role="tab" aria-selected="false">Fabriquer</button>
+      <button type="button" class="avatar-source-tab" data-tcg-tab="trade" role="tab" aria-selected="false">Échanger</button>
+    </div>
+
+    <div id="tcgPanelCollection">
+      <div class="tcg-intro" id="tcgIntro">
+        <div class="tcg-intro-text">
+          <strong>Des cartes, pour chaque film que tu regardes.</strong>
+          Chaque film, acteur et réalisateur de ton catalogue peut devenir une carte.
+          Deux films vus donnent un booster de 5 cartes. Les probabilités sont affichées sous la barre des boosters.
+        </div>
+        <button class="btn secondary" id="tcgIntroClose" type="button">Compris</button>
+      </div>
+      <div class="tcg-booster-bar">
+        <div class="tcg-booster-count" id="tcgBoosterCount">…</div>
+        <div class="wl-note tcg-pity-hint" id="tcgPityHint" aria-live="polite"></div>
+        <button class="btn" id="tcgOpenBoosterBtn" type="button" disabled>Ouvrir un booster</button>
+      </div>
+            <button class="crit-help-toggle" id="tcgOddsToggle" type="button">Voir les probabilités de tirage</button>
+      <div class="crit-help" id="tcgOddsHelp">
+        <div class="crit-anchors">Chaque carte d'un booster, tirée indépendamment des 4 autres :
+Figurant (Commun)           83%
+Second rôle (Rare)          11%
+Tête d'affiche (Épique)     4%
+Légende du 7e art (Légendaire) 2%</div>
+        <div class="crit-questions">Chaque booster contient toujours 1 film, 1 acteur et 1 réalisateur, plus 2 cartes libres, et au moins 1 carte Rare ou mieux. Cette garantie fait monter un peu la part des Rares sur l'ensemble des cartes : environ 75 % Commun, 19 % Rare, 3 % Épique, 2 % Légendaire en pratique. 70% des tirages piochent dans les films, acteurs et réalisateurs déjà liés à ton catalogue, 30% dans tout ce qu'a déjà révélé la communauté. La rareté est toujours décidée en premier, indépendamment d'où vient la carte. Obtenir la carte d'un film ne garantit jamais celle de son casting : chaque carte est un tirage à part entière, rien ne les lie entre elles.</div>
+      </div>
+            <div class="tcg-scan-row">
+        <button class="btn secondary" id="tcgScanBtn" type="button">Scanner mon catalogue</button>
+        <span class="tcg-scan-status" id="tcgScanStatus"></span>
+      </div>
+      <div class="tcg-completion-row">
+        <div class="wl-note tcg-completion" id="tcgCompletion" aria-live="polite"></div>
+        <div class="tcg-export-actions">
+          <button class="btn secondary" id="tcgHelpBtn" type="button">Revoir l'introduction</button>
+          <button class="btn secondary" id="tcgExportCsvBtn" type="button">Exporter en CSV</button>
+          <button class="btn secondary" id="tcgExportJsonBtn" type="button">Exporter en JSON</button>
+        </div>
+      </div>
+      <div class="toolbar" style="margin-bottom:16px;">
+        <select id="tcgTypeFilter" aria-label="Filtrer par type">
+          <option value="">Tous types</option>
+          <option value="film">Films</option>
+          <option value="actor">Acteurs</option>
+          <option value="director">Réalisateurs</option>
+        </select>
+        <select id="tcgRarityFilter" aria-label="Filtrer par rareté">
+          <option value="">Toutes raretés</option>
+          <option value="legendaire">Légende du 7e art</option>
+          <option value="epique">Tête d'affiche</option>
+          <option value="rare">Second rôle</option>
+          <option value="commun">Figurant</option>
+        </select>
+        <select id="tcgDecadeFilter" aria-label="Filtrer par décennie" hidden>
+          <option value="">Toutes décennies</option>
+        </select>
+      </div>
+      <div id="tcgCollectionGrid" class="tcg-grid"></div>
+    </div>
+
+        <div id="tcgPanelCraft" style="display:none;">
+      <div class="tcg-booster-bar">
+        <div class="tcg-booster-count" id="tcgDustCount">…</div>
+      </div>
+      <div class="stats-section">
+        <div class="stats-section-title">Tes doublons</div>
+        <div id="tcgDuplicatesList"></div>
+      </div>
+      <div class="stats-section">
+        <div class="stats-section-title">Fabriquer une carte précise</div>
+        <div class="field">
+          <input type="text" id="tcgCraftSearch" placeholder="Chercher un film, un acteur, un réalisateur…" autocomplete="off">
+        </div>
+        <div id="tcgCraftResults"></div>
+      </div>
+    </div>
+
+        <div id="tcgPanelTrade" style="display:none;">
+      <div class="stats-section" id="tcgTradesSection" style="display:none;">
+        <div class="stats-section-title">Tes échanges en cours</div>
+        <div id="tcgTradesList"></div>
+      </div>
+      <div class="stats-section">
+        <div class="stats-section-title">Proposer un échange</div>
+        <div class="field">
+          <label for="tcgTradePartnerSelect">Avec qui ?</label>
+          <select id="tcgTradePartnerSelect">
+            <option value="">Choisis un ami</option>
+          </select>
+        </div>
+        <div id="tcgTradeBuilder" style="display:none;">
+          <div class="tcg-trade-columns">
+            <div>
+              <div class="tcg-trade-col-title">Tu proposes</div>
+              <div id="tcgTradeMyCards" class="tcg-grid tcg-grid-compact"></div>
+            </div>
+            <div>
+              <div class="tcg-trade-col-title">Tu demandes</div>
+              <div id="tcgTradeTheirCards" class="tcg-grid tcg-grid-compact"></div>
+            </div>
+          </div>
+          <div class="tcg-trade-summary" id="tcgTradeSummary"></div>
+          <button class="btn" id="tcgTradeSubmitBtn" type="button" disabled>Proposer l'échange</button>
+        </div>
+      </div>
+    </div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="recapAnneeOverlay">
+  <div class="modal recap-modal" id="recapAnneeModal" role="dialog" aria-label="Ton année">
+    <div class="recap-slides" id="recapAnneeSlides"></div>
+    <div class="recap-dots" id="recapAnneeDots" aria-hidden="true"></div>
+    <div class="tcg-card-detail-actions">
+      <button class="btn secondary" id="recapAnneeClose" type="button">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="tcgCardOverlay">
+  <div class="modal tcg-card-modal">
+    <div id="tcgCardDetailBody"></div>
+    <div class="tcg-card-detail-actions">
+      <button class="btn secondary" id="tcgCardCopyLink" type="button">Copier le lien</button>
+      <button class="btn" id="tcgCardDetailClose" type="button">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="tcgBoosterOverlay">
+  <div class="modal tcg-booster-modal">
+    <div class="tcg-booster-pack" id="tcgBoosterPack"></div>
+    <div class="tcg-booster-actions">
+      <button class="btn secondary" id="tcgBoosterNextBtn" type="button" style="display:none;">Ouvrir un autre booster</button>
+      <button class="btn" id="tcgBoosterDoneBtn" type="button" style="display:none;">Génial !</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="chatbotOverlay">
+  <div class="modal chatbot-modal">
+    <div class="modal-head">
+      <h2>Assistant Kinet</h2>
+      <button class="close-x" id="closeChatbot" aria-label="Fermer">✕</button>
+    </div>
+    <div class="chatbot-messages" id="chatbotMessages"></div>
+    <div class="chatbot-input-row">
+      <textarea id="chatbotInput" placeholder="Écris un message…" rows="1"></textarea>
+      <button class="btn" id="chatbotSendBtn" type="button">Envoyer</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="adminOverlay">
+  <div class="modal stats-modal admin-modal">
+    <div class="modal-head">
+      <h2>Admin</h2>
+      <button class="close-x" id="closeAdmin" aria-label="Fermer">✕</button>
+    </div>
+        <div class="avatar-source-tabs" role="tablist" id="adminTabs">
+      <button type="button" class="avatar-source-tab active" data-admin-tab="achievements" role="tab" aria-selected="true">Succès</button>
+      <button type="button" class="avatar-source-tab" data-admin-tab="happenings" role="tab" aria-selected="false">Happenings</button>
+      <button type="button" class="avatar-source-tab" data-admin-tab="changelog" role="tab" aria-selected="false">Nouveautés</button>
+      <button type="button" class="avatar-source-tab" data-admin-tab="cards" role="tab" aria-selected="false">Cartes</button>
+      <button type="button" class="avatar-source-tab" data-admin-tab="feedback" role="tab" aria-selected="false">Avis</button>
+      <button type="button" class="avatar-source-tab" data-admin-tab="stats" role="tab" aria-selected="false">Stats &amp; logs</button>
+    </div>
+      </div>
+</div>
+
+<div class="overlay" id="importLetterboxdTutoOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>Importer depuis Letterboxd</h2>
+      <button class="close-x" id="closeLetterboxdTuto" aria-label="Fermer">✕</button>
+    </div>
+    <ol class="import-tuto-steps">
+      <li>
+        <span class="import-tuto-num">1</span>
+        <p>Sur <strong>letterboxd.com</strong>, clique sur ton avatar (en haut à droite) puis <strong>Settings</strong>.</p>
+      </li>
+      <li>
+        <span class="import-tuto-num">2</span>
+        <p>Onglet <strong>Data</strong> → bouton <strong>Export your data</strong> : un fichier <code>.zip</code> se télécharge.</p>
+      </li>
+      <li>
+        <span class="import-tuto-num">3</span>
+        <p>Extrais ce zip sur ton ordinateur : il contient plusieurs fichiers <code>.csv</code>.</p>
+      </li>
+      <li>
+        <span class="import-tuto-num">4</span>
+        <p>Choisis le bon fichier selon ce que tu veux importer : <code>diary.csv</code> ou <code>ratings.csv</code> pour tes films déjà notés, <code>reviews.csv</code> si tu veux garder tes critiques texte, <code>watchlist.csv</code> pour ta liste à voir, <code>watched.csv</code> pour des films vus mais jamais notés. Les autres fichiers du zip (<code>profile.csv</code>, <code>comments.csv</code>…) ne contiennent aucune note de film, inutile de les déposer ici.</p>
+      </li>
+      <li>
+        <span class="import-tuto-num">5</span>
+        <p>Reviens ici, clique sur <strong>Choisir le fichier</strong> ci-dessous et sélectionne-le.</p>
+      </li>
+    </ol>
+    <p class="import-tuto-note">Kinet recherche ensuite chaque film sur TMDB pour récupérer affiche et résumé. Ça peut prendre un peu de temps sur un gros catalogue. Tu peux répéter l'opération avec plusieurs fichiers : les films déjà présents ne sont jamais dupliqués. Importer <code>reviews.csv</code> après <code>diary.csv</code>/<code>ratings.csv</code> vient plutôt compléter leurs fiches avec le texte de tes critiques.</p>
+    <label class="manual-toggle-label">
+      <input type="checkbox" id="hideLetterboxdTutoCheck">
+      <span>Ne plus afficher ce tutoriel</span>
+    </label>
+    <div class="modal-footer">
+      <button class="btn secondary" id="letterboxdTutoCancelBtn" type="button">Annuler</button>
+      <div class="right">
+        <button class="btn" id="letterboxdTutoContinueBtn" type="button">Choisir le fichier</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="changelogOverlay">
+  <div class="modal journal-modal">
+    <div class="modal-head">
+      <h2>Nouveautés</h2>
+      <button class="close-x" id="closeChangelog" aria-label="Fermer">✕</button>
+    </div>
+    <div id="changelogList"></div>
+  </div>
+</div>
+
+<div class="overlay as-page" id="journalOverlay">
+  <div class="modal journal-modal">
+    <div class="detail-topbar">
+      <button class="back-link" id="closeJournal" type="button">‹ Retour</button>
+    </div>
+    <div class="page-header">
+      <h2>Journal</h2>
+    </div>
+    <div id="journalContent"></div>
+  </div>
+</div>
+
+<div class="overlay" id="friendProfileOverlay">
+  <div class="modal stats-modal">
+    <div class="modal-head">
+      <h2 id="friendProfileTitle">Profil</h2>
+      <button class="close-x" id="closeFriendProfile" aria-label="Fermer">✕</button>
+    </div>
+    <div id="friendProfileContent"></div>
+  </div>
+</div>
+
+<div class="overlay" id="filmReviewOverlay">
+  <div class="modal film-review-modal">
+    <div class="modal-head">
+      <h2>Critique</h2>
+      <button class="close-x" id="closeFilmReview" aria-label="Fermer">✕</button>
+    </div>
+    <div id="filmReviewContent"></div>
+  </div>
+</div>
+
+<footer class="app-footer">
+  <span class="app-footer-credit">Made by Flix</span> ·
+  <button class="app-footer-link" id="shareBtn" type="button">Partager</button>
+</footer>
+
+<div class="overlay" id="shareOverlay">
+  <div class="modal share-modal">
+    <div class="modal-head">
+      <h2>Partager Kinet</h2>
+      <button class="close-x" id="closeShare" aria-label="Fermer">✕</button>
+    </div>
+    <div class="share-qr-frame"><div id="shareQrCode"></div></div>
+    <div class="public-profile-link-row">
+      <span id="shareLinkText"></span>
+      <button class="crit-help-toggle" id="copyShareLink" type="button">Copier</button>
+    </div>
+    <p class="auth-card-foot">Scanne, ou copie le lien : Chrome et Edge proposent d'installer l'app direct depuis la page, sans store.</p>
+  </div>
+</div>
+
+<button class="scroll-top-btn" id="scrollTopBtn" type="button" aria-label="Remonter en haut de la page" style="display:none;">↑</button>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<div class="undo-toast" id="undoToast" hidden>
+  <span class="undo-toast-msg" id="undoToastMsg"></span>
+  <button type="button" class="undo-toast-btn" id="undoToastBtn">Annuler</button>
+</div>
+
+<div class="bulk-actions-bar" id="bulkActionsBar" hidden>
+  <span class="bulk-actions-count" id="bulkActionsCount"></span>
+  <div class="bulk-actions-buttons">
+    <button type="button" class="btn secondary" id="bulkFavBtn"><svg class="ui-icon ui-icon-filled" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5l2.6 5.4 5.9.7-4.3 4.1 1 5.9L12 16.6l-5.2 2.9 1-5.9-4.3-4.1 5.9-.7L12 3.5z"></path></svg> Favoris</button>
+    <button type="button" class="btn secondary" id="bulkUnfavBtn"><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5l2.6 5.4 5.9.7-4.3 4.1 1 5.9L12 16.6l-5.2 2.9 1-5.9-4.3-4.1 5.9-.7L12 3.5z"></path></svg> Retirer</button>
+    <button type="button" class="btn secondary" id="bulkExportBtn">Exporter</button>
+    <button type="button" class="btn danger" id="bulkDeleteBtn">Supprimer</button>
+  </div>
+</div>
+
+<script src="assets/offlineNet-ab801670.js" ></script>
+<script src="assets/supabase-ee3be8de.js" ></script>
+<script src="assets/supabaseConfig-89cb4f7c.js" ></script>
+<script src="assets/logging-9e8343d8.js" ></script>
+<script src="assets/tmdbConfig-51547380.js" ></script>
+<script src="assets/data-d4e097b1.js" ></script>
+<script src="assets/happenings-6070e9dd.js" ></script>
+<script src="assets/spring-4b26daa0.js" ></script>
+<script src="assets/ui-a368a95f.js" ></script>
+<script src="assets/sound-6e096cc6.js" ></script>
+<script src="assets/offlineQueue-405ca202.js" ></script>
+<script src="assets/offline-29d190a4.js" ></script>
+<script src="assets/offlinePrep-26300b56.js" ></script>
+<script src="assets/app-8006fa52.js" ></script>
+<script src="assets/tmdb-51abf30b.js" ></script>
+<script src="assets/stats-c87e1957.js" ></script>
+<script src="assets/achievements-d8bacc0b.js" ></script>
+<script src="assets/tcg-64b7adc8.js" ></script>
+<script src="assets/album-083a9b1e.js" ></script>
+<script src="assets/chatbot-dadc92aa.js" ></script>
+<script src="assets/journal-f71b36fb.js" ></script>
+<script src="assets/notation-c6b8c8ed.js" ></script>
+<script src="assets/pwa-07c4eaa9.js" ></script>
+<script src="assets/profile-949a7cc8.js" ></script>
+<script src="assets/settings-07d949f3.js" ></script>
+<script src="assets/backup-ce20ea5f.js" ></script>
+<script src="assets/feedback-20070616.js" ></script>
+<script src="assets/recap-878169d7.js" ></script>
+<script src="assets/dna-cd46c360.js" ></script>
+<script src="assets/share-e0255b2f.js" ></script>
+<script src="assets/admin-d785bc6b.js" ></script>
+<script src="assets/router-a785f1dc.js" ></script>
+<script src="assets/publicProfile-03bfdd72.js" ></script>
+<script src="assets/top-a8d4c06a.js" ></script>
+<script src="assets/friends-12a49c67.js" ></script>
+<script src="assets/activity-c050ddef.js" ></script>
+<script src="assets/watchlist-e1f53f0d.js" ></script>
+<script src="assets/suggestions-f9c12037.js" ></script>
+<script src="assets/streamingTop-65ab34a3.js" ></script>
+<script src="assets/importExternal-837d4b93.js" ></script>
+<script src="assets/prediction-f878409d.js" ></script>
+<script src="assets/filmDetail-fa91106b.js" ></script>
+<script src="assets/series-c3e649d4.js" ></script>
+<script src="assets/upcoming-fac6f432.js" ></script>
+<script src="assets/groups-e79604ee.js" ></script>
+<script src="assets/proposals-1cdf6880.js" ></script>
+<script src="assets/invites-77118883.js" ></script>
+<script src="assets/lists-59687fa2.js" ></script>
+<script src="assets/activityState-42c3c1c7.js" ></script>
+<script src="assets/changelog-da768ec8.js" ></script>
+<script src="assets/globalSearch-62698850.js" ></script>
+<script src="assets/profilePage-90a27c4d.js" ></script>
+<script src="assets/onboarding-e33a42ef.js" ></script>
+<script src="assets/prefsSync-5898a334.js" ></script>
+<script src="assets/auth-4473e3cf.js" ></script>
+</body>
+</html>

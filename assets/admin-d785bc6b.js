@@ -1,0 +1,262 @@
+const ADMIN_EMAIL=`sab.fxs@gmail.com`;let adminConfig=null;let adminConfigLoaded=false;function isAdmin(){return!!(currentUser&&currentUser.email===ADMIN_EMAIL)}function defaultAdminConfig(){return{achievements:{cumulative:{},hidden:{}},happenings:{overrides:{},custom:[]}}}async function loadAdminConfig(){if(adminConfigLoaded)return;const def=defaultAdminConfig();const{data,error}=await supabaseClient.from(`admin_config`).select(`data`).eq(`user_id`,currentUser.id).maybeSingle();if(error){console.error(error);adminConfig=def}else if(data&&data.data){adminConfig={achievements:{cumulative:{},hidden:{},...data.data.achievements},happenings:{overrides:{},custom:[],...data.data.happenings}}}else{adminConfig=def}adminConfigLoaded=true}async function persistAdminConfig(){const{error}=await supabaseClient.from(`admin_config`).upsert({user_id:currentUser.id,data:adminConfig,updated_at:new Date().toISOString()});if(error){console.error(error);showToast(`Erreur de sauvegarde admin`)}}function getAdminAchievementOverrides(){return adminConfig&&adminConfig.achievements||{cumulative:{},hidden:{}}}function getAdminHappeningOverrides(){return adminConfig&&adminConfig.happenings&&adminConfig.happenings.overrides||{}}function getAdminCustomHappenings(){return adminConfig&&adminConfig.happenings&&adminConfig.happenings.custom||[]}function setAdminTab(tab){document.querySelectorAll(`#adminTabs .avatar-source-tab`).forEach(btn=>{const active=btn.dataset.adminTab===tab;btn.classList.toggle(`active`,active);btn.setAttribute(`aria-selected`,active?`true`:`false`)});if(tab===`achievements`)renderAdminAchievementsTab();else if(tab===`happenings`)renderAdminHappeningsTab();else if(tab===`changelog`)renderAdminChangelogTab();else if(tab===`feedback`)renderAdminFeedbackTab();else if(tab===`cards`)renderAdminCardsTab();else renderAdminStatsTab()}function renderAdminAchievementsTab(){const wrap=document.getElementById(`adminContent`);const overrides=getAdminAchievementOverrides();const a=computeAchievements();const cumulativeRows=CUMULATIVE_GROUPS.map(g=>{const o=overrides.cumulative[g.key]||{};const enabled=o.enabled!==false;const isOverridden=Array.isArray(o.tiers)&&o.tiers.length===g.tiers.length;const tiers=isOverridden?o.tiers:g.tiers;const current=a.cumulative.find(x=>x.key===g.key);return`
+      <div class="wl-row admin-row${enabled?``:` admin-row-disabled`}">
+        <div class="wl-main">
+          <div class="wl-title">${g.icon} ${escapeHtml(g.label)}${current?` <span class="wl-year">(${current.value} ${escapeHtml(g.unit)} actuellement)</span>`:``}</div>
+          <div class="wl-note">Seuils (${escapeHtml(g.unit)}) : ${tiers.map((t,i)=>`<input type="number" min="1" class="admin-tier-input" data-group="${g.key}" data-tier="${i}" value="${t.threshold}" title="${escapeHtml(t.name)}">`).join(` · `)}</div>
+        </div>
+        <div class="wl-actions">
+          <label class="manual-toggle-label"><input type="checkbox" class="admin-ach-enabled" data-group="${g.key}" ${enabled?`checked`:``}><span>Activé</span></label>
+          ${isOverridden?`<button class="btn secondary admin-reset-tiers" data-group="${g.key}" type="button" title="Revenir aux seuils par défaut" aria-label="Revenir aux seuils par défaut">↺</button>`:``}
+        </div>
+      </div>
+    `}).join(``);const hiddenRows=HIDDEN_ACHIEVEMENTS.map(h=>{const o=overrides.hidden[h.key]||{};const enabled=o.enabled!==false;const unlocked=h.check(films);return`
+      <div class="wl-row admin-row${enabled?``:` admin-row-disabled`}">
+        <div class="wl-main">
+          <div class="wl-title">${h.icon} ${escapeHtml(h.title)}${unlocked?` <span class="review-badge" title="Débloqué">✓ débloqué</span>`:``}</div>
+          <div class="wl-note">${escapeHtml(h.desc)}</div>
+        </div>
+        <div class="wl-actions">
+          <label class="manual-toggle-label"><input type="checkbox" class="admin-hidden-enabled" data-key="${h.key}" ${enabled?`checked`:``}><span>Activé</span></label>
+        </div>
+      </div>
+    `}).join(``);wrap.innerHTML=`
+    <div class="stats-section">
+      <div class="stats-section-title">Paliers cumulatifs (${a.tiersUnlocked} / ${a.tiersTotal} débloqués)</div>
+      ${cumulativeRows}
+    </div>
+    <div class="stats-section">
+      <div class="stats-section-title">Secrets (${a.hiddenUnlocked} / ${a.hiddenTotal} trouvés, vue admin, sans le "???")</div>
+      ${hiddenRows}
+    </div>
+  `;wrap.querySelectorAll(`.admin-tier-input`).forEach(inp=>{inp.addEventListener(`change`,async e=>{const key=e.target.dataset.group;const tierIdx=Number(e.target.dataset.tier);const value=Math.max(1,Math.round(Number(e.target.value)||1));const group=CUMULATIVE_GROUPS.find(g=>g.key===key);const current=overrides.cumulative[key];const baseTiers=current&&Array.isArray(current.tiers)&&current.tiers.length===group.tiers.length?current.tiers:group.tiers;const tiers=baseTiers.map(t=>({...t}));tiers[tierIdx]={...tiers[tierIdx],threshold:value};adminConfig.achievements.cumulative[key]={...current,tiers};await persistAdminConfig();renderAdminAchievementsTab()})});wrap.querySelectorAll(`.admin-reset-tiers`).forEach(btn=>{btn.addEventListener(`click`,async e=>{const key=e.currentTarget.dataset.group;const current=adminConfig.achievements.cumulative[key];if(current)delete current.tiers;await persistAdminConfig();renderAdminAchievementsTab()})});wrap.querySelectorAll(`.admin-ach-enabled`).forEach(cb=>{cb.addEventListener(`change`,async e=>{const key=e.target.dataset.group;adminConfig.achievements.cumulative[key]={...adminConfig.achievements.cumulative[key],enabled:e.target.checked};await persistAdminConfig();renderAdminAchievementsTab()})});wrap.querySelectorAll(`.admin-hidden-enabled`).forEach(cb=>{cb.addEventListener(`change`,async e=>{const key=e.target.dataset.key;adminConfig.achievements.hidden[key]={...adminConfig.achievements.hidden[key],enabled:e.target.checked};await persistAdminConfig();renderAdminAchievementsTab()})})}function renderAdminHappeningsTab(){const wrap=document.getElementById(`adminContent`);const overrides=getAdminHappeningOverrides();const custom=getAdminCustomHappenings();const builtInRows=HAPPENINGS.map(h=>{const o=overrides[h.tmdbId]||{};const enabled=o.enabled!==false;const film=films.find(f=>f.tmdbId===h.tmdbId);const triggerLabel=h.trigger===`dwell`?`Reste ${Math.round(h.dwellMs/1e3)}s sur la fiche`:`Clic sur le badge`;return`
+      <div class="wl-row admin-row${enabled?``:` admin-row-disabled`}">
+        <div class="wl-main">
+          <div class="wl-title">${h.icon||`⏱️`} ${film?escapeHtml(film.title):`tmdb_id ${h.tmdbId} (hors catalogue)`}</div>
+          <div class="wl-note">${triggerLabel} · codé en dur</div>
+        </div>
+        <div class="wl-actions">
+          <label class="manual-toggle-label"><input type="checkbox" class="admin-happening-enabled" data-tmdb="${h.tmdbId}" ${enabled?`checked`:``}><span>Activé</span></label>
+          <button class="btn secondary admin-replay-builtin" data-tmdb="${h.tmdbId}" type="button">▶ Revivre</button>
+        </div>
+      </div>
+    `}).join(``);const customRows=custom.map(c=>{const film=films.find(f=>f.tmdbId===c.tmdbId);const enabled=c.enabled!==false;const triggerLabel=c.trigger===`dwell`?`Reste ${Math.round((c.dwellMs||15e3)/1e3)}s sur la fiche`:`Clic sur le badge`;return`
+      <div class="wl-row admin-row${enabled?``:` admin-row-disabled`}">
+        <div class="wl-main">
+          <div class="wl-title">${escapeHtml(c.icon||`✨`)} ${escapeHtml(c.title||`Sans titre`)} <span class="wl-year">(${film?escapeHtml(film.title):`tmdb_id ${c.tmdbId}`})</span></div>
+          <div class="wl-note">${triggerLabel} · créé depuis l'admin : « ${escapeHtml(c.message||``)} »</div>
+        </div>
+        <div class="wl-actions">
+          <label class="manual-toggle-label"><input type="checkbox" class="admin-custom-enabled" data-id="${c.id}" ${enabled?`checked`:``}><span>Activé</span></label>
+          <button class="btn secondary admin-replay-custom" data-id="${c.id}" type="button">▶ Revivre</button>
+          <button class="btn secondary admin-delete-custom" data-id="${c.id}" type="button" title="Supprimer" aria-label="Supprimer">🗑</button>
+        </div>
+      </div>
+    `}).join(``);const filmOptions=films.filter(f=>f.tmdbId).slice().sort((x,y)=>x.title.localeCompare(y.title)).map(f=>`<option value="${f.tmdbId}">${escapeHtml(f.title)}${f.releaseYear?` (${f.releaseYear})`:``}</option>`).join(``);wrap.innerHTML=`
+    <div class="stats-section">
+      <div class="stats-section-title">Happenings codés en dur (${HAPPENINGS.length})</div>
+      ${builtInRows}
+    </div>
+    <div class="stats-section">
+      <div class="stats-section-title">Happenings créés depuis l'admin (${custom.length})</div>
+      ${customRows||`<div class="tmdb-empty">Aucun pour l'instant.</div>`}
+    </div>
+    <div class="stats-section">
+      <div class="stats-section-title">Nouveau happening (message simple, sans coder)</div>
+      <form id="adminNewHappeningForm">
+        <div class="field">
+          <label for="adminHapFilm">Film</label>
+          <select id="adminHapFilm" required>
+            <option value="">Choisir un film noté avec fiche TMDB</option>
+            ${filmOptions}
+          </select>
+        </div>
+        <div class="field">
+          <label for="adminHapTrigger">Déclencheur</label>
+          <select id="adminHapTrigger">
+            <option value="click">Clic sur un badge à côté du titre</option>
+            <option value="dwell">Rester un moment sur la fiche</option>
+          </select>
+        </div>
+        <div class="field" id="adminHapDwellField" style="display:none;">
+          <label for="adminHapDwellSecs">Délai (secondes)</label>
+          <input type="number" id="adminHapDwellSecs" min="3" value="15">
+        </div>
+        <div class="field">
+          <label for="adminHapIcon">Icône (emoji du badge)</label>
+          <input type="text" id="adminHapIcon" value="✨" maxlength="4" style="width:80px;">
+        </div>
+        <div class="field">
+          <label for="adminHapTitle">Titre</label>
+          <input type="text" id="adminHapTitle" placeholder="Ex. Un dernier mot" required>
+        </div>
+        <div class="field">
+          <label for="adminHapMessage">Message</label>
+          <input type="text" id="adminHapMessage" placeholder="Le texte affiché" required>
+        </div>
+        <button class="btn" type="submit">Créer</button>
+      </form>
+    </div>
+  `;wrap.querySelector(`#adminHapTrigger`).addEventListener(`change`,e=>{document.getElementById(`adminHapDwellField`).style.display=e.target.value===`dwell`?``:`none`});wrap.querySelectorAll(`.admin-happening-enabled`).forEach(cb=>{cb.addEventListener(`change`,async e=>{const tmdbId=Number(e.target.dataset.tmdb);adminConfig.happenings.overrides[tmdbId]={enabled:e.target.checked};await persistAdminConfig();render();renderAdminHappeningsTab()})});wrap.querySelectorAll(`.admin-custom-enabled`).forEach(cb=>{cb.addEventListener(`change`,async e=>{const id=e.target.dataset.id;const entry=custom.find(c=>c.id===id);if(entry)entry.enabled=e.target.checked;await persistAdminConfig();render();renderAdminHappeningsTab()})});wrap.querySelectorAll(`.admin-delete-custom`).forEach(btn=>{btn.addEventListener(`click`,async e=>{const id=e.currentTarget.dataset.id;adminConfig.happenings.custom=custom.filter(c=>c.id!==id);await persistAdminConfig();render();renderAdminHappeningsTab()})});wrap.querySelectorAll(`.admin-replay-builtin`).forEach(btn=>{btn.addEventListener(`click`,e=>{const tmdbId=Number(e.currentTarget.dataset.tmdb);const h=HAPPENINGS.find(x=>x.tmdbId===tmdbId);const film=films.find(f=>f.tmdbId===tmdbId)||{tmdbId,title:`Sans titre`};if(h)h.run(film)})});wrap.querySelectorAll(`.admin-replay-custom`).forEach(btn=>{btn.addEventListener(`click`,e=>{const entry=custom.find(c=>c.id===e.currentTarget.dataset.id);if(entry)runCustomHappening(entry)})});wrap.querySelector(`#adminNewHappeningForm`).addEventListener(`submit`,async e=>{e.preventDefault();const tmdbId=Number(document.getElementById(`adminHapFilm`).value);if(!tmdbId){showToast(`Choisis un film`);return}const trigger=document.getElementById(`adminHapTrigger`).value;const entry={id:`custom-${Date.now()}`,tmdbId,trigger,dwellMs:trigger===`dwell`?Math.max(3,Number(document.getElementById(`adminHapDwellSecs`).value)||15)*1e3:undefined,icon:document.getElementById(`adminHapIcon`).value.trim()||`✨`,title:document.getElementById(`adminHapTitle`).value.trim(),message:document.getElementById(`adminHapMessage`).value.trim(),enabled:true};adminConfig.happenings.custom.push(entry);await persistAdminConfig();render();renderAdminHappeningsTab();showToast(`Happening créé`)})}let adminChangelogEntries=[];let adminChangelogLoaded=false;let editingChangelogId=null;function rowToAdminChangelogEntry(row){return{id:row.id,version:row.version,title:row.title,body:row.body,published:row.published,publishedAt:row.published_at}}async function loadAdminChangelogEntries(){const{data,error}=await supabaseClient.from(`changelog_entries`).select(`*`).order(`created_at`,{ascending:false});if(error){console.error(error);adminChangelogEntries=[]}else{adminChangelogEntries=data.map(rowToAdminChangelogEntry)}adminChangelogLoaded=true}function renderAdminChangelogTab(){const wrap=document.getElementById(`adminContent`);if(!adminChangelogLoaded){wrap.innerHTML=`<div class="tmdb-empty">Chargement…</div>`;loadAdminChangelogEntries().then(renderAdminChangelogTab);return}const editing=editingChangelogId?adminChangelogEntries.find(e=>e.id===editingChangelogId):null;const rows=adminChangelogEntries.map(e=>`
+    <div class="wl-row admin-row${e.published?``:` admin-row-disabled`}">
+      <div class="wl-main">
+        <div class="wl-title">v${escapeHtml(e.version)} — ${escapeHtml(e.title)} ${e.published?`<span class="status-badge ongoing">Publiée</span>`:`<span class="status-badge ended">Brouillon</span>`}</div>
+        <div class="wl-note">${escapeHtml(e.body)}</div>
+      </div>
+      <div class="wl-actions">
+        <button class="btn secondary admin-changelog-toggle" data-id="${e.id}" type="button">${e.published?`Dépublier`:`Publier`}</button>
+        <button class="btn secondary admin-changelog-edit" data-id="${e.id}" type="button">Modifier</button>
+        <button class="btn secondary admin-changelog-delete" data-id="${e.id}" type="button">Supprimer</button>
+      </div>
+    </div>
+  `).join(``);wrap.innerHTML=`
+    <div class="stats-section">
+      <div class="stats-section-title">Entrées (${adminChangelogEntries.length})</div>
+      ${rows||`<div class="tmdb-empty">Aucune pour l'instant.</div>`}
+    </div>
+    <div class="stats-section">
+      <div class="stats-section-title">${editing?`Modifier l'entrée`:`Nouvelle entrée (brouillon)`}</div>
+      <form id="adminChangelogForm">
+        <div class="field">
+          <label for="adminChangelogVersion">Version</label>
+          <input type="text" id="adminChangelogVersion" placeholder="Ex. 2.1" value="${editing?escapeHtml(editing.version):``}" required>
+        </div>
+        <div class="field">
+          <label for="adminChangelogTitle">Titre</label>
+          <input type="text" id="adminChangelogTitle" placeholder="Ex. Suivi des séries" value="${editing?escapeHtml(editing.title):``}" required>
+        </div>
+        <div class="field">
+          <label for="adminChangelogBody">Description</label>
+          <p class="cl-admin-hint" id="adminChangelogBodyHint">Une ligne en MAJUSCULES ouvre une catégorie (ex. SÉRIES, CARTES, DESIGN), chaque ligne « • » en dessous est une nouveauté.</p>
+          <textarea id="adminChangelogBody" placeholder="SÉRIES&#10;• Ce qui a changé…" rows="8" aria-describedby="adminChangelogBodyHint" required>${editing?escapeHtml(editing.body):``}</textarea>
+        </div>
+        <button class="btn" type="submit">${editing?`Enregistrer`:`Créer en brouillon`}</button>
+        ${editing?`<button class="btn secondary" id="adminChangelogCancelEdit" type="button">Annuler</button>`:``}
+      </form>
+    </div>
+  `;wrap.querySelectorAll(`.admin-changelog-toggle`).forEach(btn=>{btn.addEventListener(`click`,async e=>{const id=Number(e.currentTarget.dataset.id);const entry=adminChangelogEntries.find(x=>x.id===id);if(!entry)return;const nowPublished=!entry.published;const payload=nowPublished?{published:true,published_at:new Date().toISOString()}:{published:false};const{error}=await supabaseClient.from(`changelog_entries`).update(payload).eq(`id`,id);if(error){showToast(`Erreur, réessaie`);console.error(error);return}entry.published=nowPublished;if(nowPublished)entry.publishedAt=payload.published_at;renderAdminChangelogTab();loadChangelogEntries().then(updateVersionTag);showToast(nowPublished?`Nouveauté publiée`:`Nouveauté dépubliée`)})});wrap.querySelectorAll(`.admin-changelog-edit`).forEach(btn=>{btn.addEventListener(`click`,e=>{editingChangelogId=Number(e.currentTarget.dataset.id);renderAdminChangelogTab()})});wrap.querySelectorAll(`.admin-changelog-delete`).forEach(btn=>{btn.addEventListener(`click`,async e=>{if(!confirm(`Supprimer cette entrée ?`))return;const id=Number(e.currentTarget.dataset.id);const{error}=await supabaseClient.from(`changelog_entries`).delete().eq(`id`,id);if(error){showToast(`Erreur, réessaie`);console.error(error);return}adminChangelogEntries=adminChangelogEntries.filter(x=>x.id!==id);if(editingChangelogId===id)editingChangelogId=null;renderAdminChangelogTab();showToast(`Nouveauté supprimée`)})});const cancelBtn=wrap.querySelector(`#adminChangelogCancelEdit`);if(cancelBtn)cancelBtn.addEventListener(`click`,()=>{editingChangelogId=null;renderAdminChangelogTab()});wrap.querySelector(`#adminChangelogForm`).addEventListener(`submit`,async e=>{e.preventDefault();const version=document.getElementById(`adminChangelogVersion`).value.trim();const title=document.getElementById(`adminChangelogTitle`).value.trim();const body=document.getElementById(`adminChangelogBody`).value.trim();if(!version||!title||!body){showToast(`Complète tous les champs`);return}if(editingChangelogId){const{error}=await supabaseClient.from(`changelog_entries`).update({version,title,body}).eq(`id`,editingChangelogId);if(error){showToast(`Erreur, réessaie`);console.error(error);return}const entry=adminChangelogEntries.find(x=>x.id===editingChangelogId);if(entry){entry.version=version;entry.title=title;entry.body=body}editingChangelogId=null;showToast(`Nouveauté modifiée`)}else{const{data,error}=await supabaseClient.from(`changelog_entries`).insert({version,title,body}).select().single();if(error){showToast(`Erreur de sauvegarde, réessaie`);console.error(error);return}adminChangelogEntries.unshift(rowToAdminChangelogEntry(data));showToast(`Brouillon créé`)}renderAdminChangelogTab()})}let allFeedback=[];let allFeedbackLoaded=false;async function loadAllFeedback(){const{data,error}=await supabaseClient.from(`feedback`).select(`*`).order(`created_at`,{ascending:false});if(error){console.error(error);allFeedback=[]}else{allFeedback=data.map(row=>({id:row.id,category:row.category,message:row.message,resolved:row.resolved,createdAt:row.created_at}))}allFeedbackLoaded=true}function groupFeedbackByCategory(){return FEEDBACK_CATEGORIES.map(cat=>{const items=allFeedback.filter(f=>f.category===cat.key).slice().sort((a,b)=>(a.resolved===b.resolved?0:a.resolved?1:-1)||(b.createdAt>a.createdAt?1:-1));const openCount=items.filter(f=>!f.resolved).length;return{...cat,items,openCount}}).filter(g=>g.items.length>0).sort((a,b)=>b.openCount-a.openCount||b.items.length-a.items.length)}function renderAdminFeedbackTab(){const wrap=document.getElementById(`adminContent`);if(!allFeedbackLoaded){wrap.innerHTML=`<div class="tmdb-empty">Chargement…</div>`;loadAllFeedback().then(renderAdminFeedbackTab);return}if(!allFeedback.length){wrap.innerHTML=`<div class="empty-state">Aucun retour pour l'instant.</div>`;return}const groups=groupFeedbackByCategory();wrap.innerHTML=groups.map(g=>`
+    <div class="stats-section">
+      <div class="stats-section-title">
+        ${escapeHtml(g.label)}
+        <span class="ach-tier-progress">${g.items.length} retour${g.items.length>1?`s`:``}${g.openCount?` · ${g.openCount} non traité${g.openCount>1?`s`:``}`:` · tous traités`}</span>
+      </div>
+      ${g.items.map(f=>`
+        <div class="feedback-row${f.resolved?` is-resolved`:``}">
+          <div class="feedback-row-main">
+            <p class="feedback-message">${escapeHtml(f.message)}</p>
+            <div class="feedback-meta">${new Date(f.createdAt).toLocaleDateString(`fr-FR`)}</div>
+          </div>
+          <button class="btn secondary" type="button" data-feedback-toggle="${f.id}">${f.resolved?`Rouvrir`:`Marquer traité`}</button>
+        </div>
+      `).join(``)}
+    </div>
+  `).join(``);wrap.querySelectorAll(`[data-feedback-toggle]`).forEach(btn=>{btn.addEventListener(`click`,()=>toggleFeedbackResolved(parseInt(btn.dataset.feedbackToggle,10)))})}async function toggleFeedbackResolved(id){const item=allFeedback.find(f=>f.id===id);if(!item)return;const{error}=await supabaseClient.from(`feedback`).update({resolved:!item.resolved}).eq(`id`,id);if(error){showToast(`Erreur, réessaie`);console.error(error);return}item.resolved=!item.resolved;renderAdminFeedbackTab()}let allEvents=[];let siteStats=null;let siteStatsLoaded=false;const EVENT_TYPE_LABELS={signup:`Inscription`,pwa_install:`Installation`,error:`Erreur`,onboarding_completed:`Tuto terminé`,onboarding_skipped:`Tuto passé`};async function loadSiteStats(){const[statsRes,eventsRes]=await Promise.all([supabaseClient.rpc(`get_admin_site_stats`),supabaseClient.from(`app_events`).select(`*`).order(`created_at`,{ascending:false}).limit(200)]);if(statsRes.error){console.error(statsRes.error);siteStats=null}else{siteStats=statsRes.data&&statsRes.data[0]||null}if(eventsRes.error){console.error(eventsRes.error);allEvents=[]}else{allEvents=eventsRes.data.map(row=>({id:row.id,eventType:row.event_type,detail:row.detail,createdAt:row.created_at}))}siteStatsLoaded=true}function renderAdminStatsTab(){const wrap=document.getElementById(`adminContent`);if(!siteStatsLoaded){wrap.innerHTML=`<div class="tmdb-empty">Chargement…</div>`;loadSiteStats().then(renderAdminStatsTab);return}const weekAgo=new Date(Date.now()-7*864e5);const countSince=(type,since)=>allEvents.filter(e=>e.eventType===type&&new Date(e.createdAt)>=since).length;const totalSignups=allEvents.filter(e=>e.eventType===`signup`).length;const weekSignups=countSince(`signup`,weekAgo);const totalInstalls=allEvents.filter(e=>e.eventType===`pwa_install`).length;const weekInstalls=countSince(`pwa_install`,weekAgo);const weekErrors=countSince(`error`,weekAgo);const stat=(value,label)=>`<div class="stat-tile"><div class="stat-value">${value!=null?value:`—`}</div><div class="stat-label">${escapeHtml(label)}</div></div>`;wrap.innerHTML=`
+    <div class="stats-section">
+      <div class="stats-section-title">Croissance</div>
+      <div class="stat-tiles">
+        ${stat(totalSignups,`Inscriptions`)}
+        ${stat(weekSignups,`Cette semaine`)}
+        ${stat(totalInstalls,`Installations`)}
+        ${stat(weekInstalls,`Cette semaine`)}
+      </div>
+    </div>
+    <div class="stats-section">
+      <div class="stats-section-title">Activité globale (tous comptes)</div>
+      <div class="stat-tiles">
+        ${stat(siteStats&&siteStats.total_users,`Comptes`)}
+        ${stat(siteStats&&siteStats.total_films,`Films au catalogue`)}
+        ${stat(siteStats&&siteStats.total_series,`Séries suivies`)}
+        ${stat(siteStats&&siteStats.total_viewings,`Visionnages`)}
+      </div>
+    </div>
+    <div class="stats-section">
+      <div class="stats-section-title">
+        Journal
+        ${weekErrors?`<span class="ach-tier-progress">${weekErrors} erreur${weekErrors>1?`s`:``} cette semaine</span>`:``}
+      </div>
+      ${allEvents.length?allEvents.map(e=>`
+        <div class="event-row">
+          <span class="event-type-badge event-type-${escapeHtml(e.eventType)}">${escapeHtml(EVENT_TYPE_LABELS[e.eventType]||e.eventType)}</span>
+          <span class="event-detail">${escapeHtml(e.detail||``)}</span>
+          <span class="event-date">${new Date(e.createdAt).toLocaleString(`fr-FR`)}</span>
+        </div>
+      `).join(``):`<div class="empty-state">Rien pour l'instant.</div>`}
+    </div>
+  `}function openAdminModal(){if(!isAdmin())return;closeProfileModal();goToAdmin()}function closeAdminModal(){closeOverlay(`adminOverlay`,()=>returnToProfile())}document.querySelectorAll(`#adminTabs .avatar-source-tab`).forEach(btn=>{btn.addEventListener(`click`,()=>setAdminTab(btn.dataset.adminTab))});document.getElementById(`adminBtn`).addEventListener(`click`,openAdminModal);document.getElementById(`closeAdmin`).addEventListener(`click`,closeAdminModal);document.getElementById(`adminOverlay`).addEventListener(`click`,e=>{if(e.target.id===`adminOverlay`)closeAdminModal()});let adminCardsFilter={type:``,search:``,rarity:``};async function renderAdminCardsTab(){const wrap=document.getElementById(`adminContent`);wrap.innerHTML=`${skeletonRows(3)}`;let query=supabaseClient.from(`tcg_cards`).select(`id, card_type, name, image_url, rarity, rarity_auto, rarity_override, popularity`).limit(5e3);if(adminCardsFilter.type)query=query.eq(`card_type`,adminCardsFilter.type);if(adminCardsFilter.search)query=query.ilike(`name`,`%${adminCardsFilter.search}%`);const{data,error}=await query;if(error){wrap.innerHTML=`<div class="tmdb-empty">Erreur : ${escapeHtml(error.message)}</div>`;return}const RARETE_ORDRE={legendaire:0,epique:1,rare:2,commun:3};const filtrees=(data||[]).filter(c=>!adminCardsFilter.rarity||c.rarity===adminCardsFilter.rarity);const triees=filtrees.slice().sort((a,b)=>(RARETE_ORDRE[a.rarity]??9)-(RARETE_ORDRE[b.rarity]??9)||Number(b.popularity)-Number(a.popularity));const rows=triees.map(c=>`
+    <div class="wl-row admin-card-row">
+      ${c.image_url?`<img class="film-poster" src="${escapeHtml(c.image_url)}" alt="" loading="lazy">`:`<div class="film-poster film-poster-placeholder">${FILM_PLACEHOLDER_SVG}</div>`}
+      <div class="wl-main">
+        <div class="wl-title">${escapeHtml(c.name)}</div>
+        <div class="wl-note">${{film:`Film`,actor:`Acteur`,director:`Réalisateur`}[c.card_type]} · popularité ${Number(c.popularity).toFixed(1)} · auto : <b>${c.rarity_auto}</b>${c.rarity_override?` · <span class="admin-override">forcée : ${c.rarity_override}</span>`:``}</div>
+      </div>
+      <div class="wl-actions">
+        <select data-card-rarity="${c.id}" aria-label="Rareté de ${escapeHtml(c.name)}">
+          <option value="">Automatique</option>
+          ${[`commun`,`rare`,`epique`,`legendaire`].map(r=>`<option value="${r}" ${c.rarity_override===r?`selected`:``}>${r}</option>`).join(``)}
+        </select>
+      </div>
+    </div>
+  `).join(``);wrap.innerHTML=`
+    <div class="toolbar" style="margin-bottom:12px;">
+      <select id="adminCardsType" aria-label="Filtrer par type">
+        <option value="">Tous types</option>
+        <option value="film" ${adminCardsFilter.type===`film`?`selected`:``}>Films</option>
+        <option value="actor" ${adminCardsFilter.type===`actor`?`selected`:``}>Acteurs</option>
+        <option value="director" ${adminCardsFilter.type===`director`?`selected`:``}>Réalisateurs</option>
+      </select>
+      <select id="adminCardsRarity" aria-label="Filtrer par rareté">
+        <option value="">Toutes raretés</option>
+        ${[`legendaire`,`epique`,`rare`,`commun`].map(r=>`<option value="${r}" ${adminCardsFilter.rarity===r?`selected`:``}>${r}</option>`).join(``)}
+      </select>
+      <input type="text" id="adminCardsSearch" placeholder="Chercher une carte…" value="${escapeHtml(adminCardsFilter.search)}">
+    </div>
+    <div class="toolbar" style="margin-bottom:10px;">
+      <button class="btn secondary" id="adminCardsExport" type="button">Exporter tout le catalogue (CSV)</button>
+    </div>
+    <div class="wl-note" style="margin-bottom:10px;">
+      ${[`legendaire`,`epique`,`rare`,`commun`].map(r=>`${r} : <b>${triees.filter(c=>c.rarity===r).length}</b>`).join(` · `)}
+      · total : <b>${triees.length}</b>
+    </div>
+    ${rows||`<div class="tmdb-empty">Aucune carte.</div>`}
+  `;document.getElementById(`adminCardsType`).addEventListener(`change`,e=>{adminCardsFilter.type=e.target.value;renderAdminCardsTab()});document.getElementById(`adminCardsExport`).addEventListener(`click`,exporterCatalogueCartes);document.getElementById(`adminCardsRarity`).addEventListener(`change`,e=>{adminCardsFilter.rarity=e.target.value;renderAdminCardsTab()});let searchTimer=null;document.getElementById(`adminCardsSearch`).addEventListener(`input`,e=>{clearTimeout(searchTimer);searchTimer=setTimeout(()=>{adminCardsFilter.search=e.target.value.trim();renderAdminCardsTab()},350)});wrap.querySelectorAll(`[data-card-rarity]`).forEach(sel=>{sel.addEventListener(`change`,async()=>{const cardId=Number(sel.dataset.cardRarity);const value=sel.value||null;const carte=triees.find(c=>c.id===cardId);const avant=carte?carte.rarity_override||`automatique`:``;const apres=value||`automatique`;if(carte&&!confirm(`« ${carte.name} » : ${avant} → ${apres}.
+
+Les boosters qui tirent cette carte utiliseront la nouvelle rareté dès maintenant. Confirmer ?`)){sel.value=carte.rarity_override||``;return}sel.disabled=true;const{error:rpcErr}=await supabaseClient.rpc(`admin_set_card_rarity`,{p_card_id:cardId,p_rarity:value});sel.disabled=false;if(rpcErr){showToast(`Erreur : `+rpcErr.message);console.error(rpcErr);renderAdminCardsTab();return}showToast(`Rareté mise à jour`);renderAdminCardsTab()})})}async function exporterCatalogueCartes(){const lignes=[];const PAGE=1e3;for(let debut=0;;debut+=PAGE){const{data,error}=await supabaseClient.from(`tcg_cards`).select(`id, card_type, tmdb_id, name`).order(`id`,{ascending:true}).range(debut,debut+PAGE-1);if(error){showToast(`Export interrompu : `+error.message);console.error(error);return}lignes.push(...data||[]);if(!data||data.length<PAGE)break}const echapper=v=>v==null?``:`"${String(v).replace(/"/g,`""`)}"`;const csv=[`id,card_type,tmdb_id,name`,...lignes.map(c=>[c.id,c.card_type,c.tmdb_id,echapper(c.name)].join(`,`))].join(`
+`)+`
+`;const url=URL.createObjectURL(new Blob([csv],{type:`text/csv;charset=utf-8`}));const a=document.createElement(`a`);a.href=url;a.download=`cartes-catalogue.csv`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1e3);showToast(`${lignes.length} cartes exportées`)}let adminView=`todo`;let adminFeedback=[];let adminFeedbackNames={};let adminReplyOpen=null;let adminCounts={avis:0,errors:0,drafts:0};function goToAdmin(){location.hash=`#/admin`}const ADMIN_KIND_LABELS={bug:`Bug`,idee:`Idée`,autre:`Autre`};function adminRelTime(iso){return typeof friendFeedWhen===`function`?friendFeedWhen(iso):new Date(iso).toLocaleDateString(`fr-FR`)}async function loadAdminFeedback(){const{data,error}=await supabaseClient.from(`feedback`).select(`*`).order(`created_at`,{ascending:false});if(error){console.error(error);adminFeedback=[];return}adminFeedback=(data||[]).map(rowToFeedback);const ids=[...new Set(adminFeedback.map(f=>f.userId).filter(Boolean))];adminFeedbackNames={};if(ids.length){const{data:profs,error:profError}=await supabaseClient.from(`profiles`).select(`user_id, display_name`).in(`user_id`,ids);if(profError)console.error(profError);(profs||[]).forEach(p=>{adminFeedbackNames[p.user_id]=p.display_name})}}function adminErrorKey(detail){return String(detail||`Erreur sans détail`).replace(/https?:\/\/\S*?\/(js\/[^\s?:)]+)(\?v=\d+)?/g,`$1`).replace(/\?v=\d+/g,``).trim()}function groupAdminErrors(events,sinceMs){const groups=new Map;events.filter(e=>e.eventType===`error`&&(!sinceMs||new Date(e.createdAt).getTime()>=sinceMs)).forEach(e=>{const key=adminErrorKey(e.detail);const g=groups.get(key)||{key,count:0,last:e.createdAt};g.count++;if(e.createdAt>g.last)g.last=e.createdAt;groups.set(key,g)});return Array.from(groups.values()).sort((a,b)=>a.last<b.last?1:-1)}function adminCountsText(c){const parts=[];if(c.avis)parts.push(`${c.avis} avis`);if(c.errors)parts.push(`${c.errors} erreur${c.errors>1?`s`:``}`);if(c.drafts)parts.push(`${c.drafts} note${c.drafts>1?`s`:``} en brouillon`);return parts.length?parts.join(`, `):`Rien à traiter`}function renderAdminCounts(){const admin=isAdmin();const total=adminCounts.avis+adminCounts.errors+adminCounts.drafts;const navBtn=document.getElementById(`adminNavBtn`);const navCount=document.getElementById(`adminNavCount`);if(navBtn)navBtn.hidden=!admin;if(navCount){navCount.hidden=!admin||total===0;navCount.textContent=total?String(total):``}const sub=document.getElementById(`ppAdminSub`);const count=document.getElementById(`ppAdminCount`);if(sub)sub.textContent=adminCountsText(adminCounts);if(count){count.hidden=total===0;count.textContent=total?String(total):``}}async function refreshAdminCounts(){renderAdminCounts();if(!isAdmin())return;const weekAgo=Date.now()-7*864e5;const[fb,er,dr]=await Promise.all([supabaseClient.from(`feedback`).select(`id`,{count:`exact`,head:true}).eq(`resolved`,false),supabaseClient.from(`app_events`).select(`detail, created_at, event_type`).eq(`event_type`,`error`).gte(`created_at`,new Date(weekAgo).toISOString()).limit(500),supabaseClient.from(`changelog_entries`).select(`id`,{count:`exact`,head:true}).eq(`published`,false)]);const weekErrors=er.error?[]:(er.data||[]).map(row=>({eventType:row.event_type,detail:row.detail,createdAt:row.created_at}));adminCounts={avis:fb.error?0:fb.count||0,errors:groupAdminErrors(weekErrors).length,drafts:dr.error?0:dr.count||0};renderAdminCounts()}function adminFeedbackHtml(f){const name=adminFeedbackNames[f.userId]||`Quelqu’un`;const ctx=typeof avisContextText===`function`?avisContextText(f.context):``;const actions=adminReplyOpen===f.id?`<div class="adm-reply">
+         <textarea id="admReplyText" rows="3" aria-label="Ta réponse">${escapeHtml(f.reply||``)}</textarea>
+         <div class="adm-acts"><button class="btn" type="button" data-adm-send="${f.id}">Envoyer et marquer traité</button><button class="adm-line-btn" type="button" data-adm-reply="${f.id}">Annuler</button></div>
+       </div>`:`<div class="adm-acts"><button class="adm-line-btn" type="button" data-adm-reply="${f.id}">${f.reply?`Modifier la réponse`:`Répondre`}</button><button class="adm-line-btn" type="button" data-adm-resolve="${f.id}">${f.resolved?`Rouvrir`:`Traité`}</button></div>`;return`
+    <div class="adm-fb${f.resolved?` is-resolved`:``}">
+      <div class="adm-fb-top"><span class="adm-kind">${ADMIN_KIND_LABELS[f.category]||`Autre`}</span><b>${escapeHtml(name)}</b>${ctx?`<span>${escapeHtml(ctx)}</span>`:``}<span>${escapeHtml(adminRelTime(f.createdAt))}</span></div>
+      <p class="adm-fb-msg">${escapeHtml(f.message)}</p>
+      ${f.reply&&adminReplyOpen!==f.id?`<div class="av-reply"><span class="av-reply-label">Ta réponse</span>${escapeHtml(f.reply)}</div>`:``}
+      ${actions}
+    </div>`}function adminErrorsHtml(groups){if(groups.length===0)return`<div class="empty-state">Aucune erreur.</div>`;return groups.map(g=>`
+    <div class="adm-err">
+      <code>${escapeHtml(g.key)}</code>
+      <span class="adm-err-count">${g.count} fois</span>
+      <span class="adm-err-sub">Dernière ${escapeHtml(adminRelTime(g.last))}</span>
+    </div>`).join(``)}function adminFigureHtml(value,label,view){const hot=typeof value===`number`&&value>0&&view;return`<button type="button" class="adm-fig${hot?` is-hot`:``}"${view?` data-adm-view="${view}"`:` disabled`}><b>${value}</b><span>${escapeHtml(label)}</span></button>`}function renderAdminTodo(){const wrap=document.getElementById(`adminContent`);const open=adminFeedback.filter(f=>!f.resolved);const weekGroups=groupAdminErrors(allEvents,Date.now()-7*864e5);const drafts=adminChangelogEntries.filter(e=>!e.published).length;wrap.innerHTML=`
+    <div class="adm-figs">
+      ${adminFigureHtml(open.length,`avis à traiter`,`avis`)}
+      ${adminFigureHtml(weekGroups.length,weekGroups.length>1?`erreurs cette semaine`:`erreur cette semaine`,`health`)}
+      ${adminFigureHtml(drafts,drafts>1?`notes en brouillon`:`note en brouillon`,`news`)}
+    </div>
+    <div class="pp-label">Avis à traiter</div>
+    ${open.length?open.map(adminFeedbackHtml).join(``):`<div class="empty-state">Aucun avis en attente.</div>`}
+    <div class="pp-label adm-label">Erreurs de la semaine, regroupées</div>
+    ${adminErrorsHtml(weekGroups)}`}function renderAdminAvis(){const wrap=document.getElementById(`adminContent`);const open=adminFeedback.filter(f=>!f.resolved);const done=adminFeedback.filter(f=>f.resolved);wrap.innerHTML=`
+    <div class="pp-label">À traiter</div>
+    ${open.length?open.map(adminFeedbackHtml).join(``):`<div class="empty-state">Aucun avis en attente.</div>`}
+    <div class="pp-label adm-label">Traités</div>
+    ${done.length?done.map(adminFeedbackHtml).join(``):`<div class="empty-state">Rien pour l’instant.</div>`}`}function renderAdminHealth(){const wrap=document.getElementById(`adminContent`);const weekAgo=Date.now()-7*864e5;const since=type=>allEvents.filter(e=>e.eventType===type&&new Date(e.createdAt).getTime()>=weekAgo).length;const s=siteStats||{};const val=v=>v!=null?v:`–`;const other=allEvents.filter(e=>e.eventType!==`error`).slice(0,20);wrap.innerHTML=`
+    <div class="adm-figs adm-figs-4">
+      ${adminFigureHtml(val(s.total_users),`comptes · +${since(`signup`)} cette semaine`)}
+      ${adminFigureHtml(val(s.total_films),`films au catalogue`)}
+      ${adminFigureHtml(val(s.total_series),`séries suivies`)}
+      ${adminFigureHtml(val(s.total_viewings),`visionnages`)}
+    </div>
+    <div class="pp-label">Erreurs, regroupées</div>
+    ${adminErrorsHtml(groupAdminErrors(allEvents))}
+    <div class="pp-label adm-label">Derniers évènements</div>
+    ${other.length?`<div class="pp-rows">${other.map(e=>`
+      <div class="pp-row st-row-static"><span class="pp-row-main"><span class="pp-row-title">${escapeHtml(EVENT_TYPE_LABELS[e.eventType]||e.eventType)}</span>${e.detail?`<span class="pp-row-sub">${escapeHtml(e.detail)}</span>`:``}</span><span class="pp-val">${escapeHtml(adminRelTime(e.createdAt))}</span></div>`).join(``)}</div>`:`<div class="empty-state">Rien pour l’instant.</div>`}`}function renderAdminView(){document.querySelectorAll(`#adminPage .top-tab[data-adm-view]`).forEach(btn=>{const on=btn.dataset.admView===adminView;btn.classList.toggle(`is-active`,on);btn.setAttribute(`aria-selected`,String(on))});if(adminView===`news`){renderAdminChangelogTab();return}if(adminView===`avis`)renderAdminAvis();else if(adminView===`health`)renderAdminHealth();else renderAdminTodo()}async function openAdminPage(){if(!isAdmin()){goHome();return}adminReplyOpen=null;document.getElementById(`adminContent`).innerHTML=skeletonRows(3);await Promise.all([loadAdminFeedback(),loadSiteStats(),loadAdminChangelogEntries()]).catch(e=>console.error(e));if(parseRoute().name!==`admin`)return;renderAdminView();refreshAdminCounts()}async function adminSetResolved(id,resolved){const f=adminFeedback.find(x=>x.id===id);if(!f)return;const{error}=await supabaseClient.from(`feedback`).update({resolved}).eq(`id`,id);if(error){showToast(`Erreur, réessaie`);console.error(error);return}f.resolved=resolved;renderAdminView();refreshAdminCounts()}async function adminSendReply(id){const f=adminFeedback.find(x=>x.id===id);const field=document.getElementById(`admReplyText`);const text=field?field.value.trim():``;if(!f||!text){showToast(`Écris une réponse avant d’envoyer`);return}const repliedAt=new Date().toISOString();const{error}=await supabaseClient.from(`feedback`).update({reply:text,replied_at:repliedAt,resolved:true}).eq(`id`,id);if(error){showToast(/reply/i.test(error.message||``)?`Pour répondre, lance d’abord la migration 063`:`Erreur, réessaie`);console.error(error);return}Object.assign(f,{reply:text,repliedAt,resolved:true});adminReplyOpen=null;showToast(`Réponse envoyée`);renderAdminView();refreshAdminCounts()}document.getElementById(`adminPage`).addEventListener(`click`,e=>{const view=e.target.closest(`[data-adm-view]`);if(view){adminView=view.dataset.admView;adminReplyOpen=null;renderAdminView();return}const reply=e.target.closest(`[data-adm-reply]`);if(reply){const id=Number(reply.dataset.admReply);adminReplyOpen=adminReplyOpen===id?null:id;renderAdminView();if(adminReplyOpen){const t=document.getElementById(`admReplyText`);if(t)t.focus()}return}const send=e.target.closest(`[data-adm-send]`);if(send){adminSendReply(Number(send.dataset.admSend));return}const resolve=e.target.closest(`[data-adm-resolve]`);if(resolve){const f=adminFeedback.find(x=>x.id===Number(resolve.dataset.admResolve));if(f)adminSetResolved(f.id,!f.resolved)}});document.getElementById(`adminNavBtn`).addEventListener(`click`,goToAdmin);
