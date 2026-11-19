@@ -13,7 +13,7 @@
 // cache. La construction le remplace par une empreinte du site
 // (vite.config.mjs) : rien à monter à la main. Ce v325 ne sert qu'en
 // développement, et à reconnaître les caches d'avant Vite.
-const CACHE_NAME = 'critique-films-shell-6ad3d0f8';
+const CACHE_NAME = 'critique-films-shell-50b71c36';
 const TMDB_CACHE = 'kinet-tmdb-v1';
 const IMAGE_CACHE = 'kinet-images-v1';
 const FONT_CACHE = 'kinet-polices-v1';
