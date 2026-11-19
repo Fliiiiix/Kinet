@@ -519,6 +519,10 @@
     </div>
   </div>
 
+  <!-- Entête compacte (retour de Flix du 19/11, téléphone : « boutons
+       entassés ») : « + Ajouter » et « Surprends-moi » sur une ligne, le
+       filtre de plateforme et « Mes abonnements » sur la suivante. -->
+  <div class="wl-head-row">
   <!-- Formulaire replié derrière une action (audit M3) : il ne passe plus
        avant la liste à chaque visite. <details> natif, ids inchangés. -->
   <details class="create-disclosure" id="wlAddDisclosure">
@@ -545,12 +549,12 @@
     <button class="btn" id="wlAddBtn" type="button">Ajouter à À voir</button>
   </div>
   </details>
-
   <!-- "Surprends-moi" (retour utilisateur) : tire un film au hasard dans la
        watchlist pour aider à décider quoi regarder ce soir plutôt que de
        parcourir toute la liste — voir js/watchlist.js. -->
-  <div class="toolbar" style="margin-bottom:16px;">
-    <button class="btn secondary" id="wlSurpriseBtn" type="button">Surprends-moi</button>
+  <button class="btn secondary wl-surprise-btn" id="wlSurpriseBtn" type="button">Surprends-moi</button>
+  </div>
+  <div class="wl-filters">
     <!-- Filtre "dispo sur ma plateforme" (retour utilisateur : "trouver
          facilement les films de ma watchlist dispo sur Netflix") — voir
          loadWatchlistProviders()/buildWatchlistProviderFilterOptions() dans
